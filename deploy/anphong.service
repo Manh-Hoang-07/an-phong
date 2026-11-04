@@ -1,0 +1,30 @@
+# Dịch vụ systemd cho Ẩn Phong.
+# Chép vào /etc/systemd/system/anphong.service rồi:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now anphong
+[Unit]
+Description=An Phong game server
+After=network.target
+
+[Service]
+Type=simple
+User=anphong
+WorkingDirectory=/opt/anphong
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+Environment=PORT=3100
+Environment=HOST=127.0.0.1
+Environment=DATA_DIR=/var/lib/anphong
+# Bật dòng dưới SAU KHI đã có HTTPS (certbot)
+#Environment=COOKIE_SECURE=1
+
+# Giới hạn quyền của tiến trình
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/anphong /var/backups/anphong
+
+[Install]
+WantedBy=multi-user.target

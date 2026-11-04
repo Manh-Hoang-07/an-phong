@@ -1,0 +1,19 @@
+{
+  "name": "an-phong",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ẩn Phong - game nhập vai ninja 2D chơi trên web, tự lưu lên server",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "backup": "node server/backup.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@fontsource/be-vietnam-pro": "5.2.5",
+    "phaser": "3.90.0"
+  }
+}
