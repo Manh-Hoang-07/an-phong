@@ -52,12 +52,7 @@
       <div id="hud-right">
         <div id="h-map"></div>
         <div class="menu">
-          <button data-panel="bag" title="Túi đồ (I)">🎒<i>I</i></button>
-          <button data-panel="char" title="Nhân vật (C)">🥋<i>C</i><b id="h-points" class="badge hidden"></b></button>
-          <button data-panel="skills" title="Kỹ năng (K)">✨<i>K</i></button>
-          <button data-panel="quest" title="Nhiệm vụ (L)">📜<i>L</i></button>
-          <button id="btn-full" class="hidden" title="Toàn màn hình">⛶</button>
-          <button id="btn-logout" title="Đăng xuất">⏻</button>
+          <button id="btn-menu" title="Menu (I / C / K / L)">☰<b id="h-points" class="badge hidden"></b></button>
         </div>
         <div id="quest-track"></div>
       </div>
@@ -67,6 +62,9 @@
         <div class="sk" data-k="0"><span class="key">1</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk" data-k="1"><span class="key">2</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk" data-k="2"><span class="key">3</span><span class="ico"></span><div class="cd"></div></div>
+        <div class="sk" data-k="3"><span class="key">4</span><span class="ico"></span><div class="cd"></div></div>
+        <div class="sk sk-extra hidden" data-k="4"><span class="key">5</span><span class="ico"></span><div class="cd"></div></div>
+        <div class="sk sk-ult" data-k="5"><span class="key">R</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk pot" data-k="hp"><span class="key">Q</span><span class="ico">❤</span><span class="cnt" id="pot-hp"></span></div>
         <div class="sk pot" data-k="mp"><span class="key">E</span><span class="ico">💧</span><span class="cnt" id="pot-mp"></span></div>
       </div>
@@ -86,6 +84,9 @@
         <button data-t="s0" class="tb tb-skill tb-s0"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="s1" class="tb tb-skill tb-s1"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="s2" class="tb tb-skill tb-s2"><span class="ico"></span><div class="cd"></div></button>
+        <button data-t="s3" class="tb tb-skill tb-s3"><span class="ico"></span><div class="cd"></div></button>
+        <button data-t="s4" class="tb tb-skill tb-s4 hidden"><span class="ico"></span><div class="cd"></div></button>
+        <button data-t="ult" class="tb tb-skill tb-ult"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="hp" class="tb tb-pot tb-hp">🧪<b id="tpot-hp"></b></button>
         <button data-t="mp" class="tb tb-pot tb-mp">💧<b id="tpot-mp"></b></button>
       </div>
@@ -105,10 +106,14 @@
 
   <script src="/lib/phaser.min.js"></script>
   <script src="/shared/data.js"></script>
+  <script src="/js/sound.js"></script>
   <script src="/js/net.js"></script>
   <script src="/js/art.js"></script>
+  <script src="/js/fx.js"></script>
+  <script src="/js/sprites.js"></script>
   <script src="/js/ui.js"></script>
   <script src="/js/world.js"></script>
+  <script src="/js/juice.js"></script>
   <script src="/js/main.js"></script>
 </body>
 </html>

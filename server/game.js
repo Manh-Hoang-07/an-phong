@@ -4,6 +4,7 @@
  * nhiệm vụ và nâng cấp đều do server quyết định rồi lưu ngay vào SQLite.
  */
 const G = require('../shared/data');
+const codes = require('./codes');
 
 class GameError extends Error {}
 const fail = (msg) => { throw new GameError(msg); };
@@ -81,12 +82,13 @@ function gainExp(p, amount, ev) {
     p.exp -= G.expToNext(p.level);
     p.level++;
     p.freePoints += G.STAT_POINTS_PER_LEVEL;
+    p.skillPoints = (p.skillPoints || 0) + 1;
     const st = G.calcStats(p);
     p.hp = st.maxHp; p.mp = st.maxMp;
     ev.push({ t: 'levelup', level: p.level });
-    ev.push({ t: 'msg', text: `[Hệ thống] Thăng cấp! Đạt cấp ${p.level}, nhận ${G.STAT_POINTS_PER_LEVEL} điểm tiềm năng (phím C).`, color: '#ffd54f' });
+    ev.push({ t: 'msg', text: `[Hệ thống] Thăng cấp! Đạt cấp ${p.level}: +${G.STAT_POINTS_PER_LEVEL} điểm tiềm năng, +1 điểm kỹ năng.`, color: '#ffd54f' });
     const newSkills = G.availableSkills(p).filter(id => G.SKILLS[id].level === p.level);
-    for (const id of newSkills) ev.push({ t: 'msg', text: `Đã mở kỹ năng ${G.SKILLS[id].name}.`, color: '#4fc3f7' });
+    for (const id of newSkills) ev.push({ t: 'msg', text: `Có thể học kỹ năng mới: ${G.SKILLS[id].name} (phím K).`, color: '#4fc3f7' });
   }
   if (p.level >= G.MAX_LEVEL) p.exp = 0;
 }
@@ -152,8 +154,7 @@ const lastKill = new Map(); // userId -> {t, boss:{monster:time}}
 const lastPotion = new Map();
 
 function onCurrentMapNpc(p, npc) {
-  const m = G.MAPS[p.map];
-  return Object.values(m.npcs).includes(npc);
+  return G.npcHere(p, p.map, npc);
 }
 
 const actions = {
@@ -172,6 +173,7 @@ const actions = {
     const portal = m.portals[a.portal];
     if (!portal) fail('Không có cổng này.');
     const target = G.MAPS[portal.to];
+    if (portal.require && !G.questDone(p, portal.require)) fail('Lối ra chưa mở. Hoàn thành nhiệm vụ của Hệ thống trước.');
     if (target.require && !G.questDone(p, target.require)) {
       const q = G.QUESTS.find(x => x.id === target.require);
       fail(`Chưa thể vào ${target.name}. Cần hoàn thành nhiệm vụ "${q.name}".`);
@@ -184,16 +186,29 @@ const actions = {
   },
 
   kill(p, a, ev, userId) {
-    const m = G.MAPS[p.map];
-    const mon = G.MONSTERS[a.monster];
-    if (!mon || !Object.values(m.spawns).includes(a.monster)) fail('Quái không có ở bản đồ này.');
+    actions.kills(p, { list: [a] }, ev, userId);
+  },
+
+  // Hạ nhiều quái cùng lúc (đánh lan) gửi gộp một lần cho nhanh
+  kills(p, a, ev, userId) {
+    const list = Array.isArray(a.list) ? a.list.slice(0, 15) : [];
+    if (!list.length) fail('Không có quái.');
     const now = Date.now();
     const lk = lastKill.get(userId) || { t: 0, boss: {} };
-    if (now - lk.t < 120) fail('Quá nhanh.');
-    if (mon.boss && lk.boss[a.monster] && now - lk.boss[a.monster] < mon.respawn * 900) fail('Trùm chưa hồi sinh.');
+    if (now - lk.t < 90) fail('Quá nhanh.');
     lk.t = now;
-    if (mon.boss) lk.boss[a.monster] = now;
     lastKill.set(userId, lk);
+    for (const k of list) killOne(p, k, ev, lk, now);
+  },
+};
+
+function killOne(p, a, ev, lk, now) {
+  {
+    const m = G.MAPS[p.map];
+    const mon = G.MONSTERS[a.monster];
+    if (!mon || !Object.values(m.spawns).includes(a.monster)) return;
+    if (mon.boss && lk.boss[a.monster] && now - lk.boss[a.monster] < mon.respawn * 900) return;
+    if (mon.boss) lk.boss[a.monster] = now;
 
     p.kills[a.monster] = (p.kills[a.monster] || 0) + 1;
     // Quái thấp hơn mình 5 cấp trở lên cho ít kinh nghiệm
@@ -239,10 +254,23 @@ const actions = {
         }
       }
     }
+    ensureDaily(p);
+    for (const d of p.daily.list) {
+      if (d.claimed || d.type === 'collect' || d.target !== a.monster || d.have >= d.need) continue;
+      d.have++;
+      if (d.have === d.need) ev.push({ t: 'msg', text: `Nhiệm vụ ngày xong: hạ ${d.need} ${mon.name}. Về Bảng nhiệm vụ nhận thưởng.`, color: '#ffd54f' });
+    }
+    const col = p.daily.list.find(d => d.type === 'collect' && !d.claimed);
+    if (col && !mon.passive && p.map !== 'lang' && p.map !== 'cong_do') {
+      const onGround = (p.loot || []).filter(l => l.inst.id === col.target).length;
+      if (countItem(p, col.target) + onGround < col.need && Math.random() < 0.35) dropLoot(p, { id: col.target, qty: 1, plus: 0 }, spot(), y, ev);
+    }
     if (mon.boss) ev.push({ t: 'msg', text: `Bạn đã hạ ${mon.name}!`, color: '#ffab40' });
     if (questComplete(p)) ev.push({ t: 'msg', text: 'Nhiệm vụ đã hoàn thành, quay về gặp Hội trưởng Khải.', color: '#ffd54f' });
-  },
+  }
+}
 
+Object.assign(actions, {
   talk(p, a, ev) {
     if (!onCurrentMapNpc(p, a.npc)) fail('NPC không ở đây.');
     const q = currentQuest(p);
@@ -288,6 +316,10 @@ const actions = {
     ev.push({ t: 'msg', text: `Hoàn thành nhiệm vụ: ${q.name}`, color: '#ffd54f' });
     gainExp(p, r.exp, ev);
     gainGold(p, r.gold, ev);
+    if (r.skillPoints) {
+      p.skillPoints += r.skillPoints;
+      ev.push({ t: 'msg', text: `[Hệ thống] Nhận ${r.skillPoints} điểm kỹ năng.`, color: '#4fc3f7' });
+    }
     for (const [id, n] of items) giveItem(p, id, n, ev);
   },
 
@@ -295,13 +327,10 @@ const actions = {
     if (p.school) fail('Bạn đã thức tỉnh class rồi.');
     if (p.level < 5) fail('Cần đạt cấp 5.');
     if (!questActive(p, 'q6')) fail('Hãy nhận nhiệm vụ "Thức tỉnh lần hai" từ Hội trưởng Khải.');
-    if (!G.SCHOOLS[a.school]) fail('Class không hợp lệ.');
-    p.school = a.school;
-    const skills = G.availableSkills(p);
-    p.skillSlots = a.school === 'toan_nang' ? ['pa1', 'hl1', 'tn1'] : skills.slice(0, 3);
-    const st = G.calcStats(p);
-    p.hp = st.maxHp; p.mp = st.maxMp;
-    ev.push({ t: 'msg', text: `Thức tỉnh class ${G.SCHOOLS[a.school].name} thành công!`, color: '#ffd54f' });
+    const sc = G.SCHOOLS[a.school];
+    if (!sc) fail('Class không hợp lệ.');
+    if (sc.special && !p.unlocks[a.school]) fail('Class này chỉ thức tỉnh được bằng mật mã.');
+    setSchool(p, a.school, ev);
   },
 
   buy(p, a, ev) {
@@ -360,6 +389,13 @@ const actions = {
     const e = p.bag.find(x => x.id === a.item);
     if (!e) fail('Hết ' + (G.ITEMS[a.item]?.name || 'vật phẩm') + '.');
     const def = G.ITEMS[e.id];
+    if (def.kind === 'book') {
+      e.qty--;
+      if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+      p.skillPoints += 1;
+      ev.push({ t: 'msg', text: '[Hệ thống] Đọc Sách kỹ năng: +1 điểm kỹ năng.', color: '#4fc3f7' });
+      return;
+    }
     if (def.kind !== 'potion') fail('Không dùng được.');
     if ((def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level}.`);
     const now = Date.now();
@@ -458,15 +494,123 @@ const actions = {
   },
 
   set_skill(p, a) {
-    if (p.school !== 'toan_nang') fail('Chỉ Toàn Năng mới tự chọn kỹ năng.');
     const slot = Number(a.slot);
-    if (![0, 1, 2].includes(slot)) fail('Ô kỹ năng không hợp lệ.');
+    if (!Number.isInteger(slot) || slot < 0 || slot >= G.SKILL_SLOTS) fail('Ô kỹ năng không hợp lệ.');
+    if (slot === G.EXTRA_SLOT && p.school !== 'toan_nang') fail('Ô này chỉ dành cho Toàn Năng.');
+    if (!a.skill) { p.skillSlots[slot] = null; return; }
     const sk = G.SKILLS[a.skill];
-    if (!sk) fail('Kỹ năng không tồn tại.');
-    if (sk.level > p.level) fail(`Cần cấp ${sk.level}.`);
+    if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
+    if (!G.skillLevel(p, a.skill)) fail('Hãy học kỹ năng này trước.');
+    if (sk.ult && slot !== G.ULT_SLOT) fail('Tuyệt kỹ chỉ đặt được ở ô tuyệt kỹ.');
+    if (!sk.ult && slot === G.ULT_SLOT) fail('Ô tuyệt kỹ chỉ dành cho tuyệt kỹ.');
     const other = p.skillSlots.indexOf(a.skill);
-    if (other >= 0) p.skillSlots[other] = p.skillSlots[slot];
+    if (other >= 0) p.skillSlots[other] = null;
     p.skillSlots[slot] = a.skill;
+  },
+
+  daily_claim(p, a, ev) {
+    if (!onCurrentMapNpc(p, 'bang_nv')) fail('Hãy đến Bảng nhiệm vụ của Hiệp Hội.');
+    ensureDaily(p);
+    const d = p.daily.list[Number(a.i)];
+    if (!d) fail('Không có nhiệm vụ này.');
+    if (d.claimed) fail('Đã nhận thưởng rồi.');
+    if (!dailyDone(p, d)) fail('Nhiệm vụ chưa xong.');
+    if (bagFree(p) < 1 && !p.bag.some(e => e.id === 'da_cuong_hoa')) fail('Túi đã đầy.');
+    if (d.type === 'collect') removeItem(p, d.target, d.need);
+    d.claimed = true;
+    const r = G.dailyReward(p.level);
+    const mul = d.type === 'boss' ? 2 : 1;
+    ev.push({ t: 'msg', text: 'Hoàn thành nhiệm vụ ngày.', color: '#ffd54f' });
+    gainExp(p, r.exp * mul, ev);
+    gainGold(p, r.gold * mul, ev);
+    giveItem(p, 'da_cuong_hoa', r.stones * mul, ev);
+  },
+
+  daily_bonus(p, a, ev) {
+    if (!onCurrentMapNpc(p, 'bang_nv')) fail('Hãy đến Bảng nhiệm vụ của Hiệp Hội.');
+    ensureDaily(p);
+    if (!p.daily.list.length || !p.daily.list.every(d => d.claimed)) fail('Hãy hoàn thành cả 3 nhiệm vụ ngày.');
+    if (p.daily.bonus) fail('Hôm nay bạn đã nhận thưởng thêm rồi.');
+    const b = G.DAILY_BONUS;
+    const need = 1 + b.items.length;
+    if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô.`);
+    p.daily.bonus = true;
+    ev.push({ t: 'msg', text: '[Hệ thống] Hoàn thành toàn bộ nhiệm vụ ngày!', color: '#ffd54f' });
+    giveItem(p, 'da_cuong_hoa', b.stones, ev);
+    for (const [id, n] of b.items) giveItem(p, id, n, ev);
+  },
+
+  // Học hoặc nâng cấp kỹ năng bằng điểm kỹ năng
+  learn_skill(p, a, ev) {
+    const sk = G.SKILLS[a.skill];
+    if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
+    if (sk.level > p.level) fail(`Cần đạt cấp ${sk.level}.`);
+    const lv = G.skillLevel(p, a.skill);
+    if (lv >= G.SKILL_MAX) fail('Kỹ năng đã đạt cấp tối đa.');
+    if (p.skillPoints < 1) fail('Không còn điểm kỹ năng.');
+    p.skillPoints -= 1;
+    p.skills[a.skill] = lv + 1;
+    if (lv === 0) {
+      // Học lần đầu thì tự đặt vào ô trống
+      const slots = sk.ult ? [G.ULT_SLOT] : [0, 1, 2, 3].concat(p.school === 'toan_nang' ? [G.EXTRA_SLOT] : []);
+      const free = slots.find(i => !p.skillSlots[i]);
+      if (free !== undefined) p.skillSlots[free] = a.skill;
+      ev.push({ t: 'msg', text: `Đã học ${sk.name}.`, color: '#4fc3f7' });
+    } else {
+      const milestone = (lv + 1 === 5 && sk.t5) || (lv + 1 === 10 && sk.t10);
+      ev.push({ t: 'msg', text: `${sk.name} lên cấp ${lv + 1}.${milestone ? ' Mở hiệu ứng: ' + milestone : ''}`, color: '#4fc3f7' });
+    }
+  },
+
+  // Tẩy điểm kỹ năng ở Hội trưởng
+  reset_skills(p, a, ev) {
+    if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải.');
+    const spent = Object.values(p.skills).reduce((x, y) => x + y, 0);
+    if (!spent) fail('Bạn chưa cộng điểm kỹ năng nào.');
+    const cost = resetCost(p);
+    if (p.gold < cost) fail('Không đủ xu.');
+    p.gold -= cost;
+    p.skillPoints += spent;
+    p.skills = {};
+    p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+    ev.push({ t: 'msg', text: `Đã tẩy điểm kỹ năng, nhận lại ${spent} điểm (-${fmt(cost)} xu).`, color: '#ffd54f' });
+  },
+
+  // Nhập mật mã ở Lữ khách bí ẩn
+  redeem(p, a, ev, userId) {
+    if (!onCurrentMapNpc(p, 'lu_khach')) fail('Hãy đến gặp Lữ khách bí ẩn.');
+    const now = Date.now();
+    const tr = redeemTries.get(userId) || { start: now, n: 0 };
+    if (now - tr.start > 10 * 60 * 1000) { tr.start = now; tr.n = 0; }
+    if (tr.n >= 8) fail('Sai quá nhiều lần, thử lại sau 10 phút.');
+    const c = codes.find(a.code);
+    if (!c) { tr.n++; redeemTries.set(userId, tr); fail('Mật mã không đúng.'); }
+    const key = codes.normalize(c.code);
+    if (p.redeemed.includes(key)) fail('Bạn đã dùng mật mã này rồi.');
+    const r = c.rewards || {};
+    const items = Array.isArray(r.items) ? r.items.filter(([id]) => G.ITEMS[id]) : [];
+    const need = items.reduce((s2, [id, n]) => s2 + slotsNeeded(p, id, n), 0);
+    if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô.`);
+    p.redeemed.push(key);
+    ev.push({ t: 'msg', text: '[Hệ thống] Mật mã hợp lệ.', color: '#ffd54f' });
+    if (r.unlockClass && G.SCHOOLS[r.unlockClass]) {
+      p.unlocks[r.unlockClass] = true;
+      ev.push({ t: 'unlock', school: r.unlockClass });
+      ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa class đặc biệt: ${G.SCHOOLS[r.unlockClass].name}.`, color: '#ffc94a' });
+    }
+    if (r.gold) gainGold(p, Math.max(0, Math.floor(r.gold)), ev);
+    if (r.skillPoints) p.skillPoints += Math.max(0, Math.floor(r.skillPoints));
+    for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
+  },
+
+  // Thức tỉnh class đặc biệt ở Lữ khách bí ẩn (đổi được cả khi đã có class khác)
+  awaken_special(p, a, ev) {
+    if (!onCurrentMapNpc(p, 'lu_khach')) fail('Hãy đến gặp Lữ khách bí ẩn.');
+    const sc = G.SCHOOLS[a.school];
+    if (!sc || !sc.special || !p.unlocks[a.school]) fail('Bạn chưa mở khóa class này.');
+    if (p.school === a.school) fail('Bạn đã là ' + sc.name + ' rồi.');
+    if (p.level < 5) fail('Cần đạt cấp 5.');
+    setSchool(p, a.school, ev);
   },
 
   store(p, a) {
@@ -504,7 +648,49 @@ const actions = {
     ev.push({ t: 'msg', text: `Bạn đã bị đánh bại, mất ${fmt(lose)} kinh nghiệm. Hồi sinh ở làng.`, color: '#ef5350' });
     ev.push({ t: 'map', map: p.map });
   },
-};
+});
+
+// Đặt class: trả lại toàn bộ điểm kỹ năng đã cộng, xóa ô kỹ năng
+function setSchool(p, school, ev) {
+  const spent = Object.values(p.skills || {}).reduce((x, y) => x + y, 0);
+  p.skillPoints += spent;
+  p.skills = {};
+  p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+  p.school = school;
+  const st = G.calcStats(p);
+  p.hp = st.maxHp; p.mp = st.maxMp;
+  ev.push({ t: 'msg', text: `[Hệ thống] Thức tỉnh class ${G.SCHOOLS[school].name} thành công! Mở bảng Kỹ năng để học kỹ năng.`, color: '#ffd54f' });
+  ev.push({ t: 'school', school });
+}
+
+function resetCost(p) { return 100 * p.level; }
+
+// Tạo 3 nhiệm vụ ngày theo các cổng người chơi đã vào được
+function ensureDaily(p) {
+  const today = G.dailyDate();
+  if (p.daily && p.daily.date === today) return;
+  const maps = ['rung', 'hang'].filter(id => { const req = G.MAPS[id].require; return !req || G.questDone(p, req); });
+  const list = [];
+  if (maps.length) {
+    const mons = [...new Set(maps.flatMap(id => Object.values(G.MAPS[id].spawns)))]
+      .filter(id => !G.MONSTERS[id].boss && !G.MONSTERS[id].passive)
+      .sort((a, b) => Math.abs(G.MONSTERS[a].level - p.level) - Math.abs(G.MONSTERS[b].level - p.level));
+    const pick = mons.slice(0, 3).sort(() => Math.random() - 0.5);
+    list.push({ type: 'kill', target: pick[0], need: 15 + Math.floor(Math.random() * 3) * 5, have: 0, claimed: false });
+    list.push({ type: 'collect', target: 'loi_nang_luong', need: 6 + Math.floor(Math.random() * 3) * 2, have: 0, claimed: false });
+    if (maps.includes('hang') && p.level >= 10) list.push({ type: 'boss', target: 'thach_quy', need: 1, have: 0, claimed: false });
+    else list.push({ type: 'kill', target: pick[1] || pick[0], need: 20 + Math.floor(Math.random() * 3) * 5, have: 0, claimed: false });
+  }
+  p.daily = { date: today, list, bonus: false };
+}
+
+function dailyDone(p, d) {
+  if (d.type === 'collect') return countItem(p, d.target) >= d.need;
+  return d.have >= d.need;
+}
+
+const redeemTries = new Map();
+
 
 function reforgeCost(inst) {
   const def = G.ITEMS[inst.id];
@@ -524,6 +710,7 @@ function clampHpMp(p) {
 function handle(userId, player, action) {
   const fn = actions[action && action.type];
   if (!fn) fail('Hành động không hợp lệ.');
+  ensureDaily(player);
   const ev = [];
   fn(player, action, ev, userId);
   return ev;
@@ -531,6 +718,7 @@ function handle(userId, player, action) {
 
 // Sửa dữ liệu cũ khi game thêm trường mới
 function migrate(p) {
+  const legacySkills = p.skills === undefined;
   const base = G.newPlayer(p.name);
   for (const k in base) if (p[k] === undefined) p[k] = base[k];
   // Đổi tên từ phiên bản ninja cũ
@@ -550,8 +738,35 @@ function migrate(p) {
   p.storage.forEach(G.normalizeInst);
   if (!G.MAPS[p.map]) { p.map = G.START_MAP; p.x = null; p.y = null; }
   if (!Array.isArray(p.loot)) p.loot = [];
+  if (!p.unlocks || typeof p.unlocks !== 'object') p.unlocks = {};
+  if (!p.quest.ver) {
+    const oldId = G.OLD_QUEST_ORDER[p.quest.step];
+    const newId = oldId ? (G.OLD_QUEST_MAP[oldId] || oldId) : 'q10';
+    const idx = G.QUESTS.findIndex(q => q.id === newId);
+    if (!oldId) { p.quest.state = 'none'; p.quest.progress = {}; }
+    p.quest.step = idx >= 0 ? idx : G.QUESTS.length;
+    p.quest.ver = G.QUEST_VERSION;
+  }
+  ensureDaily(p);
+  if (!Array.isArray(p.redeemed)) p.redeemed = [];
+  // Hệ thống điểm kỹ năng: người chơi cũ được trả điểm theo cấp, kỹ năng đang dùng được học sẵn cấp 1
+  if (legacySkills || !p.skills || typeof p.skills !== 'object' || Array.isArray(p.skills)) {
+    p.skills = {};
+    p.skillPoints = Math.max(0, p.level - 1);
+    const old = Array.isArray(p.skillSlots) ? p.skillSlots : [];
+    p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+    old.slice(0, 4).forEach((id, i) => {
+      const sk = G.SKILLS[id];
+      if (sk && !sk.ult && sk.level <= p.level && G.availableSkills(p).includes(id) && p.skillPoints > 0) {
+        p.skills[id] = 1; p.skillPoints--; p.skillSlots[i] = id;
+      }
+    });
+  }
+  if (!Number.isFinite(p.skillPoints)) p.skillPoints = 0;
+  while (p.skillSlots.length < G.SKILL_SLOTS) p.skillSlots.push(null);
+  p.skillSlots = p.skillSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] ? id : null));
   pruneLoot(p);
   return p;
 }
 
-module.exports = { handle, migrate, GameError, questComplete, currentQuest, reforgeCost, salvageStones };
+module.exports = { handle, migrate, GameError, questComplete, currentQuest, reforgeCost, salvageStones, resetCost };

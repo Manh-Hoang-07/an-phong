@@ -6,12 +6,14 @@ const UI = (() => {
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = (n) => Number(Math.floor(n)).toLocaleString('vi-VN');
 
-  const SKILL_ICONS = { pa1: '💨', pa2: '⚔️', pa3: '👥', hl1: '🔥', hl2: '✴️', hl3: '💥', tn1: '🌊', tn2: '🌙', tn3: '❄️' };
+  const skIcon = (id) => (G.SKILLS[id] && G.SKILLS[id].icon) || '✨';
+  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ']];
+  let lastMenuTab = 'bag';
   const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿' };
   const WEAPON_ICONS = { kiem: '🗡️', cung: '🏹', truong: '🪄' };
   const statText = (k, v) => `${G.statLabel(k)} +${v}${G.statUnit(k)}`;
   const qOf = (e) => (G.ITEMS[e.id] && G.ITEMS[e.id].slot ? (e.q || 1) : 1);
-  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', thu_kho: '📦' };
+  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋' };
 
   // Trên điện thoại, đổi lời nhắc phím bấm thành nút tương ứng
   const isTouch = () => document.body.classList.contains('touch');
@@ -19,10 +21,10 @@ const UI = (() => {
     if (!isTouch()) return s;
     return String(s)
       .replace(/\(Phím J để đánh[^)]*\)/, '(Kéo cần điều khiển bên trái để di chuyển, kéo lên hoặc bấm ⤒ để nhảy, bấm ⚔ để đánh.)')
-      .replace(/phím I\b/g, 'nút 🎒')
+      .replace(/phím I\b/g, 'nút ☰')
       .replace(/phím Q\b/g, 'nút 🧪')
-      .replace(/phím K\b/g, 'nút ✨')
-      .replace(/phím C\b/g, 'nút 🥋');
+      .replace(/phím K\b/g, 'nút ☰ → Kỹ năng')
+      .replace(/phím C\b/g, 'nút ☰ → Nhân vật');
   }
 
   function itemIcon(id) {
@@ -35,6 +37,9 @@ const UI = (() => {
     if (id === 'da_cuong_hoa') return '💎';
     if (id === 'manh_vai_den') return '🏴';
     if (id.startsWith('manh_an')) return '🔷';
+    if (id === 'sach_ky_nang') return '📘';
+    if (id === 'tinh_the_xanh') return '💠';
+    if (id === 'loi_nang_luong') return '🔶';
     return '📦';
   }
 
@@ -60,8 +65,11 @@ const UI = (() => {
     $('h-exp').style.width = ep + '%';
     $('h-exp-t').textContent = p.level >= G.MAX_LEVEL ? 'Cấp tối đa' : `${ep.toFixed(1)}%`;
     const badge = $('h-points');
-    badge.textContent = p.freePoints;
-    badge.classList.toggle('hidden', !p.freePoints);
+    const pts = (p.freePoints || 0) + (p.skillPoints || 0);
+    badge.textContent = pts;
+    badge.classList.toggle('hidden', !pts);
+    const tn = p.school === 'toan_nang';
+    document.querySelectorAll('.sk-extra, .tb-s4').forEach(el => el.classList.toggle('hidden', !tn));
 
     // thanh kỹ năng
     document.querySelectorAll('#skillbar .sk').forEach(el => {
@@ -70,21 +78,21 @@ const UI = (() => {
       const id = p.skillSlots[Number(k)];
       const ico = el.querySelector('.ico');
       if (id) {
-        const sk = G.SKILLS[id];
-        ico.innerHTML = `${SKILL_ICONS[id]}<small>${esc(sk.name.split(' ')[0])}</small>`;
-        el.title = `${sk.name} (${Math.round(sk.mp * st.costMul)} năng lượng)`;
-        el.classList.toggle('empty', sk.level > p.level);
-      } else { ico.innerHTML = '·'; el.title = 'Trống'; el.classList.add('empty'); }
+        const sk = G.skillAt(id, G.skillLevel(p, id));
+        ico.innerHTML = `${skIcon(id)}<small>${esc(sk.name.split(' ')[0])}</small>`;
+        el.title = `${sk.name} cấp ${sk.lv} (${Math.round(sk.mp * st.costMul)} năng lượng)`;
+        el.classList.remove('empty');
+      } else { ico.innerHTML = Number(k) === G.ULT_SLOT ? '★' : '·'; el.title = 'Trống'; el.classList.add('empty'); }
     });
     // nút kỹ năng cảm ứng
-    for (let i = 0; i < 3; i++) {
-      const el = document.querySelector(`#touch .tb-s${i}`);
+    for (const [cls, i] of [['tb-s0', 0], ['tb-s1', 1], ['tb-s2', 2], ['tb-s3', 3], ['tb-s4', 4], ['tb-ult', G.ULT_SLOT]]) {
+      const el = document.querySelector(`#touch .${cls}`);
       const id = p.skillSlots[i];
       const ico = el.querySelector('.ico');
       if (id) {
-        ico.innerHTML = `${SKILL_ICONS[id]}<small>${esc(G.SKILLS[id].name.split(' ').pop())}</small>`;
-        el.classList.toggle('empty', G.SKILLS[id].level > p.level);
-      } else { ico.textContent = i + 1; el.classList.add('empty'); }
+        ico.innerHTML = `${skIcon(id)}<small>${esc(G.SKILLS[id].name.split(' ').pop())}</small>`;
+        el.classList.remove('empty');
+      } else { ico.textContent = i === G.ULT_SLOT ? '★' : i + 1; el.classList.add('empty'); }
     }
     const cnt = (ids) => p.bag.filter(e => ids.includes(e.id)).reduce((s, e) => s + e.qty, 0);
     $('pot-hp').textContent = $('tpot-hp').textContent = cnt(['binh_mau_nho', 'binh_mau_vua']);
@@ -104,12 +112,15 @@ const UI = (() => {
     $('h-mp').style.width = Math.max(0, App.mp / st.maxMp * 100) + '%';
     $('h-mp-t').textContent = `${fmt(App.mp)} / ${fmt(st.maxMp)}`;
     const len = scene.cooldownLen || {};
-    for (let i = 0; i < 3; i++) {
-      const left = scene.cooldowns['s' + i] - time;
-      const h = left > 0 ? (left / (len['s' + i] || 1) * 100) + '%' : '0';
-      const id = App.player.skillSlots[i];
-      const noMp = !!id && App.mp < Math.round(G.SKILLS[id].mp * st.costMul);
-      for (const el of [document.querySelector(`#skillbar .sk[data-k="${i}"]`), document.querySelector(`#touch .tb-s${i}`)]) {
+    const p = App.player;
+    for (let i = 0; i < G.SKILL_SLOTS; i++) {
+      const id = p.skillSlots[i];
+      const left = id ? (scene.cooldowns[id] || 0) - time : 0;
+      const h = left > 0 ? (left / (len[id] || 1) * 100) + '%' : '0';
+      const noMp = !!id && App.mp < Math.round(G.skillAt(id, G.skillLevel(p, id)).mp * st.costMul);
+      const touchCls = i === G.ULT_SLOT ? 'tb-ult' : 'tb-s' + i;
+      for (const el of [document.querySelector(`#skillbar .sk[data-k="${i}"]`), document.querySelector(`#touch .${touchCls}`)]) {
+        if (!el) continue;
         el.querySelector('.cd').style.height = h;
         el.classList.toggle('nomp', noMp);
       }
@@ -171,16 +182,62 @@ const UI = (() => {
     const p = App.player;
     const q = G.QUESTS[p.quest.step];
     const el = $('quest-track');
-    if (!q) { el.innerHTML = '<b>Cốt truyện</b>Đã hoàn thành chương 3.'; return; }
-    if (p.quest.state === 'none') { el.innerHTML = `<b>${esc(q.name)}</b>Gặp ${esc(G.NPCS[q.npc].name)} để nhận nhiệm vụ.`; return; }
+    if (!q) { el.innerHTML = '<b>Cốt truyện</b>Đã hoàn thành chương 1.' + dailyTrack(); return; }
+    if (p.quest.state === 'none') { el.innerHTML = `<b>${esc(q.name)}</b>Gặp ${esc(G.NPCS[q.npc].name)} để nhận nhiệm vụ.` + dailyTrack(); return; }
     const lines = questLines(p);
     el.innerHTML = `<b>${esc(q.name)}</b>` + lines.map(([t, ok]) => `<div class="${ok ? 'done' : ''}">${ok ? '✓' : '•'} ${esc(t)}</div>`).join('') +
-      (questReady() ? `<div class="done">→ Quay về gặp ${esc(G.NPCS[q.npc].name)}</div>` : '');
+      (questReady() ? `<div class="done">→ Gặp ${esc(G.NPCS[q.npc].name)} để trả nhiệm vụ</div>` : '') + dailyTrack();
+  }
+
+  // ------------------------------------------------------------ Nhiệm vụ hằng ngày
+  function dailyLines(p) {
+    const d = p.daily;
+    if (!d || !d.list || !d.list.length) return [];
+    return d.list.map((x, i) => {
+      const mon = G.MONSTERS[x.target], it = G.ITEMS[x.target];
+      const have = x.type === 'collect' ? Math.min(x.need, p.bag.filter(e => e.id === x.target).reduce((a, e) => a + e.qty, 0)) : Math.min(x.have, x.need);
+      const text = x.type === 'kill' ? `Hạ ${x.need} ${mon.name}` : x.type === 'boss' ? `Hạ trùm ${mon.name}` : `Thu thập ${x.need} ${it.name}`;
+      return { i, x, have, done: have >= x.need, text, icon: x.type === 'boss' ? '👑' : x.type === 'collect' ? '🔶' : '⚔️' };
+    });
+  }
+  function dailyTrack() {
+    const lines = dailyLines(App.player).filter(l => !l.x.claimed);
+    if (!lines.length) return '';
+    return '<div class="daily-track">' + lines.map(l => `<div class="${l.done ? 'done' : ''}">${l.icon} ${esc(l.text)} ${l.have}/${l.x.need}</div>`).join('') + '</div>';
+  }
+  function resetIn() {
+    const now = Date.now(), vn = now + 7 * 3600 * 1000;
+    const left = 86400000 - (vn % 86400000);
+    const h = Math.floor(left / 3600000), m = Math.floor((left % 3600000) / 60000);
+    return `${h} giờ ${m} phút`;
+  }
+  function panelDaily() {
+    const p = App.player;
+    const lines = dailyLines(p);
+    if (!lines.length) return ['Bảng nhiệm vụ', '<p>Chưa có nhiệm vụ cho bạn. Hãy hoàn thành nhiệm vụ <b>Cổng đỏ</b> của Hội trưởng Khải để được vào cổng.</p>'];
+    const r = G.dailyReward(p.level);
+    let html = `<p class="muted" style="margin-top:0">Mỗi ngày 3 nhiệm vụ mới. Làm mới sau <b>${resetIn()}</b>.</p><div class="list">`;
+    for (const l of lines) {
+      const mul = l.x.type === 'boss' ? 2 : 1;
+      const btn = l.x.claimed ? '<span class="okc">✓ Đã nhận</span>'
+        : `<button class="btn small ${l.done ? 'primary' : ''}" data-act="daily_claim" data-i="${l.i}" ${l.done ? '' : 'disabled'}>Nhận thưởng</button>`;
+      html += `<div class="li"><div class="ic">${l.icon}</div><div class="main"><b>${esc(l.text)}</b>
+        <small>Tiến độ: <b class="${l.done ? 'okc' : ''}">${l.have}/${l.x.need}</b>${l.x.type === 'collect' ? ' · rơi từ quái trong cổng' : ''}</small>
+        <small class="gold">Thưởng: ${fmt(r.exp * mul)} kinh nghiệm, ${fmt(r.gold * mul)} xu, ${r.stones * mul} đá cường hóa</small></div>${btn}</div>`;
+    }
+    html += '</div>';
+    const all = lines.every(l => l.x.claimed);
+    const b = G.DAILY_BONUS;
+    html += `<div class="detail" style="margin-top:10px"><b>🎁 Thưởng hoàn thành cả 3:</b> ${b.stones} đá cường hóa${b.items.map(([id, n]) => ', ' + G.ITEMS[id].name + (n > 1 ? ' ×' + n : '')).join('')}
+      <div class="row" style="margin-top:8px">${p.daily.bonus ? '<span class="okc">✓ Đã nhận hôm nay</span>'
+        : `<button class="btn ${all ? 'primary' : ''}" data-act="daily_bonus" ${all ? '' : 'disabled'}>Nhận thưởng thêm</button>`}</div></div>`;
+    return ['Bảng nhiệm vụ', html];
   }
 
   // ------------------------------------------------------------ Bảng
   function openPanel(name, ctx = {}) {
     if (panel && panel.name === name && !ctx.force) { closePanel(); return; }
+    if (MENU_TABS.some(([k]) => k === name)) lastMenuTab = name;
     panel = { name, ctx };
     if (!ctx.keepSel) selected = null;
     App.panelOpen = true;
@@ -200,11 +257,22 @@ const UI = (() => {
   function renderPanel() {
     if (!panel) return;
     const fns = { bag: panelBag, char: panelChar, skills: panelSkills, quest: panelQuest, npc: panelNpc,
-      shop: panelShop, smith: panelSmith, storage: panelStorage, school: panelSchool, story: panelStory };
-    const [title, html] = fns[panel.name](panel.ctx);
+      shop: panelShop, smith: panelSmith, storage: panelStorage, school: panelSchool, story: panelStory, code: panelCode, daily: panelDaily };
+    const [title, html0] = fns[panel.name](panel.ctx);
+    let html = html0;
+    if (MENU_TABS.some(([k]) => k === panel.name)) {
+      const p = App.player;
+      const count = { char: p.freePoints || 0, skills: p.skillPoints || 0 };
+      html = '<div class="tabs">' + MENU_TABS.map(([k, n]) =>
+        `<button class="btn tab ${panel.name === k ? 'active' : ''}" data-act="tab" data-tab="${k}">${n}${count[k] ? ` <b class="tabcount">${count[k]}</b>` : ''}</button>`).join('') + '</div>' + html;
+    }
+    // Bảng có nhiều tab (menu, thợ rèn) giữ cố định kích cỡ, chuyển tab không bị co giãn
+    const fixed = MENU_TABS.some(([k]) => k === panel.name) || panel.name === 'smith';
+    document.querySelector('.panel-box').classList.toggle('fixed', fixed);
     $('panel-title').textContent = title;
     const body = $('panel-body');
-    const scroll = body.scrollTop;
+    const scroll = panel.lastName === panel.name ? body.scrollTop : 0;
+    panel.lastName = panel.name;
     body.innerHTML = html;
     body.scrollTop = scroll;
   }
@@ -230,6 +298,8 @@ const UI = (() => {
     const tags = [];
     if (d.slot) tags.push(`<span class="q${q}">${G.QUALITY_NAMES[q]}</span>`, G.SLOT_NAMES[d.slot]);
     if (d.level) tags.push(`<span class="${d.level > p.level ? 'bad' : ''}">Cấp ${d.level}</span>`);
+    const set = G.setOfItem(d);
+    if (set) tags.push(`<span class="muted">Bộ ${set.name} (cấp ${set.min}–${set.max})</span>`);
     if (d.school) tags.push(`<span class="${G.canUseItem({ ...p, level: 99 }, d) ? '' : 'bad'}">${G.SCHOOLS[d.school].name}</span>`);
     if (tags.length) h += `<div class="muted">${tags.join(' · ')}</div>`;
     if (d.slot) {
@@ -310,6 +380,7 @@ const UI = (() => {
       ['Class', p.school ? G.SCHOOLS[p.school].name : '—'],
       ['Máu', fmt(st.maxHp)], ['Năng lượng', fmt(st.maxMp)], ['Tấn công', fmt(st.atk)], ['Phòng thủ', fmt(st.def)],
       ['Chí mạng', st.crit + '%'], ['Sức mạnh kỹ năng', Math.round(st.skillMul * 100) + '%'], ['Tốc độ chạy', Math.round(st.speed)],
+      ['Điểm kỹ năng', p.skillPoints || 0],
       ['Đã hạ quái', fmt(Object.values(p.kills).reduce((a, b) => a + b, 0))],
     ];
     const pts = [
@@ -322,31 +393,101 @@ const UI = (() => {
         <button class="btn small" data-act="add_stat" data-stat="${k}" data-n="1" ${p.freePoints ? '' : 'disabled'}>+1</button>
         <button class="btn small" data-act="add_stat" data-stat="${k}" data-n="5" ${p.freePoints >= 5 ? '' : 'disabled'}>+5</button></div>`).join('') +
       '</div>' + (p.school ? `<p class="muted" style="font-size:12px">${esc(G.SCHOOLS[p.school].desc)}</p>` : '');
-    return ['Nhân vật: ' + p.name, `<div class="cols"><div>${left}</div><div>${right}</div></div>`];
+    const snd = `<div class="row" style="margin-top:12px"><button class="btn" data-act="toggle_sfx">${Sound.settings.sfx ? '🔊 Âm thanh: Bật' : '🔇 Âm thanh: Tắt'}</button><button class="btn" data-act="toggle_music">${Sound.settings.music ? '🎵 Nhạc nền: Bật' : '🎵 Nhạc nền: Tắt'}</button></div>`;
+    const sys = snd + `<div class="row" style="margin-top:8px">${isTouch() ? '<button class="btn" data-act="fullscreen">⛶ Toàn màn hình</button>' : ''}<button class="btn" data-act="logout">⏻ Đăng xuất</button></div>`;
+    return ['Nhân vật: ' + p.name, `<div class="cols"><div>${left}${sys}</div><div>${right}</div></div>`];
   }
 
   // ---------- Kỹ năng
+  // Số liệu chính của kỹ năng ở một cấp, để người chơi thấy nâng cấp tăng gì
+  function skillNumbers(s) {
+    const st = App.stats, out = [];
+    if (s.power) out.push(`${Math.round(s.power * st.skillMul * 100)}% sức mạnh` + (s.hits ? ` × ${s.hits} nhát` : '') + (s.count > 1 ? ` × ${s.count}` : '') + (s.arrows ? ` × ${s.arrows} mũi` : ''));
+    if (s.finisher) out.push(`nhát cuối ${Math.round(s.finisher * st.skillMul * 100)}%`);
+    if (s.after) out.push(`vệt kiếm ${Math.round(s.after * st.skillMul * 100)}%`);
+    if (s.heal) out.push(`hồi ${Math.round(s.heal * st.skillMul * 100)}% máu`);
+    if (s.mpHeal) out.push(`+${Math.round(s.mpHeal * 100)}% năng lượng`);
+    if (s.reduce) out.push(`giảm ${Math.round(s.reduce * 100)}% sát thương`);
+    if (s.reflect) out.push(`phản ${Math.round(s.reflect * 100)}%`);
+    if (s.absorb) out.push(`đỡ ${Math.round(s.absorb * 100)}% sát thương`);
+    if (s.atkBuff) out.push(`tấn công +${Math.round(s.atkBuff * st.skillMul * 100)}%`);
+    if (s.critBuff) out.push(`chí mạng +${s.critBuff}%`);
+    if (s.speedBuff) out.push(`tốc đánh +${Math.round(s.speedBuff * 100)}%`);
+    if (s.duration) out.push(`${s.duration} giây`);
+    if (s.slow) out.push(`làm chậm ${s.slow}s`);
+    if (s.freeze) out.push(`đóng băng ${s.freeze}s`);
+    if (s.distance) out.push(`xa ${s.distance}`);
+    if (s.radius) out.push(`bán kính ${s.radius}`);
+    return out.join(' · ');
+  }
+
+  function slotLabel(i) { return i === G.ULT_SLOT ? 'R' : String(i + 1); }
+
   function panelSkills() {
     const p = App.player, st = App.stats;
-    if (!p.school) return ['Kỹ năng', '<p>Bạn chưa có class. Đạt cấp 5 rồi gặp Hội trưởng Khải để chọn class và học kỹ năng.</p>' +
-      '<div class="schools">' + Object.entries(G.SCHOOLS).map(([id, s]) => `<div class="school-card"><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p></div>`).join('') + '</div>'];
-    const vp = p.school === 'toan_nang';
-    const ids = G.availableSkills(p);
-    const slotsInfo = p.skillSlots.map((id, i) => `<b>${i + 1}</b>: ${id ? esc(G.SKILLS[id].name) : '—'}`).join(' &nbsp; ');
-    let html = `<p>Ô kỹ năng: ${slotsInfo}</p>`;
-    if (vp) html += '<p class="muted" style="font-size:12px">Toàn Năng: bấm "Ô 1/2/3" để đặt bất kỳ kỹ năng nào vào thanh kỹ năng. Kỹ năng gây 80% sức mạnh, tốn thêm 20% năng lượng.</p>';
-    html += '<div class="list">';
+    if (!p.school) {
+      return ['Kỹ năng', `<p>Bạn chưa thức tỉnh class. Đạt cấp 5 rồi gặp <b>Hội trưởng Khải</b> để chọn class.</p>
+        <p>Điểm kỹ năng đang có: <b class="gold">${p.skillPoints}</b> (mỗi lần lên cấp được 1 điểm, giữ lại để dùng sau khi thức tỉnh).</p>
+        <div class="schools">` + Object.entries(G.SCHOOLS).filter(([id, s]) => !s.special || p.unlocks[id])
+        .map(([, s]) => `<div class="school-card"><h3>${s.icon} ${esc(s.name)}</h3><p>${esc(s.desc)}</p></div>`).join('') + '</div>'];
+    }
+    const tn = p.school === 'toan_nang';
+    const slots = [0, 1, 2, 3].concat(tn ? [G.EXTRA_SLOT] : []).concat([G.ULT_SLOT]);
+    let html = `<div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <div>Điểm kỹ năng: <b class="gold" style="font-size:16px">${p.skillPoints}</b></div>
+      <div class="muted" style="font-size:12px">Mỗi cấp +1 điểm · Tẩy điểm ở Hội trưởng Khải</div></div>`;
+    // Thanh kỹ năng hiện tại
+    html += '<div class="skill-slots">' + slots.map(i => {
+      const id = p.skillSlots[i];
+      const sk = id && G.SKILLS[id];
+      return `<div class="sslot ${i === G.ULT_SLOT ? 'ult' : ''}"><span class="k">${slotLabel(i)}</span>` +
+        (sk ? `<span class="ic">${sk.icon}</span><small>${esc(sk.name)}</small><button class="x" data-act="clear_slot" data-slot="${i}" title="Gỡ">✕</button>`
+          : `<small class="muted">${i === G.ULT_SLOT ? 'Tuyệt kỹ' : 'Trống'}</small>`) + '</div>';
+    }).join('') + '</div>';
+    // Nội tại
+    const passives = G.passivesOf(p);
+    if (passives.length) {
+      html += '<div class="muted" style="margin:10px 0 4px;font-size:12px">NỘI TẠI</div><div class="list">' + passives.map(k => {
+        const ps = G.PASSIVES[k];
+        return `<div class="li"><div class="ic">${ps.icon}</div><div class="main"><b>${esc(ps.name)}</b><small>${esc(ps.desc)}</small></div></div>`;
+      }).join('') + '</div>';
+    }
+    // Danh sách kỹ năng
+    html += '<div class="muted" style="margin:12px 0 4px;font-size:12px">KỸ NĂNG CHỦ ĐỘNG</div><div class="list">';
     let lastSchool = null;
+    const ids = G.availableSkills(p).sort((a, b) => (G.SKILLS[a].school === G.SKILLS[b].school ? G.SKILLS[a].level - G.SKILLS[b].level : 0));
     for (const id of ids) {
-      const sk = G.SKILLS[id];
-      if (vp && sk.school !== lastSchool) { html += `<div class="muted" style="margin-top:6px">— ${G.SCHOOLS[sk.school].name} —</div>`; lastSchool = sk.school; }
-      const locked = sk.level > p.level;
-      const slotBtns = vp && !locked ? [0, 1, 2].map(i => `<button class="btn small" data-act="set_skill" data-slot="${i}" data-skill="${id}" ${p.skillSlots[i] === id ? 'disabled' : ''}>Ô ${i + 1}</button>`).join(' ') : '';
-      html += `<div class="li ${locked ? 'locked' : ''}"><div class="ic">${SKILL_ICONS[id]}</div><div class="main"><b>${esc(sk.name)}</b>
-        <small>${locked ? `🔒 Cần cấp ${sk.level}` : 'Đã học'} · ${Math.round(sk.mp * st.costMul)} năng lượng · hồi ${sk.cd}s</small><small>${esc(sk.desc)}</small></div>${slotBtns}</div>`;
+      const base = G.SKILLS[id];
+      if (tn && base.school !== lastSchool) {
+        html += `<div class="muted" style="margin-top:6px;font-size:12px">— ${G.SCHOOLS[base.school].icon} ${G.SCHOOLS[base.school].name} —</div>`;
+        lastSchool = base.school;
+      }
+      const lv = G.skillLevel(p, id);
+      const locked = base.level > p.level;
+      const cur = G.skillAt(id, Math.max(1, lv));
+      const next = lv && lv < G.SKILL_MAX ? G.skillAt(id, lv + 1) : null;
+      const canUp = !locked && lv < G.SKILL_MAX && p.skillPoints > 0;
+      const upBtn = lv >= G.SKILL_MAX ? '<span class="gold" style="font-size:12px">TỐI ĐA</span>'
+        : `<button class="btn small ${canUp ? 'primary' : ''}" data-act="learn_skill" data-skill="${id}" ${canUp ? '' : 'disabled'}>${lv ? '+1 cấp' : 'Học'}</button>`;
+      const slotBtns = lv ? (base.ult ? [G.ULT_SLOT] : [0, 1, 2, 3].concat(tn ? [G.EXTRA_SLOT] : []))
+        .map(i => `<button class="btn small slotbtn ${p.skillSlots[i] === id ? 'on' : ''}" data-act="set_skill" data-slot="${i}" data-skill="${id}" ${p.skillSlots[i] === id ? 'disabled' : ''}>${slotLabel(i)}</button>`).join('') : '';
+      const ms = [[5, base.t5], [10, base.t10]].filter(([, t]) => t)
+        .map(([m, t]) => `<span class="${lv >= m ? 'okc' : 'muted'}">${lv >= m ? '✓' : '◇'} Cấp ${m}: ${esc(t)}</span>`).join('<br>');
+      html += `<div class="li skill-li ${locked ? 'locked' : ''} ${base.ult ? 'is-ult' : ''}">
+        <div class="ic">${base.icon}</div>
+        <div class="main">
+          <b>${esc(base.name)}</b> ${base.ult ? '<span class="tag-ult">TUYỆT KỸ</span>' : ''}
+          <span class="lvl">${locked ? `🔒 Mở ở cấp ${base.level}` : lv ? `Cấp ${lv}/${G.SKILL_MAX}` : 'Chưa học'}</span>
+          <small>${esc(base.desc)}</small>
+          <small>${skillNumbers(cur)} · ${Math.round(cur.mp * st.costMul)} năng lượng · hồi ${Math.round(cur.cd * 10) / 10}s</small>
+          ${next ? `<small class="okc">Cấp ${lv + 1}: ${skillNumbers(next)}</small>` : ''}
+          <small>${ms}</small>
+        </div>
+        <div class="skill-act">${upBtn}<div class="row" style="gap:4px;margin-top:6px">${slotBtns}</div></div>
+      </div>`;
     }
     html += '</div>';
-    return ['Kỹ năng: ' + G.SCHOOLS[p.school].name, html];
+    return ['Kỹ năng · ' + G.SCHOOLS[p.school].name, html];
   }
 
   // ---------- Nhiệm vụ
@@ -354,14 +495,19 @@ const UI = (() => {
     const p = App.player;
     const q = G.QUESTS[p.quest.step];
     const doneList = G.QUESTS.slice(0, p.quest.step).map(x => `<div class="okc">✓ ${esc(x.name)}</div>`).join('');
-    if (!q) return ['Nhiệm vụ', `<p>Bạn đã hoàn thành toàn bộ cốt truyện hiện có. Hãy chờ chương tiếp theo!</p>${doneList}`];
+    if (!q) return ['Nhiệm vụ', `<p>Bạn đã hoàn thành chương 1. Hãy chờ chương tiếp theo!</p>${dailyLines(p).map(l => `<div>${l.icon} ${esc(l.text)} ${l.have}/${l.x.need}${l.x.claimed ? ' ✓' : ''}</div>`).join('')}<hr style="border-color:#333">${doneList}`];
     let html = `<h3 class="gold" style="margin:0 0 6px">${esc(q.name)}</h3>`;
-    if (p.quest.state === 'none') html += `<p>Gặp <b>${esc(G.NPCS[q.npc].name)}</b> ở Làng Trúc Khê để nhận nhiệm vụ.</p>`;
+    if (p.quest.state === 'none') html += `<p>Gặp <b>${esc(G.NPCS[q.npc].name)}</b> để nhận nhiệm vụ.</p>`;
     else {
       html += q.start.map(l => `<p class="muted" style="margin:0 0 4px">${esc(keyText(l))}</p>`).join('');
       html += '<div style="margin:10px 0">' + questLines(p).map(([t, ok]) => `<div class="${ok ? 'okc' : ''}">${ok ? '✓' : '•'} ${esc(t)}</div>`).join('') + '</div>';
       const r = q.reward;
       html += `<p>Phần thưởng: ${fmt(r.exp)} kinh nghiệm, ${fmt(r.gold)} xu${r.items.map(([id, n]) => ', ' + G.ITEMS[id].name + (n > 1 ? ' ×' + n : '')).join('')}${r.schoolWeapon ? ', vũ khí class' : ''}</p>`;
+    }
+    const dl = dailyLines(p);
+    if (dl.length) {
+      html += `<hr style="border-color:#333"><div class="muted">Nhiệm vụ hằng ngày (nhận thưởng ở Bảng nhiệm vụ, làm mới sau ${resetIn()}):</div>` +
+        dl.map(l => `<div class="${l.x.claimed || l.done ? 'okc' : ''}">${l.x.claimed ? '✓' : l.icon} ${esc(l.text)} ${l.have}/${l.x.need}${l.x.claimed ? ' (đã nhận)' : ''}</div>`).join('');
     }
     if (doneList) html += `<hr style="border-color:#333"><div class="muted">Đã hoàn thành:</div>${doneList}`;
     return ['Nhiệm vụ', html];
@@ -382,6 +528,17 @@ const UI = (() => {
     if (id === 'lao_su' && !p.school && q && q.id === 'q6' && p.quest.state === 'active') {
       opts.push(`<button class="btn ${p.level >= 5 ? 'primary' : ''}" data-act="open" data-panel="school" ${p.level >= 5 ? '' : 'disabled'}>✨ Thức tỉnh class${p.level >= 5 ? '' : ' (cần cấp 5)'}</button>`);
     }
+    if (id === 'lao_su' && p.school && Object.keys(p.skills || {}).length) {
+      opts.push(`<button class="btn" data-act="reset_skills">♻️ Tẩy điểm kỹ năng (${fmt(100 * p.level)} xu)</button>`);
+    }
+    if (n.role === 'daily') opts.push('<button class="btn primary" data-act="open" data-panel="daily">📋 Xem nhiệm vụ hằng ngày</button>');
+    if (n.role === 'mystic') {
+      opts.push('<button class="btn" data-act="open" data-panel="code">🔑 Nói mật mã</button>');
+      for (const [sid, sc] of Object.entries(G.SCHOOLS)) {
+        if (!sc.special || !p.unlocks[sid] || p.school === sid) continue;
+        opts.push(`<button class="btn ${p.level >= 5 ? 'primary' : ''}" data-act="awaken_pick" data-school="${sid}" ${p.level >= 5 ? '' : 'disabled'}>${sc.icon} Thức tỉnh ${esc(sc.name)}${p.level >= 5 ? '' : ' (cần cấp 5)'}</button>`);
+      }
+    }
     if (n.shop) opts.push(`<button class="btn" data-act="open" data-panel="shop" data-npc="${id}">🛒 Mua bán</button>`);
     if (n.role === 'smith') opts.push('<button class="btn" data-act="open" data-panel="smith">⚒️ Nâng cấp trang bị</button>');
     if (n.role === 'storage') opts.push('<button class="btn" data-act="open" data-panel="storage">📦 Gửi / lấy đồ</button>');
@@ -399,19 +556,33 @@ const UI = (() => {
   // ---------- Cửa hàng
   function panelShop({ npc }) {
     const n = G.NPCS[npc], p = App.player;
-    let html = `<p>Xu của bạn: <b class="gold">${fmt(p.gold)}</b></p><div class="cols"><div><h3 style="margin:0 0 8px">Mua</h3><div class="list">`;
+    let html = `<p>Xu của bạn: <b class="gold">${fmt(p.gold)}</b></p><div class="cols"><div><h3 style="margin:0 0 8px">Mua</h3>`;
+    // Hàng bán được gom theo bộ trang bị để thấy rõ mỗi bộ dùng cho 10 cấp nào
+    const groups = [];
     for (const id of n.shop) {
-      const d = G.ITEMS[id];
-      const can = p.gold >= d.price;
-      const qtyBtns = d.stack
-        ? [1, 5, 10].map(q => `<button class="btn small" data-act="buy" data-npc="${npc}" data-item="${id}" data-qty="${q}" ${p.gold >= d.price * q ? '' : 'disabled'}>×${q}</button>`).join(' ')
-        : `<button class="btn small" data-act="buy" data-npc="${npc}" data-item="${id}" data-qty="1" ${can ? '' : 'disabled'}>Mua</button>`;
-      const st = d.stats ? Object.entries(d.stats).map(([k, v]) => statText(k, v)).join(', ') : (d.desc || '');
-      html += `<div class="li"><div class="ic">${itemIcon(id)}</div><div class="main"><b>${esc(d.name)}</b>
-        <small>${d.level ? 'Cấp ' + d.level + ' · ' : ''}${d.school ? G.SCHOOLS[d.school].name + ' · ' : ''}${esc(st)}</small>
-        <small class="gold">${fmt(d.price)} xu</small></div><div class="row">${qtyBtns}</div></div>`;
+      const set = G.setOfItem(G.ITEMS[id]);
+      const key = set ? 'set' + set.id : 'misc';
+      let gr = groups.find(g => g.key === key);
+      if (!gr) groups.push(gr = { key, set, items: [] });
+      gr.items.push(id);
     }
-    html += '</div></div><div><h3 style="margin:0 0 8px">Bán</h3><div class="list">';
+    for (const gr of groups) {
+      html += `<div class="muted" style="margin:8px 0 6px;font-size:12px">` +
+        (gr.set ? `Bộ ${gr.set.name} · cấp ${gr.set.min}–${gr.set.max}` : 'Thuốc và nguyên liệu') + '</div><div class="list">';
+      for (const id of gr.items) {
+        const d = G.ITEMS[id];
+        const can = p.gold >= d.price;
+        const qtyBtns = d.stack
+          ? [1, 5, 10].map(q => `<button class="btn small" data-act="buy" data-npc="${npc}" data-item="${id}" data-qty="${q}" ${p.gold >= d.price * q ? '' : 'disabled'}>×${q}</button>`).join(' ')
+          : `<button class="btn small" data-act="buy" data-npc="${npc}" data-item="${id}" data-qty="1" ${can ? '' : 'disabled'}>Mua</button>`;
+        const st = d.stats ? Object.entries(d.stats).map(([k, v]) => statText(k, v)).join(', ') : (d.desc || '');
+        html += `<div class="li"><div class="ic">${itemIcon(id)}</div><div class="main"><b>${d.level && d.level > p.level ? `<span class="bad">${esc(d.name)}</span>` : esc(d.name)}</b>
+          <small>${d.level ? 'Cấp ' + d.level + ' · ' : ''}${d.school ? G.SCHOOLS[d.school].name + ' · ' : ''}${esc(st)}</small>
+          <small class="gold">${fmt(d.price)} xu</small></div><div class="row">${qtyBtns}</div></div>`;
+      }
+      html += '</div>';
+    }
+    html += `</div><div><h3 style="margin:0 0 8px">Bán</h3><div class="list">`;
     const sellable = p.bag.filter(e => G.ITEMS[e.id].price && G.ITEMS[e.id].kind !== 'quest');
     if (!sellable.length) html += '<p class="muted">Không có gì để bán.</p>';
     for (const e of sellable) {
@@ -511,6 +682,25 @@ const UI = (() => {
       <div><h3 style="margin:0 0 8px">Kho (${p.storage.length}/${G.STORAGE_SIZE})</h3>${grid(p.storage, G.STORAGE_SIZE, 'storage')}</div></div>`];
   }
 
+  // ---------- Nhập mật mã (Lữ khách bí ẩn)
+  let codeDraft = '', codeMsg = '';
+  function panelCode({ confirm }) {
+    if (confirm) {
+      const sc = G.SCHOOLS[confirm], p = App.player;
+      return ['Lữ khách bí ẩn', `<div class="dialog"><div class="face">🧙</div><div class="text" style="flex:1">
+        <p>Con đường của <b>${sc.icon} ${esc(sc.name)}</b>: ${esc(sc.desc)}</p>
+        ${p.school ? `<p class="bad">Bạn sẽ rời class ${esc(G.SCHOOLS[p.school].name)}. Điểm kỹ năng đã cộng được trả lại toàn bộ.</p>` : ''}
+        <div class="opts"><button class="btn primary" data-act="awaken_special" data-school="${confirm}">Thức tỉnh</button>
+        <button class="btn" data-act="open" data-panel="npc_lu">Để sau</button></div></div></div>`];
+    }
+    return ['Lữ khách bí ẩn', `<div class="dialog"><div class="face">🧙</div><div class="text" style="flex:1">
+      <p>Nói cho ta nghe mật mã của cậu.</p>
+      <div class="row"><input id="code-input" class="code-input" value="${esc(codeDraft)}" placeholder="Mật mã" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button class="btn primary" data-act="redeem">Xác nhận</button></div>
+      <p id="code-msg" class="${codeMsg ? 'bad' : 'muted'}" style="font-size:12px;margin-top:8px">${esc(codeMsg || 'Mật mã có thể mở class đặc biệt hoặc tặng quà.')}</p>
+      <div class="opts"><button class="btn" data-act="open" data-panel="npc_lu">Quay lại</button></div></div></div>`];
+  }
+
   // ---------- Chọn class
   function panelSchool({ confirm }) {
     if (confirm) {
@@ -520,9 +710,9 @@ const UI = (() => {
         <div class="row"><button class="btn primary" data-act="choose_school" data-school="${confirm}">Gia nhập ${esc(s.name)}</button>
         <button class="btn" data-act="open" data-panel="school">Xem lại</button></div>`];
     }
-    const skillsOf = (id) => Object.entries(G.SKILLS).filter(([, s]) => id === 'toan_nang' || s.school === id).map(([k, s]) => SKILL_ICONS[k]).join(' ');
+    const skillsOf = (id) => Object.entries(G.SKILLS).filter(([, s]) => id === 'toan_nang' || s.school === id).map(([k]) => skIcon(k)).join(' ');
     return ['Chọn class', '<p>Mỗi class có vũ khí và kỹ năng riêng. Chọn hướng thức tỉnh của bạn:</p><div class="schools">' +
-      Object.entries(G.SCHOOLS).map(([id, s]) => `<div class="school-card" data-act="school_pick" data-school="${id}"><h3 style="color:#${s.color.toString(16).padStart(6, '0')}">${s.icon} ${esc(s.name)}</h3><p>${esc(s.desc)}</p><p style="margin-top:6px">${skillsOf(id)}</p></div>`).join('') + '</div>'];
+      Object.entries(G.SCHOOLS).filter(([id, s]) => !s.special || App.player.unlocks[id]).map(([id, s]) => `<div class="school-card" data-act="school_pick" data-school="${id}"><h3 style="color:#${s.color.toString(16).padStart(6, '0')}">${s.icon} ${esc(s.name)}</h3><p>${esc(s.desc)}</p><p style="margin-top:6px">${skillsOf(id)}</p></div>`).join('') + '</div>'];
   }
 
   // ------------------------------------------------------------ Bấm nút
@@ -537,9 +727,41 @@ const UI = (() => {
     }
     if (!el || el.disabled) return;
     const a = el.dataset.act, ds = el.dataset;
+    Sound.play('click');
     switch (a) {
       case 'close': closePanel(); break;
-      case 'open': openPanel(ds.panel, { npc: ds.npc, force: true }); break;
+      case 'open':
+        if (ds.panel === 'npc_lu') { openNpc('lu_khach'); break; }
+        openPanel(ds.panel, { npc: ds.npc, force: true });
+        if (ds.panel === 'code') codeMsg = '';
+        if (ds.panel === 'code') setTimeout(() => { const i = $('code-input'); if (i) i.focus(); }, 50);
+        break;
+      case 'tab': openPanel(ds.tab, { force: true }); break;
+      case 'daily_claim': await act('daily_claim', { i: Number(ds.i) }); break;
+      case 'daily_bonus': await act('daily_bonus'); break;
+      case 'toggle_sfx': Sound.setSfx(!Sound.settings.sfx); renderPanel(); break;
+      case 'toggle_music': Sound.setMusic(!Sound.settings.music); renderPanel(); break;
+      case 'learn_skill': await act('learn_skill', { skill: ds.skill }); break;
+      case 'clear_slot': await act('set_skill', { slot: Number(ds.slot), skill: null }); break;
+      case 'reset_skills': await act('reset_skills'); renderPanel(); break;
+      case 'redeem': {
+        const inp = $('code-input');
+        const code = inp ? inp.value.trim() : '';
+        if (!code) break;
+        codeDraft = code; codeMsg = '';
+        const r = await act('redeem', { code });
+        if (r.ok) { codeDraft = ''; openNpc('lu_khach'); }
+        else { codeMsg = r.error || 'Mật mã không đúng.'; renderPanel(); }
+        break;
+      }
+      case 'awaken_pick': openPanel('code', { confirm: ds.school, force: true }); break;
+      case 'awaken_special': {
+        const r = await act('awaken_special', { school: ds.school });
+        if (r.ok) { App.hp = App.player.hp; App.mp = App.player.mp; openPanel('skills', { force: true }); UI.banner('THỨC TỈNH · ' + G.SCHOOLS[ds.school].name, 2200); }
+        break;
+      }
+      case 'logout': if (App.logout) App.logout(); break;
+      case 'fullscreen': if (App.fullscreen) App.fullscreen(); break;
       case 'equip': await act('equip', { uid: Number(ds.uid) }); selected = null; renderPanel(); break;
       case 'unequip': await act('unequip', { slot: ds.slot }); selected = null; renderPanel(); break;
       case 'use': App.scene.usePotion(ds.item.startsWith('binh_mau') ? 'hp' : 'mp'); break;
@@ -588,7 +810,7 @@ const UI = (() => {
       case 'school_pick': openPanel('school', { confirm: ds.school, force: true }); break;
       case 'choose_school': {
         const r = await act('choose_school', { school: ds.school });
-        if (r.ok) { App.hp = App.player.hp; App.mp = App.player.mp; openNpc('lao_su'); }
+        if (r.ok) { App.hp = App.player.hp; App.mp = App.player.mp; openNpc('lao_su'); UI.banner('THỨC TỈNH · ' + G.SCHOOLS[ds.school].name, 2200); }
         break;
       }
     }
@@ -596,6 +818,7 @@ const UI = (() => {
 
   async function completeQuest(q) {
     const r = await act('quest_complete');
+    if (r.ok) Sound.play('quest');
     if (r.ok) openPanel('story', { id: q.npc, lines: q.end, button: '<button class="btn primary" data-act="close">Đã hiểu</button>', force: true });
   }
 
@@ -619,11 +842,12 @@ const UI = (() => {
 
   function init() {
     $('panel-body').addEventListener('click', onClick);
+    $('panel-body').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'code-input') { e.preventDefault(); onClick({ target: document.querySelector('[data-act="redeem"]') }); } });
+    $('btn-menu').addEventListener('click', () => openPanel(lastMenuTab));
     $('panel-body').addEventListener('mouseover', showTip);
     $('panel-body').addEventListener('mouseleave', hideTip);
     $('panel-close').addEventListener('click', closePanel);
     $('panel').addEventListener('click', (e) => { if (e.target.id === 'panel') closePanel(); });
-    document.querySelectorAll('.menu [data-panel]').forEach(b => b.addEventListener('click', () => openPanel(b.dataset.panel)));
     document.querySelectorAll('#skillbar .sk').forEach(b => b.addEventListener('click', () => {
       const k = b.dataset.k, sc = App.scene;
       if (!sc || App.panelOpen) return;

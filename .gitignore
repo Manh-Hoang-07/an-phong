@@ -4,3 +4,4 @@ backups/
 *.db
 *.db-*
 .env
+assets_raw/

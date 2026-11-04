@@ -386,3 +386,64 @@ body.panel-open #touch, body.panel-open #tb-talk { display: none !important; }
   #banner { font-size: 18px; top: 16%; }
 }
 @media (max-width: 600px) { .inv, .cols { grid-template-columns: 1fr; } }
+
+/* ================================================================
+   Menu có tab, bảng kỹ năng, nhập mật mã, thêm ô kỹ năng
+   ================================================================ */
+.menu #btn-menu { width: 46px; height: 42px; font-size: 22px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 12px; }
+.tabs .tab { padding: 7px 12px; }
+.tabs .tab.active { border-color: var(--sys); color: #fff; box-shadow: 0 0 12px rgba(63, 208, 255, 0.45); background: linear-gradient(180deg, rgba(63, 208, 255, 0.28), rgba(12, 20, 44, 0.85)); }
+.tabcount { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--hp); color: #fff; font-size: 11px; line-height: 17px; text-align: center; margin-left: 2px; }
+
+.skill-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.sslot {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px; padding: 6px 4px;
+  border-radius: 8px; border: 1px dashed var(--line-2); background: rgba(3, 7, 18, 0.55); text-align: center;
+}
+.sslot.ult { border-color: rgba(255, 204, 61, 0.7); }
+.sslot .k { position: absolute; left: 5px; top: 2px; font-size: 10px; color: var(--muted); font-weight: 700; }
+.sslot .ic { font-size: 22px; line-height: 1.1; }
+.sslot small { font-size: 10.5px; line-height: 1.2; }
+.sslot .x { position: absolute; right: 2px; top: 2px; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: 11px; }
+.sslot .x:hover { color: var(--bad); }
+.skill-li { align-items: flex-start; }
+.skill-li .main small { margin-top: 2px; }
+.skill-li .lvl { font-size: 12px; color: var(--sys); margin-left: 4px; }
+.skill-li.is-ult { border-color: rgba(255, 204, 61, 0.5); }
+.skill-act { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.slotbtn { min-width: 30px; padding: 4px 7px !important; }
+.slotbtn.on { border-color: var(--sys); color: var(--sys); opacity: 1 !important; }
+.tag-ult { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #1a1200; background: var(--q4); vertical-align: 2px; }
+.code-input {
+  flex: 1; min-width: 150px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line-2);
+  background: rgba(3, 7, 18, 0.85); color: var(--text); outline: none; letter-spacing: 1px; text-transform: uppercase;
+  -webkit-user-select: text; user-select: text;
+}
+.code-input:focus { border-color: var(--sys); box-shadow: 0 0 0 3px rgba(63, 208, 255, 0.15); }
+.sk.sk-ult { border-color: rgba(255, 204, 61, 0.75); box-shadow: 0 0 12px rgba(255, 204, 61, 0.3); }
+
+/* Cụm nút cảm ứng: 4 kỹ năng + tuyệt kỹ (+ ô thứ 5 của Toàn Năng) quanh nút đánh */
+#tbtns { width: 310px; height: 270px; }
+.tb-attack { right: 16px; bottom: 16px; }
+.tb-jump { right: 133px; bottom: 8px; width: 64px; height: 64px; }
+.tb-s0 { right: 24px; bottom: 132px; }
+.tb-s1 { right: 84px; bottom: 112px; }
+.tb-s2 { right: 137px; bottom: 84px; }
+.tb-s3 { right: 194px; bottom: 52px; }
+.tb-s4 { right: 113px; bottom: 179px; width: 54px; height: 54px; }
+.tb-ult { right: 47px; bottom: 191px; width: 62px; height: 62px; border-color: rgba(255, 204, 61, 0.85); box-shadow: 0 0 14px rgba(255, 204, 61, 0.45); }
+.tb-hp { right: 209px; bottom: 7px; }
+.tb-mp { right: 257px; bottom: 29px; }
+.tb-talk { bottom: 268px; }
+
+/* Nhiệm vụ hằng ngày trên khung theo dõi */
+.daily-track { margin-top: 6px; padding-top: 5px; border-top: 1px dashed var(--line); font-size: 11.5px; color: var(--muted); }
+.daily-track .done { color: var(--ok); }
+
+/* Bảng có tab: kích cỡ cố định, nội dung cuộn bên trong */
+.panel-box.fixed { width: min(860px, calc(100vw - 20px)); height: min(640px, calc(100vh - 20px)); }
+.panel-box.fixed #panel-body { flex: 1 1 auto; min-height: 0; }
+@media (max-height: 500px) {
+  .panel-box.fixed { width: calc(100vw - 16px); height: calc(100dvh - 10px); }
+}

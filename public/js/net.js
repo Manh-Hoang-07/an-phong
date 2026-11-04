@@ -38,7 +38,7 @@ const Net = (() => {
         data = { ok: false, error: 'Mất kết nối tới server.' };
       }
       if (data.player) App.setPlayer(data.player);
-      if (data.ok === false && data.error && !opts.silent) UI.log(data.error, '#ef5350');
+      if (data.ok === false && data.error && !opts.silent) { UI.log(data.error, '#ef5350'); Sound.play('error'); }
       if (data.events) for (const ev of data.events) App.onEvent(ev);
       if (type === 'kill') await new Promise(r => setTimeout(r, 130));
       return data;
@@ -81,10 +81,11 @@ App.onEvent = function (ev) {
   const sc = App.scene;
   switch (ev.t) {
     case 'msg': UI.log(ev.text, ev.color); break;
-    case 'float': if (sc && sc.player) sc.floatText(sc.player.x, sc.player.y - 40, ev.text, ev.color); break;
+    case 'float': if (sc && sc.player) sc.floatText(sc.player.x, sc.player.y - 40, ev.text, ev.color); if (/xu$/.test(ev.text)) Sound.play('coin'); break;
     case 'levelup':
       App.hp = App.player.hp; App.mp = App.player.mp;
       UI.banner('THĂNG CẤP · Lv ' + ev.level, 2000);
+      Sound.play('levelup');
       if (sc) sc.levelUpFx();
       break;
     case 'heal':
@@ -96,7 +97,9 @@ App.onEvent = function (ev) {
       }
       break;
     case 'upgrade': UI.upgradeResult(ev); break;
+    case 'school': App.hp = App.player.hp; App.mp = App.player.mp; break;
+    case 'unlock': UI.banner('MỞ KHÓA CLASS ĐẶC BIỆT', 2200); break;
     case 'loot': if (sc && sc.addLoot) sc.addLoot(ev.loot, true); break;
-    case 'picked': if (sc && sc.removeLoot) { sc.removeLoot(ev.lid, true); sc.lastLootError = null; } break;
+    case 'picked': Sound.play('pickup'); if (sc && sc.removeLoot) { sc.removeLoot(ev.lid, true); sc.lastLootError = null; } break;
   }
 };

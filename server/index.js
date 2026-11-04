@@ -208,6 +208,7 @@ const server = http.createServer((req, res) => {
 });
 
 store.purgeSessions();
+require('./codes').ensureFile();
 setInterval(() => store.purgeSessions(), 3600 * 1000).unref();
 
 server.listen(PORT, HOST, () => {

@@ -66,19 +66,21 @@
     });
     UI.refresh();
     UI.log(`[Hệ thống] Chào mừng thợ săn ${player.name}. Tiến trình được tự động lưu.`, '#ffd54f');
-    if (player.quest.step === 0 && player.quest.state === 'none') {
+    const q0 = GameData.QUESTS[player.quest.step];
+    if (q0 && player.quest.state === 'none' && player.quest.step <= 1) {
+      const who = GameData.NPCS[q0.npc].name;
       UI.log(document.body.classList.contains('touch')
-        ? 'Hãy đến gần Hội trưởng Khải rồi bấm nút 💬 Nói chuyện.'
-        : 'Hãy đến nói chuyện với Hội trưởng Khải (đi tới gần và bấm F).', '#a5d6a7');
+        ? `Hãy đến gần ${who} rồi bấm nút 💬 Nói chuyện.`
+        : `Hãy đến nói chuyện với ${who} (đi tới gần và bấm F).`, '#a5d6a7');
     }
 
     window.addEventListener('pagehide', Net.saveOnExit);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') Net.saveOnExit(); });
-    $('btn-logout').addEventListener('click', async () => {
+    App.logout = async () => {
       Net.saveOnExit();
       await Net.logout();
       location.reload();
-    });
+    };
   }
 
   // ------------------------------------------------------------ Bàn phím
@@ -114,11 +116,10 @@
   }
 
   function setupTouch() {
+    App.fullscreen = goFullscreen;
     if (!isTouchDevice()) return;
     document.body.classList.add('touch');
     $('touch').classList.remove('hidden');
-    $('btn-full').classList.remove('hidden');
-    $('btn-full').addEventListener('click', goFullscreen);
     const standalone = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
     let triedFull = standalone;
     const firstTouch = () => {
