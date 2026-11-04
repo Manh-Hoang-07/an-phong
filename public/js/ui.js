@@ -394,7 +394,9 @@ const UI = (() => {
         <button class="btn small" data-act="add_stat" data-stat="${k}" data-n="5" ${p.freePoints >= 5 ? '' : 'disabled'}>+5</button></div>`).join('') +
       '</div>' + (p.school ? `<p class="muted" style="font-size:12px">${esc(G.SCHOOLS[p.school].desc)}</p>` : '');
     const snd = `<div class="row" style="margin-top:12px"><button class="btn" data-act="toggle_sfx">${Sound.settings.sfx ? '🔊 Âm thanh: Bật' : '🔇 Âm thanh: Tắt'}</button><button class="btn" data-act="toggle_music">${Sound.settings.music ? '🎵 Nhạc nền: Bật' : '🎵 Nhạc nền: Tắt'}</button></div>`;
-    const sys = snd + `<div class="row" style="margin-top:8px">${isTouch() ? '<button class="btn" data-act="fullscreen">⛶ Toàn màn hình</button>' : ''}<button class="btn" data-act="logout">⏻ Đăng xuất</button></div>`;
+    const qName = { auto: '⚙️ Đồ họa: Tự động', high: '✨ Đồ họa: Cao', low: '🔋 Đồ họa: Thấp (mượt nhất)' }[Quality.mode];
+    const gfx = `<div class="row" style="margin-top:8px"><button class="btn" data-act="toggle_quality">${qName}</button></div>`;
+    const sys = snd + gfx + `<div class="row" style="margin-top:8px">${isTouch() ? '<button class="btn" data-act="fullscreen">⛶ Toàn màn hình</button>' : ''}<button class="btn" data-act="logout">⏻ Đăng xuất</button></div>`;
     return ['Nhân vật: ' + p.name, `<div class="cols"><div>${left}${sys}</div><div>${right}</div></div>`];
   }
 
@@ -741,6 +743,14 @@ const UI = (() => {
       case 'daily_bonus': await act('daily_bonus'); break;
       case 'toggle_sfx': Sound.setSfx(!Sound.settings.sfx); renderPanel(); break;
       case 'toggle_music': Sound.setMusic(!Sound.settings.music); renderPanel(); break;
+      case 'toggle_quality': {
+        const next = { auto: 'high', high: 'low', low: 'auto' }[Quality.mode];
+        Quality.set(next);
+        if (Quality.low && App.scene) App.scene.applyLowQuality();
+        else UI.log('Đồ họa cao sẽ áp dụng khi bạn chuyển bản đồ.', '#bdbdbd');
+        renderPanel();
+        break;
+      }
       case 'learn_skill': await act('learn_skill', { skill: ds.skill }); break;
       case 'clear_slot': await act('set_skill', { slot: Number(ds.slot), skill: null }); break;
       case 'reset_skills': await act('reset_skills'); renderPanel(); break;

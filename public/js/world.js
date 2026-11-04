@@ -117,7 +117,9 @@ class WorldScene extends Phaser.Scene {
     if (this.theme === 'redgate') this.cameras.main.setBackgroundColor(0x12060a);
     // Hạt sáng bay lơ lửng
     const moteColor = { city: 0xffe6a0, forest: 0x7fffd4, cave: 0xb388ff, redgate: 0xff5c5c }[this.theme];
-    for (let i = 0; i < 28; i++) {
+    this.motes = [];
+    const moteCount = Quality.low ? 0 : 14;
+    for (let i = 0; i < moteCount; i++) {
       const m = this.add.image(Phaser.Math.Between(0, this.worldW), Phaser.Math.Between(40, this.worldH - 120), 'mote')
         .setTint(moteColor).setAlpha(0.15 + Math.random() * 0.35).setScale(0.3 + Math.random() * 0.6)
         .setDepth(-1).setBlendMode(Phaser.BlendModes.ADD);
@@ -125,6 +127,7 @@ class WorldScene extends Phaser.Scene {
         targets: m, y: m.y - Phaser.Math.Between(40, 120), x: m.x + Phaser.Math.Between(-60, 60),
         alpha: 0, duration: Phaser.Math.Between(4000, 9000), repeat: -1, delay: Math.random() * 4000,
       });
+      this.motes.push(m);
     }
     // Viền tối mềm, giúp khung hình có chiều sâu
     this.vignette = this.add.image(0, 0, 'fx_vignette').setOrigin(0).setScrollFactor(0).setDepth(24);
@@ -481,7 +484,7 @@ class WorldScene extends Phaser.Scene {
     this.bgFar.tilePositionY = 0;
 
     if (!this.dead) this.updatePlayer(time, delta);
-    for (const m of this.monsters) if (m.alive) this.updateMonster(m, time);
+    for (const m of this.monsters) if (m.alive && this.mobActive(m)) this.updateMonster(m, time);
     this.updateProjectiles(time, delta);
     this.updateLoot(time);
 
@@ -686,7 +689,8 @@ class WorldScene extends Phaser.Scene {
     const angle = o.angle || 0;
     const p = this.add.image(pl.x + this.facing * 16, pl.y - 2 + (o.dy || 0), o.key).setDepth(7).setFlipX(this.facing < 0);
     if (o.tint) p.setTint(o.tint);
-    this.glowObj(p, { proj_fire: 0xff9d4d, proj_orb: 0x8fb0ff, fx_wave: 0x9fe8ff, proj_arrow: 0x6ff0a6 }[o.key] || 0xffffff, 2);
+    // Đạn phép, mũi tên lửa sáng lên bằng cách cộng màu (nhẹ hơn nhiều so với hiệu ứng phát sáng)
+    if (o.key !== 'proj_arrow') p.setBlendMode(Phaser.BlendModes.ADD);
     p.setRotation(angle * this.facing);
     p.vx = Math.cos(angle) * o.speed * this.facing;
     p.vy = Math.sin(angle) * o.speed;
@@ -732,7 +736,6 @@ class WorldScene extends Phaser.Scene {
       this.healTick = this.time.now + 120;
       App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * 0.01);
     }
-    if (crit) this.hitstop(40);
     const s = m.sprite;
     this.floatText(s.x + Phaser.Math.Between(-8, 8), this.monsterTop(m) - 4, (crit ? '💥' : '') + dmg, crit ? '#ffd740' : '#ffffff', crit ? 20 : 15);
     m.flashUntil = this.time.now + 80;
@@ -768,7 +771,7 @@ class WorldScene extends Phaser.Scene {
     const dropY = m.def.fly ? this.groundY(Math.floor(s.y / T), Math.floor(s.x / T)) : s.y;
     this.pendingKills.push({ monster: m.id, x: Math.round(s.x), y: Math.round(dropY) });
     if (!this.killFlush) this.killFlush = this.time.delayedCall(120, () => this.flushKills());
-    this.hitstop(m.def.boss ? 120 : 50);
+    if (m.def.boss) this.hitstop(120);
     if (m.minion) { this.time.delayedCall(400, () => { m.label.destroy(); m.bar.destroy(); s.destroy(); this.monsters.splice(this.monsters.indexOf(m), 1); }); }
     else this.time.delayedCall(m.def.respawn * 1000, () => this.respawnMonster(m));
   }
@@ -1345,6 +1348,8 @@ class WorldScene extends Phaser.Scene {
     const e = this.loots && this.loots.get(lid);
     if (!e) return;
     this.loots.delete(lid);
+    // Dừng các hiệu ứng lặp mãi của món đồ để không tích tụ khi chơi lâu
+    this.tweens.killTweensOf(e.c.list);
     if (toPlayer && this.player) {
       this.tweens.add({ targets: e.c, x: this.player.x, y: this.player.y - 10, scale: 0.3, alpha: 0, duration: 220, onComplete: () => e.c.destroy() });
     } else e.c.destroy();
