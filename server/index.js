@@ -15,7 +15,7 @@ const path = require('path');
 const store = require('./db');
 const auth = require('./auth');
 const game = require('./game');
-const G = require('../shared/data');
+const G = require('../shared');
 
 const PORT = Number(process.env.PORT) || 3100;
 const HOST = process.env.HOST || '127.0.0.1';

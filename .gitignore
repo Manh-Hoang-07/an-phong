@@ -1,7 +1,8 @@
 node_modules/
-data/
+/data/
 backups/
 *.db
 *.db-*
 .env
 assets_raw/
+*.log

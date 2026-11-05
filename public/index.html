@@ -105,15 +105,63 @@
   </div>
 
   <script src="/lib/phaser.min.js"></script>
-  <script src="/shared/data.js"></script>
-  <script src="/js/sound.js"></script>
-  <script src="/js/net.js"></script>
-  <script src="/js/art.js"></script>
-  <script src="/js/fx.js"></script>
-  <script src="/js/sprites.js"></script>
-  <script src="/js/ui.js"></script>
-  <script src="/js/world.js"></script>
-  <script src="/js/juice.js"></script>
-  <script src="/js/main.js"></script>
+  <!-- Dữ liệu game dùng chung (giữ đúng thứ tự như shared/index.js) -->
+  <script src="/shared/core.js"></script>
+  <script src="/shared/data/classes.js"></script>
+  <script src="/shared/data/skills.js"></script>
+  <script src="/shared/data/items.js"></script>
+  <script src="/shared/data/equipment.js"></script>
+  <script src="/shared/data/monsters.js"></script>
+  <script src="/shared/data/npcs.js"></script>
+  <script src="/shared/data/maps.js"></script>
+  <script src="/shared/data/quests/chapter1.js"></script>
+  <script src="/shared/data/quests/side.js"></script>
+  <script src="/shared/data/quests/legacy.js"></script>
+  <script src="/shared/data/quests/periodic.js"></script>
+  <script src="/shared/logic/items.js"></script>
+  <script src="/shared/logic/monsters.js"></script>
+  <script src="/shared/logic/skills.js"></script>
+  <script src="/shared/logic/player.js"></script>
+  <script src="/shared/logic/quests.js"></script>
+  <script src="/shared/logic/shop.js"></script>
+  <!-- Lõi: âm thanh, kết nối server -->
+  <script src="/js/core/sound.js"></script>
+  <script src="/js/core/net.js"></script>
+  <!-- Hình ảnh: bút vẽ + từng nhóm hình vẽ bằng code, hiệu ứng, bộ sprite -->
+  <script src="/js/art/art.js"></script>
+  <script src="/js/art/characters.js"></script>
+  <script src="/js/art/weapons.js"></script>
+  <script src="/js/art/monsters.js"></script>
+  <script src="/js/art/terrain.js"></script>
+  <script src="/js/art/scenery.js"></script>
+  <script src="/js/art/backgrounds.js"></script>
+  <script src="/js/art/fx.js"></script>
+  <script src="/js/art/sprites.js"></script>
+  <!-- Giao diện: lõi UI, từng bảng, xử lý nút -->
+  <script src="/js/ui/ui.js"></script>
+  <script src="/js/ui/panels/daily.js"></script>
+  <script src="/js/ui/panels/bag.js"></script>
+  <script src="/js/ui/panels/char.js"></script>
+  <script src="/js/ui/panels/skills.js"></script>
+  <script src="/js/ui/panels/quest.js"></script>
+  <script src="/js/ui/panels/npc.js"></script>
+  <script src="/js/ui/panels/shop.js"></script>
+  <script src="/js/ui/panels/smith.js"></script>
+  <script src="/js/ui/panels/storage.js"></script>
+  <script src="/js/ui/panels/code.js"></script>
+  <script src="/js/ui/panels/school.js"></script>
+  <script src="/js/ui/actions.js"></script>
+  <!-- Cảnh chơi: khung WorldScene + các phần gắn thêm method -->
+  <script src="/js/scene/world.js"></script>
+  <script src="/js/scene/map.js"></script>
+  <script src="/js/scene/player.js"></script>
+  <script src="/js/scene/monsters.js"></script>
+  <script src="/js/scene/combat.js"></script>
+  <script src="/js/scene/boss.js"></script>
+  <script src="/js/scene/skills.js"></script>
+  <script src="/js/scene/loot.js"></script>
+  <script src="/js/scene/juice.js"></script>
+  <!-- Khởi động game -->
+  <script src="/js/core/main.js"></script>
 </body>
 </html>

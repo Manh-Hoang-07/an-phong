@@ -16,7 +16,7 @@ Mở http://127.0.0.1:3100. Lần đầu vào, bạn tạo tài khoản. Sau đ�
 
 - Muốn điện thoại cùng wifi vào chơi: chạy `HOST=0.0.0.0 npm start` (trên Windows PowerShell: `$env:HOST='0.0.0.0'; npm start`) rồi mở `http://<IP máy tính>:3100` trên điện thoại.
 - Dữ liệu nằm ở `data/anphong.db`. Sao lưu: `npm run backup`. File sao lưu nằm trong thư mục `backups/`.
-- Quên mật khẩu: `node server/reset-password.js <tên đăng nhập> <mật khẩu mới>`.
+- Quên mật khẩu: `node server/tools/reset-password.js <tên đăng nhập> <mật khẩu mới>`.
 
 ## Điều khiển
 
@@ -55,7 +55,7 @@ Trên máy tính, muốn thử giao diện điện thoại thì thêm `?touch=1`
 ### Class đặc biệt Toàn Năng và mật mã
 
 - Toàn Năng **không có trong danh sách chọn**. Phải nói mật mã với **Lữ khách bí ẩn** (đứng cạnh cổng ở Tân Đô), rồi thức tỉnh ở chính NPC đó (cần cấp 5). Đang có class khác vẫn đổi được, điểm kỹ năng được trả lại.
-- Toàn Năng: máu, tấn công, năng lượng +200% (gấp 3), dùng mọi vũ khí, học cả 15 kỹ năng của 3 class cùng tuyệt kỹ riêng **Thức Tỉnh Tối Thượng**, có cả 3 nội tại và thêm 1 ô kỹ năng. Muốn giảm sức mạnh thì sửa `bonus` của `toan_nang` trong `shared/data.js`.
+- Toàn Năng: máu, tấn công, năng lượng +200% (gấp 3), dùng mọi vũ khí, học cả 15 kỹ năng của 3 class cùng tuyệt kỹ riêng **Thức Tỉnh Tối Thượng**, có cả 3 nội tại và thêm 1 ô kỹ năng. Muốn giảm sức mạnh thì sửa `bonus` của `toan_nang` trong `shared/data/classes.js`.
 - **Mật mã nằm trong file `data/giftcodes.json`** (tự tạo lần đầu chạy server, mã cũng được in ra màn hình console). Trên Ubuntu là `/var/lib/anphong/giftcodes.json`.
 - Có thể thêm mã quà tặng khác vào file này, sửa xong có hiệu lực ngay, không cần khởi động lại server. Mỗi tài khoản dùng mỗi mã một lần. Ví dụ:
 
@@ -63,21 +63,20 @@ Trên máy tính, muốn thử giao diện điện thoại thì thêm `?touch=1`
 { "code": "QUA-TET", "note": "Quà Tết", "rewards": { "gold": 1000, "skillPoints": 2, "items": [["da_cuong_hoa", 5]] } }
 ```
 
-## Nội dung hiện có (chương 1)
+## Nội dung hiện có (chương 1–5 và end-game)
 
-- 4 bản đồ: Cổng đỏ chưa phân hạng (màn mở đầu), Tân Đô – Khu Hiệp Hội, Cổng hạng E – Rừng Sương, Cổng hạng D – Hang Pha Lê.
-- **Chương 1 "Cổng đỏ" có 11 nhiệm vụ:**
-  - Mở đầu: tỉnh dậy kẹt trong Cổng đỏ, Hệ thống giao nhiệm vụ đầu tiên.
-  - Đồng đội: Vy, thợ săn hạng C, đi cùng qua Rừng Sương và Hang Pha Lê.
-  - Phản diện: nhóm Hắc Nguyệt và Kẻ Đeo Mặt Nạ Trăng.
-  - Kết thúc bằng trận đánh trùm Thạch Vương.
+- **27 bản đồ** từ Cổng đỏ, Tân Đô, các cổng hạng E–SS đến Cổng SS – Vực Không Cùng.
+- **46 nhiệm vụ chính** qua 5 chương, kết thúc ở Thực Thể Bên Kia Cổng; sau đó mở Cổng SS để chơi tiếp.
+- **Nội tại cốt truyện** nhận theo nhiệm vụ: Ý Chí Thầy Truyền, Nhận Thức Ký Sinh, Liên Minh, Trạng Thái Tự Do, Đồng Đội Bình Minh.
+- **Phụ tuyến:** Đội Bình Minh của Vy, hàng thất lạc của Chủ tiệm Tư (giảm giá và mở thêm hàng), mở rộng túi của Quản kho Bảo (+10 ô × 3 bậc) và thuốc chữa nhiễm đỏ của Dược sư Lan.
 - **Nhiệm vụ hằng ngày** ở Bảng nhiệm vụ trong Tân Đô: mỗi ngày 3 nhiệm vụ (hạ quái, thu thập Lõi năng lượng, hạ trùm), làm mới lúc 0 giờ (giờ Việt Nam). Xong cả 3 nhận thêm đá cường hóa và 1 Sách kỹ năng.
+- **Nhiệm vụ hằng tuần:** hạ 200 quái và 5 trùm, nhận đá cường hóa, đá cường hóa cao, xu, kinh nghiệm và Sách kỹ năng; làm mới vào thứ Hai.
 - **Quái báo trước đòn đánh:** đứng lại nháy đỏ rồi mới lao tới, chỉ gây sát thương lúc lao, nên luôn né kịp.
 - **Trùm 2 giai đoạn:** dưới 50% máu, Thạch Vương nổi giận, gọi thêm Bộ Xương Pha Lê và tung sóng đá chạy dọc mặt đất (phải nhảy qua).
 - **Âm thanh và nhạc nền** tạo bằng code, mỗi bản đồ một bản nhạc. Bật tắt ở tab Nhân vật.
 - Mỗi lần lên cấp được 3 điểm tiềm năng.
 - **10 ô trang bị:** vũ khí, mũ, áo, găng tay, đai lưng, quần, giày, nhẫn, dây chuyền, ngọc bội.
-- **Trang bị chia bộ theo cấp:** cứ 10 cấp là một bộ – Bộ Tân Binh (cấp 1–10) và Bộ Thạch Vương (cấp 11–20). Trong mỗi bộ, từng món có cấp sử dụng riêng nên mở dần khi lên cấp, và bộ nào cũng phủ đủ 10 ô.
+- **Trang bị chia bộ theo cấp:** cứ 10 cấp là một bộ – Tân Binh (1–10), Thạch Vương (11–20), Băng Long (21–30), Lưu Trữ (31–40), Vĩnh Hằng (41–50). Trong mỗi bộ, từng món có cấp sử dụng riêng nên mở dần khi lên cấp, và bộ nào cũng phủ đủ 10 ô.
 - **Đồ rơi từ quái là ngẫu nhiên:**
   - Chỉ số chính dao động 80–120%.
   - Phẩm chất: Thường (trắng), Tốt (xanh), Hiếm (tím), Huyền thoại (vàng), tỉ lệ khoảng 62% / 30% / 7% / 1%. Trùm luôn rơi đồ Hiếm hoặc Huyền thoại.
@@ -88,23 +87,54 @@ Trên máy tính, muốn thử giao diện điện thoại thì thêm `?touch=1`
   - Nâng cấp tới +12; từ +8 trở đi, thất bại sẽ bị giảm 1 cấp.
   - Tẩy luyện: gieo lại dòng phụ.
   - Phân rã: đổi đồ thừa lấy đá cường hóa.
-- Có cửa hàng (bán đồ Thường, chỉ số chuẩn) và kho đồ. Túi đồ có 40 ô.
+- Có cửa hàng (bán đồ Thường, chỉ số chuẩn) và kho đồ. Túi đồ có 40 ô, mở rộng tối đa lên 70 ô bằng phụ tuyến Kho chật quá.
 
 ## Tự sửa game
 
-- **Cân chỉnh** (máu quái, giá đồ, phần thưởng, kỹ năng, nhiệm vụ): sửa `shared/data.js`.
+- **Cân chỉnh**: sửa các file trong `shared/data/` (xem bảng *Cấu trúc thư mục* bên dưới): class ở `classes.js`, kỹ năng ở `skills.js`, vật phẩm ở `items.js`, phẩm chất / nâng cấp ở `equipment.js`, quái ở `monsters.js`, NPC ở `npcs.js`, nhiệm vụ trong `quests/`.
 - **Bản đồ**: sửa file chữ trong `shared/maps/`. Ký hiệu:
 
 ```
 .  trống            #  đất              =  bục gỗ (nhảy lên từ dưới được)
 S  điểm xuất hiện   < >  cổng chuyển bản đồ
-a-z  quái (xem "spawns" của bản đồ trong data.js)
-A-Z  NPC  (xem "npcs" của bản đồ trong data.js)
+a-z  quái (xem "spawns" của bản đồ trong shared/data/maps.js)
+A-Z  NPC  (xem "npcs" của bản đồ trong shared/data/maps.js)
 &  cây/tre   $  nhà   !  đèn lồng   ^  nhũ đá
 ```
 
 Nhân vật nhảy cao được khoảng 3 ô, nên đặt các bục cách nhau tối đa 3 hàng.
-Sửa xong thì tải lại trang là thấy bản đồ mới. Riêng file `shared/data.js` thì phải khởi động lại server.
+Sửa xong thì tải lại trang là thấy bản đồ mới. Riêng các file `.js` trong `shared/` thì phải khởi động lại server.
+
+## Cấu trúc thư mục
+
+```
+shared/                 Dữ liệu + luật tính toán dùng chung cho server và trình duyệt (biến GameData)
+  core.js               Hằng số chung, công thức kinh nghiệm, hạng thợ săn
+  index.js              Server nạp file này (danh sách file theo đúng thứ tự)
+  data/                 Bảng dữ liệu để cân chỉnh game
+    classes.js skills.js items.js equipment.js monsters.js npcs.js maps.js
+    quests/             chapter1.js (chính tuyến), side.js (phụ tuyến), periodic.js (ngày/tuần), legacy.js
+  logic/                Hàm tính toán: player.js (calcStats...), items.js, skills.js, monsters.js, quests.js, shop.js
+  maps/                 Bố cục ô của từng bản đồ (*.txt)
+server/
+  index.js              Máy chủ HTTP, đăng nhập, API
+  auth.js db.js codes.js backup.js
+  game/                 Luật chơi phía server
+    index.js            handle() + migrate() (sửa save cũ)
+    inventory.js progress.js quests.js periodic.js util.js
+    actions/            Từng nhóm hành động: world, combat, quests, items, smith, character
+  tools/reset-password.js
+public/
+  index.html            Nạp các file JS theo đúng thứ tự (có chú thích từng nhóm)
+  js/core/              sound.js, net.js, main.js (khởi động)
+  js/art/               art.js (bút vẽ) + hình vẽ bằng code từng nhóm, fx.js, sprites.js
+  js/ui/                ui.js (HUD + khung bảng), panels/*.js (từng bảng), actions.js (bấm nút)
+  js/scene/             world.js (WorldScene) + map, player, monsters, combat, boss, skills, loot, juice
+```
+
+**Thêm file JS mới:** trình duyệt không có bundler, nên phải thêm thẻ `<script>` vào `public/index.html` đúng thứ tự;
+file trong `shared/` thì thêm cả vào `shared/index.js`. Mỗi file tự gắn phần của mình vào biến chung
+(`GameData`, `UI`, `Art`, `WorldScene.prototype`).
 
 ## Đưa lên server Ubuntu
 
