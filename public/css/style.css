@@ -503,3 +503,14 @@ html.compact body.touch #banner { font-size: 15px; }
 
 /* Toàn trang tắt chọn chữ (chạm giữ không bôi đen), nhưng ô nhập phải gõ/chọn được (iOS chặn gõ nếu thiếu dòng này) */
 input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+
+/* Nút biến hình (thức tỉnh) */
+.sk-form, .tb-form { border-color: var(--form, #ffd54f) !important; }
+.sk-form .ico, .tb-form .ico { color: var(--form, #ffd54f); }
+.sk-form.active, .tb-form.active {
+  background: radial-gradient(circle at 50% 40%, var(--form, #ffd54f), rgba(6, 11, 26, 0.85) 75%);
+  box-shadow: 0 0 18px var(--form, #ffd54f); animation: formpulse 0.7s ease-in-out infinite alternate;
+}
+.sk-form.active .ico, .tb-form.active .ico { color: #fff; }
+@keyframes formpulse { to { box-shadow: 0 0 6px var(--form, #ffd54f); } }
+.tb-form { right: 175px; bottom: 150px; width: 56px; height: 56px; }

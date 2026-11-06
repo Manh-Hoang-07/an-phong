@@ -184,9 +184,10 @@ WorldScene.mix(class WorldCombat {
 
   async die() {
     if (this.dead) return;
+    this.endForm();
     this.dead = true;
     App.hp = 0;
-    if (this.sheetId) { this.attackUntil = 0; this.player.setAngle(0); this.player.play(`ch_${this.sheetId}_death`); }
+    if (this.sheetId) { this.attackUntil = 0; this.player.setAngle(0); this.player.play(this.charAnim('death')); }
     else this.player.setTint(0x555555).setAngle(this.facing * -90);
     this.player.body.setVelocity(0, 0);
     UI.banner('Bạn đã bị đánh bại', 1800);

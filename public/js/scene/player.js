@@ -59,6 +59,22 @@ WorldScene.mix(class WorldPlayer {
     }
   }
 
+  // Tên hoạt ảnh nhân vật: đang biến hình (formTier) thì dùng bộ hình biến hình chf<ấn>_..., không thì ch_...
+  charAnim(a) { return `${this.formTier ? 'chf' + this.formTier : 'ch'}_${this.sheetId}_${a}`; }
+  // Biến hình thì nhân vật to hơn: ấn 1 ×1.15, ấn 2 ×1.25
+  formGrow() { return this.formTier ? (this.formTier >= 2 ? 1.25 : 1.15) : 1; }
+  // Đổi sang / trở về bộ hình biến hình và vừa lại kích thước
+  applyFormLook() {
+    const aw = App.form ? GameData.awakenOf(App.player) : null;
+    this.formTier = aw && this.sheetId && Sprites.makeFormSheets(this, this.sheetId, aw.tier) ? aw.tier : 0;
+    if (!this.sheetId || !this.player) return;
+    this.fitFacing = this.facing || 1;
+    Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow());
+    this.player.setFlipX(this.fitFacing < 0);
+    this.attackUntil = 0;
+    this.player.play(this.charAnim('idle'));
+  }
+
   // Dùng hình vẽ sẵn (có hoạt ảnh) nếu có, không thì dùng hình vẽ bằng code
   refreshPlayerLook() {
     const id = App.player.school || 'none';
@@ -68,11 +84,13 @@ WorldScene.mix(class WorldPlayer {
     this.fitDone = true;
     const pl = this.player;
     if (sheet) {
+      this.formTier = 0;
       pl.setTexture(`ch_${sheet}_idle`, 0);
       this.fitFacing = this.facing || 1;
       Sprites.fitPlayer(pl, sheet, this.fitFacing < 0);
       pl.setFlipX(this.fitFacing < 0);
       pl.play(`ch_${sheet}_idle`);
+      if (App.form) this.applyFormLook();
     } else {
       pl.anims.stop();
       pl.setScale(1).setOrigin(0.5);
@@ -86,7 +104,7 @@ WorldScene.mix(class WorldPlayer {
     const pl = this.player, id = this.sheetId;
     if (this.fitFacing !== this.facing) {
       this.fitFacing = this.facing;
-      Sprites.fitPlayer(pl, id, this.facing < 0);
+      Sprites.fitPlayer(pl, id, this.facing < 0, this.formGrow());
       pl.setFlipX(this.facing < 0);
     }
     if (time < (this.attackUntil || 0)) return;
@@ -95,7 +113,7 @@ WorldScene.mix(class WorldPlayer {
     else if (!onGround) a = pl.body.velocity.y < 0 ? 'jump' : 'fall';
     else if (Math.abs(pl.body.velocity.x) > 10) a = 'run';
     else a = 'idle';
-    pl.play(`ch_${id}_${a}`, true);
+    pl.play(this.charAnim(a), true);
   }
 
   // Hoạt ảnh đánh: đòn liên hoàn 1 → 2 → 3, tốc độ khớp với thời gian hồi đòn
@@ -114,7 +132,7 @@ WorldScene.mix(class WorldPlayer {
     const [n, base] = c.anims[a];
     const rate = Math.max(base, n / Math.max(0.18, dur / 1000));
     this.attackUntil = time + n / rate * 1000;
-    this.player.play({ key: `ch_${id}_${a}`, frameRate: rate }, false);
+    this.player.play({ key: this.charAnim(a), frameRate: rate }, false);
   }
 
   updateWeaponLook() {
@@ -172,7 +190,8 @@ WorldScene.mix(class WorldPlayer {
     // Buff "Ân Sủng" (Trị Liệu Sư): hồi 3% máu mỗi nhịp (2 giây), 5% khi skill cấp 10
     const grace = this.buffOn('grace');
     if (grace) App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * (grace.regen || 0.03));
-    App.mp = Math.min(App.stats.maxMp, App.mp + App.stats.maxMp * 0.02 * mul * (this.hasPassive('phap_su') ? 2 : 1));
+    // Đang biến hình: năng lượng không tự hồi (chỉ hồi bằng bình)
+    if (!App.form) App.mp = Math.min(App.stats.maxMp, App.mp + App.stats.maxMp * 0.02 * mul * (this.hasPassive('phap_su') ? 2 : 1));
   }
 
   // ------------------------------------------------------------------ Thể lực (tách riêng với năng lượng)
@@ -199,39 +218,146 @@ WorldScene.mix(class WorldPlayer {
   }
   skillStaminaCost(sk) { return sk.ult ? GameData.STAMINA.ult : GameData.STAMINA.skill; }
 
+  // ------------------------------------------------------------------ Biến hình (thức tỉnh)
+  // Bật/tắt bằng phím T hoặc nút ⚡. Đang biến hình: chỉ số nhân theo ấn, hào quang lửa, mỗi giây tốn `drain` năng lượng
+  // và thể lực (ấn 1: 1, ấn 2: 2); MP và thể lực không tự hồi. Cạn một trong hai thì tự trở lại dạng thường.
+  toggleForm(time) {
+    if (App.form) { this.endForm(); return; }
+    const aw = GameData.awakenOf(App.player);
+    if (!aw) { UI.log('Chưa thức tỉnh. Đạt cấp 25 rồi gặp Hội trưởng Khải để nhận Ấn thứ nhất.', '#bdbdbd'); return; }
+    if (time < (this.formReadyAt || 0)) return;
+    const need = aw.drain * 3;   // phải đủ ít nhất 3 giây biến hình
+    if (App.mp < need || App.sta < need || App.staLocked) { UI.log(`Không đủ năng lượng / thể lực để biến hình (cần ${need}).`, '#ffca28'); return; }
+    const hpRatio = App.hp / App.stats.maxHp;
+    App.form = true;
+    App.recalcStats();
+    App.hp = Math.round(App.stats.maxHp * hpRatio);   // giữ nguyên % máu khi máu tối đa tăng
+    this.formDrainAcc = 0;
+    this.formReadyAt = time + 1500;
+    this.awakenFx(aw.tier);
+    this.formStart();
+    UI.banner(aw.tier >= 2 ? 'BIẾN HÌNH · ẤN THỨ HAI' : 'BIẾN HÌNH · ẤN THỨ NHẤT', 1400);
+    UI.refresh();
+  }
+  endForm(reason) {
+    if (!App.form) return;
+    const hpRatio = App.hp / App.stats.maxHp;
+    App.form = false;
+    App.recalcStats();
+    App.hp = Math.max(1, Math.round(App.stats.maxHp * hpRatio));
+    this.formReadyAt = this.time.now + 1500;
+    this.formStop();
+    if (reason) UI.log(reason, '#ffca28');
+    if (this.player) this.floatText(this.player.x, this.player.y - 52, 'Trở lại dạng thường', '#e0e0e0', 12);
+    UI.refresh();
+  }
+  formTick(time, delta) {
+    if (!App.form) return;
+    const aw = GameData.awakenOf(App.player);
+    if (!aw || this.dead) { this.endForm(); return; }
+    // Trừ theo từng giây tròn (hiện số trên thanh đổi đều 1, 2 mỗi giây)
+    this.formDrainAcc = (this.formDrainAcc || 0) + delta;
+    while (this.formDrainAcc >= 1000) {
+      this.formDrainAcc -= 1000;
+      App.mp = Math.max(0, App.mp - aw.drain);
+      App.sta = Math.max(0, App.sta - aw.drain);
+    }
+    if (App.mp <= 0) this.endForm('Hết năng lượng, biến hình kết thúc.');
+    else if (App.sta <= 0) { App.staLocked = true; this.endForm('Hết thể lực, biến hình kết thúc.'); }
+  }
+
   // Hồi thể lực từ từ (gọi mỗi khung hình)
   staminaTick(time, delta) {
     const S = GameData.STAMINA, max = App.stats.maxSta;
     if (App.sta == null) App.sta = max;
-    if (App.sta < max && !this.dead) {
+    if (App.sta < max && !this.dead && !App.form) {
       const rate = time - (this.staUsedAt || 0) > S.delay ? 1 : S.activeMul;
       App.sta = Math.min(max, App.sta + S.regen * rate * delta / 1000);
     }
     if (App.staLocked && App.sta >= max * S.unlock) App.staLocked = false;
   }
 
+  // Hiệu ứng biến hình: lưỡi lửa bốc lên quanh người (hạt), quầng sáng sau lưng (vẽ trong drawAura)
+  formStart() {
+    const aw = GameData.awakenOf(App.player);
+    if (!aw || !this.player) return;
+    this.formStop();
+    const low = Quality.low, t2 = aw.tier >= 2;
+    this.formBack = this.add.graphics().setDepth(3.5);   // sau lưng nhân vật (nhân vật ở độ sâu 4)
+    const zone = { type: 'random', source: new Phaser.Geom.Rectangle(-17, -26, 34, 58) };
+    const flame = (depth, freq, scale, alpha) => this.add.particles(0, 0, 'fx_flame', {
+      emitZone: zone, speedY: { min: -150, max: -250 }, speedX: { min: -18, max: 18 },
+      scaleX: { start: scale, end: 0.15 }, scaleY: { start: scale * 1.3, end: 0.3 },
+      alpha: { start: alpha, end: 0 }, lifespan: { min: 320, max: 560 }, frequency: freq,
+      tint: [aw.aura, aw.aura2, aw.aura], blendMode: 'ADD', maxParticles: 90,
+    }).setDepth(depth).startFollow(this.player);
+    this.formEms = [flame(3.6, low ? 40 : (t2 ? 9 : 13), t2 ? 1.6 : 1.35, 0.9)];
+    if (!low) this.formEms.push(flame(4.2, t2 ? 55 : 80, 0.7, 0.28));   // vài lưỡi lửa mỏng phía trước người (nhạt, không che mặt)
+    // Đổi hình dạng: bộ hình tô màu ấn + to hơn
+    this.applyFormLook();
+    // Hào quang bám theo ĐƯỜNG VIỀN cơ thể trong từng khung hoạt ảnh (WebGL), nhấp nháy như lửa cháy
+    const pl = this.player;
+    if (this.webgl && pl.preFX) {
+      try {
+        pl.preFX.setPadding(18);
+        this.formGlow = pl.preFX.addGlow(aw.aura, t2 ? 7 : 5, 0, false, 0.1, t2 ? 16 : 12);   // chỉ sáng viền ngoài, không phủ vào người
+        this.formGlowTw = this.tweens.add({ targets: this.formGlow, outerStrength: t2 ? 11 : 8, duration: 160, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+      } catch { this.formGlow = null; }
+    }
+  }
+  formStop() {
+    for (const em of this.formEms || []) em.destroy();
+    this.formEms = [];
+    if (this.formBack) { this.formBack.destroy(); this.formBack = null; }
+    if (this.formGlowTw) { this.formGlowTw.remove(); this.formGlowTw = null; }
+    if (this.formGlow && this.player && this.player.preFX) { try { this.player.preFX.remove(this.formGlow); } catch { /* bỏ qua */ } }
+    this.formGlow = null;
+    if (!App.form && this.formTier) this.applyFormLook();   // trở về bộ hình thường, kích thước thường
+  }
+
   drawAura(time) {
     const g = this.aura, pl = this.player;
     g.clear();
+    if (App.form && !this.formBack) this.formStart();   // vừa đổi bản đồ khi đang biến hình
+    if (this.formBack) {
+      const aw = GameData.awakenOf(App.player);
+      const b = this.formBack, col = aw ? aw.aura : 0xffd54f, col2 = aw ? aw.aura2 : 0xfff3b0;
+      const pulse = 0.75 + Math.sin(time / 70) * 0.25;
+      b.clear();
+      // Viền ngọn lửa răng cưa bùng quanh người (các lưỡi lửa nhọn phía trên, dao động liên tục)
+      const tier2 = aw && aw.tier >= 2;
+      for (let layer = 0; layer < 2; layer++) {
+        const pts = [], n = 22, R = (tier2 ? 46 : 40) - layer * 12;
+        for (let k = 0; k < n; k++) {
+          const a = (k / n) * Math.PI * 2;                       // 0 = bên phải, PI/2 = dưới chân
+          const up = Math.max(0, -Math.sin(a));                  // 1 ở đỉnh đầu, 0 ở hai bên / dưới
+          const tongue = k % 2 ? 0.55 : 1 + 0.35 * Math.sin(time / 45 + k * 1.7 + layer);
+          const r = R * (0.8 + 0.25 * tongue) * (1 + up * (tier2 ? 0.9 : 0.7) * tongue);
+          pts.push({ x: pl.x + Math.cos(a) * r * 0.62, y: pl.y + 6 + Math.sin(a) * r * (Math.sin(a) > 0 ? 0.55 : 1) });
+        }
+        b.fillStyle(layer ? col2 : col, (layer ? 0.22 : 0.16) * pulse).fillPoints(pts, true);
+      }
+      // Quầng sáng mềm sau lưng
+      for (let i = 0; i < 3; i++) {
+        const w = 60 - i * 14 + Math.sin(time / 55 + i) * 4, h = 92 - i * 18 + Math.sin(time / 47 + i * 2) * 6;
+        b.fillStyle(i < 1 ? col : col2, (0.16 + i * 0.07) * pulse).fillEllipse(pl.x, pl.y - 4 - i * 3, w, h);
+      }
+      // Ấn 2: tia điện chớp quanh người
+      if (aw && aw.tier >= 2 && Math.floor(time / 90) % 3 === 0) {
+        g.lineStyle(2, 0xf3e6ff, 0.9);
+        for (let k = 0; k < 2; k++) {
+          let x = pl.x + Phaser.Math.Between(-26, 26), y = pl.y - Phaser.Math.Between(20, 40);
+          g.beginPath(); g.moveTo(x, y);
+          for (let s = 0; s < 4; s++) { x += Phaser.Math.Between(-10, 10); y += Phaser.Math.Between(9, 16); g.lineTo(x, y); }
+          g.strokePath();
+        }
+      }
+    }
     const guard = this.buffOn('guard', time), shield = this.buffOn('manashield', time);
     if (guard) { g.lineStyle(3, 0xffb36b, 0.6 + Math.sin(time / 120) * 0.2).strokeEllipse(pl.x, pl.y + 2, 54, 70); }
     if (shield) { g.fillStyle(0x8fb4ff, 0.12).fillCircle(pl.x, pl.y, 38); g.lineStyle(2, 0xbfd2ff, 0.7).strokeCircle(pl.x, pl.y, 38); }
     // Buff awaken tạm thời (skill vn1 Toàn Năng)
     if (this.buffOn('awaken', time)) { g.lineStyle(2, 0xffd54f, 0.5 + Math.sin(time / 90) * 0.3).strokeEllipse(pl.x, pl.y + 28, 60, 14); }
-    // Vầng quang vĩnh viễn theo bậc thức tỉnh
-    const tier = App.player.awakenTier || 0;
-    if (tier >= 1) {
-      const aw = GameData.awakenOf(App.player);
-      const col = aw ? aw.aura : 0xffd54f;
-      const pulse = 0.45 + Math.sin(time / 110) * 0.2;
-      // Đường sáng dưới chân + ring ngoài
-      g.fillStyle(col, 0.18 * pulse).fillEllipse(pl.x, pl.y + 28, 80, 22);
-      g.lineStyle(tier >= 2 ? 3 : 2, col, pulse).strokeEllipse(pl.x, pl.y + 28, tier >= 2 ? 90 : 68, tier >= 2 ? 24 : 16);
-      if (tier >= 2) {
-        // ấn 2: thêm ring thứ hai xoay đối
-        g.lineStyle(1, col, pulse * 0.5).strokeEllipse(pl.x, pl.y, 50, 70);
-      }
-    }
   }
 
   levelUpFx() {

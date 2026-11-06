@@ -92,6 +92,15 @@ const Juice = {
     mk('fx_dust', 12, 12, (g) => { for (let i = 6; i > 0; i--) { g.fillStyle(0xffffff, 0.12); g.fillCircle(6, 6, i); } });
     mk('fx_rain', 2, 16, (g) => { g.fillStyle(0xbfe3ff, 0.8); g.fillRect(0, 0, 2, 16); });
     mk('fx_fog', 256, 96, (g) => { for (let i = 12; i > 0; i--) { g.fillStyle(0xffffff, 0.035); g.fillEllipse(128, 48, 256 * i / 12, 96 * i / 12); } });
+    // Lưỡi lửa hào quang biến hình: giọt dài, mềm, nhọn đầu trên (tô màu bằng tint)
+    mk('fx_flame', 16, 30, (g) => {
+      for (let i = 7; i > 0; i--) {
+        const k = i / 7;
+        g.fillStyle(0xffffff, 0.09 + (1 - k) * 0.08);
+        g.fillEllipse(8, 30 - 11 * k, 14 * k + 2, 22 * k + 6);
+        g.fillTriangle(8 - 5 * k, 30 - 14 * k, 8 + 5 * k, 30 - 14 * k, 8, 2 + (1 - k) * 8);
+      }
+    });
     mk('fx_ember', 6, 6, (g) => { g.fillStyle(0xff7a6e, 0.4); g.fillCircle(3, 3, 3); g.fillStyle(0xffd0c4, 1); g.fillCircle(3, 3, 1.4); });
   },
 

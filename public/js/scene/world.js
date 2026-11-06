@@ -47,6 +47,7 @@ class WorldScene extends Phaser.Scene {
     this.invulnUntil = this.time.now + 2000;   // bất tử 2 giây khi vừa vào bản đồ
     this.portalReady = this.time.now + 800;
     this.gateArmed = false;   // vừa tới nơi (đứng ngay cổng): phải bước ra khỏi cổng rồi mới mở danh sách
+    this.formBack = null; this.formEms = []; this.formGlow = null; this.formGlowTw = null; this.formTier = 0;   // hiệu ứng biến hình của cảnh cũ đã bị hủy; drawAura tự dựng lại nếu còn biến hình
     this.lastGroundAt = 0;
     this.jumpBufferedAt = -1000;
     this.lastHurt = 0;
@@ -114,6 +115,7 @@ class WorldScene extends Phaser.Scene {
     this.bgFar.tilePositionY = 0;
 
     this.staminaTick(time, delta);
+    this.formTick(time, delta);
     if (!this.dead) this.updatePlayer(time, delta);
     for (const m of this.monsters) if (m.alive && this.mobActive(m)) this.updateMonster(m, time);
     this.updateMobShadows();
@@ -190,6 +192,7 @@ class WorldScene extends Phaser.Scene {
       if (this.key('KeyJ') || App.touch.attack) this.basicAttack(time);
       for (let i = 0; i < 5; i++) if (this.pressed('Digit' + (i + 1)) || this.tpressed('s' + i)) this.useSkill(i, time);
       if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOT, time);
+      if (this.pressed('KeyT') || this.tpressed('form')) this.toggleForm(time);
       if (this.pressed('KeyQ') || this.tpressed('hp')) this.usePotion('hp');
       if (this.pressed('KeyE') || this.tpressed('mp')) this.usePotion('mp');
       if (this.pressed('KeyF') || this.pressed('Enter') || this.tpressed('interact')) this.interact();
@@ -206,13 +209,13 @@ class WorldScene extends Phaser.Scene {
     }
     if (time < this.invulnUntil) pl.setAlpha(Math.floor(time / 80) % 2 ? 0.4 : 1); else pl.setAlpha(1);
     const bt = this.buffTotals(time);
-    // Tint: thức tỉnh vĩnh viễn (awakenTier) ưu tiên; buff tạm thời dùng vàng nhạt;
+    // Tint: đang biến hình thì theo màu ấn thức tỉnh (ưu tiên); buff tạm thời dùng vàng nhạt;
     // khi không có gì thì dùng tint cố định của class (ví dụ tri_lieu_su xanh lá)
-    const tier = App.player.awakenTier || 0;
+    const formAw = App.form ? GameData.awakenOf(App.player) : null;
     const classSheet = Sprites.CHARS[this.sheetId];
     const classTint = classSheet && classSheet.tint;
-    if (tier >= 2) pl.setTint(0xff94c4);
-    else if (tier === 1) pl.setTint(0xffe082);
+    if (formAw && this.formTier) pl.clearTint();   // đã có bộ hình biến hình tô sẵn màu, không phủ thêm
+    else if (formAw) pl.setTint(formAw.tint);      // nhân vật vẽ bằng code (chưa có bộ hình): chỉ đổi màu
     else if (bt.atk || bt.crit || bt.speed) pl.setTint(0xfff3b0);
     else if (classTint) pl.setTint(classTint);
     else pl.clearTint();

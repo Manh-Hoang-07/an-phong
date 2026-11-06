@@ -46,7 +46,7 @@
   }
 
   // Tính chỉ số cuối cùng của nhân vật từ cấp, điểm tiềm năng, trang bị và class
-  function calcStats(player) {
+  function calcStats(player, opts = {}) {
     const lv = player.level;
     const p = player.points;
     const eq = { hp: 0, mp: 0, atk: 0, def: 0, crit: 0, lifesteal: 0, cdr: 0, speed: 0, boss: 0, goldfind: 0, expfind: 0 };
@@ -84,8 +84,8 @@
     // bonus speed nhân (sat_thu: speed: 1.15 — nhân trực tiếp vào base speed)
     const scSpeed = sc && sc.bonus && sc.bonus.speed ? sc.bonus.speed : 1;
     hp *= perkMul.hp; mp *= perkMul.mp; atk *= perkMul.atk; def *= perkMul.def;
-    // Thức tỉnh (biến hình): nhân thêm theo bậc awakenTier
-    const aw = awakenOf(player);
+    // Thức tỉnh: chỉ nhân thêm khi ĐANG BIẾN HÌNH (opts.form, do client bật/tắt). Server tính không có opts → chỉ số thường.
+    const aw = opts.form ? awakenOf(player) : null;
     if (aw && aw.mul) {
       const m = aw.mul;
       if (m.hp) hp *= m.hp;

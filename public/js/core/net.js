@@ -112,9 +112,18 @@ const Net = (() => {
   };
 })();
 
+// Chỉ số hiện tại: đang biến hình (App.form) thì nhân thêm theo ấn thức tỉnh
+App.form = false;
+App.recalcStats = function () {
+  if (App.form && !(App.player.awakenTier > 0)) App.form = false;
+  App.stats = GameData.calcStats(App.player, { form: App.form });
+  App.hp = Math.min(App.hp, App.stats.maxHp);
+  App.mp = Math.min(App.mp, App.stats.maxMp);
+};
+
 App.setPlayer = function (p) {
   App.player = p;
-  App.stats = GameData.calcStats(p);
+  App.stats = GameData.calcStats(p, { form: App.form });
   App.hp = Math.min(App.hp, App.stats.maxHp);
   App.mp = Math.min(App.mp, App.stats.maxMp);
   if (App.sta != null) App.sta = Math.min(App.sta, App.stats.maxSta);

@@ -79,7 +79,8 @@
     try { await Promise.race([document.fonts.load('16px "Be Vietnam Pro"', 'Thức Tỉnh'), new Promise(r => setTimeout(r, 600))]); } catch { /* bỏ qua */ }
     App.hp = 0; App.mp = 0;
     App.player = player;
-    App.stats = GameData.calcStats(player);
+    App.form = false;
+    App.stats = GameData.calcStats(player, { form: false });
     App.hp = player.hp ?? App.stats.maxHp;
     App.mp = player.mp ?? App.stats.maxMp;
     App.sta = App.stats.maxSta; App.staLocked = false;   // thể lực luôn đầy khi vào game

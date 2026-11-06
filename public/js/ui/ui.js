@@ -82,6 +82,13 @@ const UI = (() => {
     badge.classList.toggle('hidden', !pts);
     const tn = p.school === 'toan_nang';
     document.querySelectorAll('.sk-extra, .tb-s4').forEach(el => el.classList.toggle('hidden', !tn));
+    // Nút biến hình: chỉ hiện khi đã có ấn thức tỉnh; sáng lên khi đang biến hình
+    const awk = G.awakenOf(p);
+    document.querySelectorAll('.sk-form, .tb-form').forEach(el => {
+      el.classList.toggle('hidden', !awk);
+      el.classList.toggle('active', !!App.form);
+      if (awk) el.style.setProperty('--form', '#' + awk.aura.toString(16).padStart(6, '0'));
+    });
 
     // thanh kỹ năng
     document.querySelectorAll('#skillbar .sk').forEach(el => {
@@ -423,6 +430,7 @@ const UI = (() => {
       if (!sc || App.panelOpen) return;
       if (k === 'atk') sc.basicAttack(sc.time.now);
       else if (k === 'hp' || k === 'mp') sc.usePotion(k);
+      else if (k === 'form') sc.toggleForm(sc.time.now);
       else sc.useSkill(Number(k), sc.time.now);
     }));
   }

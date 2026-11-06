@@ -51,9 +51,11 @@
   // Mỗi bậc nhân chỉ số (mul), đổi màu (tint) và vầng quang (aura) nhân vật.
   // awakenTier: 0 = chưa biến hình, 1 = Ấn 1, 2 = Ấn 2.
   const AWAKENS = [
-    { tier: 1, level: 25, npc: 'lao_su', name: 'Thức tỉnh · Ấn thứ nhất',
-      mul: { hp: 1.3, mp: 1.2, atk: 1.3, def: 1.15 }, tint: 0xffe082, aura: 0xffd54f,
-      desc: 'Bứt phá giới hạn class. Máu +30%, năng lượng +20%, tấn công +30%, phòng thủ +15%. Tóc ánh vàng, vầng quang kim.',
+    // Thức tỉnh = kỹ năng BIẾN HÌNH bật/tắt (phím T / nút ⚡). Chỉ số `mul` chỉ có tác dụng khi đang biến hình.
+    // drain: mỗi giây biến hình tốn bấy nhiêu năng lượng (MP) và thể lực; cạn một trong hai thì tự trở lại dạng thường.
+    { tier: 1, level: 25, npc: 'lao_su', name: 'Thức tỉnh · Ấn thứ nhất', drain: 1,
+      mul: { hp: 1.3, mp: 1.2, atk: 1.3, def: 1.15 }, tint: 0xffe082, aura: 0xffd54f, aura2: 0xfff3b0,
+      desc: 'Mở khóa BIẾN HÌNH (phím T / nút ⚡): máu +30%, năng lượng +20%, tấn công +30%, phòng thủ +15%, hào quang vàng rực. Tốn 1 năng lượng và 1 thể lực mỗi giây.',
       start: [
         'Hội trưởng Khải: Cậu đã đi được xa rồi. Nhưng sức mạnh class chỉ là khởi đầu.',
         'Hội trưởng Khải: Trong Cổng Vĩnh Hằng có năng lượng gốc. Để dấu ấn đầu tiên in lên cậu, cậu cần đạt cấp 25.',
@@ -63,9 +65,9 @@
         '[Hệ thống] Dấu ấn thức tỉnh thứ nhất đã kích hoạt. Cơ thể vượt qua giới hạn cũ.',
         'Hội trưởng Khải: Nhìn cậu đi... Đúng là người được Hệ thống chọn.',
       ] },
-    { tier: 2, level: 45, npc: 'lu_khach', name: 'Thức tỉnh · Ấn thứ hai',
-      mul: { hp: 1.6, mp: 1.5, atk: 1.6, def: 1.3 }, tint: 0xff80ab, aura: 0xff6ec7,
-      desc: 'Vượt qua cả Hệ thống. Máu +60%, năng lượng +50%, tấn công +60%, phòng thủ +30%. Hóa hình thái dị giới, vầng quang hồng.',
+    { tier: 2, level: 45, npc: 'lu_khach', name: 'Thức tỉnh · Ấn thứ hai', drain: 2,
+      mul: { hp: 1.6, mp: 1.5, atk: 1.6, def: 1.3 }, tint: 0xff80ab, aura: 0xff6ec7, aura2: 0xffd6f0,
+      desc: 'Nâng BIẾN HÌNH lên dạng dị giới: máu +60%, năng lượng +50%, tấn công +60%, phòng thủ +30%, hào quang hồng tím kèm tia điện. Tốn 2 năng lượng và 2 thể lực mỗi giây.',
       start: [
         'Lữ khách: Cậu đã thấy bản chất của Hệ thống rồi. Nó không cho đi sức mạnh — nó mượn.',
         'Lữ khách: Dấu ấn thứ hai không lấy từ Hệ thống, mà từ chính ký ức của những người chơi đã mất tích.',

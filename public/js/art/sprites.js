@@ -127,16 +127,64 @@ const Sprites = (() => {
   const mobOf = (look) => LOOK[look];
   const hasMob = (scene, look) => !!LOOK[look] && scene.textures.exists(`mb_${LOOK[look]}_idle`);
 
-  // Đặt gốc tọa độ và khung va chạm sao cho: x là tâm thân, chân ở y+30, khung va chạm 18x46 như cũ
-  function fitPlayer(sprite, id, flip) {
+  // Đặt gốc tọa độ và khung va chạm sao cho: x là tâm thân, chân ở y+30, khung va chạm 18x46 như cũ.
+  // grow: phóng to thêm khi biến hình (khung va chạm trong thế giới game giữ nguyên, chân vẫn chạm đất)
+  function fitPlayer(sprite, id, flip, grow = 1) {
     const c = CHARS[id];
+    const s = c.s * grow;
     const cx = flip ? c.fw - c.cx : c.cx;
-    sprite.setScale(c.s);
-    sprite.setOrigin(cx / c.fw, (c.fy - 30 / c.s) / c.fh);
-    sprite.body.setSize(18 / c.s, 46 / c.s, false);
-    sprite.body.setOffset(cx - 9 / c.s, c.fy - 46 / c.s);
+    sprite.setScale(s);
+    sprite.setOrigin(cx / c.fw, (c.fy - 30 / s) / c.fh);
+    sprite.body.setSize(18 / s, 46 / s, false);
+    sprite.body.setOffset(cx - 9 / s, c.fy - 46 / s);
     // Tint cố định theo class (ví dụ tri_lieu_su tái dụng sheet toan_nang với màu xanh lá)
-    if (c.tint) sprite.setTint(c.tint); else sprite.clearTint();
+    if (c.tint && grow === 1) sprite.setTint(c.tint); else sprite.clearTint();
+  }
+
+  // ---------------------------------------------------------------- Bộ hình biến hình (thức tỉnh)
+  // Tạo từ chính bộ hình của class: tô lại từng điểm ảnh sang màu ấn (vàng / hồng tím), giữ khối sáng tối,
+  // chỗ sáng gần trắng như phát quang. Tạo một lần cho mỗi class + ấn, dùng lại cả phiên chơi.
+  // Khóa: chf<ấn>_<class>_<hoạt ảnh> (cùng số khung, tốc độ với ch_...).
+  const FORM_RGB = { 1: [255, 206, 84], 2: [255, 112, 214] };
+  const formKey = (id, tier, a) => `chf${tier}_${id}_${a}`;
+  function makeFormSheets(scene, id, tier) {
+    const c = CHARS[id];
+    if (!c) return false;
+    const [cr, cg, cb] = FORM_RGB[tier] || FORM_RGB[1];
+    const loops = new Set(['idle', 'run', 'fall']);
+    const { NEAREST, LINEAR } = Phaser.Textures.FilterMode;
+    for (const [a, [n, rate]] of Object.entries(c.anims)) {
+      const src = `ch_${id}_${a}`, key = formKey(id, tier, a);
+      if (!scene.textures.exists(src)) return false;
+      if (!scene.textures.exists(key)) {
+        const img = scene.textures.get(src).getSourceImage();
+        const cv = document.createElement('canvas');
+        cv.width = img.width; cv.height = img.height;
+        const ctx = cv.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0);
+        const data = ctx.getImageData(0, 0, cv.width, cv.height), d = data.data;
+        for (let i = 0; i < d.length; i += 4) {
+          if (!d[i + 3]) continue;
+          const r = d[i], g = d[i + 1], b = d[i + 2];
+          const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+          // Ánh màu ấn mạnh dần theo độ sáng: chỗ tối (tóc, viền, mắt) gần như giữ nguyên để còn nhận ra nhân vật,
+          // chỗ sáng (da, áo, vũ khí) ánh màu ấn và sáng rực lên
+          const k = 0.25 + 0.45 * lum;
+          const L = lum * 1.25 + 0.08;
+          const glow = Math.max(0, lum - 0.6) * 0.9;
+          d[i] = Math.min(255, r * (1 - k) + cr * L * k + 255 * glow * 0.3);
+          d[i + 1] = Math.min(255, g * (1 - k) + cg * L * k + 255 * glow * 0.3);
+          d[i + 2] = Math.min(255, b * (1 - k) + cb * L * k + 255 * glow * 0.3);
+        }
+        ctx.putImageData(data, 0, 0);
+        scene.textures.addSpriteSheet(key, cv, { frameWidth: c.fw, frameHeight: c.fh });
+        scene.textures.get(key).setFilter(c.s * View.k >= 1.75 ? NEAREST : LINEAR);
+      }
+      if (!scene.anims.exists(key)) {
+        scene.anims.create({ key, frames: scene.anims.generateFrameNumbers(key, { start: 0, end: n - 1 }), frameRate: rate, repeat: loops.has(a) ? -1 : 0 });
+      }
+    }
+    return true;
   }
 
   // walking: quái này đi bộ (def.fly = false). Một số quái đi bộ mượn bộ hình bay (shade → eye): khi đó gốc tọa độ
@@ -157,5 +205,5 @@ const Sprites = (() => {
     if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
   }
 
-  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob };
+  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, makeFormSheets };
 })();
