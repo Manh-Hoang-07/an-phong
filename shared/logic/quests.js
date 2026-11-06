@@ -48,12 +48,48 @@
     return idx >= 0 && player.quest.step > idx;
   }
 
+  // ---------------------------------------------------------------- Hướng dẫn nhiệm vụ: nhận ở đâu, làm ở đâu, trả ở đâu
+  const mapName = (id) => (MAPS[id] ? MAPS[id].name : id);
+  // Các bản đồ có NPC này ở thời điểm hiện tại của cốt truyện (NPC có thể đổi chỗ theo chương)
+  function npcMaps(player, npcId) { return Object.keys(MAPS).filter(m => npcHere(player, m, npcId)); }
+  function mobMaps(monId) { return Object.keys(MAPS).filter(m => Object.values(MAPS[m].spawns || {}).includes(monId)); }
+  // "Vy (Tân Đô – Khu Hiệp Hội)"
+  function npcAt(player, npcId) {
+    const maps = npcMaps(player, npcId);
+    return `${NPCS[npcId].name}${maps.length ? ' · ' + maps.map(mapName).join(' / ') : ''}`;
+  }
+  // q: nhiệm vụ chính hoặc phụ tuyến; side: true nếu là phụ tuyến
+  function questGuide(player, q, side) {
+    const where = [];
+    const o = q.obj || {};
+    const tagOk = (d) => side ? (d[3] && (q.id === d[3] || q.id.startsWith(d[3] + '-'))) : d[2] === q.id;
+    for (const m in o.kill || {}) {
+      const maps = mobMaps(m);
+      where.push(`Hạ ${MONSTERS[m].name}${maps.length ? ' ở ' + maps.map(mapName).join(', ') : ''}`);
+    }
+    for (const it in o.collect || {}) {
+      // Ưu tiên quái rơi món này RIÊNG cho nhiệm vụ; không có thì mới kể quái rơi ngẫu nhiên
+      const src = (pick) => Object.keys(MONSTERS).filter(id => (MONSTERS[id].drops || []).some(d => d[0] === it && pick(d)));
+      let mons = src(tagOk);
+      if (!mons.length) mons = src(d => !d[2] && !d[3]);
+      const maps = [...new Set(mons.flatMap(mobMaps))];
+      where.push(`${ITEMS[it].name} rơi từ ${mons.map(id => MONSTERS[id].name).join(', ') || 'quái'}${maps.length ? ' ở ' + maps.map(mapName).join(', ') : ''}`);
+    }
+    for (const n of o.visit || []) where.push(`Gặp ${npcAt(player, n)}`);
+    if (o.level) where.push(`Lên cấp ${o.level} (hạ quái ở bất kỳ đâu)`);
+    if (o.school) where.push(`Chọn class ở ${npcAt(player, 'lao_su')}`);
+    return { giver: npcAt(player, q.npc), where, turnIn: npcAt(player, q.npc) };
+  }
+
   // ---------------------------------------------------------------- Cổng dịch chuyển
   // Mỗi bản đồ chỉ có MỘT cổng, đặt ở chỗ ký hiệu cổng đầu tiên trong G.MAPS[id].portals (file bản đồ giữ nguyên).
   // Đi vào cổng: chọn một trong các điểm đến của bản đồ đó. Tới nơi thì xuất hiện ở cổng của bản đồ mới.
+  // Cổng luôn ở đầu hoặc cuối bản đồ: dùng MAPS[id].gate nếu có, không thì ký hiệu cổng đầu tiên
   function gateOf(mapId) {
     const m = G.MAPS[mapId];
-    return (m && Object.keys(m.portals || {})[0]) || null;
+    if (!m) return null;
+    if (m.gate && m.portals && m.portals[m.gate]) return m.gate;
+    return Object.keys(m.portals || {})[0] || null;
   }
   // Điểm đến có mở chưa: { ok, reason }
   function portalStatus(player, mapId, ch) {
@@ -104,5 +140,5 @@
     return sideLines(player, q).every(l => l[1]);
   }
 
-  Object.assign(G, { gateOf, portalStatus, gateDestinations, npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
+  Object.assign(G, { questGuide, npcAt, gateOf, portalStatus, gateDestinations, npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

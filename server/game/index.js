@@ -35,6 +35,8 @@ async function handle(userId, player, action) {
 // Sửa dữ liệu cũ khi game thêm trường mới
 function migrate(p) {
   const legacySkills = p.skills === undefined;
+  // Nhân vật cũ (trước khi hạng phải qua đánh giá): giữ hạng đang có theo cấp, không bị tụt về E
+  if (p.rank === undefined && p.level) p.rank = G.rankOf(p.level);
   const base = G.newPlayer(p.name);
   for (const k in base) if (p[k] === undefined) p[k] = base[k];
   // Đổi tên từ phiên bản ninja cũ

@@ -19,6 +19,8 @@ function gainExp(p, amount, ev) {
     ev.push({ t: 'msg', text: `[Hệ thống] Thăng cấp! Đạt cấp ${p.level}: +${G.STAT_POINTS_PER_LEVEL} điểm tiềm năng, +1 điểm kỹ năng.`, color: '#ffd54f' });
     const newSkills = G.availableSkills(p).filter(id => G.SKILLS[id].level === p.level);
     for (const id of newSkills) ev.push({ t: 'msg', text: `Có thể học kỹ năng mới: ${G.SKILLS[id].name} (phím K).`, color: '#4fc3f7' });
+    const nr = G.nextRank(p);
+    if (nr && nr.level === p.level) ev.push({ t: 'msg', text: `[Hiệp Hội] Bạn đã đủ cấp để đánh giá hạng ${nr.rank}. Gặp Hội trưởng Khải ở Hiệp Hội nếu muốn được đánh giá.`, color: '#ffb74d' });
   }
   if (p.level >= G.MAX_LEVEL) p.exp = 0;
 }

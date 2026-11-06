@@ -129,7 +129,7 @@
       bag: [], storage: [], bagPlus: 0,
       skillSlots: Array(SKILL_SLOTS).fill(null),
       skills: {}, skillPoints: 0,
-      unlocks: {}, redeemed: [], perks: [], boosts: {},
+      unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
       quest: { step: 0, state: 'none', progress: {}, ver: QUEST_VERSION },
       side: { active: {}, done: [] },
       daily: null, weekly: null, shopDiscount: 0,

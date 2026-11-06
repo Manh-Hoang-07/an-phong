@@ -24,6 +24,12 @@
       const canAw = p.level >= awNext.level;
       opts.push(`<button class="btn ${canAw ? 'primary' : ''}" data-act="awaken_confirm" data-tier="${awNext.tier}" ${canAw ? '' : 'disabled'}>⚡ ${esc(awNext.name)}${canAw ? '' : ` (cần cấp ${awNext.level})`}</button>`);
     }
+    // Đánh giá hạng thợ săn (không tự lên theo cấp)
+    const nr = G.nextRank(p);
+    if (id === 'lao_su' && nr) {
+      const can = p.level >= nr.level;
+      opts.push(`<button class="btn ${can ? 'primary' : ''}" data-act="rank_eval" ${can ? '' : 'disabled'}>📋 Đánh giá hạng: ${G.playerRank(p)} → ${nr.rank}${can ? '' : ` (cần cấp ${nr.level})`}</button>`);
+    }
     if (id === 'lao_su' && p.school && Object.keys(p.skills || {}).length) {
       opts.push(`<button class="btn" data-act="reset_skills">♻️ Tẩy điểm kỹ năng (${fmt(100 * p.level)} xu)</button>`);
     }

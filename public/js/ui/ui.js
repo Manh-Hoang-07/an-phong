@@ -67,8 +67,8 @@ const UI = (() => {
     $('h-name').textContent = p.name;
     $('h-level').textContent = 'Cấp ' + p.level;
     const sc = p.school && G.SCHOOLS[p.school];
-    $('h-school').textContent = (sc ? sc.name : 'Chưa thức tỉnh') + ' · Hạng ' + G.rankOf(p.level);
-    $('h-rank').textContent = G.rankOf(p.level);
+    $('h-school').textContent = (sc ? sc.name : 'Chưa thức tỉnh') + ' · Hạng ' + G.playerRank(p);
+    $('h-rank').textContent = G.playerRank(p);
     $('h-ava').textContent = sc ? sc.icon : '👤';
     document.documentElement.style.setProperty('--accent', sc ? '#' + sc.color.toString(16).padStart(6, '0') : '#3fd0ff');
     $('h-gold').textContent = fmt(p.gold) + ' xu';
@@ -221,10 +221,10 @@ const UI = (() => {
     const q = G.QUESTS[p.quest.step];
     const el = $('quest-track');
     if (!q) { el.innerHTML = '<b>Cốt truyện</b>Đã hoàn thành tất cả chương.' + sideTrack() + dailyTrack(); return; }
-    if (p.quest.state === 'none') { el.innerHTML = `<b>${esc(q.name)}</b>Gặp ${esc(G.NPCS[q.npc].name)} để nhận nhiệm vụ.` + sideTrack() + dailyTrack(); return; }
+    if (p.quest.state === 'none') { el.innerHTML = `<b>${esc(q.name)}</b>📍 Gặp ${esc(G.npcAt(p, q.npc))} để nhận nhiệm vụ.` + sideTrack() + dailyTrack(); return; }
     const lines = questLines(p);
     el.innerHTML = `<b>${esc(q.name)}</b>` + lines.map(([t, ok]) => `<div class="${ok ? 'done' : ''}">${ok ? '✓' : '•'} ${esc(t)}</div>`).join('') +
-      (questReady() ? `<div class="done">→ Gặp ${esc(G.NPCS[q.npc].name)} để trả nhiệm vụ</div>` : '') + sideTrack() + dailyTrack();
+      (questReady() ? `<div class="done">🏁 Về gặp ${esc(G.npcAt(p, q.npc))} để trả nhiệm vụ</div>` : '') + sideTrack() + dailyTrack();
   }
 
   // Phụ tuyến đang làm, hiển thị gọn dưới nhiệm vụ chính
@@ -250,10 +250,11 @@ const UI = (() => {
     for (const q of act) {
       const ready = G.sideReady(p, q.id);
       h += `<div style="margin:6px 0"><b>${ready ? '✔' : '📌'} ${esc(q.name)}</b>` +
+        (lib.guideHtml ? lib.guideHtml(G.questGuide(p, q, true), 'active') : '') +
         G.sideLines(p, q).map(([t, ok]) => `<div class="${ok ? 'okc' : 'muted'}" style="font-size:12px">${ok ? '✓' : '•'} ${esc(t)}</div>`).join('') +
-        (ready ? `<div class="okc" style="font-size:12px">→ Về gặp ${esc(G.NPCS[q.npc].name)} để trả</div>` : '') + '</div>';
+        (ready ? `<div class="okc" style="font-size:12px">🏁 Về gặp ${esc(G.npcAt(p, q.npc))} để trả</div>` : '') + '</div>';
     }
-    for (const q of avail) h += `<div class="muted" style="font-size:12px">• ${esc(q.name)} — gặp ${esc(G.NPCS[q.npc].name)}</div>`;
+    for (const q of avail) h += `<div class="muted" style="font-size:12px">• ${esc(q.name)} — 📍 nhận ở ${esc(G.npcAt(p, q.npc))}</div>`;
     return h;
   }
 

@@ -89,6 +89,18 @@ const actions = {
     setSchool(p, a.school, ev);
   },
 
+  // Đánh giá hạng thợ săn ở Hội trưởng Khải: đủ cấp thì lên đúng MỘT hạng (người chơi tự chọn lúc nào đi đánh giá)
+  rank_eval(p, a, ev) {
+    if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải ở Hiệp Hội để được đánh giá.');
+    const next = G.nextRank(p);
+    if (!next) fail('Bạn đã đạt hạng cao nhất.');
+    if (p.level < next.level) fail(`Cần đạt cấp ${next.level} mới được đánh giá hạng ${next.rank}.`);
+    const from = G.playerRank(p);
+    p.rank = next.rank;
+    ev.push({ t: 'rank', rank: next.rank });
+    ev.push({ t: 'msg', text: `[Hiệp Hội] Đánh giá hoàn tất: thợ săn hạng ${from} → hạng ${next.rank}.`, color: '#ffd54f' });
+  },
+
   // Thức tỉnh (biến hình) bậc kế tiếp: ấn 1 ở Hội trưởng Khải (cấp 25), ấn 2 ở Lữ khách (cấp 45)
   awaken_next(p, a, ev) {
     const aw = G.nextAwaken(p);

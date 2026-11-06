@@ -167,6 +167,11 @@ App.onEvent = function (ev) {
       break;
     }
     case 'unlock': UI.banner('MỞ KHÓA CLASS ĐẶC BIỆT', 2200); break;
+    case 'rank':
+      UI.banner('THỢ SĂN HẠNG ' + ev.rank, 2200);
+      Sound.play('levelup');
+      if (sc && sc.levelUpFx) sc.levelUpFx();
+      break;
     case 'perk': {
       const pk = GameData.PERKS[ev.perk];
       UI.banner(pk ? `NỘI TẠI: ${pk.name.toUpperCase()}` : 'NHẬN NỘI TẠI CỐT TRUYỆN', 2200);

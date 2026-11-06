@@ -47,7 +47,7 @@ class WorldScene extends Phaser.Scene {
     this.invulnUntil = this.time.now + 2000;   // bất tử 2 giây khi vừa vào bản đồ
     this.portalReady = this.time.now + 800;
     this.gateArmed = false;   // vừa tới nơi (đứng ngay cổng): phải bước ra khỏi cổng rồi mới mở danh sách
-    this.formBack = null; this.formEms = []; this.formGlow = null; this.formGlowTw = null; this.formTier = 0;   // hiệu ứng biến hình của cảnh cũ đã bị hủy; drawAura tự dựng lại nếu còn biến hình
+    this.formOn = false; this.formShell = null; this.formEms = []; this.formGlow = null; this.formTier = 0;   // hiệu ứng biến hình của cảnh cũ đã bị hủy; drawAura tự dựng lại nếu còn biến hình
     this.lastGroundAt = 0;
     this.jumpBufferedAt = -1000;
     this.lastHurt = 0;
@@ -76,13 +76,14 @@ class WorldScene extends Phaser.Scene {
     UI.refresh();
 
     this.saveTimer = this.time.addEvent({ delay: 10000, loop: true, callback: () => this.autoSave() });
-    this.regenTimer = this.time.addEvent({ delay: 2000, loop: true, callback: () => this.regen() });
+    this.regenTimer = this.time.addEvent({ delay: 1000, loop: true, callback: () => this.regen() });
     this.aura = this.add.graphics().setDepth(5);
     this.events.once('shutdown', () => this.flushKills());
     Loading.set(1);
     Loading.hide();
     // Tải ngầm các bộ hình còn lại (class khác, quái bản đồ khác) để lúc cần thì đã có sẵn
     this.time.delayedCall(1500, () => this.loadRestAssets());
+    this.time.delayedCall(2500, () => this.prewarmForm());   // đã có ấn thức tỉnh: tạo sẵn hình biến hình
   }
 
   // Tải ngầm NHỎ GIỌT: mỗi lượt 1 ảnh, nghỉ giữa các lượt.

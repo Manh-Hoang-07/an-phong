@@ -147,42 +147,107 @@ const Sprites = (() => {
   // Khóa: chf<ấn>_<class>_<hoạt ảnh> (cùng số khung, tốc độ với ch_...).
   const FORM_RGB = { 1: [255, 206, 84], 2: [255, 112, 214] };
   const formKey = (id, tier, a) => `chf${tier}_${id}_${a}`;
+  const shellKey = (id, tier, a) => `cha${tier}_${id}_${a}`;
+
+  // Lớp màng hào quang: dải sáng ôm sát BÊN NGOÀI đường viền cơ thể (không phủ lên người).
+  // Đo khoảng cách từng điểm ảnh tới thân (biến đổi khoảng cách 2 lượt), rồi tô:
+  //   lòng màng (0 < d < R): mờ nhẹ;  mép ngoài (d ≈ R): sáng rõ, ngả trắng;  trong thân: trong suốt.
+  const SHELL = { 1: { R: 4, rgb: [255, 214, 92] }, 2: { R: 5.5, rgb: [255, 120, 220] } };
+  function shellFrame(src, W, H, out, tier) {
+    const { R, rgb } = SHELL[tier] || SHELL[1];
+    const dist = new Float32Array(W * H);
+    for (let i = 0; i < W * H; i++) dist[i] = src[i * 4 + 3] > 60 ? 0 : 1e6;
+    const D = 1.41;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x; let d = dist[i];
+      if (!d) continue;
+      if (x > 0) d = Math.min(d, dist[i - 1] + 1);
+      if (y > 0) { d = Math.min(d, dist[i - W] + 1); if (x > 0) d = Math.min(d, dist[i - W - 1] + D); if (x < W - 1) d = Math.min(d, dist[i - W + 1] + D); }
+      dist[i] = d;
+    }
+    for (let y = H - 1; y >= 0; y--) for (let x = W - 1; x >= 0; x--) {
+      const i = y * W + x; let d = dist[i];
+      if (!d) continue;
+      if (x < W - 1) d = Math.min(d, dist[i + 1] + 1);
+      if (y < H - 1) { d = Math.min(d, dist[i + W] + 1); if (x < W - 1) d = Math.min(d, dist[i + W + 1] + D); if (x > 0) d = Math.min(d, dist[i + W - 1] + D); }
+      dist[i] = d;
+    }
+    for (let i = 0; i < W * H; i++) {
+      const d = dist[i];
+      if (!d || d > R + 2.5) continue;
+      const rim = Math.exp(-((d - R) * (d - R)) / 1.4);                 // mép ngoài sáng
+      const fill = d < R ? 0.28 * (1 - 0.4 * d / R) : 0;                 // lòng màng mờ
+      const a = Math.min(1, Math.max(fill, rim * 0.95));
+      const w = rim * 0.55;                                              // mép ngả trắng
+      out[i * 4] = rgb[0] + (255 - rgb[0]) * w; out[i * 4 + 1] = rgb[1] + (255 - rgb[1]) * w; out[i * 4 + 2] = rgb[2] + (255 - rgb[2]) * w;
+      out[i * 4 + 3] = a * 255;
+    }
+  }
+  // Tô màu ấn cho một khung: chỗ tối (tóc, viền, mắt) gần như giữ nguyên để còn nhận ra nhân vật,
+  // chỗ sáng (da, áo, vũ khí) ánh màu ấn và sáng rực lên
+  function recolorFrame(d, tier) {
+    const [cr, cg, cb] = FORM_RGB[tier] || FORM_RGB[1];
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+      const k = 0.25 + 0.45 * lum, L = lum * 1.25 + 0.08, glow = Math.max(0, lum - 0.6) * 0.9;
+      d[i] = Math.min(255, r * (1 - k) + cr * L * k + 255 * glow * 0.3);
+      d[i + 1] = Math.min(255, g * (1 - k) + cg * L * k + 255 * glow * 0.3);
+      d[i + 2] = Math.min(255, b * (1 - k) + cb * L * k + 255 * glow * 0.3);
+    }
+  }
+
+  // Việc tạo bộ hình biến hình + lớp màng cho MỘT hoạt ảnh, làm dần: mỗi step() xử lý 1 khung hình (vài ms),
+  // khung cuối thì đưa vào game. Trả về null nếu đã có sẵn / chưa tải ảnh gốc.
+  function formJob(scene, id, tier, a) {
+    const c = CHARS[id], src = `ch_${id}_${a}`, key = formKey(id, tier, a), skey = shellKey(id, tier, a);
+    if (!c || !scene.textures.exists(src)) return null;
+    const finishAnim = () => {
+      if (scene.anims.exists(key) || !scene.textures.exists(key)) return;
+      const [n, rate] = c.anims[a];
+      scene.anims.create({ key, frames: scene.anims.generateFrameNumbers(key, { start: 0, end: n - 1 }), frameRate: rate, repeat: ['idle', 'run', 'fall'].includes(a) ? -1 : 0 });
+    };
+    if (scene.textures.exists(key)) { finishAnim(); return null; }
+    const img = scene.textures.get(src).getSourceImage();
+    const W = img.width, H = img.height, cols = Math.max(1, Math.floor(W / c.fw)), total = cols * Math.max(1, Math.floor(H / c.fh));
+    const mk = () => { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; return [cv, cv.getContext('2d', { willReadFrequently: true })]; };
+    const [bodyCv, body] = mk(), [shellCv, shell] = mk();
+    body.drawImage(img, 0, 0);
+    let j = 0;
+    return {
+      step() {
+        if (j < total) {
+          const x = (j % cols) * c.fw, y = Math.floor(j / cols) * c.fh;
+          const data = body.getImageData(x, y, c.fw, c.fh);
+          const out = shell.createImageData(c.fw, c.fh);
+          shellFrame(data.data, c.fw, c.fh, out.data, tier);
+          recolorFrame(data.data, tier);
+          body.putImageData(data, x, y);
+          shell.putImageData(out, x, y);
+          j++;
+          return false;
+        }
+        if (!scene.textures.exists(key)) {
+          const { NEAREST, LINEAR } = Phaser.Textures.FilterMode;
+          scene.textures.addSpriteSheet(key, bodyCv, { frameWidth: c.fw, frameHeight: c.fh });
+          scene.textures.get(key).setFilter(c.s * View.k >= 1.75 ? NEAREST : LINEAR);
+          scene.textures.addSpriteSheet(skey, shellCv, { frameWidth: c.fw, frameHeight: c.fh });
+          scene.textures.get(skey).setFilter(LINEAR);
+        }
+        finishAnim();
+        return true;
+      },
+    };
+  }
+  // Tạo ngay (đồng bộ) mọi hoạt ảnh còn thiếu. Trả về true khi đã đủ.
   function makeFormSheets(scene, id, tier) {
     const c = CHARS[id];
     if (!c) return false;
-    const [cr, cg, cb] = FORM_RGB[tier] || FORM_RGB[1];
-    const loops = new Set(['idle', 'run', 'fall']);
-    const { NEAREST, LINEAR } = Phaser.Textures.FilterMode;
-    for (const [a, [n, rate]] of Object.entries(c.anims)) {
-      const src = `ch_${id}_${a}`, key = formKey(id, tier, a);
-      if (!scene.textures.exists(src)) return false;
-      if (!scene.textures.exists(key)) {
-        const img = scene.textures.get(src).getSourceImage();
-        const cv = document.createElement('canvas');
-        cv.width = img.width; cv.height = img.height;
-        const ctx = cv.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(img, 0, 0);
-        const data = ctx.getImageData(0, 0, cv.width, cv.height), d = data.data;
-        for (let i = 0; i < d.length; i += 4) {
-          if (!d[i + 3]) continue;
-          const r = d[i], g = d[i + 1], b = d[i + 2];
-          const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 255;
-          // Ánh màu ấn mạnh dần theo độ sáng: chỗ tối (tóc, viền, mắt) gần như giữ nguyên để còn nhận ra nhân vật,
-          // chỗ sáng (da, áo, vũ khí) ánh màu ấn và sáng rực lên
-          const k = 0.25 + 0.45 * lum;
-          const L = lum * 1.25 + 0.08;
-          const glow = Math.max(0, lum - 0.6) * 0.9;
-          d[i] = Math.min(255, r * (1 - k) + cr * L * k + 255 * glow * 0.3);
-          d[i + 1] = Math.min(255, g * (1 - k) + cg * L * k + 255 * glow * 0.3);
-          d[i + 2] = Math.min(255, b * (1 - k) + cb * L * k + 255 * glow * 0.3);
-        }
-        ctx.putImageData(data, 0, 0);
-        scene.textures.addSpriteSheet(key, cv, { frameWidth: c.fw, frameHeight: c.fh });
-        scene.textures.get(key).setFilter(c.s * View.k >= 1.75 ? NEAREST : LINEAR);
-      }
-      if (!scene.anims.exists(key)) {
-        scene.anims.create({ key, frames: scene.anims.generateFrameNumbers(key, { start: 0, end: n - 1 }), frameRate: rate, repeat: loops.has(a) ? -1 : 0 });
-      }
+    for (const a of Object.keys(c.anims)) {
+      if (!scene.textures.exists(`ch_${id}_${a}`)) return false;
+      const job = formJob(scene, id, tier, a);
+      if (job) while (!job.step()) { /* làm hết các khung */ }
     }
     return true;
   }
@@ -205,5 +270,5 @@ const Sprites = (() => {
     if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
   }
 
-  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, makeFormSheets };
+  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, makeFormSheets, formJob };
 })();
