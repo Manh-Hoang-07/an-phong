@@ -254,10 +254,12 @@
     // 3 nút mũi tên trái / xuống / phải. Mỗi ngón tay nhấn một nút; trượt ngón sang nút bên cạnh thì đổi hướng luôn
     // (không cần nhấc tay). elementFromPoint dùng tọa độ màn hình nên vẫn đúng khi khung game bị xoay.
     const pad = $('arrows');
-    const held = new Map();   // pointerId → 'left' | 'down' | 'right' | null
+    const held = new Map();   // pointerId → 'left' | 'up' | 'right' | null
     const syncArrows = () => {
       const on = new Set(held.values());
-      for (const dir of ['left', 'down', 'right']) {
+      // ▲ = nhảy: mỗi lần ngón tay chạm vào / trượt vào nút là một cú nhảy
+      if (on.has('up') && !App.touch.up) App.touch._p_jump = true;
+      for (const dir of ['left', 'up', 'right']) {
         App.touch[dir] = on.has(dir);
         pad.querySelector(`[data-arrow="${dir}"]`).classList.toggle('on', on.has(dir));
       }

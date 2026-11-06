@@ -88,15 +88,14 @@
 
     <!-- Điều khiển cảm ứng cho điện thoại -->
     <div id="touch" class="hidden">
-      <!-- 3 nút mũi tên: trái, xuống (giữ + nhảy để rơi qua bục), phải. Trượt ngón tay giữa các nút cũng được -->
+      <!-- 3 nút mũi tên: trái, lên (nhảy), phải. Trượt ngón tay giữa các nút cũng được (vd. đang chạy phải trượt lên để nhảy) -->
       <div id="arrows">
         <div class="tb tb-arrow" data-arrow="left" aria-label="Sang trái"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg></div>
-        <div class="tb tb-arrow tb-arrow-down" data-arrow="down" aria-label="Xuống"><svg viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></svg></div>
+        <div class="tb tb-arrow tb-arrow-up" data-arrow="up" aria-label="Nhảy"><svg viewBox="0 0 24 24"><path d="m5 15 7-7 7 7"/></svg></div>
         <div class="tb tb-arrow" data-arrow="right" aria-label="Sang phải"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></div>
       </div>
       <div id="tbtns">
         <button data-t="attack" class="tb tb-attack"><span class="ico" id="tb-atk-ico">⚔</span><div class="cd"></div></button>
-        <button data-t="jump" class="tb tb-jump">⤒</button>
         <button data-t="s0" class="tb tb-skill tb-s0"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="s1" class="tb tb-skill tb-s1"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="s2" class="tb tb-skill tb-s2"><span class="ico"></span><div class="cd"></div></button>

@@ -311,13 +311,13 @@ html.rot #game-wrap { inset: auto; left: 0; top: 0; transform-origin: 0 0; }
 
 /* 3 nút mũi tên tròn: trái, xuống, phải */
 #arrows {
-  position: absolute; left: calc(14px + var(--sal)); bottom: calc(12px + var(--sab)); width: 234px; height: 80px;
+  position: absolute; left: calc(14px + var(--sal)); bottom: calc(12px + var(--sab)); width: 188px; height: 148px;
   pointer-events: auto; touch-action: none;
 }
 .tb-arrow { width: 76px; height: 76px; bottom: 2px; }
 .tb-arrow[data-arrow="left"] { left: 0; }
-.tb-arrow-down { left: 84px; bottom: 0; width: 66px; height: 66px; opacity: 0.85; }   /* ▼ nhỏ hơn: ít dùng (giữ + nhảy để rơi qua bục) */
-.tb-arrow[data-arrow="right"] { left: 158px; }
+.tb-arrow-up { left: 56px; bottom: 70px; }   /* ▲ nhảy: nằm giữa, phía trên ◀ ▶ (kiểu chữ T ngược) */
+.tb-arrow[data-arrow="right"] { left: 112px; }
 .tb-arrow svg { width: 46%; height: 46%; fill: none; stroke: #e6f4ff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .tb-arrow.on svg { stroke: #fff; }
 #tbtns { position: absolute; right: var(--sar); bottom: var(--sab); width: 260px; height: 220px; pointer-events: none; }
@@ -337,7 +337,6 @@ html.rot #game-wrap { inset: auto; left: 0; top: 0; transform-origin: 0 0; }
   right: 16px; bottom: 16px; width: 88px; height: 88px; font-size: 34px;
   border-color: var(--accent); box-shadow: 0 0 18px var(--accent), inset 0 0 18px rgba(255, 255, 255, 0.08);
 }
-.tb-jump { right: 130px; bottom: 14px; width: 66px; height: 66px; font-size: 28px; }
 .tb-skill { width: 58px; height: 58px; font-size: 24px; }
 .tb-s0 { right: 12px; bottom: 132px; }
 .tb-s1 { right: 76px; bottom: 122px; }
@@ -441,15 +440,14 @@ html.narrow .inv, html.narrow .cols { grid-template-columns: 1fr; }   /* khung g
 /* Cụm nút cảm ứng: 4 kỹ năng + tuyệt kỹ (+ ô thứ 5 của Toàn Năng) quanh nút đánh */
 #tbtns { width: 310px; height: 270px; }
 .tb-attack { right: 16px; bottom: 16px; }
-.tb-jump { right: 133px; bottom: 8px; width: 64px; height: 64px; }
 .tb-s0 { right: 24px; bottom: 132px; }
 .tb-s1 { right: 84px; bottom: 112px; }
 .tb-s2 { right: 137px; bottom: 84px; }
 .tb-s3 { right: 194px; bottom: 52px; }
 .tb-s4 { right: 113px; bottom: 179px; width: 54px; height: 54px; }
 .tb-ult { right: 47px; bottom: 191px; width: 62px; height: 62px; border-color: rgba(255, 204, 61, 0.85); box-shadow: 0 0 14px rgba(255, 204, 61, 0.45); }
-.tb-hp { right: 209px; bottom: 7px; }
-.tb-mp { right: 257px; bottom: 29px; }
+.tb-hp { right: 132px; bottom: 10px; }   /* lấp chỗ nút nhảy cũ (nhảy giờ là ▲ bên trái) */
+.tb-mp { right: 186px; bottom: 4px; }
 .tb-talk { bottom: 268px; }
 
 /* Nhiệm vụ hằng ngày trên khung theo dõi */
@@ -502,3 +500,6 @@ html.compact body.touch #banner { font-size: 15px; }
 /* Bảng chọn nơi đến của cổng */
 .gate-dest.locked { opacity: 0.6; }
 .gate-dest.locked .main small { color: #ffb74d; }
+
+/* Toàn trang tắt chọn chữ (chạm giữ không bôi đen), nhưng ô nhập phải gõ/chọn được (iOS chặn gõ nếu thiếu dòng này) */
+input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }

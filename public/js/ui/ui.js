@@ -309,8 +309,23 @@ const UI = (() => {
     $('panel-title').textContent = title;
     const body = $('panel-body');
     const scroll = panel.lastName === panel.name ? body.scrollTop : 0;
+    const same = panel.lastName === panel.name;
     panel.lastName = panel.name;
+    // Bảng được vẽ lại mỗi khi server trả lời (kể cả lần tự lưu 10 giây một lần). Giữ nguyên chữ đang gõ và con trỏ
+    // trong các ô nhập, nếu không thì đang nhập mã giữa chừng sẽ mất chữ và bàn phím điện thoại tự đóng.
+    const typed = {};
+    const act0 = document.activeElement;
+    let focusId = null, sel = null;
+    if (same) {
+      for (const el of body.querySelectorAll('input[id], textarea[id]')) typed[el.id] = el.value;
+      if (act0 && body.contains(act0) && act0.id) { focusId = act0.id; try { sel = [act0.selectionStart, act0.selectionEnd]; } catch { /* bỏ qua */ } }
+    }
     body.innerHTML = html;
+    for (const id in typed) { const el = document.getElementById(id); if (el && body.contains(el)) el.value = typed[id]; }
+    if (focusId) {
+      const el = document.getElementById(focusId);
+      if (el && body.contains(el)) { el.focus({ preventScroll: true }); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch { /* bỏ qua */ } }
+    }
     body.scrollTop = scroll;
   }
 
