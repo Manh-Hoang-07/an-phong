@@ -83,14 +83,7 @@ const Fx = (() => {
       rect(g, RED.glow, 9, 4, 2, 2, 0.7);
     });
     // trời: chuyển màu đỏ thẫm
-    make(scene, 'bg_redgate_sky', 16, 576, (g) => {
-      const cols = [0x0a0306, 0x1c070d, 0x3a0d18, 0x5a1420];
-      for (let i = 0; i < 36; i++) {
-        const t = i / 35 * (cols.length - 1), a = Math.floor(t), b = Math.min(cols.length - 1, a + 1);
-        const c = Phaser.Display.Color.Interpolate.ColorWithColor(Phaser.Display.Color.IntegerToColor(cols[a]), Phaser.Display.Color.IntegerToColor(cols[b]), 100, (t - a) * 100);
-        rect(g, Phaser.Display.Color.GetColor(c.r, c.g, c.b), 0, 576 / 36 * i, 16, 576 / 36 + 1);
-      }
-    });
+    Art._.gradient(scene, 'bg_redgate_sky', [0x0a0306, 0x1c070d, 0x3a0d18, 0x5a1420]);
     make(scene, 'bg_redgate_far', 960, 576, (g) => {
       for (let x = 0; x < 960; x += 110) { rect(g, 0x24090f, x + 18, 0, 46, 576); tri(g, 0x24090f, x, 0, x + 110, 0, x + 40, 160); }
       g.fillStyle(0xff2d55, 0.12); g.fillCircle(480, 300, 160);

@@ -16,6 +16,9 @@
     if (!el || el.disabled) return;
     const a = el.dataset.act, ds = el.dataset;
     Sound.play('click');
+    // Nút mờ đi trong lúc chờ server, không bấm lặp được
+    el.classList.add('busy');
+    try {
     switch (a) {
       case 'close': closePanel(); break;
       case 'open':
@@ -35,6 +38,7 @@
         Quality.set(next);
         if (Quality.low && App.scene) App.scene.applyLowQuality();
         else UI.log('Đồ họa cao sẽ áp dụng khi bạn chuyển bản đồ.', '#bdbdbd');
+        if (App.refit) App.refit();   // đổi độ nét khung hình (Thấp: tối đa 1.5×)
         renderPanel();
         break;
       }
@@ -149,6 +153,7 @@
         break;
       }
     }
+    } finally { el.classList.remove('busy'); }
   }
 
   async function completeQuest(q) {

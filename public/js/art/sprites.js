@@ -50,13 +50,37 @@ const Sprites = (() => {
   const LOOK = { mushroom: 'mushroom', wolf: 'goblin', frog: 'slime', bat: 'bat', spider: 'skeleton', shade: 'eye' };
   const LOOK_TINT = { shade: 0xff7080 };
 
-  function preload(scene) {
-    for (const [id, c] of Object.entries(CHARS)) for (const a of Object.keys(c.anims)) {
-      scene.load.spritesheet(`ch_${id}_${a}`, `/assets/chars/${id}/${a}.png`, { frameWidth: c.fw, frameHeight: c.fh });
+  // Bộ hình cần ngay khi vào một bản đồ: class đang chơi + các loại quái xuất hiện ở bản đồ đó
+  function needed(mapId, school) {
+    const chars = new Set([CHARS[school] ? school : 'none']);
+    const mobs = new Set();
+    const meta = GameData.MAPS[mapId];
+    for (const ch in (meta && meta.spawns) || {}) {
+      const def = GameData.MONSTERS[meta.spawns[ch]];
+      if (def && LOOK[def.look]) mobs.add(LOOK[def.look]);
     }
-    for (const [id, m] of Object.entries(MOBS)) for (const a of Object.keys(m.anims)) {
-      scene.load.spritesheet(`mb_${id}_${a}`, `/assets/mobs/${id}/${a}.png`, { frameWidth: m.fw, frameHeight: m.fh });
+    return { chars, mobs };
+  }
+
+  // Xếp hàng tải các bộ hình (only = null: tải hết phần còn thiếu). Trả về số file được xếp hàng.
+  // ?v= là mã phiên bản ảnh: trình duyệt lưu lâu dài, chỉ tải lại khi ảnh thay đổi.
+  function preload(scene, only) {
+    const v = window.BUILD ? '?v=' + BUILD.assets : '';
+    let n = 0;
+    const add = (key, url, fw, fh) => {
+      if (scene.textures.exists(key)) return;
+      scene.load.spritesheet(key, url + v, { frameWidth: fw, frameHeight: fh });
+      n++;
+    };
+    for (const [id, c] of Object.entries(CHARS)) {
+      if (only && !only.chars.has(id)) continue;
+      for (const a of Object.keys(c.anims)) add(`ch_${id}_${a}`, `/assets/chars/${id}/${a}.png`, c.fw, c.fh);
     }
+    for (const [id, m] of Object.entries(MOBS)) {
+      if (only && !only.mobs.has(id)) continue;
+      for (const a of Object.keys(m.anims)) add(`mb_${id}_${a}`, `/assets/mobs/${id}/${a}.png`, m.fw, m.fh);
+    }
+    return n;
   }
 
   function createAnims(scene) {
@@ -68,6 +92,22 @@ const Sprites = (() => {
     const loops = new Set(['idle', 'run', 'fall']);
     for (const [id, c] of Object.entries(CHARS)) for (const [a, [n, r]] of Object.entries(c.anims)) mk('ch', id, a, n, r, loops.has(a));
     for (const [id, m] of Object.entries(MOBS)) for (const [a, [n, r]] of Object.entries(m.anims)) mk('mb', id, a, n, r, loops.has(a));
+  }
+
+  // Chọn kiểu lọc ảnh theo độ phóng thực trên màn hình (tỉ lệ bộ hình × độ nét khung nhìn k):
+  //  - phóng từ ~1.75 lần trở lên: giữ điểm ảnh sắc (NEAREST), các ô vuông gần như đều nhau
+  //  - phóng ít hoặc thu nhỏ (Pháp Sư, Toàn Năng...): lọc mượt (LINEAR) để không mất hàng điểm ảnh, không răng cưa
+  function applyFilters(scene, k) {
+    const { NEAREST, LINEAR } = Phaser.Textures.FilterMode;
+    const set = (prefix, id, def) => {
+      const mode = def.s * k >= 1.75 ? NEAREST : LINEAR;
+      for (const a of Object.keys(def.anims)) {
+        const key = `${prefix}_${id}_${a}`;
+        if (scene.textures.exists(key)) scene.textures.get(key).setFilter(mode);
+      }
+    };
+    for (const [id, c] of Object.entries(CHARS)) set('ch', id, c);
+    for (const [id, m] of Object.entries(MOBS)) set('mb', id, m);
   }
 
   const hasChar = (scene, id) => !!CHARS[id] && scene.textures.exists(`ch_${id}_idle`);
@@ -101,5 +141,5 @@ const Sprites = (() => {
     if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
   }
 
-  return { CHARS, MOBS, LOOK, LOOK_TINT, preload, createAnims, hasChar, hasMob, mobOf, fitPlayer, fitMob };
+  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob };
 })();

@@ -15,7 +15,8 @@ RestartSec=3
 Environment=NODE_ENV=production
 Environment=PORT=3100
 Environment=HOST=127.0.0.1
-Environment=DATA_DIR=/var/lib/anphong
+# Cấu hình PostgreSQL: PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE
+EnvironmentFile=-/etc/anphong.env
 # Bật dòng dưới SAU KHI đã có HTTPS (certbot)
 #Environment=COOKIE_SECURE=1
 
@@ -24,7 +25,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/anphong /var/backups/anphong
+ReadWritePaths=/var/backups/anphong
 
 [Install]
 WantedBy=multi-user.target

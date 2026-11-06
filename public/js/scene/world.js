@@ -13,18 +13,25 @@ class WorldScene extends Phaser.Scene {
   }
 
   preload() {
-    for (const id in GameData.MAPS) this.load.text('map_' + id, '/shared/maps/' + id + '.txt?v=' + Date.now());
+    // Bản đồ đã nằm sẵn trong file gộp (window.MAP_TEXT); chạy kiểu từng file riêng (NO_BUNDLE) thì tải như cũ
+    for (const id in GameData.MAPS) {
+      if (this.cache.text.exists('map_' + id)) continue;
+      if (window.MAP_TEXT && MAP_TEXT[id] != null) this.cache.text.add('map_' + id, MAP_TEXT[id]);
+      else this.load.text('map_' + id, '/shared/maps/' + id + '.txt');
+    }
     this.load.on('loaderror', () => { /* thiếu ảnh thì dùng hình vẽ bằng code */ });
-    if (!this.textures.exists('ch_none_idle')) Sprites.preload(this);
+    // Chỉ tải hình cần ngay: class của mình + quái trên bản đồ này. Phần còn lại tải ngầm sau khi vào game.
+    Sprites.preload(this, Sprites.needed(this.mapId, App.player.school || 'none'));
+    this.load.on('progress', (v) => Loading.set(0.2 + v * 0.7));
   }
 
   create() {
     App.scene = this;
-    Art.makeAll(this);
-    Fx.makeAll(this);
-    Sprites.createAnims(this);
     this.meta = GameData.MAPS[this.mapId];
     this.theme = this.meta.theme;
+    Art.makeAll(this, this.theme);
+    Fx.makeAll(this, this.theme);
+    Sprites.createAnims(this);
     this.parseMap();
 
     this.monsters = [];
@@ -70,6 +77,23 @@ class WorldScene extends Phaser.Scene {
     this.regenTimer = this.time.addEvent({ delay: 2000, loop: true, callback: () => this.regen() });
     this.aura = this.add.graphics().setDepth(5);
     this.events.once('shutdown', () => this.flushKills());
+    Loading.set(1);
+    Loading.hide();
+    // Tải ngầm các bộ hình còn lại (class khác, quái bản đồ khác) để lúc cần thì đã có sẵn
+    this.time.delayedCall(800, () => this.loadRestAssets());
+  }
+
+  loadRestAssets() {
+    if (!this.sys.isActive() || this.load.isLoading()) return;
+    const n = Sprites.preload(this, null);
+    if (!n) return;
+    this.load.once('complete', () => {
+      if (!this.sys.isActive()) return;
+      Sprites.createAnims(this);
+      Sprites.applyFilters(this, View.k);
+      if (this.player) this.refreshPlayerLook();   // class vừa đổi mà lúc nãy chưa có hình thì giờ thay vào
+    });
+    this.load.start();
   }
 
   // ------------------------------------------------------------------ Vòng lặp
@@ -78,10 +102,12 @@ class WorldScene extends Phaser.Scene {
     const cam = this.cameras.main;
     this.bgFar.tilePositionX = cam.scrollX * 0.15;
     this.bgNear.tilePositionX = cam.scrollX * 0.35;
+    if (this.bgMid && this.bgMid.active) this.bgMid.tilePositionX = cam.scrollX * 0.25;
     this.bgFar.tilePositionY = 0;
 
     if (!this.dead) this.updatePlayer(time, delta);
     for (const m of this.monsters) if (m.alive && this.mobActive(m)) this.updateMonster(m, time);
+    this.updateMobShadows();
     this.updateProjectiles(time, delta);
     this.updateEnemyShots(delta);
     this.updateLoot(time);
@@ -93,6 +119,24 @@ class WorldScene extends Phaser.Scene {
       this.player.setVelocity(0, 0);
     }
     UI.tick(time, this);
+  }
+
+  // Bóng mờ dưới chân quái đi bộ (dùng lại một kho ảnh, ẩn ảnh thừa)
+  updateMobShadows() {
+    if (!this.mobShadowPool || (this.mobShadowPool[0] && !this.mobShadowPool[0].scene)) this.mobShadowPool = [];
+    const pool = this.mobShadowPool;
+    let n = 0;
+    for (const m of this.monsters) {
+      const s = m.sprite;
+      if (!m.alive || m.def.fly || !s.active || !s.visible || !s.body) continue;
+      const onGround = s.body.blocked.down || s.body.touching.down;
+      if (!onGround) continue;
+      let img = pool[n];
+      if (!img) { img = this.add.image(0, 0, 'shadow').setDepth(2.9); pool.push(img); }
+      img.setVisible(true).setPosition(s.x, s.body.bottom - 1).setScale(Math.max(0.6, s.body.width / 26), 1);
+      n++;
+    }
+    for (let i = n; i < pool.length; i++) pool[i].setVisible(false);
   }
 
   key(...codes) { return codes.some(c => App.keys[c]); }
@@ -205,19 +249,26 @@ class WorldScene extends Phaser.Scene {
   talkTo(id, x) {
     if (Math.abs(this.player.x - x) > 140) { UI.log('Hãy lại gần hơn để nói chuyện.', '#bdbdbd'); return; }
     this.facing = x > this.player.x ? 1 : -1;
-    Net.action('talk', { npc: id }).then(() => { this.refreshNpcMarks(); UI.openNpc(id); });
+    // Mở bảng hội thoại ngay; server ghi nhận lượt nói chuyện xong thì UI.refresh tự vẽ lại bảng (nhiệm vụ có thể vừa đổi)
+    UI.openNpc(id);
+    Net.action('talk', { npc: id }).then(() => { if (this.sys.isActive()) this.refreshNpcMarks(); });
   }
 
   async usePortal(portal) {
     this.changing = true;
     this.flushKills();
     const s = this.saveState();
+    // Bắt đầu chuyển cảnh ngay, song song với lúc chờ server
+    const t0 = Date.now();
+    Sound.play('portal');
+    this.cameras.main.fadeOut(250);
     const res = await Net.action('change_map', { portal: portal.ch, hp: s.hp, mp: s.mp });
+    if (!this.sys.isActive()) return;
     if (res.ok) {
-      Sound.play('portal');
-      this.cameras.main.fadeOut(250);
-      this.time.delayedCall(260, () => this.scene.restart({ map: res.player.map, arrive: portal.def.at }));
+      this.time.delayedCall(Math.max(0, 260 - (Date.now() - t0)), () => this.scene.restart({ map: res.player.map, arrive: portal.def.at }));
     } else {
+      this.cameras.main.resetFX();
+      this.cameras.main.fadeIn(200);
       this.changing = false;
       this.portalReady = this.time.now + 1500;
       this.player.setVelocityX(-this.facing * 300);

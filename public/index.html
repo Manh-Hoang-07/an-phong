@@ -9,7 +9,10 @@
   <title>Thức Tỉnh</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/be-vietnam-pro-vietnamese-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/be-vietnam-pro-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/core/early.js"></script>
 </head>
 <body>
   <!-- Màn hình đăng nhập -->
@@ -29,7 +32,7 @@
     </div>
   </div>
 
-  <div id="loading" class="screen"><div class="spinner"></div><p>Đang tải...</p></div>
+  <div id="loading" class="screen"><div class="spinner"></div><p id="load-text">Đang tải...</p><div class="load-bar"><i id="load-fill"></i></div></div>
 
   <!-- Game -->
   <div id="game-wrap" class="hidden">

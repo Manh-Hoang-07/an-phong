@@ -6,9 +6,17 @@
   async function boot() {
     let me;
     try { me = await Net.me(); } catch { me = { error: 'Không kết nối được server.' }; }
-    $('loading').classList.add('hidden');
-    if (me.user && me.player) startGame(me.player);
-    else showLogin(me.registerOpen, me.error);
+    if (me.user && me.player) { Loading.set(0.15, 'Đang vào game...'); startGame(me.player); }
+    else { Loading.hide(); showLogin(me.registerOpen, me.error); }
+    registerServiceWorker();
+  }
+
+  // Lưu sẵn code, hình, font trên máy để lần sau mở game gần như tức thì (cần HTTPS hoặc localhost)
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
+    if (new URLSearchParams(location.search).has('nosw')) return;
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => { /* bỏ qua */ }));
+    if (document.readyState === 'complete') navigator.serviceWorker.register('/sw.js').catch(() => { /* bỏ qua */ });
   }
 
   // ------------------------------------------------------------ Đăng nhập
@@ -30,6 +38,7 @@
       if (!r.ok) { $('lf-error').textContent = r.error || 'Có lỗi xảy ra.'; return; }
       const me = await Net.me();
       $('login').classList.add('hidden');
+      Loading.show('Đang vào game...');
       startGame(me.player);
     };
     $('lf-user').focus();
@@ -37,7 +46,8 @@
 
   // ------------------------------------------------------------ Vào game
   async function startGame(player) {
-    try { await Promise.race([document.fonts.load('16px "Be Vietnam Pro"'), new Promise(r => setTimeout(r, 1500))]); } catch { /* bỏ qua */ }
+    // Font đã bắt đầu tải từ <head> (early.js) nên thường xong rồi; chờ tối đa 600ms để chữ trong game đúng font
+    try { await Promise.race([document.fonts.load('16px "Be Vietnam Pro"', 'Thức Tỉnh'), new Promise(r => setTimeout(r, 600))]); } catch { /* bỏ qua */ }
     App.hp = 0; App.mp = 0;
     App.player = player;
     App.stats = GameData.calcStats(player);
@@ -49,11 +59,12 @@
     setupKeyboard();
     setupTouch();
 
+    View.calc();
     game = new Phaser.Game({
       type: Phaser.AUTO,
       parent: 'game',
-      width: viewWidth(),
-      height: VIEW_H,
+      width: View.pw,
+      height: View.ph,
       backgroundColor: '#000000',
       pixelArt: true,
       roundPixels: true,
@@ -64,6 +75,11 @@
       fps: new URLSearchParams(location.search).has('timer') ? { forceSetTimeOut: true, target: 60 } : {},
       scene: [WorldScene],
     });
+    // Canvas đã vẽ đúng điểm ảnh màn hình; nếu trình duyệt còn phải co giãn chút ít thì cho mượt thay vì răng cưa
+    // (Phaser có thể khởi động ở nhịp kế tiếp, lúc này game.canvas còn null → chờ sự kiện 'ready')
+    if (game.canvas) game.canvas.style.imageRendering = 'auto';
+    else game.events.once('ready', () => { if (game.canvas) game.canvas.style.imageRendering = 'auto'; });
+    App.refit = fitGame;
     UI.refresh();
     UI.log(`[Hệ thống] Chào mừng thợ săn ${player.name}. Tiến trình được tự động lưu.`, '#ffd54f');
     const q0 = GameData.QUESTS[player.quest.step];
@@ -194,14 +210,15 @@
   }
 
   // Khung hình game giãn theo tỉ lệ màn hình (điện thoại dài thì thấy rộng hơn, không có viền đen)
-  const VIEW_H = 540;
-  function viewWidth() {
-    const ratio = window.innerWidth / Math.max(1, window.innerHeight);
-    return Math.round(Math.max(720, Math.min(1280, VIEW_H * ratio)));
-  }
+  // Kích thước canvas = khung logic × View.k (xem View trong scene/juice.js).
   function fitGame() {
-    if (game && game.scale) game.scale.setGameSize(viewWidth(), VIEW_H);
+    if (!game || !game.scale) return;
+    View.calc();
+    if (game.scale.width !== View.pw || game.scale.height !== View.ph) game.scale.setGameSize(View.pw, View.ph);
+    else game.scale.refresh();
   }
+  // Điện thoại: thanh địa chỉ ẩn/hiện, xoay màn hình... không phải lúc nào cũng phát sự kiện resize của window
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(fitGame, 50));
   window.addEventListener('resize', () => setTimeout(fitGame, 50));
 
   boot();

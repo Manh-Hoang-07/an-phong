@@ -17,6 +17,8 @@ const Net = (() => {
       ? { credentials: 'same-origin' }
       : { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
     const res = await fetch(url, opt);
+    // Nginx trả 502/503/504 khi server Node đang khởi động lại → coi như rớt mạng để thử lại
+    if (res.status >= 502 && res.status <= 504) throw new Error('gateway ' + res.status);
     let data = {};
     try { data = await res.json(); } catch { /* bỏ qua */ }
     if (res.status === 401 && url === '/api/action') {
@@ -27,19 +29,50 @@ const Net = (() => {
     return data;
   }
 
+  // Rớt mạng: tự gửi lại. Mỗi yêu cầu có mã riêng (rid) nên server không xử lý trùng nếu lượt trước thật ra đã tới nơi.
+  //  - Ghi nhận hạ quái, lưu vị trí: thử lại tới khi được (không mất tiến trình)
+  //  - Thao tác khác: thử lại 4 lần (khoảng 6 giây) rồi báo lỗi
+  const KEEP_TRYING = new Set(['kills', 'save']);
+  const ridBase = Math.random().toString(36).slice(2, 8);
+  let ridSeq = 0, offline = false;
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  function setOffline(v) {
+    if (v === offline) return;
+    offline = v;
+    if (v) UI.log('[Hệ thống] Mất kết nối, đang thử lại...', '#ffb74d');
+    else UI.log('[Hệ thống] Đã kết nối lại.', '#a5d6a7');
+  }
+  async function send(type, params) {
+    const rid = ridBase + '-' + (++ridSeq);
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const data = await req('/api/action', { type, ...params, rid });
+        setOffline(false);
+        return data;
+      } catch (e) {
+        if (attempt >= 4 && !KEEP_TRYING.has(type)) { return { ok: false, error: 'Mất kết nối tới server.' }; }
+        if (attempt >= 1) setOffline(true);
+        await sleep([300, 700, 1500, 3000][attempt] || 5000);
+      }
+    }
+  }
+
   // Các hành động gửi lần lượt từng cái một để server luôn thấy đúng thứ tự
   let queue = Promise.resolve();
+  let savePending = false;
   function action(type, params = {}, opts = {}) {
+    // Lưu tự động: đang có một lượt lưu chờ gửi thì bỏ qua lượt mới (tránh dồn hàng khi mất mạng lâu)
+    if (type === 'save') {
+      if (savePending) return Promise.resolve({ ok: true, skipped: true });
+      savePending = true;
+    }
     const run = async () => {
-      let data;
-      try {
-        data = await req('/api/action', { type, ...params });
-      } catch (e) {
-        data = { ok: false, error: 'Mất kết nối tới server.' };
-      }
+      if (type === 'save') savePending = false;
+      const data = await send(type, params);
       if (data.player) App.setPlayer(data.player);
       if (data.ok === false && data.error && !opts.silent) { UI.log(data.error, '#ef5350'); Sound.play('error'); }
-      if (data.events) for (const ev of data.events) App.onEvent(ev);
+      // skipEvents: sự kiện client đã tự xử lý trước (ví dụ hồi máu ngay khi bấm bình)
+      if (data.events) for (const ev of data.events) if (!(opts.skipEvents && opts.skipEvents.includes(ev.t))) App.onEvent(ev);
       if (type === 'kill') await new Promise(r => setTimeout(r, 130));
       return data;
     };
@@ -61,7 +94,13 @@ const Net = (() => {
   }
 
   return {
-    me: () => req('/api/me'),
+    // Lần đầu dùng kết quả đã hỏi sẵn từ <head> (early.js), các lần sau hỏi lại server
+    me: async () => {
+      const early = window.__me;
+      window.__me = null;
+      if (early) { const r = await early; if (r) return r; }
+      return req('/api/me');
+    },
     login: (u, p) => req('/api/login', { username: u, password: p }),
     register: (u, p, c) => req('/api/register', { username: u, password: p, charName: c }),
     logout: () => req('/api/logout', {}),

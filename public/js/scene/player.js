@@ -136,7 +136,31 @@ WorldScene.mix(class WorldPlayer {
     if (!id) { UI.log(kind === 'hp' ? 'Hết bình máu! Mua ở Bà Lan.' : 'Hết bình năng lượng! Mua ở Bà Lan.', '#ef5350'); return; }
     if (kind === 'hp' && App.hp >= App.stats.maxHp) return;
     if (kind === 'mp' && App.mp >= App.stats.maxMp) return;
-    Net.action('use', { item: id, hp: Math.round(App.hp), mp: Math.round(App.mp) });
+    // Server chặn uống quá nhanh (400ms); chặn luôn ở đây để không hồi máu "ảo" rồi bị trả lại
+    const now = Date.now();
+    if (now < (this.potionReadyAt || 0)) return;
+    this.potionReadyAt = now + 450;
+    // Hồi máu NGAY khi bấm (cùng công thức với server), server kiểm tra sau; nếu bị từ chối thì trả lại như cũ
+    const def = GameData.ITEMS[id], st = App.stats;
+    const healHp = (def.hp || 0) + (def.hpPct ? Math.round(st.maxHp * def.hpPct) : 0);
+    const healMp = def.mp || 0;
+    const sent = { item: id, hp: Math.round(App.hp), mp: Math.round(App.mp) };
+    const gotHp = Math.min(st.maxHp, App.hp + healHp) - App.hp, gotMp = Math.min(st.maxMp, App.mp + healMp) - App.mp;
+    App.hp += gotHp; App.mp += gotMp;
+    const entry = p.bag.find(e => e.id === id);
+    if (entry) entry.qty--;          // số bình hiển thị giảm ngay; server gửi về số chuẩn sau
+    if (this.player) {
+      if (healHp) this.floatText(this.player.x, this.player.y - 30, '+' + healHp, '#69f0ae');
+      if (healMp) this.floatText(this.player.x, this.player.y - 46, '+' + healMp, '#64b5f6');
+    }
+    UI.refresh();
+    Net.action('use', sent, { skipEvents: ['heal'] }).then((r) => {
+      if (r && r.ok === false) {
+        App.hp = Math.max(1, App.hp - gotHp); App.mp = Math.max(0, App.mp - gotMp);
+        if (!r.player && entry) entry.qty++;   // mất mạng hẳn: trả lại bình (có phản hồi thì server đã gửi số chuẩn)
+        UI.refresh();
+      }
+    });
   }
 
   regen() {

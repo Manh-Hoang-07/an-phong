@@ -4,17 +4,72 @@
   const { light, make, ell, rect, rrect, poly, rnd } = Art._;
 
   // ---------------------------------------------------------------- Nền xa
+  // Trời chuyển màu: mỗi hàng điểm ảnh một màu, nội suy mượt (smoothstep) giữa các mốc → không lộ vệt
   function gradient(scene, key, colors) {
     const H = 576;
-    make(scene, key, 16, H, (g) => {
-      const steps = 48;
-      for (let i = 0; i < steps; i++) {
-        const t = i / (steps - 1) * (colors.length - 1);
-        const a = Math.floor(t), b = Math.min(colors.length - 1, a + 1);
-        const col = Phaser.Display.Color.Interpolate.ColorWithColor(
-          Phaser.Display.Color.IntegerToColor(colors[a]), Phaser.Display.Color.IntegerToColor(colors[b]), 100, (t - a) * 100);
-        g.fillStyle(Phaser.Display.Color.GetColor(col.r, col.g, col.b));
-        g.fillRect(0, (H / steps) * i, 16, H / steps + 1);
+    make(scene, key, 4, H, (g) => {
+      const C = Phaser.Display.Color;
+      for (let y = 0; y < H; y++) {
+        const t = y / (H - 1) * (colors.length - 1);
+        const a = Math.min(colors.length - 2, Math.floor(t)), f = t - a;
+        const s = f * f * (3 - 2 * f);
+        const col = C.Interpolate.ColorWithColor(C.IntegerToColor(colors[a]), C.IntegerToColor(colors[a + 1]), 1000, s * 1000);
+        g.fillStyle(C.GetColor(col.r, col.g, col.b));
+        g.fillRect(0, y, 4, 1);
+      }
+    });
+  }
+
+  // Lớp nền giữa: dải bóng mờ nằm giữa nền xa và nền gần, tạo chiều sâu khi camera trượt.
+  // kind: 'city' nhà cao tầng · 'forest' đồi + ngọn cây · 'cave'/'redgate' vách đá lởm chởm
+  function midLayer(scene, key, kind, col, hazeCol) {
+    const W = 960, H = 576;
+    make(scene, key, W, H, (g) => {
+      if (kind === 'city') {
+        for (let i = 0; i < 18; i++) {
+          const x = i * 56 - 8 + rnd(i, 21) * 14, w = 34 + rnd(i, 22) * 22, hh = 150 + rnd(i, 23) * 120;
+          rect(g, col, x, H - hh, w, hh, 0.78);
+          if (rnd(i, 24) > 0.6) rect(g, col, x + w * 0.4, H - hh - 18, 3, 18, 0.78);
+          for (let y = H - hh + 10; y < H - 40; y += 18) {
+            for (let wx = x + 5; wx < x + w - 6; wx += 10) {
+              if (rnd(wx * 3 + y, 25) > 0.78) rect(g, 0xffd9a0, wx, y, 3, 4, 0.18);
+            }
+          }
+        }
+      } else {
+        const jag = kind === 'forest' ? 0 : 1;
+        g.fillStyle(col, 0.8);
+        g.beginPath(); g.moveTo(0, H);
+        for (let x = 0; x <= W; x += 8) {
+          // hàm tuần hoàn theo W để ghép nối liền mạch khi lặp ngang
+          const p = x / W * Math.PI * 2;
+          let y = 360 + Math.sin(p * 2 + 0.6) * 30 + Math.sin(p * 5 + 1.3) * 14;
+          if (jag) y += Math.abs(Math.sin(p * 13)) * -26 + Math.sin(p * 31) * 6;
+          g.lineTo(x, y);
+        }
+        g.lineTo(W, H); g.closePath(); g.fillPath();
+        if (kind === 'forest') {
+          // ngọn cây lá kim nhô lên khỏi sườn đồi
+          for (let i = 0; i < 26; i++) {
+            const x = (i * 37 + rnd(i, 31) * 20) % W, p = x / W * Math.PI * 2;
+            const base = 360 + Math.sin(p * 2 + 0.6) * 30 + Math.sin(p * 5 + 1.3) * 14 + 6;
+            const h = 34 + rnd(i, 32) * 40, w = 10 + rnd(i, 33) * 8;
+            poly(g, col, [[x - w, base], [x, base - h], [x + w, base]], 0.8);
+            poly(g, col, [[x - w * 0.8, base - h * 0.35], [x, base - h * 1.1], [x + w * 0.8, base - h * 0.35]], 0.8);
+          }
+        }
+      }
+      // sương phủ chân lớp giữa → hòa vào nền gần
+      mist(g, 430, 150, hazeCol, 0.22);
+    });
+  }
+
+  // Sương sát mặt đất (đặt trước nền gần, sau cây cối): chuyển màu mượt từ trong suốt sang màu sương
+  function haze(scene) {
+    make(scene, 'bg_haze', 4, 576, (g) => {
+      for (let y = 300; y < 576; y++) {
+        const t = (y - 300) / 276;
+        rect(g, 0xffffff, 0, y, 4, 1, 0.16 * t * t);
       }
     });
   }
@@ -29,6 +84,12 @@
 
   function backgrounds(scene) {
     const W = 960, H = 576;
+    midLayer(scene, 'bg_city_mid', 'city', 0x120d24, 0x2a1f46);
+    midLayer(scene, 'bg_forest_mid', 'forest', 0x0f302d, 0x9ffff0);
+    midLayer(scene, 'bg_cave_mid', 'cave', 0x110c1e, 0x3a2a5a);
+    midLayer(scene, 'bg_redgate_mid', 'redgate', 0x1c070c, 0x5a1420);
+    haze(scene);
+    make(scene, 'fx_grade', 4, 4, (g) => rect(g, 0xffffff, 0, 0, 4, 4));
     gradient(scene, 'bg_city_sky', [0x050814, 0x10142c, 0x252046, 0x4a2a56, 0x6b3a5c]);
     gradient(scene, 'bg_forest_sky', [0x061418, 0x0e2b30, 0x1d4c46, 0x2f6b58]);
     gradient(scene, 'bg_cave_sky', [0x05040c, 0x110c20, 0x1d1533, 0x2a1e42]);
@@ -221,5 +282,5 @@
     });
   }
 
-  Object.assign(Art._, { gradient, mist, backgrounds });
+  Object.assign(Art._, { gradient, mist, midLayer, backgrounds });
 })();

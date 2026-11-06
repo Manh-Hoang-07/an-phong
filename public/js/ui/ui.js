@@ -56,6 +56,9 @@ const UI = (() => {
   const PANELS = {};
   let lastTick = 0;
 
+  // Chỉ ghi vào DOM khi nội dung thật sự đổi (đỡ vẽ lại thanh kỹ năng mỗi lần server trả lời)
+  function setHtml(el, html) { if (el._html !== html) { el._html = html; el.innerHTML = html; } }
+
   function refresh() {
     const p = App.player;
     if (!p) return;
@@ -87,10 +90,10 @@ const UI = (() => {
       const ico = el.querySelector('.ico');
       if (id) {
         const sk = G.skillAt(id, G.skillLevel(p, id));
-        ico.innerHTML = `${skIcon(id)}<small>${esc(sk.name.split(' ')[0])}</small>`;
+        setHtml(ico, `${skIcon(id)}<small>${esc(sk.name.split(' ')[0])}</small>`);
         el.title = `${sk.name} cấp ${sk.lv} (${Math.round(sk.mp * st.costMul)} năng lượng)`;
         el.classList.remove('empty');
-      } else { ico.innerHTML = Number(k) === G.ULT_SLOT ? '★' : '·'; el.title = 'Trống'; el.classList.add('empty'); }
+      } else { setHtml(ico, Number(k) === G.ULT_SLOT ? '★' : '·'); el.title = 'Trống'; el.classList.add('empty'); }
     });
     // nút kỹ năng cảm ứng
     for (const [cls, i] of [['tb-s0', 0], ['tb-s1', 1], ['tb-s2', 2], ['tb-s3', 3], ['tb-s4', 4], ['tb-ult', G.ULT_SLOT]]) {
@@ -98,9 +101,9 @@ const UI = (() => {
       const id = p.skillSlots[i];
       const ico = el.querySelector('.ico');
       if (id) {
-        ico.innerHTML = `${skIcon(id)}<small>${esc(G.SKILLS[id].name.split(' ').pop())}</small>`;
+        setHtml(ico, `${skIcon(id)}<small>${esc(G.SKILLS[id].name.split(' ').pop())}</small>`);
         el.classList.remove('empty');
-      } else { ico.textContent = i === G.ULT_SLOT ? '★' : i + 1; el.classList.add('empty'); }
+      } else { setHtml(ico, String(i === G.ULT_SLOT ? '★' : i + 1)); el.classList.add('empty'); }
     }
     const cnt = (ids) => p.bag.filter(e => ids.includes(e.id)).reduce((s, e) => s + e.qty, 0);
     $('pot-hp').textContent = $('tpot-hp').textContent = cnt(['binh_mau_nho', 'binh_mau_vua', 'binh_mau_lon', 'binh_mau_dac', 'binh_mau_than_thoai', 'thuoc_nhiem_do']);

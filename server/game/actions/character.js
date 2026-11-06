@@ -103,31 +103,41 @@ const actions = {
     ev.push({ t: 'awaken', tier: aw.tier });
   },
 
-  // Nhập mật mã ở Lữ khách bí ẩn
-  redeem(p, a, ev, userId) {
+  // Nhập mật mã ở Lữ khách bí ẩn. Mã nằm trong PostgreSQL: mỗi tài khoản một lần,
+  // và mã có thể bị giới hạn tổng số lượt hoặc có hạn dùng.
+  async redeem(p, a, ev, userId) {
     if (!onCurrentMapNpc(p, 'lu_khach')) fail('Hãy đến gặp Lữ khách bí ẩn.');
     const now = Date.now();
     const tr = redeemTries.get(userId) || { start: now, n: 0 };
     if (now - tr.start > 10 * 60 * 1000) { tr.start = now; tr.n = 0; }
     if (tr.n >= 8) fail('Sai quá nhiều lần, thử lại sau 10 phút.');
-    const c = codes.find(a.code);
-    if (!c) { tr.n++; redeemTries.set(userId, tr); fail('Mật mã không đúng.'); }
-    const key = codes.normalize(c.code);
+    const key = codes.normalize(a.code);
     if (p.redeemed.includes(key)) fail('Bạn đã dùng mật mã này rồi.');
-    const r = c.rewards || {};
-    const items = Array.isArray(r.items) ? r.items.filter(([id]) => G.ITEMS[id]) : [];
-    const need = items.reduce((s2, [id, n]) => s2 + slotsNeeded(p, id, n), 0);
-    if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô.`);
-    p.redeemed.push(key);
-    ev.push({ t: 'msg', text: '[Hệ thống] Mật mã hợp lệ.', color: '#ffd54f' });
-    if (r.unlockClass && G.SCHOOLS[r.unlockClass]) {
-      p.unlocks[r.unlockClass] = true;
-      ev.push({ t: 'unlock', school: r.unlockClass });
-      ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa class đặc biệt: ${G.SCHOOLS[r.unlockClass].name}.`, color: '#ffc94a' });
+    const claim = await codes.redeem(userId, key);
+    if (!claim.ok) {
+      if (claim.error === 'not_found') { tr.n++; redeemTries.set(userId, tr); }
+      fail(claim.message);
     }
-    if (r.gold) gainGold(p, Math.max(0, Math.floor(r.gold)), ev);
-    if (r.skillPoints) p.skillPoints += Math.max(0, Math.floor(r.skillPoints));
-    for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
+    try {
+      const r = claim.rewards || {};
+      const items = Array.isArray(r.items) ? r.items.filter(([id]) => G.ITEMS[id]) : [];
+      const need = items.reduce((s2, [id, n]) => s2 + slotsNeeded(p, id, n), 0);
+      if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô.`);
+      p.redeemed.push(key);
+      ev.push({ t: 'msg', text: '[Hệ thống] Mật mã hợp lệ.', color: '#ffd54f' });
+      if (r.unlockClass && G.SCHOOLS[r.unlockClass]) {
+        p.unlocks[r.unlockClass] = true;
+        ev.push({ t: 'unlock', school: r.unlockClass });
+        ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa class đặc biệt: ${G.SCHOOLS[r.unlockClass].name}.`, color: '#ffc94a' });
+      }
+      if (r.gold) gainGold(p, Math.max(0, Math.floor(r.gold)), ev);
+      if (r.skillPoints) p.skillPoints += Math.max(0, Math.floor(r.skillPoints));
+      for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
+    } catch (e) {
+      // Không phát được quà (ví dụ túi đầy) thì trả lại lượt cho mã
+      await codes.release(userId, key);
+      throw e;
+    }
   },
 };
 

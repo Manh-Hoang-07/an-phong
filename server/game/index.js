@@ -1,7 +1,7 @@
 'use strict';
 /*
  * Luật chơi phía server. Mọi thứ liên quan tới tiền, vật phẩm, kinh nghiệm,
- * nhiệm vụ và nâng cấp đều do server quyết định rồi lưu ngay vào SQLite.
+ * nhiệm vụ và nâng cấp đều do server quyết định rồi lưu ngay vào PostgreSQL.
  *
  * Thư mục server/game/: luật chung (inventory, progress, quests, periodic, util)
  * và từng nhóm hành động người chơi gửi lên (actions/*.js).
@@ -23,12 +23,12 @@ const actions = Object.assign({},
   require('./actions/character')
 );
 
-function handle(userId, player, action) {
+async function handle(userId, player, action) {
   const fn = actions[action && action.type];
   if (!fn) fail('Hành động không hợp lệ.');
   ensureDaily(player);
   const ev = [];
-  fn(player, action, ev, userId);
+  await fn(player, action, ev, userId);
   return ev;
 }
 

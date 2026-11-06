@@ -14,13 +14,30 @@ const Art = (() => {
   const light = (c, p) => Phaser.Display.Color.IntegerToColor(c).lighten(p).color;
 
   // ---------------------------------------------------------------- Bút vẽ
+  // Hình vẽ nét cong (nhà, cây, đèn, pha lê, cổng, NPC) được tạo ở độ phân giải gấp HD lần và lọc mượt,
+  // nên phóng to trên màn hình nét vẫn mịn. Khi đặt hình phải nhân scale với Art.hdScale(key) (xem scene.artImage).
+  // Ô đất, cỏ sỏi (dán vào ảnh ghép) và hình nhỏ khác giữ 1× kiểu điểm ảnh cho khớp với nhân vật.
+  // Nền xa giữ 1× nhưng lọc mượt (cảnh xa mềm tự nhiên, không bị vỡ khối).
+  const HD = 2;
+  const HD_KEYS = /^(npc_|d_(shop|lamp|tree|dtree|shroom|crystal|redcrystal|stalactite|portal))/;
+  const SMOOTH_KEYS = /^(bg_|fx_vignette$|fx_grade$|shadow$)/;
+  const hdSet = new Set();
+  // Nền lớn (960×576) chỉ vẽ cho chủ đề của bản đồ đang vào; chủ đề khác vẽ khi tới bản đồ đó → vào game nhanh hơn
+  const THEME_BG = /^bg_(city|forest|cave|redgate)_/;
+  let onlyTheme = null;
   function make(scene, key, w, h, draw) {
     if (scene.textures.exists(key)) return;
+    if (onlyTheme) { const m = THEME_BG.exec(key); if (m && m[1] !== onlyTheme) return; }
     const g = scene.make.graphics({ x: 0, y: 0, add: false });
+    const hd = HD_KEYS.test(key);
+    if (hd) g.scaleCanvas(HD, HD);
     draw(g);
-    g.generateTexture(key, w, h);
+    g.generateTexture(key, hd ? w * HD : w, hd ? h * HD : h);
     g.destroy();
+    if (hd) hdSet.add(key);
+    if (hd || SMOOTH_KEYS.test(key)) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
   }
+  const hdScale = (key) => (hdSet.has(key) ? 1 / HD : 1);
   const ell = (g, c, x, y, rx, ry, a = 1) => { g.fillStyle(c, a); g.fillEllipse(x, y, rx * 2, ry * 2); };
   const rect = (g, c, x, y, w, h, a = 1) => { g.fillStyle(c, a); g.fillRect(x, y, w, h); };
   const rrect = (g, c, x, y, w, h, r, a = 1) => { g.fillStyle(c, a); g.fillRoundedRect(x, y, w, h, r); };
@@ -36,7 +53,8 @@ const Art = (() => {
   const tri = (g, c, x1, y1, x2, y2, x3, y3, a = 1) => poly(g, c, [[x1, y1], [x2, y2], [x3, y3]], a);
   const rnd = (i, s = 0) => { const v = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return v - Math.floor(v); };
 
-  function makeAll(scene) {
+  function makeAll(scene, theme) {
+    onlyTheme = theme || null;
     const p = lib;
     p.hunters(scene); p.weapons(scene); p.effects(scene); p.monsters(scene); p.npcs(scene);
     p.tiles(scene); p.decorations(scene); p.backgrounds(scene);
@@ -45,5 +63,5 @@ const Art = (() => {
   // Dùng nội bộ cho các file public/js/art/*.js
   const lib = { OUT, shade, light, make, ell, rect, rrect, poly, line, bone, tri, rnd, makeAll };
   // THEMES, HUNTERS, drawHunter: gắn trong art/terrain.js và art/characters.js
-  return { makeAll, make, ell, rect, rrect, poly, line, tri, _: lib };
+  return { makeAll, make, hdScale, ell, rect, rrect, poly, line, tri, _: lib };
 })();

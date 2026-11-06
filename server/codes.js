@@ -1,46 +1,43 @@
 'use strict';
 /*
- * Mã quà tặng (giftcode). Danh sách mã nằm trong file <DATA_DIR>/giftcodes.json,
- * sửa file là có hiệu lực ngay, không cần khởi động lại server.
+ * Mã quà tặng, lưu trong PostgreSQL (bảng gift_codes + gift_redemptions).
  *
- * Mỗi mã:
- *   { "code": "ABC-123", "note": "ghi chú", "rewards": {
- *       "unlockClass": "toan_nang",      // mở class đặc biệt
- *       "gold": 1000,                    // xu
- *       "skillPoints": 2,                // điểm kỹ năng
- *       "items": [["da_cuong_hoa", 5]]   // vật phẩm
- *   } }
- * Mỗi tài khoản dùng mỗi mã được một lần.
+ * Mỗi mã: { code, note, rewards, maxUses, expires }
+ *   rewards: { unlockClass: 'toan_nang', gold: 1000, skillPoints: 2, items: [["da_cuong_hoa", 5]] }
+ *   maxUses: giới hạn tổng số lượt (null = không giới hạn)
+ *   expires: mốc thời gian hết hạn (null = không hết hạn)
+ *
+ * Mỗi tài khoản dùng mỗi mã một lần. Tạo/sửa mã bằng server/tools/giftcode.js.
  */
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { DATA_DIR } = require('./db');
+const store = require('./db');
 
-const FILE = path.join(DATA_DIR, 'giftcodes.json');
+const normalize = (c) => String(c || '').trim().toUpperCase();
 
-function ensureFile() {
-  if (fs.existsSync(FILE)) return;
-  const code = 'TOANNANG-' + crypto.randomBytes(3).toString('hex').toUpperCase();
-  const data = {
-    codes: [
-      { code, note: 'Mở class đặc biệt Toàn Năng', rewards: { unlockClass: 'toan_nang' } },
-    ],
-  };
-  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
-  console.log('Đã tạo file mã quà tặng:', FILE);
-  console.log('Mã mở class Toàn Năng:', code);
+async function redeem(userId, code) {
+  const key = normalize(code);
+  if (!key) return { ok: false, error: 'not_found', message: 'Mật mã không đúng.' };
+
+  const claimed = await store.claimGiftCode(userId, key);
+  if (claimed.duplicate) return { ok: false, error: 'used', message: 'Bạn đã dùng mật mã này rồi.' };
+  if (claimed.rewards) return { ok: true, rewards: claimed.rewards };
+
+  // Không giành được lượt: xem mã có thật không để báo đúng lý do
+  const meta = await store.giftCodeMeta(key);
+  if (!meta) return { ok: false, error: 'not_found', message: 'Mật mã không đúng.' };
+  if (meta.expires && Number(meta.expires) <= Date.now()) {
+    return { ok: false, error: 'expired', message: 'Mật mã này đã hết hạn.' };
+  }
+  if (meta.max_uses !== null && Number(meta.uses) >= Number(meta.max_uses)) {
+    return { ok: false, error: 'exhausted', message: 'Mật mã này đã hết lượt sử dụng.' };
+  }
+  return { ok: false, error: 'used', message: 'Bạn đã dùng mật mã này rồi.' };
 }
 
-function normalize(c) { return String(c || '').trim().toUpperCase(); }
-
-function find(code) {
-  ensureFile();
-  let data;
-  try { data = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch { return null; }
-  const want = normalize(code);
-  if (!want) return null;
-  return (data.codes || []).find(c => normalize(c.code) === want) || null;
-}
-
-module.exports = { find, ensureFile, normalize, FILE };
+module.exports = {
+  normalize,
+  redeem,
+  release: (userId, code) => store.releaseGiftCode(userId, normalize(code)),
+  list: () => store.listGiftCodes(),
+  add: (gift) => store.upsertGiftCode(gift),
+  remove: (code) => store.deleteGiftCode(normalize(code)),
+};

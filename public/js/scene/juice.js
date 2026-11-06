@@ -21,6 +21,31 @@ const Quality = (() => {
   };
 })();
 
+/*
+ * Khung nhìn: game luôn tính toán trong khung "logic" cao 540 (rộng 720–1280 theo tỉ lệ màn hình),
+ * nhưng canvas được vẽ bằng đúng số điểm ảnh thật của màn hình rồi phóng camera lên k lần.
+ * Nhờ vậy tọa độ, kích thước, va chạm giữ nguyên như cũ mà hình thì nét theo màn hình.
+ *   w, H : kích thước logic      k : số điểm ảnh thật trên 1 đơn vị logic
+ * Để giữ mượt: k tối đa 2.5 (đồ họa Thấp: 1.5).
+ */
+const View = {
+  H: 540, w: 960, k: 1,
+  calc() {
+    const iw = Math.max(1, window.innerWidth), ih = Math.max(1, window.innerHeight);
+    this.w = Math.round(Math.max(720, Math.min(1280, this.H * iw / ih)));
+    // Chiều cao canvas thực sự chiếm trên màn hình (chế độ FIT, có thể có viền đen khi màn hình quá dài)
+    const cssH = Math.min(ih, iw * this.H / this.w);
+    const dpr = window.devicePixelRatio || 1;
+    const cap = Quality.low ? 1.5 : 2.5;
+    this.k = Math.max(0.75, Math.min(cap, cssH * dpr / this.H));
+    return this;
+  },
+  get pw() { return Math.round(this.w * this.k); },
+  get ph() { return Math.round(this.H * this.k); },
+  // Độ phân giải vẽ chữ (chữ trên đầu nhân vật, số sát thương)
+  get textRes() { return Math.max(1, Math.ceil(this.k * 2) / 2); },
+};
+
 const Juice = {
   setupJuice() {
     this.webgl = this.game.renderer.type === Phaser.WEBGL;
@@ -70,9 +95,10 @@ const Juice = {
 
   // Thời tiết theo chủ đề bản đồ (đặt cố định theo màn hình)
   setupWeather() {
-    const H = this.scale.height;
+    const H = this.viewH;
+    const o = this.screenOff;
     if (this.theme === 'city') {
-      this.weather.push(this.add.particles(0, -20, 'fx_rain', {
+      this.weather.push(this.add.particles(o.x, o.y - 20, 'fx_rain', {
         x: { min: -100, max: 1400 }, speedY: { min: 680, max: 820 }, speedX: -90, lifespan: 900,
         quantity: 1, frequency: 28, alpha: { start: 0.35, end: 0.15 }, rotate: 7, maxParticles: 50,
       }).setScrollFactor(0).setDepth(20));
@@ -80,14 +106,14 @@ const Juice = {
       // 3 lớp sương mỏng (ít lớp để điện thoại không phải vẽ chồng quá nhiều)
       const tint = this.theme === 'forest' ? 0xcff7ee : 0xb9a8ff;
       for (let i = 0; i < 3; i++) {
-        const f = this.add.image(Math.random() * 1000, H * (0.5 + i * 0.12), 'fx_fog')
+        const f = this.add.image(o.x + Math.random() * 1000, o.y + H * (0.5 + i * 0.12), 'fx_fog')
           .setScrollFactor(0.4 + i * 0.15).setDepth(i < 2 ? -3 : 7).setAlpha(this.theme === 'forest' ? 0.42 : 0.3)
           .setTint(tint).setScale(2.2, 1.1);
         this.tweens.add({ targets: f, x: f.x + 320, duration: 16000 + i * 3000, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
         this.weather.push(f);
       }
     } else if (this.theme === 'redgate') {
-      this.weather.push(this.add.particles(0, 0, 'fx_ember', {
+      this.weather.push(this.add.particles(o.x, o.y, 'fx_ember', {
         x: { min: 0, max: 1300 }, y: { min: 380, max: 620 }, speedY: { min: -60, max: -20 }, speedX: { min: -15, max: 15 },
         lifespan: { min: 2500, max: 4000 }, alpha: { start: 0.9, end: 0 }, frequency: 160, blendMode: 'ADD', maxParticles: 30,
       }).setScrollFactor(0).setDepth(6));
@@ -99,6 +125,7 @@ const Juice = {
     for (const w of this.weather) { this.tweens.killTweensOf(w); w.destroy(); }
     this.weather = [];
     if (this.vignette) this.vignette.setVisible(false);
+    for (const l of (this.screenLayers || []).slice(3)) l.setVisible(false);   // lớp giữa + sương đất
     for (const pt of this.portals) if (pt.img.preFX) pt.img.preFX.clear();
     if (this.motes) for (const m of this.motes) { this.tweens.killTweensOf(m); m.destroy(); }
     this.motes = [];
@@ -133,6 +160,7 @@ const Juice = {
       this.fpsCheckAt = time + 3000;
       if (avg > 24 && Quality.markSlow()) {
         this.applyLowQuality();
+        if (App.refit) App.refit();
         UI.log('[Hệ thống] Máy chạy hơi chậm, đã tự giảm hiệu ứng để mượt hơn (chỉnh ở tab Nhân vật).', '#64b5f6');
       }
     }
@@ -158,8 +186,8 @@ const Juice = {
     const cam = this.cameras.main;
     this.zoomTween = this.tweens.addCounter({
       from: 1, to: 1 + amount, duration: ms / 2, yoyo: true, ease: 'Quad.out',
-      onUpdate: (t) => cam.setZoom(t.getValue()),
-      onComplete: () => cam.setZoom(1),
+      onUpdate: (t) => cam.setZoom(this.baseZoom * t.getValue()),
+      onComplete: () => cam.setZoom(this.baseZoom),
     });
   },
 

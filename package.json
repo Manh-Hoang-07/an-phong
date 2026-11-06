@@ -5,15 +5,17 @@
   "description": "Ẩn Phong - game nhập vai ninja 2D chơi trên web, tự lưu lên server",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
-    "backup": "node server/backup.js"
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "dev": "node --watch --env-file-if-exists=.env server/index.js",
+    "backup": "node --env-file-if-exists=.env server/backup.js",
+    "giftcode": "node --env-file-if-exists=.env server/tools/giftcode.js"
   },
   "engines": {
     "node": ">=22.13"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "5.2.5",
+    "pg": "^8.16.3",
     "phaser": "3.90.0"
   }
 }

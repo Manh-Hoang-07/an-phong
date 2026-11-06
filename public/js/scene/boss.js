@@ -45,7 +45,8 @@ WorldScene.mix(class WorldBoss {
       // Giai đoạn 2: hai sóng đá chạy dọc mặt đất, phải nhảy qua
       if (m.enraged) {
         const mk = (dir) => {
-          const img = this.add.image(s.x, s.y, 'd_crystal').setOrigin(0.5, 1).setDepth(6).setTint(0xff7043).setScale(0.8, 0.7);
+          const img = this.artImage(s.x, s.y, 'd_crystal').setOrigin(0.5, 1).setDepth(6).setTint(0xff7043);
+          img.setScale(img.scaleX * 0.8, img.scaleY * 0.7);
           return { x: s.x, dir, img, hit: false };
         };
         m.wave = { list: [mk(-1), mk(1)], until: this.time.now + 1600, y: s.y };
