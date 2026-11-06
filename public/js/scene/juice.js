@@ -31,7 +31,9 @@ const Quality = (() => {
 const View = {
   H: 540, w: 960, k: 1,
   calc() {
-    const iw = Math.max(1, window.innerWidth), ih = Math.max(1, window.innerHeight);
+    // Điện thoại cầm dọc thì khung game bị xoay ngang (ScreenRot trong core/main.js): đo theo khung đó
+    const sz = window.ScreenRot ? ScreenRot.size() : { w: window.innerWidth, h: window.innerHeight };
+    const iw = Math.max(1, sz.w), ih = Math.max(1, sz.h);
     this.w = Math.round(Math.max(720, Math.min(1280, this.H * iw / ih)));
     // Chiều cao canvas thực sự chiếm trên màn hình (chế độ FIT, có thể có viền đen khi màn hình quá dài)
     const cssH = Math.min(ih, iw * this.H / this.w);

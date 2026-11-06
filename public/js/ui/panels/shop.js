@@ -3,11 +3,19 @@
 (() => {
   const { G, $, esc, fmt, statText, qOf, itemIcon } = UI._;
 
+  // Nhớ mục nào người chơi đã gập/mở (bảng được vẽ lại sau mỗi lần mua/bán)
+  const openState = new Map();
+  document.addEventListener('toggle', (e) => {
+    const el = e.target;
+    if (el.classList && el.classList.contains('shop-set')) openState.set(el.dataset.key, el.open);
+  }, true);
+
   // ---------- Cửa hàng
   function panelShop({ npc }) {
     const n = G.NPCS[npc], p = App.player;
     const discount = Math.round((p.shopDiscount || 0) * 100);
-    let html = `<p>Xu của bạn: <b class="gold">${fmt(p.gold)}</b>${discount ? ` · <span class="okc">Khách quen: giảm ${discount}%</span>` : ''}</p><div class="cols"><div><h3 style="margin:0 0 8px">Mua</h3>`;
+    let html = `<p>Xu của bạn: <b class="gold">${fmt(p.gold)}</b>${discount ? ` · <span class="okc">Khách quen: giảm ${discount}%</span>` : ''}</p>
+      ${n.gearShop ? '<p class="muted" style="margin-top:-4px;font-size:12px">Trang bị bán ở tiệm có phẩm chất <b>Thường</b>. Đồ Tốt, Hiếm, Huyền thoại chỉ rơi từ quái và trùm.</p>' : ''}<div class="cols"><div><h3 style="margin:0 0 8px">Mua</h3>`;
     // Hàng bán được gom theo bộ trang bị để thấy rõ mỗi bộ dùng cho 10 cấp nào
     const groups = [];
     for (const id of G.shopItems(p, npc)) {
@@ -17,9 +25,14 @@
       if (!gr) groups.push(gr = { key, set, items: [] });
       gr.items.push(id);
     }
+    // Mỗi bộ là một mục gập/mở được; mở sẵn bộ hợp với cấp hiện tại (và nhóm thuốc, nguyên liệu)
+    const mySet = G.setOfLevel(p.level);
     for (const gr of groups) {
-      html += `<div class="muted" style="margin:8px 0 6px;font-size:12px">` +
-        (gr.set ? `Bộ ${gr.set.name} · cấp ${gr.set.min}–${gr.set.max}` : 'Thuốc và nguyên liệu') + '</div><div class="list">';
+      const auto = !gr.set || (mySet && gr.set.id === mySet.id) || groups.length <= 2;
+      const open = openState.has(gr.key) ? openState.get(gr.key) : auto;
+      const here = gr.set && mySet && gr.set.id === mySet.id ? ' <span class="okc">· hợp cấp của bạn</span>' : '';
+      html += `<details class="shop-set" data-key="${gr.key}"${open ? ' open' : ''}><summary>` +
+        (gr.set ? `Bộ ${gr.set.name} · cấp ${gr.set.min}–${gr.set.max} · ${gr.items.length} món${here}` : 'Thuốc và nguyên liệu') + '</summary><div class="list">';
       for (const id of gr.items) {
         const d = G.ITEMS[id];
         const price = G.shopPrice(p, d);
@@ -32,7 +45,7 @@
           <small>${d.level ? 'Cấp ' + d.level + ' · ' : ''}${d.school ? G.SCHOOLS[d.school].name + ' · ' : ''}${esc(st)}</small>
           <small class="gold">${discount ? `<s class="muted">${fmt(d.price)}</s> ` : ''}${fmt(price)} xu</small></div><div class="row">${qtyBtns}</div></div>`;
       }
-      html += '</div>';
+      html += '</div></details>';
     }
     html += `</div><div><h3 style="margin:0 0 8px">Bán</h3><div class="list">`;
     const sellable = p.bag.filter(e => G.ITEMS[e.id].price && G.ITEMS[e.id].kind !== 'quest');

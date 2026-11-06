@@ -21,6 +21,9 @@ WorldScene.mix(class WorldCombat {
     const w = GameData.WEAPON_TYPES[App.stats.wtype];
     const fast = 1 / (1 + this.buffTotals(time).speed);
     if (time < this.cooldowns.atk) return;
+    const sta = this.attackStaminaCost();
+    if (!this.canSpendStamina(sta)) { this.cooldowns.atk = time + 250; return; }
+    this.spendStamina(sta);
     this.cooldowns.atk = time + w.cooldown * fast;
     this.attackAnim(time, w.cooldown * fast);
     this.swing();
@@ -190,6 +193,7 @@ WorldScene.mix(class WorldCombat {
     await new Promise(r => setTimeout(r, 1800));
     const res = await Net.action('die');
     if (res.player) { App.hp = res.player.hp; App.mp = res.player.mp; }
+    App.sta = App.stats.maxSta; App.staLocked = false;
     this.cameras.main.fadeOut(300);
     this.time.delayedCall(320, () => this.scene.restart({ map: GameData.START_MAP, arrive: 'S' }));
   }

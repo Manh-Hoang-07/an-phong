@@ -4,7 +4,7 @@ const G = require('../../../shared');
 const codes = require('../../codes');
 const { fail, fmt } = require('../util');
 const { bagFree, slotsNeeded, giveItem } = require('../inventory');
-const { gainGold, setSchool, resetCost } = require('../progress');
+const { gainGold, gainExp, setSchool, resetCost } = require('../progress');
 const { questActive, onCurrentMapNpc } = require('../quests');
 
 const redeemTries = new Map();
@@ -131,6 +131,7 @@ const actions = {
         ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa class đặc biệt: ${G.SCHOOLS[r.unlockClass].name}.`, color: '#ffc94a' });
       }
       if (r.gold) gainGold(p, Math.max(0, Math.floor(r.gold)), ev);
+      if (r.exp) gainExp(p, Math.max(0, Math.floor(r.exp)), ev);
       if (r.skillPoints) p.skillPoints += Math.max(0, Math.floor(r.skillPoints));
       for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
     } catch (e) {

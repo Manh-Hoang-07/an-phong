@@ -117,6 +117,7 @@ App.setPlayer = function (p) {
   App.stats = GameData.calcStats(p);
   App.hp = Math.min(App.hp, App.stats.maxHp);
   App.mp = Math.min(App.mp, App.stats.maxMp);
+  if (App.sta != null) App.sta = Math.min(App.sta, App.stats.maxSta);
   UI.refresh();
 };
 

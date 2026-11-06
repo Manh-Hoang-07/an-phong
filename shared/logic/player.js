@@ -103,12 +103,18 @@
     const speedFinal = Math.round(Math.min(290, Math.min(260, 190 + p.agi * 2) * scSpeed + eq.speed));
     return {
       maxHp: Math.round(hp), maxMp: Math.round(mp), atk: Math.round(atk), def: Math.round(def),
+      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)),
       crit: Math.min(60, r1(crit)), speed: speedFinal, skillMul, costMul, wtype,
       lifesteal: Math.min(15, r1(eq.lifesteal + scLifesteal)),
       cdr: Math.min(30, r1(eq.cdr + perkAdd.cdr + scCdr)),
       boss: r1(eq.boss + perkAdd.boss), goldfind: r1(eq.goldfind + perkAdd.goldfind), expfind: r1(eq.expfind + perkAdd.expfind),
     };
   }
+
+  // Tăng cường đang có hiệu lực (Bùa nhân đôi kinh nghiệm...): player.boosts = { exp: mốc hết hạn (ms) }
+  const BOOST_MAX_MS = 24 * 3600 * 1000;
+  function boostLeft(player, kind, now) { return Math.max(0, ((player.boosts || {})[kind] || 0) - now); }
+  function expBoostMul(player, now) { return boostLeft(player, 'exp', now) > 0 ? 2 : 1; }
 
   function newPlayer(name) {
     return {
@@ -123,7 +129,7 @@
       bag: [], storage: [], bagPlus: 0,
       skillSlots: Array(SKILL_SLOTS).fill(null),
       skills: {}, skillPoints: 0,
-      unlocks: {}, redeemed: [], perks: [],
+      unlocks: {}, redeemed: [], perks: [], boosts: {},
       quest: { step: 0, state: 'none', progress: {}, ver: QUEST_VERSION },
       side: { active: {}, done: [] },
       daily: null, weekly: null, shopDiscount: 0,
@@ -137,5 +143,5 @@
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, passivesOf, perksOf, canUseItem, calcStats, newPlayer, bagSize });
+  Object.assign(G, { nextAwaken, awakenOf, passivesOf, perksOf, canUseItem, calcStats, newPlayer, bagSize, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

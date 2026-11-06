@@ -22,7 +22,7 @@ WorldScene.mix(class WorldMonsters {
     this.mGroup.add(s);
     s.body.setAllowGravity(!fly);
     if (sheet) {
-      Sprites.fitMob(s, def.look);
+      Sprites.fitMob(s, def.look, !fly);
       s.play(`mb_${sheet}_idle`);
     } else if (!fly) {
       s.body.setSize(s.width * 0.7, s.height * 0.9).setOffset(s.width * 0.15, s.height * 0.1);
@@ -140,6 +140,10 @@ WorldScene.mix(class WorldMonsters {
     else if (time < m.slowUntil) s.setTint(0x9fc5e8);
     else this.baseTint(m);
     if (m.sheet && m.alive) this.mobAnim(m, time);
+    // Lưới an toàn: quái đi bộ lọt vào trong đất / rơi khỏi bản đồ (bị đẩy lùi quá mạnh, khung hình giật...) → về chỗ xuất hiện
+    if (!d.fly && m.alive && s.body && (s.body.bottom > this.worldH + 40 || this.isSolid(Math.floor((s.body.bottom - 6) / T), Math.floor(s.x / T)))) {
+      s.body.reset(m.homeX, m.homeY);
+    }
     if (d.passive) { this.drawMonsterBar(m); return; }
 
     const dx = pl.x - s.x, dy = pl.y - (d.fly ? s.y : s.body.center.y);

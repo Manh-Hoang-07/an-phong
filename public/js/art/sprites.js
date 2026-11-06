@@ -139,11 +139,14 @@ const Sprites = (() => {
     if (c.tint) sprite.setTint(c.tint); else sprite.clearTint();
   }
 
-  function fitMob(sprite, look) {
+  // walking: quái này đi bộ (def.fly = false). Một số quái đi bộ mượn bộ hình bay (shade → eye): khi đó gốc tọa độ
+  // phải là ĐÁY khung va chạm (chân), không phải tâm. Trước đây đặt theo tâm → nửa thân lọt vào đất, quái chìm 1 ô.
+  function fitMob(sprite, look, walking = true) {
     const m = MOBS[LOOK[look]];
     sprite.setScale(m.s);
     if (m.fly) {
-      sprite.setOrigin(m.cx / m.fw, m.cy / m.fh);
+      const oy = walking ? m.cy + m.bh / 2 / m.s : m.cy;
+      sprite.setOrigin(m.cx / m.fw, oy / m.fh);
       sprite.body.setSize(m.bw / m.s, m.bh / m.s, false);
       sprite.body.setOffset(m.cx - m.bw / 2 / m.s, m.cy - m.bh / 2 / m.s);
     } else {

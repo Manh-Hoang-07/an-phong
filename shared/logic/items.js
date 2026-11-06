@@ -81,6 +81,9 @@
   function makeInst(id, opts = {}) {
     const def = ITEMS[id];
     if (!def.slot) return { id, qty: opts.qty || 1, plus: 0 };
+    // Mua ở tiệm: luôn phẩm chất Thường, không dòng phụ (đồ Hiếm/Huyền thoại chỉ có từ quái, trùm).
+    // Bán lại được 1/4 giá, nên không thể mua rồi bán lại để kiếm lời.
+    if (opts.shop) return { id, qty: 1, plus: 0, q: 1, roll: 1, aff: [] };
     if (opts.plain) return { id, qty: 1, plus: 0, q: def.minQ || 1, roll: 1, aff: def.minQ ? rollAffixes(def, def.minQ) : [] };
     const q = opts.q || rollQuality(opts.table || 'normal', def.minQ);
     const roll = Math.round((0.8 + Math.random() * 0.4) * 1000) / 1000;

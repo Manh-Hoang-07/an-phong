@@ -20,7 +20,7 @@ const actions = {
     if (p.gold < cost) fail('Không đủ xu.');
     if (bagFree(p) < slotsNeeded(p, a.item, qty)) fail('Túi đã đầy.');
     p.gold -= cost;
-    addItem(p, a.item, qty);
+    addItem(p, a.item, qty, { shop: true });
     ev.push({ t: 'msg', text: `Đã mua ${def.name}${qty > 1 ? ' ×' + qty : ''} (-${fmt(cost)} xu).`, color: '#e0e0e0' });
   },
 
@@ -70,6 +70,19 @@ const actions = {
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
       p.skillPoints += 1;
       ev.push({ t: 'msg', text: '[Hệ thống] Đọc Sách kỹ năng: +1 điểm kỹ năng.', color: '#4fc3f7' });
+      return;
+    }
+    if (def.kind === 'boost') {
+      const now = Date.now();
+      p.boosts = p.boosts || {};
+      const left = G.boostLeft(p, def.boost, now);
+      if (left + def.minutes * 60000 > G.BOOST_MAX_MS) fail('Đã cộng dồn tối đa 24 giờ, dùng tiếp khi bớt thời gian.');
+      p.boosts[def.boost] = now + left + def.minutes * 60000;
+      e.qty--;
+      if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+      const total = Math.round((left + def.minutes * 60000) / 60000);
+      ev.push({ t: 'msg', text: `[Hệ thống] ${def.name}: kinh nghiệm khi hạ quái x${def.mul} trong ${total} phút.`, color: '#ffd54f' });
+      ev.push({ t: 'float', text: `Kinh nghiệm x${def.mul}!`, color: '#ffd54f' });
       return;
     }
     if (def.kind !== 'potion') fail('Không dùng được.');

@@ -46,6 +46,7 @@ class WorldScene extends Phaser.Scene {
     this.killFlush = null;
     this.invulnUntil = this.time.now + 2000;   // bất tử 2 giây khi vừa vào bản đồ
     this.portalReady = this.time.now + 800;
+    this.gateArmed = false;   // vừa tới nơi (đứng ngay cổng): phải bước ra khỏi cổng rồi mới mở danh sách
     this.lastGroundAt = 0;
     this.jumpBufferedAt = -1000;
     this.lastHurt = 0;
@@ -112,6 +113,7 @@ class WorldScene extends Phaser.Scene {
     if (this.bgMid && this.bgMid.active) this.bgMid.tilePositionX = cam.scrollX * 0.25;
     this.bgFar.tilePositionY = 0;
 
+    this.staminaTick(time, delta);
     if (!this.dead) this.updatePlayer(time, delta);
     for (const m of this.monsters) if (m.alive && this.mobActive(m)) this.updateMonster(m, time);
     this.updateMobShadows();
@@ -224,10 +226,27 @@ class WorldScene extends Phaser.Scene {
     // Gợi ý tương tác
     const near = this.nearestInteract();
     const npcName = near && near.type === 'npc' ? GameData.NPCS[near.id].name : '';
-    UI.hint(npcName ? `F: Nói chuyện với ${npcName}` : '', npcName);
-    if (near && near.type === 'portal' && !this.changing && time > (this.portalReady || 0) && move !== 0 && time >= (this.knockUntil || 0)) {
-      this.usePortal(near.portal);
+    if (near && near.type === 'portal') UI.hint('F: Chọn nơi đến', 'Cổng');
+    else UI.hint(npcName ? `F: Nói chuyện với ${npcName}` : '', npcName);
+    // Bước vào cổng (đang đi) thì mở danh sách nơi đến. Vừa tới bản đồ / vừa đóng danh sách thì phải bước ra khỏi cổng
+    // một lần rồi mới tự mở lại (gateArmed), để không bật lên liên tục.
+    if (!near || near.type !== 'portal') this.gateArmed = true;
+    else if (this.gateArmed && !this.changing && !App.panelOpen && time > (this.portalReady || 0) && move !== 0 && time >= (this.knockUntil || 0)) {
+      this.enterGate();
     }
+  }
+
+  // Vào cổng: một nơi đến thì đi luôn, nhiều nơi thì hiện danh sách (nơi chưa mở có khóa)
+  enterGate() {
+    this.gateArmed = false;
+    const dests = GameData.gateDestinations(App.player, this.mapId);
+    if (dests.length === 1) {
+      if (dests[0].ok) this.usePortal(dests[0].ch);
+      else UI.log(`🔒 ${dests[0].name}: ${dests[0].reason}.`, '#ffb74d');
+      return;
+    }
+    this.player.setVelocityX(0);
+    UI.openPanel('gate');
   }
 
   onPlatform() {
@@ -251,6 +270,7 @@ class WorldScene extends Phaser.Scene {
   interact() {
     const n = this.nearestInteract();
     if (n && n.type === 'npc') this.talkTo(n.id, n.x);
+    else if (n && n.type === 'portal' && !this.changing) this.enterGate();
   }
 
   talkTo(id, x) {
@@ -261,7 +281,11 @@ class WorldScene extends Phaser.Scene {
     Net.action('talk', { npc: id }).then(() => { if (this.sys.isActive()) this.refreshNpcMarks(); });
   }
 
-  async usePortal(portal) {
+  // ch: ký hiệu điểm đến trong G.MAPS[map].portals
+  async usePortal(ch) {
+    if (this.changing) return;
+    const st = GameData.portalStatus(App.player, this.mapId, ch);
+    if (!st.ok) { UI.log(`🔒 ${st.reason}.`, '#ffb74d'); return; }
     this.changing = true;
     this.flushKills();
     const s = this.saveState();
@@ -269,10 +293,11 @@ class WorldScene extends Phaser.Scene {
     const t0 = Date.now();
     Sound.play('portal');
     this.cameras.main.fadeOut(250);
-    const res = await Net.action('change_map', { portal: portal.ch, hp: s.hp, mp: s.mp });
+    const res = await Net.action('change_map', { portal: ch, hp: s.hp, mp: s.mp });
     if (!this.sys.isActive()) return;
     if (res.ok) {
-      this.time.delayedCall(Math.max(0, 260 - (Date.now() - t0)), () => this.scene.restart({ map: res.player.map, arrive: portal.def.at }));
+      const arrive = GameData.gateOf(res.player.map) || 'S';
+      this.time.delayedCall(Math.max(0, 260 - (Date.now() - t0)), () => this.scene.restart({ map: res.player.map, arrive }));
     } else {
       this.cameras.main.resetFX();
       this.cameras.main.fadeIn(200);

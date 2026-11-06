@@ -82,11 +82,13 @@
     App.stats = GameData.calcStats(player);
     App.hp = player.hp ?? App.stats.maxHp;
     App.mp = player.mp ?? App.stats.maxMp;
+    App.sta = App.stats.maxSta; App.staLocked = false;   // thể lực luôn đầy khi vào game
     $('game-wrap').classList.remove('hidden');
     $('hud').classList.remove('hidden');
     UI.init();
     setupKeyboard();
     setupTouch();
+    ScreenRot.update();
 
     View.calc();
     game = new Phaser.Game({
@@ -108,6 +110,7 @@
     // (Phaser có thể khởi động ở nhịp kế tiếp, lúc này game.canvas còn null → chờ sự kiện 'ready')
     if (game.canvas) game.canvas.style.imageRendering = 'auto';
     else game.events.once('ready', () => { if (game.canvas) game.canvas.style.imageRendering = 'auto'; });
+    patchScaleForRotation(game);
     App.refit = fitGame;
     UI.refresh();
     UI.log(`[Hệ thống] Chào mừng thợ săn ${player.name}. Tiến trình được tự động lưu.`, '#ffd54f');
@@ -146,6 +149,64 @@
     window.addEventListener('blur', () => { App.keys = {}; });
   }
 
+  // ------------------------------------------------------------ Luôn chơi màn hình ngang trên điện thoại
+  // iPhone không cho trang web khóa hướng xoay. Nên khi máy đang cầm DỌC, ta tự xoay cả khung game 90° bằng CSS:
+  // khung có kích thước (cao × rộng) của màn hình rồi quay sang ngang. Cầm ngang thật thì không xoay gì.
+  // Kích thước khung game thật lấy qua ScreenRot.size() (View.calc dùng), không dùng thẳng innerWidth/innerHeight.
+  const ScreenRot = window.ScreenRot = {
+    on: false,
+    size() { const w = window.innerWidth, h = window.innerHeight; return this.on ? { w: h, h: w } : { w, h }; },
+    update() {
+      const W = window.innerWidth, H = window.innerHeight;
+      this.on = document.body.classList.contains('touch') && H > W;
+      const root = document.documentElement, wrap = $('game-wrap');
+      root.classList.toggle('rot', this.on);
+      if (this.on) {
+        // Điểm (x, y) trong khung → màn hình (W − y, x): xoay 90° theo chiều kim đồng hồ quanh góc trên-trái rồi dời sang phải W
+        wrap.style.width = H + 'px'; wrap.style.height = W + 'px';
+        wrap.style.transform = `translateX(${W}px) rotate(90deg)`;
+      } else {
+        wrap.style.width = wrap.style.height = wrap.style.transform = '';
+      }
+      // Kích thước khung game cho CSS (thay cho 100vw / 100vh vốn tính theo màn hình chưa xoay)
+      const s = this.size();
+      root.style.setProperty('--gw', s.w + 'px');
+      root.style.setProperty('--gh', s.h + 'px');
+      // Màn hình thấp (điện thoại nằm ngang): giao diện gọn hơn
+      root.classList.toggle('compact', s.h <= 500);
+      root.classList.toggle('narrow', s.w <= 600);
+    },
+    // Tọa độ trên màn hình → tọa độ trong khung game (chưa xoay)
+    toLocal(x, y) { return this.on ? [y, window.innerWidth - x] : [x, y]; },
+  };
+
+  // Phaser đo khung bằng getBoundingClientRect (ra kích thước ĐÃ xoay) → đo bằng kích thước bố cục thay thế,
+  // và đổi tọa độ chạm về khung chưa xoay (chạm vào NPC để nói chuyện vẫn trúng).
+  function patchScaleForRotation(g) {
+    const sm = g.scale;
+    sm.getParentBounds = function () {
+      const el = this.parent;
+      if (!el) return false;
+      const w = el.clientWidth, h = el.clientHeight;
+      if (this.parentSize.width !== w || this.parentSize.height !== h) { this.parentSize.setSize(w, h); return true; }
+      return false;
+    };
+    // #game đã tự căn giữa canvas bằng flexbox (style.css); Phaser tính margin căn giữa bằng kích thước đã xoay → bỏ
+    sm.updateCenter = function () { this.canvas.style.marginLeft = '0px'; this.canvas.style.marginTop = '0px'; };
+    sm.updateBounds = function () {
+      const c = this.canvas, b = this.canvasBounds;
+      let x = 0, y = 0;
+      for (let el = c; el; el = el.offsetParent) { x += el.offsetLeft; y += el.offsetTop; }
+      b.x = x; b.y = y; b.width = c.offsetWidth; b.height = c.offsetHeight;
+    };
+    const im = g.input;
+    const orig = im.transformPointer;
+    im.transformPointer = function (pointer, pageX, pageY, wasMove) {
+      const [x, y] = ScreenRot.toLocal(pageX, pageY);
+      return orig.call(this, pointer, x, y, wasMove);
+    };
+  }
+
   // ------------------------------------------------------------ Cảm ứng
   // ?touch=1 để ép hiện điều khiển cảm ứng (thử trên máy tính)
   function isTouchDevice() {
@@ -170,7 +231,6 @@
     const standalone = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
     let triedFull = standalone;
     const firstTouch = () => {
-      $('joy-tip').classList.add('gone');
       if (!triedFull) { triedFull = true; goFullscreen(); }
     };
 
@@ -191,48 +251,38 @@
       b.addEventListener('lostpointercapture', up);
     });
 
-    // Cần điều khiển nổi: chạm ở đâu thì cần hiện ở đó
-    const zone = $('joy-zone'), base = $('joy-base'), knob = $('joy-knob');
-    const R = 52;
-    let active = null, cx = 0, cy = 0, upLatched = false;
-    const reset = () => {
-      active = null;
-      App.touch.left = App.touch.right = App.touch.down = false;
-      knob.style.transform = '';
-      base.style.left = ''; base.style.bottom = ''; base.style.top = '';
-      base.classList.remove('active');
+    // 3 nút mũi tên trái / xuống / phải. Mỗi ngón tay nhấn một nút; trượt ngón sang nút bên cạnh thì đổi hướng luôn
+    // (không cần nhấc tay). elementFromPoint dùng tọa độ màn hình nên vẫn đúng khi khung game bị xoay.
+    const pad = $('arrows');
+    const held = new Map();   // pointerId → 'left' | 'down' | 'right' | null
+    const syncArrows = () => {
+      const on = new Set(held.values());
+      for (const dir of ['left', 'down', 'right']) {
+        App.touch[dir] = on.has(dir);
+        pad.querySelector(`[data-arrow="${dir}"]`).classList.toggle('on', on.has(dir));
+      }
     };
-    zone.addEventListener('pointerdown', (e) => {
-      if (active !== null) return;
+    const arrowAt = (e) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const b = el && el.closest && el.closest('[data-arrow]');
+      return b && pad.contains(b) ? b.dataset.arrow : null;
+    };
+    pad.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       firstTouch();
-      active = e.pointerId;
-      try { zone.setPointerCapture(e.pointerId); } catch { /* bỏ qua */ }
-      const zr = zone.getBoundingClientRect();
-      cx = Math.max(zr.left + 64, Math.min(zr.right - 64, e.clientX));
-      cy = Math.max(zr.top + 64, Math.min(zr.bottom - 64, e.clientY));
-      base.style.left = (cx - zr.left - 62) + 'px';
-      base.style.top = (cy - zr.top - 62) + 'px';
-      base.style.bottom = 'auto';
-      base.classList.add('active');
-      move(e);
+      try { pad.setPointerCapture(e.pointerId); } catch { /* bỏ qua */ }
+      held.set(e.pointerId, arrowAt(e));
+      syncArrows();
     });
-    const move = (e) => {
-      if (e.pointerId !== active) return;
-      let dx = e.clientX - cx, dy = e.clientY - cy;
-      const len = Math.hypot(dx, dy);
-      if (len > R) { dx = dx / len * R; dy = dy / len * R; }
-      knob.style.transform = `translate(${dx}px, ${dy}px)`;
-      App.touch.left = dx < -14;
-      App.touch.right = dx > 14;
-      App.touch.down = dy > 32;
-      if (dy < -36 && !upLatched) { App.touch._p_jump = true; upLatched = true; }
-      if (dy > -18) upLatched = false;
-    };
-    zone.addEventListener('pointermove', move);
-    const end = (e) => { if (e.pointerId === active) reset(); };
-    zone.addEventListener('pointerup', end);
-    zone.addEventListener('pointercancel', end);
+    pad.addEventListener('pointermove', (e) => {
+      if (!held.has(e.pointerId)) return;
+      const dir = arrowAt(e);
+      if (dir !== held.get(e.pointerId)) { held.set(e.pointerId, dir); syncArrows(); }
+    });
+    const release = (e) => { if (held.delete(e.pointerId)) syncArrows(); };
+    pad.addEventListener('pointerup', release);
+    pad.addEventListener('pointercancel', release);
+    pad.addEventListener('lostpointercapture', release);
 
     // Chặn zoom và menu khi giữ ngón tay
     document.addEventListener('gesturestart', (e) => e.preventDefault());
@@ -243,6 +293,7 @@
   // Khung hình game giãn theo tỉ lệ màn hình (điện thoại dài thì thấy rộng hơn, không có viền đen)
   // Kích thước canvas = khung logic × View.k (xem View trong scene/juice.js).
   function fitGame() {
+    ScreenRot.update();
     if (!game || !game.scale) return;
     View.calc();
     if (game.scale.width !== View.pw || game.scale.height !== View.ph) game.scale.setGameSize(View.pw, View.ph);

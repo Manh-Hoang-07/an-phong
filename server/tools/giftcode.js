@@ -11,6 +11,7 @@
  *   --max-uses 20           tổng số lượt dùng (bỏ trống = không giới hạn)
  *   --expires 2026-12-31    hết hạn cuối ngày (giờ Việt Nam)
  *   --gold 1000             tặng xu
+ *   --exp 50000             tặng kinh nghiệm (tự lên cấp, cộng điểm như khi đánh quái)
  *   --skill-points 2        tặng điểm kỹ năng
  *   --item da_cuong_hoa 5   tặng vật phẩm (lặp lại được nhiều lần)
  *   --unlock-class toan_nang
@@ -25,7 +26,7 @@ function usage() {
   console.log('Cách dùng:');
   console.log('  node server/tools/giftcode.js list');
   console.log('  node server/tools/giftcode.js add [MÃ] [--note "..."] [--max-uses N] [--expires YYYY-MM-DD]');
-  console.log('                                      [--gold N] [--skill-points N] [--unlock-class ten]');
+  console.log('                                      [--gold N] [--exp N] [--skill-points N] [--unlock-class ten]');
   console.log('                                      [--item id_danh_muc so_luong]');
   console.log('  node server/tools/giftcode.js remove MÃ');
 }
@@ -38,6 +39,7 @@ function parse(argv) {
     else if (a === '--max-uses') out.maxUses = Number(argv[++i]);
     else if (a === '--expires') out.expires = Date.parse(argv[++i] + 'T23:59:59+07:00');
     else if (a === '--gold') out.rewards.gold = Number(argv[++i]);
+    else if (a === '--exp') out.rewards.exp = Number(argv[++i]);
     else if (a === '--skill-points') out.rewards.skillPoints = Number(argv[++i]);
     else if (a === '--unlock-class') out.rewards.unlockClass = argv[++i];
     else if (a === '--item') {

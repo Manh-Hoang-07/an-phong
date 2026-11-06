@@ -34,6 +34,7 @@ const UI = (() => {
     if (d.kind === 'armor') return SLOT_ICONS[d.slot];
     if (id.startsWith('binh_mau')) return '🧪';
     if (id === 'thuoc_nhiem_do') return '🧴';
+    if (d.kind === 'boost') return '📜';
     if (id.startsWith('binh_nl')) return '💧';
     if (id === 'da_cuong_hoa') return '💎';
     if (id === 'manh_vai_den') return '🏴';
@@ -122,18 +123,37 @@ const UI = (() => {
     $('h-hp-t').textContent = `${fmt(Math.max(0, App.hp))} / ${fmt(st.maxHp)}`;
     $('h-mp').style.width = Math.max(0, App.mp / st.maxMp * 100) + '%';
     $('h-mp-t').textContent = `${fmt(App.mp)} / ${fmt(st.maxMp)}`;
+    const sta = App.sta ?? st.maxSta;
+    $('h-sta').style.width = Math.max(0, sta / st.maxSta * 100) + '%';
+    $('h-sta-t').textContent = App.staLocked ? 'Kiệt sức…' : `${fmt(Math.floor(sta))} / ${fmt(st.maxSta)}`;
+    $('h-sta-bar').classList.toggle('locked', !!App.staLocked);
+    // Bùa nhân đôi kinh nghiệm: hiện thời gian còn lại (giờ server)
+    const boost = G.boostLeft(App.player, 'exp', App.serverNow());
+    const bEl = $('h-boost');
+    if (bEl.classList.contains('hidden') === boost > 0) bEl.classList.toggle('hidden', boost <= 0);
+    if (boost > 0) {
+      const m = Math.floor(boost / 60000), s = Math.floor(boost / 1000) % 60;
+      const txt = `✨ x2 KN ${m >= 60 ? Math.floor(m / 60) + 'g' + String(m % 60).padStart(2, '0') : m + ':' + String(s).padStart(2, '0')}`;
+      if (bEl.textContent !== txt) bEl.textContent = txt;
+    }
     const len = scene.cooldownLen || {};
     const p = App.player;
+    // Nút đánh thường mờ đi khi không đủ thể lực
+    const noAtk = !!App.staLocked || (scene.attackStaminaCost && sta < scene.attackStaminaCost());
+    for (const el of [document.querySelector('#skillbar .sk[data-k="atk"]'), document.querySelector('#touch .tb-attack')]) if (el) el.classList.toggle('nosta', noAtk);
     for (let i = 0; i < G.SKILL_SLOTS; i++) {
       const id = p.skillSlots[i];
       const left = id ? (scene.cooldowns[id] || 0) - time : 0;
       const h = left > 0 ? (left / (len[id] || 1) * 100) + '%' : '0';
-      const noMp = !!id && App.mp < Math.round(G.skillAt(id, G.skillLevel(p, id)).mp * st.costMul);
+      const skNow = id && G.skillLevel(p, id) ? G.skillAt(id, G.skillLevel(p, id)) : null;
+      const noMp = !!skNow && App.mp < Math.round(skNow.mp * st.costMul);
+      const noSta = !!skNow && (!!App.staLocked || sta < (skNow.ult ? G.STAMINA.ult : G.STAMINA.skill));
       const touchCls = i === G.ULT_SLOT ? 'tb-ult' : 'tb-s' + i;
       for (const el of [document.querySelector(`#skillbar .sk[data-k="${i}"]`), document.querySelector(`#touch .${touchCls}`)]) {
         if (!el) continue;
         el.querySelector('.cd').style.height = h;
         el.classList.toggle('nomp', noMp);
+        el.classList.toggle('nosta', noSta);
       }
     }
   }

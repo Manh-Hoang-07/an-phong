@@ -38,10 +38,9 @@
         'da_cuong_hoa', 'da_cuong_hoa_trung', 'da_cuong_hoa_cao', 'da_cuong_hoa_than_thoai'] },
     tap_hoa: { name: 'Chủ tiệm Tư', role: 'shop', color: 0x6b4fa0,
       greet: 'Trang bị cho thợ săn mới vào nghề đây! Bán gì cũng mua, giá hữu nghị.',
-      shop: ['khan_vai', 'ao_vai', 'gang_vai', 'dai_vai', 'quan_vai', 'giay_vai', 'nhan_dong', 'day_chuyen_dong', 'ngoc_boi_xanh',
-        'kiem_go', 'kiem_sat', 'cung_go', 'truong_go', 'da_cuong_hoa',
-        'kiem_thach_quy', 'cung_thach_vuong', 'truong_thach_vuong', 'da_cuong_hoa_trung',
-        'kiem_bang_long', 'cung_bang_long', 'truong_bang_long', 'da_cuong_hoa_cao'] },
+      // gearShop: tự bày đủ mọi bộ trang bị thường (xem shopItems trong shared/logic/shop.js)
+      gearShop: true,
+      shop: ['da_cuong_hoa', 'da_cuong_hoa_trung', 'da_cuong_hoa_cao'] },
     thu_kho: { name: 'Quản kho Bảo', role: 'storage', color: 0x3b4a5a,
       greet: 'Kho của Hiệp Hội, khóa ba lớp. Gửi gì cũng giữ nguyên vẹn.' },
     lu_khach: { name: 'Lữ khách bí ẩn', role: 'mystic', color: 0x3a2a55,

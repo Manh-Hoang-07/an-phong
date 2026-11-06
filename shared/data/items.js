@@ -20,6 +20,9 @@
     // Nguyên liệu, vật phẩm nhiệm vụ
     da_cuong_hoa: { name: 'Đá cường hóa', kind: 'material', price: 80, stack: true, desc: 'Dùng để nâng cấp trang bị ở Thợ rèn.' },
     sach_ky_nang: { name: 'Sách kỹ năng', kind: 'book', stack: true, price: 0, desc: 'Đọc để nhận thêm 1 điểm kỹ năng.' },
+    // Vật phẩm tăng cường (kind 'boost'): chỉ có qua mã quà tặng (npm run giftcode -- add --item bua_x2_kinh_nghiem 3)
+    bua_x2_kinh_nghiem: { name: 'Bùa nhân đôi kinh nghiệm', kind: 'boost', boost: 'exp', mul: 2, minutes: 60, stack: true, price: 0,
+      desc: 'Dùng để nhận gấp đôi kinh nghiệm khi hạ quái trong 60 phút. Dùng thêm khi còn hiệu lực sẽ cộng dồn thời gian (tối đa 24 giờ).' },
     manh_vai_den: { name: 'Mảnh huy hiệu đen', kind: 'quest', stack: true, desc: 'Mảnh kim loại đen khắc hình trăng khuyết.' },
     tinh_the_xanh: { name: 'Tinh thể xanh', kind: 'quest', stack: true, desc: 'Tinh thể mát lạnh lấy từ lồng ngực Bộ Xương Pha Lê, hút được năng lượng đỏ.' },
     loi_nang_luong: { name: 'Lõi năng lượng', kind: 'quest', stack: true, desc: 'Vật phẩm nhiệm vụ ngày, rơi từ quái trong cổng.' },

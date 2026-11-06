@@ -38,7 +38,8 @@ function killOne(p, a, ev, lk, now) {
     const expMul = diff >= 8 ? 0.1 : diff >= 5 ? 0.4 : 1;
     const st = G.calcStats(p);
     // exp gốc đã được chia cho hệ số hạng quái; nhân lại hệ số (tinh anh x10, thủ lĩnh x100, boss x200)
-    gainExp(p, Math.max(1, Math.round(G.monExp(mon) * expMul * (1 + st.expfind / 100))), ev);
+    // Bùa nhân đôi kinh nghiệm (p.boosts.exp) nhân thêm x2
+    gainExp(p, Math.max(1, Math.round(G.monExp(mon) * expMul * (1 + st.expfind / 100) * G.expBoostMul(p, now))), ev);
     gainGold(p, Math.round(rand(mon.gold[0], mon.gold[1]) * (1 + st.goldfind / 100)), ev);
 
     // Đồ rơi ra đất ở chỗ quái chết, người chơi đi qua để nhặt

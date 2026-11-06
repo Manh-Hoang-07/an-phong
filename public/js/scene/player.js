@@ -175,6 +175,41 @@ WorldScene.mix(class WorldPlayer {
     App.mp = Math.min(App.stats.maxMp, App.mp + App.stats.maxMp * 0.02 * mul * (this.hasPassive('phap_su') ? 2 : 1));
   }
 
+  // ------------------------------------------------------------------ Thể lực (tách riêng với năng lượng)
+  // Trừ thể lực cho một đòn/kỹ năng. Không đủ, hoặc đang kiệt sức → trả false (không được đánh).
+  canSpendStamina(cost) {
+    if (App.staLocked || App.sta < cost) {
+      if (!App.staLocked) App.staLocked = true;   // vừa cạn: kiệt sức tới khi hồi đủ ngưỡng
+      if (this.time.now > (this.staWarnAt || 0)) {
+        this.staWarnAt = this.time.now + 1500;
+        UI.log('Hết thể lực! Chờ hồi lại rồi mới đánh tiếp được.', '#ffca28');
+        if (this.player) this.floatText(this.player.x, this.player.y - 52, 'Kiệt sức', '#ffca28', 13);
+      }
+      return false;
+    }
+    return true;
+  }
+  spendStamina(cost) {
+    App.sta = Math.max(0, App.sta - cost);
+    this.staUsedAt = this.time.now;
+  }
+  attackStaminaCost() {
+    const S = GameData.STAMINA, w = GameData.WEAPON_TYPES[App.stats.wtype];
+    return Math.max(1, Math.round(S.attack * w.cooldown / 400));
+  }
+  skillStaminaCost(sk) { return sk.ult ? GameData.STAMINA.ult : GameData.STAMINA.skill; }
+
+  // Hồi thể lực từ từ (gọi mỗi khung hình)
+  staminaTick(time, delta) {
+    const S = GameData.STAMINA, max = App.stats.maxSta;
+    if (App.sta == null) App.sta = max;
+    if (App.sta < max && !this.dead) {
+      const rate = time - (this.staUsedAt || 0) > S.delay ? 1 : S.activeMul;
+      App.sta = Math.min(max, App.sta + S.regen * rate * delta / 1000);
+    }
+    if (App.staLocked && App.sta >= max * S.unlock) App.staLocked = false;
+  }
+
   drawAura(time) {
     const g = this.aura, pl = this.player;
     g.clear();

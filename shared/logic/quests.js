@@ -48,6 +48,29 @@
     return idx >= 0 && player.quest.step > idx;
   }
 
+  // ---------------------------------------------------------------- Cổng dịch chuyển
+  // Mỗi bản đồ chỉ có MỘT cổng, đặt ở chỗ ký hiệu cổng đầu tiên trong G.MAPS[id].portals (file bản đồ giữ nguyên).
+  // Đi vào cổng: chọn một trong các điểm đến của bản đồ đó. Tới nơi thì xuất hiện ở cổng của bản đồ mới.
+  function gateOf(mapId) {
+    const m = G.MAPS[mapId];
+    return (m && Object.keys(m.portals || {})[0]) || null;
+  }
+  // Điểm đến có mở chưa: { ok, reason }
+  function portalStatus(player, mapId, ch) {
+    const m = G.MAPS[mapId], portal = m && m.portals[ch];
+    if (!portal) return { ok: false, reason: 'Không có điểm đến này.' };
+    const target = G.MAPS[portal.to];
+    const need = [portal.require, target.require].filter(Boolean).find(id => !questDone(player, id));
+    if (!need) return { ok: true };
+    const q = QUESTS.find(x => x.id === need);
+    return { ok: false, reason: q ? `Cần hoàn thành nhiệm vụ "${q.name}"` : 'Chưa mở' };
+  }
+  // Danh sách điểm đến của cổng trong bản đồ: [{ ch, to, name, ok, reason }]
+  function gateDestinations(player, mapId) {
+    const m = G.MAPS[mapId];
+    return Object.keys((m && m.portals) || {}).map(ch => ({ ch, to: m.portals[ch].to, name: G.MAPS[m.portals[ch].to].name, ...portalStatus(player, mapId, ch) }));
+  }
+
   // ---------------------------------------------------------------- Phụ tuyến: truy vấn
 
   function sideById(id) { return SIDE_QUESTS.find(q => q.id === id); }
@@ -81,5 +104,5 @@
     return sideLines(player, q).every(l => l[1]);
   }
 
-  Object.assign(G, { npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
+  Object.assign(G, { gateOf, portalStatus, gateDestinations, npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

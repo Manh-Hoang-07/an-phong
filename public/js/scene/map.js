@@ -210,8 +210,11 @@ WorldScene.mix(class WorldMap {
     this.flushLayer(bitLayer);
   }
 
+  // Mỗi bản đồ chỉ dựng MỘT cổng (ở ký hiệu cổng đầu tiên, xem GameData.gateOf); các ký hiệu cổng khác bỏ qua.
+  // Đi vào cổng thì chọn điểm đến (enterGate trong world.js).
   buildPortals() {
-    for (const ch in this.meta.portals) {
+    const gate = GameData.gateOf(this.mapId);
+    for (const ch of gate ? [gate] : []) {
       const pos = this.findChar(ch);
       if (!pos) continue;
       const def = this.meta.portals[ch];
@@ -227,10 +230,11 @@ WorldScene.mix(class WorldMap {
   }
 
   refreshPortals() {
+    const dests = GameData.gateDestinations(App.player, this.mapId);
+    const open = dests.filter(d => d.ok).length;
     for (const p of this.portals) {
-      const target = GameData.MAPS[p.def.to];
-      const locked = target.require && !GameData.questDone(App.player, target.require);
-      p.label.setText((locked ? '🔒 ' : '') + target.name).setColor(locked ? '#bbbbbb' : '#e1d5ff');
+      if (dests.length === 1) p.label.setText((open ? '' : '🔒 ') + dests[0].name).setColor(open ? '#e1d5ff' : '#bbbbbb');
+      else p.label.setText(`Cổng dịch chuyển · ${open}/${dests.length} nơi`).setColor(open ? '#e1d5ff' : '#bbbbbb');
     }
   }
 

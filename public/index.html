@@ -60,8 +60,9 @@
         </div>
         <div class="bar hp"><div id="h-hp"></div><span id="h-hp-t"></span></div>
         <div class="bar mp"><div id="h-mp"></div><span id="h-mp-t"></span></div>
+        <div class="bar sta" id="h-sta-bar" title="Thể lực: đánh và dùng kỹ năng đều tốn, tự hồi khi ngừng đánh"><div id="h-sta"></div><span id="h-sta-t"></span></div>
         <div class="bar exp"><div id="h-exp"></div><span id="h-exp-t"></span></div>
-        <div class="hud-gold">🪙 <span id="h-gold"></span></div>
+        <div class="hud-gold">🪙 <span id="h-gold"></span><span id="h-boost" class="hud-boost hidden" title="Bùa nhân đôi kinh nghiệm đang có hiệu lực"></span></div>
       </div>
       <div id="hud-right">
         <div id="h-map"></div>
@@ -87,10 +88,11 @@
 
     <!-- Điều khiển cảm ứng cho điện thoại -->
     <div id="touch" class="hidden">
-      <!-- Cần điều khiển: chạm vào bất kỳ đâu ở nửa trái màn hình rồi kéo -->
-      <div id="joy-zone">
-        <div id="joy-base"><div id="joy-knob"></div></div>
-        <div id="joy-tip">Chạm và kéo để di chuyển<br>Kéo lên để nhảy</div>
+      <!-- 3 nút mũi tên: trái, xuống (giữ + nhảy để rơi qua bục), phải. Trượt ngón tay giữa các nút cũng được -->
+      <div id="arrows">
+        <div class="tb tb-arrow" data-arrow="left" aria-label="Sang trái"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg></div>
+        <div class="tb tb-arrow tb-arrow-down" data-arrow="down" aria-label="Xuống"><svg viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></svg></div>
+        <div class="tb tb-arrow" data-arrow="right" aria-label="Sang phải"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></div>
       </div>
       <div id="tbtns">
         <button data-t="attack" class="tb tb-attack"><span class="ico" id="tb-atk-ico">⚔</span><div class="cd"></div></button>
@@ -106,7 +108,6 @@
       </div>
       <button id="tb-talk" data-t="interact" class="tb tb-talk hidden">💬 <span></span></button>
     </div>
-    <div id="rotate"><div>📱 ↻</div><p>Xoay ngang điện thoại để chơi</p><p class="note ios-only">Không xoay được? Vuốt mở Trung tâm điều khiển và tắt <b>Khóa hướng dọc</b> 🔒</p></div>
 
     <div id="panel" class="hidden">
       <div class="panel-box">
@@ -164,6 +165,7 @@
   <script src="/js/ui/panels/storage.js"></script>
   <script src="/js/ui/panels/code.js"></script>
   <script src="/js/ui/panels/school.js"></script>
+  <script src="/js/ui/panels/gate.js"></script>
   <script src="/js/ui/actions.js"></script>
   <!-- Cảnh chơi: khung WorldScene + các phần gắn thêm method -->
   <script src="/js/scene/world.js"></script>

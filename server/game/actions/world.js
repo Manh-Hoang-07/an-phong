@@ -18,16 +18,12 @@ const actions = {
     const m = G.MAPS[p.map];
     const portal = m.portals[a.portal];
     if (!portal) fail('Không có cổng này.');
-    const target = G.MAPS[portal.to];
-    if (portal.require && !G.questDone(p, portal.require)) fail('Lối ra chưa mở. Hoàn thành nhiệm vụ của Hệ thống trước.');
-    if (target.require && !G.questDone(p, target.require)) {
-      const q = G.QUESTS.find(x => x.id === target.require);
-      fail(`Chưa thể vào ${target.name}. Cần hoàn thành nhiệm vụ "${q.name}".`);
-    }
+    const st = G.portalStatus(p, p.map, a.portal);
+    if (!st.ok) fail(`Chưa thể vào ${G.MAPS[portal.to].name}. ${st.reason}.`);
     if (Number.isFinite(a.hp)) actions.save(p, { map: p.map, hp: a.hp, mp: a.mp });
     p.map = portal.to;
     p.x = null; p.y = null;
-    p.arrive = portal.at;
+    p.arrive = G.gateOf(portal.to) || 'S';   // mỗi bản đồ một cổng: tới nơi thì đứng ở cổng đó
     ev.push({ t: 'map', map: p.map });
   },
 

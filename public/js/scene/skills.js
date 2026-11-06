@@ -35,7 +35,10 @@ WorldScene.mix(class WorldSkills {
     if (time < (this.cooldowns[id] || 0)) return;
     const cost = Math.round(sk.mp * App.stats.costMul);
     if (App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }
+    const sta = this.skillStaminaCost(sk);
+    if (!this.canSpendStamina(sta)) return;
     App.mp -= cost;
+    this.spendStamina(sta);
     const cdMs = sk.cd * 1000 * (1 - (App.stats.cdr || 0) / 100);
     this.cooldowns[id] = time + cdMs;
     this.cooldownLen[id] = cdMs;

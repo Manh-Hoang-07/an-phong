@@ -25,9 +25,9 @@
     toan_nang: {
       name: 'Toàn Năng', weapon: 'all', color: 0xffc94a, icon: '✴️', special: true,
       desc: 'Class đặc biệt, chỉ thức tỉnh được bằng mật mã. Dùng mọi vũ khí, học mọi kỹ năng của các class, ' +
-        'có cả 3 nội tại, thêm 1 ô kỹ năng và tuyệt kỹ riêng. Máu, tấn công, năng lượng +200%.',
-      // +200% = nhân 3. Muốn nhẹ hơn thì giảm các số này (ví dụ 2 = +100%)
-      bonus: { hp: 3, atk: 3, mp: 3 },
+        'có cả 3 nội tại, thêm 1 ô kỹ năng và tuyệt kỹ riêng. Máu, tấn công, năng lượng, thể lực +200%.',
+      // +200% = nhân 3. Muốn nhẹ hơn thì giảm các số này (ví dụ 2 = +100%). sta: thể lực tối đa
+      bonus: { hp: 3, atk: 3, mp: 3, sta: 3 },
     },
     sat_thu: {
       name: 'Sát Thủ', weapon: 'kiem', color: 0xe040fb, icon: '🗡️',
@@ -85,6 +85,13 @@
     truong: { name: 'Trượng', range: 170, cooldown: 480, mult: 0.85, style: 'wave' },
   };
 
+  // Thể lực: tách riêng với năng lượng (MP). Đánh thường và dùng kỹ năng đều tốn; hết thì kiệt sức,
+  // phải chờ hồi tới `unlock` (tỉ lệ so với tối đa) mới đánh tiếp được.
+  //   max = base + perLevel × (cấp − 1) + perAgi × điểm Nhanh nhẹn
+  //   attack: tốn mỗi đòn thường (nhân theo tốc độ đánh của vũ khí: cooldown / 400ms)
+  //   regen: hồi mỗi giây khi đã ngừng đánh `delay` ms; đang đánh thì chỉ hồi `activeMul` phần
+  const STAMINA = { base: 100, perLevel: 2, perAgi: 1, attack: 6, skill: 14, ult: 30, regen: 16, delay: 800, activeMul: 0.3, unlock: 0.3 };
+
   // Nội tại: luôn có tác dụng sau khi thức tỉnh class
   const PASSIVES = {
     kiem_si: { icon: '❤️', name: 'Kiếm Tâm', desc: 'Mỗi lần đánh thường trúng quái hồi 1% máu tối đa.' },
@@ -95,5 +102,5 @@
     tri_lieu_su: { icon: '🌿', name: 'Sinh Lực', desc: 'Kỹ năng hồi máu hồi thêm 20% theo máu tối đa.' },
   };
 
-  Object.assign(G, { SCHOOLS, AWAKENS, WEAPON_TYPES, PASSIVES });
+  Object.assign(G, { SCHOOLS, AWAKENS, WEAPON_TYPES, PASSIVES, STAMINA });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);
