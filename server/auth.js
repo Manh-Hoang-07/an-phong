@@ -95,5 +95,5 @@ setInterval(() => {
 
 module.exports = {
   hashPassword, verifyPassword, newSession, createSession, getSession, destroySession,
-  registerOpen, loginAllowed, loginFailed, log, sha256,
+  registerOpen, loginAllowed, loginFailed, log,
 };

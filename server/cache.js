@@ -162,6 +162,5 @@ function stop() { for (const t of timers) clearInterval(t); timers = []; }
 module.exports = {
   configure, start, stop,
   getSession, dropSession, dropUserSessions,
-  getPlayer, replacePlayer, begin, end, markDirty, saveNow, flush, flushAll,
-  stats: () => ({ sessions: sessions.size, players: players.size }),
+  getPlayer, replacePlayer, begin, end, markDirty, saveNow, flushAll,
 };

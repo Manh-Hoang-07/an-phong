@@ -104,7 +104,7 @@ Trên máy tính, muốn thử giao diện điện thoại thì thêm `?touch=1`
 
 - Toàn Năng **không có trong danh sách chọn**. Phải nói mật mã với **Lữ khách bí ẩn** (đứng cạnh cổng ở Tân Đô), rồi thức tỉnh ở chính NPC đó (cần cấp 5). Đang có class khác vẫn đổi được, điểm kỹ năng được trả lại.
 - Toàn Năng: máu, tấn công, năng lượng +200% (gấp 3), dùng mọi vũ khí, học cả 15 kỹ năng của 3 class cùng tuyệt kỹ riêng **Thức Tỉnh Tối Thượng**, có cả 3 nội tại và thêm 1 ô kỹ năng. Muốn giảm sức mạnh thì sửa `bonus` của `toan_nang` trong `shared/data/classes.js`.
-- **Mật mã lưu trong PostgreSQL** (bảng `gift_codes`), không còn file nào trên đĩa. Mã của bản cũ `TOANNANG-2E9D60` đã được chuyển sang.
+- **Mật mã lưu trong PostgreSQL** (bảng `gift_codes`).
 - Mỗi tài khoản dùng mỗi mã một lần. Ngoài ra mỗi mã có thể **giới hạn tổng số lượt** (`--max-uses`) và **hạn dùng** (`--expires`), hoặc để trống cho không giới hạn.
 - Tạo mã bằng lệnh, có hiệu lực ngay không cần khởi động lại server:
 

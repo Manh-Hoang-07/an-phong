@@ -198,7 +198,6 @@ const AUTH_LOG_DAYS = Number(process.env.AUTH_LOG_DAYS) || 90;
 
 module.exports = {
   DB_INFO,
-  pool,
   init,
   close: () => pool.end(),
 
