@@ -2,7 +2,7 @@
 /* Luật chơi phía server · Hành động: hạ quái (chống gian lận tốc độ hạ, trùm hồi sinh). */
 const G = require('../../../shared');
 const { fail, rand } = require('../util');
-const { countItem, dropLoot } = require('../inventory');
+const { countItem, dropLoot, pruneLoot } = require('../inventory');
 const { gainExp, gainGold } = require('../progress');
 const { currentQuest, questComplete, questActive, sideDropActive, sideDropNeed } = require('../quests');
 const { ensureWeekly, ensureDaily } = require('../periodic');
@@ -46,13 +46,25 @@ function killOne(p, a, ev, lk, now) {
     const y = Number.isFinite(a.y) ? Math.round(a.y) : p.y || 0;
     let n = 0;
     const spot = () => x + (n++ % 2 ? 1 : -1) * Math.ceil(n / 2) * 22;
+    // Bỏ đồ đã hết hạn trước khi đếm "đồ còn nằm trên đất". Trước đây đồ hết hạn chỉ bị dọn khi có món khác rơi ra,
+    // nên mấy món nhiệm vụ đã biến mất từ lâu vẫn được tính là "chưa nhặt" → server không cho rơi thêm.
+    pruneLoot(p);
     for (const [item, chance, onlyQuest, onlySide] of mon.drops) {
       if (onlyQuest && !questActive(p, onlyQuest)) continue;
       if (onlySide && !sideDropActive(p, onlySide)) continue;
       const need = onlyQuest ? (currentQuest(p).obj.collect?.[item] || 0) : onlySide ? sideDropNeed(p, onlySide, item) : 0;
       if (need) {
-        const onGround = (p.loot || []).filter(l => l.inst.id === item).length;
-        if (countItem(p, item) + onGround >= need) continue;
+        const ground = (p.loot || []).filter(l => l.inst.id === item);
+        if (countItem(p, item) + ground.length >= need) {
+          // Đủ số rồi nhưng còn món nằm ở bản đồ khác: nhắc người chơi (tối đa 1 lần / phút), kẻo tưởng không rơi
+          const away = ground.filter(l => l.map !== p.map);
+          if (away.length && now - (lk.groundHint || 0) > 60000) {
+            lk.groundHint = now;
+            const left = Math.ceil((Math.max(...away.map(l => l.until)) - now) / 60000);
+            ev.push({ t: 'msg', text: `Còn ${away.length} ${G.ITEMS[item].name} chưa nhặt ở ${G.MAPS[away[0].map].name}. Quay lại nhặt hoặc chờ khoảng ${left} phút để quái rơi lại.`, color: '#ffb74d' });
+          }
+          continue;
+        }
       }
       if (Math.random() < chance) dropLoot(p, { id: item, qty: 1, plus: 0 }, spot(), y, ev);
     }

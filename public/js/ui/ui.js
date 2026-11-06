@@ -246,7 +246,7 @@ const UI = (() => {
     return '<div class="daily-track">' + lines.map(l => `<div class="${l.done ? 'done' : ''}">${l.icon} ${esc(l.text)} ${l.have}/${l.x.need}</div>`).join('') + '</div>';
   }
   function resetIn() {
-    const now = Date.now(), vn = now + 7 * 3600 * 1000;
+    const now = App.serverNow(), vn = now + 7 * 3600 * 1000;
     const left = 86400000 - (vn % 86400000);
     const h = Math.floor(left / 3600000), m = Math.floor((left % 3600000) / 60000);
     return `${h} giờ ${m} phút`;

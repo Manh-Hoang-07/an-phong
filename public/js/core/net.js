@@ -9,6 +9,9 @@ window.App = {
   touch: {},        // nút cảm ứng đang giữ
   panelOpen: false,
   busy: false,
+  // Giờ theo đồng hồ SERVER. Mốc thời gian server gửi về (vd. hạn đồ rơi trên đất) phải so với giờ này,
+  // không so với Date.now(): điện thoại chỉnh giờ lệch vài phút là đồ rơi ra biến mất ngay lập tức.
+  serverNow: () => Date.now() + (window.__clockSkew || 0),
 };
 
 const Net = (() => {
@@ -17,6 +20,7 @@ const Net = (() => {
       ? { credentials: 'same-origin' }
       : { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
     const res = await fetch(url, opt);
+    if (window.__noteServerTime) __noteServerTime(res);
     // Nginx trả 502/503/504 khi server Node đang khởi động lại → coi như rớt mạng để thử lại
     if (res.status >= 502 && res.status <= 504) throw new Error('gateway ' + res.status);
     let data = {};

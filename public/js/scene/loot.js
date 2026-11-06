@@ -49,7 +49,7 @@ WorldScene.mix(class WorldLoot {
 
   updateLoot(time) {
     if (!this.loots || !this.loots.size || this.dead) return;
-    const now = Date.now();
+    const now = App.serverNow();
     const pl = this.player;
     for (const [lid, e] of this.loots) {
       if (e.l.until < now) { this.removeLoot(lid); continue; }

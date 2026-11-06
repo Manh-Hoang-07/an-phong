@@ -5,7 +5,12 @@
  *  - bắt đầu tải font tiếng Việt sớm
  *  - thanh tiến độ của màn hình chờ
  */
-window.__me = fetch('/api/me', { credentials: 'same-origin' }).then(r => r.json()).catch(() => null);
+// Độ lệch đồng hồ máy này so với server (header Date), xem App.serverNow trong net.js
+window.__clockSkew = 0;
+window.__noteServerTime = (res) => {
+  try { const d = Date.parse(res.headers.get('Date')); if (d) window.__clockSkew = d - Date.now(); } catch { /* bỏ qua */ }
+};
+window.__me = fetch('/api/me', { credentials: 'same-origin' }).then(r => { __noteServerTime(r); return r.json(); }).catch(() => null);
 try {
   if (document.fonts && document.fonts.load) {
     document.fonts.load('16px "Be Vietnam Pro"', 'Thức Tỉnh').catch(() => {});
