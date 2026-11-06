@@ -6,9 +6,13 @@
   <meta name="theme-color" content="#060a18">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- iPhone: mở từ biểu tượng trên Màn hình chính thì chạy toàn màn hình, không thanh địa chỉ, nội dung tràn dưới thanh trạng thái -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Thức Tỉnh">
   <title>Thức Tỉnh</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="/fonts/be-vietnam-pro-vietnamese-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/be-vietnam-pro-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/style.css">
@@ -30,6 +34,13 @@
         <p id="lf-note" class="note"></p>
       </form>
     </div>
+  </div>
+
+  <!-- Chỉ hiện trên iPhone/iPad khi đang mở trong Safari (chưa cài như ứng dụng) -->
+  <div id="install-tip" class="hidden">
+    <button id="install-close" title="Đóng">✕</button>
+    <b>Chơi toàn màn hình như ứng dụng</b>
+    <p>Bấm nút <b>Chia sẻ</b> <svg class="ios-share" viewBox="0 0 20 24" aria-hidden="true"><path d="M10 2v13M5.5 6.5 10 2l4.5 4.5M6 10H3v12h14V10h-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> của Safari → <b>Thêm vào MH chính</b>. Sau đó mở game bằng biểu tượng <b>Thức Tỉnh</b> trên màn hình chính.</p>
   </div>
 
   <div id="loading" class="screen"><div class="spinner"></div><p id="load-text">Đang tải...</p><div class="load-bar"><i id="load-fill"></i></div></div>
@@ -95,7 +106,7 @@
       </div>
       <button id="tb-talk" data-t="interact" class="tb tb-talk hidden">💬 <span></span></button>
     </div>
-    <div id="rotate"><div>📱 ↻</div><p>Xoay ngang điện thoại để chơi</p></div>
+    <div id="rotate"><div>📱 ↻</div><p>Xoay ngang điện thoại để chơi</p><p class="note ios-only">Không xoay được? Vuốt mở Trung tâm điều khiển và tắt <b>Khóa hướng dọc</b> 🔒</p></div>
 
     <div id="panel" class="hidden">
       <div class="panel-box">

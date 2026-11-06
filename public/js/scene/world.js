@@ -80,18 +80,25 @@ class WorldScene extends Phaser.Scene {
     Loading.set(1);
     Loading.hide();
     // Tải ngầm các bộ hình còn lại (class khác, quái bản đồ khác) để lúc cần thì đã có sẵn
-    this.time.delayedCall(800, () => this.loadRestAssets());
+    this.time.delayedCall(1500, () => this.loadRestAssets());
   }
 
+  // Tải ngầm NHỎ GIỌT: mỗi lượt 1 ảnh, nghỉ giữa các lượt.
+  // Trước đây xếp hàng ~80 ảnh một lúc: trình duyệt giải mã + đẩy lên GPU dồn vào vài khung hình liền nhau
+  // ngay sau khi vào game → khựng 1–2 giây trên điện thoại. Giờ mỗi khung hình nhiều nhất một ảnh.
   loadRestAssets() {
-    if (!this.sys.isActive() || this.load.isLoading()) return;
-    const n = Sprites.preload(this, null);
-    if (!n) return;
+    if (!this.sys.isActive()) return;
+    if (this.load.isLoading()) { this.time.delayedCall(500, () => this.loadRestAssets()); return; }
+    const next = Sprites.background(this, this.mapId, App.player.school || 'none')[0];
+    if (!next) return;
+    this.load.spritesheet(next.key, next.url, { frameWidth: next.fw, frameHeight: next.fh });
     this.load.once('complete', () => {
+      if (!this.textures.exists(next.key)) Sprites.skip(next.key);   // tải lỗi thì bỏ qua, không thử lại mãi
       if (!this.sys.isActive()) return;
       Sprites.createAnims(this);
       Sprites.applyFilters(this, View.k);
       if (this.player) this.refreshPlayerLook();   // class vừa đổi mà lúc nãy chưa có hình thì giờ thay vào
+      this.time.delayedCall(Quality.low ? 400 : 150, () => this.loadRestAssets());
     });
     this.load.start();
   }

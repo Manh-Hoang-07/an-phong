@@ -9,6 +9,35 @@
     if (me.user && me.player) { Loading.set(0.15, 'Đang vào game...'); startGame(me.player); }
     else { Loading.hide(); showLogin(me.registerOpen, me.error); }
     registerServiceWorker();
+    setupInstallTip();
+  }
+
+  // ------------------------------------------------------------ iPhone: chơi như ứng dụng
+  // Safari trên iPhone KHÔNG cho trang web vào toàn màn hình (không có requestFullscreen, không khóa được hướng xoay)
+  // nên thanh địa chỉ luôn còn. Cách duy nhất để mất thanh địa chỉ: "Thêm vào Màn hình chính" rồi mở từ biểu tượng
+  // (chạy kiểu ứng dụng, xem manifest.webmanifest + thẻ apple-mobile-web-app-* trong index.html).
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+  if (isIOS) document.body.classList.add('ios');
+  if (isStandalone()) document.body.classList.add('standalone');
+
+  function showInstallTip(force) {
+    const tip = $('install-tip');
+    if (!tip || !isIOS || isStandalone()) return false;
+    let hiddenAt = 0;
+    try { hiddenAt = +localStorage.getItem('tt_install_tip') || 0; } catch { /* bỏ qua */ }
+    if (!force && Date.now() - hiddenAt < 3 * 864e5) return false;   // đã tắt thì 3 ngày sau mới nhắc lại
+    tip.classList.remove('hidden');
+    return true;
+  }
+  function setupInstallTip() {
+    const close = $('install-close');
+    if (!close) return;
+    close.onclick = () => {
+      $('install-tip').classList.add('hidden');
+      try { localStorage.setItem('tt_install_tip', String(Date.now())); } catch { /* bỏ qua */ }
+    };
+    showInstallTip(false);
   }
 
   // Lưu sẵn code, hình, font trên máy để lần sau mở game gần như tức thì (cần HTTPS hoặc localhost)
@@ -125,6 +154,8 @@
 
   async function goFullscreen() {
     const el = document.documentElement;
+    // iPhone không có toàn màn hình cho trang web → hướng dẫn cài như ứng dụng
+    if (isIOS && !el.requestFullscreen && !el.webkitRequestFullscreen) { showInstallTip(true); return; }
     try {
       if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
       if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
@@ -220,6 +251,8 @@
   // Điện thoại: thanh địa chỉ ẩn/hiện, xoay màn hình... không phải lúc nào cũng phát sự kiện resize của window
   if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(fitGame, 50));
   window.addEventListener('resize', () => setTimeout(fitGame, 50));
+  // iOS (nhất là khi chạy như ứng dụng) đôi khi báo kích thước mới chậm sau khi xoay → đo lại thêm lần nữa
+  window.addEventListener('orientationchange', () => { setTimeout(fitGame, 120); setTimeout(fitGame, 500); });
 
   boot();
 })();

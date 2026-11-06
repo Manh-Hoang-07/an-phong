@@ -1,0 +1,4 @@
+# Script chạy trên Linux phải giữ xuống dòng LF (CRLF làm bash báo lỗi "$'\r': command not found")
+*.sh text eol=lf
+deploy/*.service text eol=lf
+deploy/*.conf text eol=lf

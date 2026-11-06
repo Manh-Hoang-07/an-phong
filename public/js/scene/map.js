@@ -122,14 +122,28 @@ WorldScene.mix(class WorldMap {
     for (let x = 0; x < this.worldW; x += CH) {
       layer.push(this.add.renderTexture(x, 0, Math.min(CH, this.worldW - x), this.worldH).setOrigin(0).setDepth(depth));
     }
+    layer.queue = layer.map(() => []);
     return layer;
   }
+  // Chỉ xếp hàng, chưa vẽ: vẽ dồn một lượt trong flushLayer
   stampTile(key, x, y, layer = this.tileLayer, ox = 0, oy = 0) {
     const fr = this.textures.getFrame(key);
     if (!fr) return;
     const left = x - fr.width * ox, top = y - fr.height * oy;
     const i0 = Math.floor(left / 1024), i1 = Math.floor((left + fr.width - 1) / 1024);
-    for (let i = Math.max(0, i0); i <= Math.min(layer.length - 1, i1); i++) layer[i].drawFrame(key, undefined, left - i * 1024, top);
+    for (let i = Math.max(0, i0); i <= Math.min(layer.length - 1, i1); i++) layer.queue[i].push(key, left - i * 1024, top);
+  }
+  // Vẽ mọi ô đã xếp hàng vào từng mảng ảnh ghép trong MỘT lượt vẽ.
+  // (drawFrame từng ô thì mỗi ô phải mở/đóng một lượt vẽ GPU riêng: vài trăm ô mất ~300ms trên máy tính, lâu hơn nhiều trên điện thoại)
+  flushLayer(layer) {
+    layer.forEach((rt, i) => {
+      const q = layer.queue[i];
+      if (!q.length) return;
+      rt.beginDraw();
+      for (let j = 0; j < q.length; j += 3) rt.batchDrawFrame(q[j], undefined, q[j + 1], q[j + 2]);
+      rt.endDraw();
+      q.length = 0;
+    });
   }
 
   buildTiles() {
@@ -162,6 +176,7 @@ WorldScene.mix(class WorldMap {
         c = e + 1;
       }
     }
+    this.flushLayer(this.tileLayer);
   }
 
   buildDecorations() {
@@ -192,6 +207,7 @@ WorldScene.mix(class WorldMap {
       const key = list[h % list.length];
       this.stampTile(key, c * T + 4 + (h * 13) % 21, r * T + 2, bitLayer, 0.5, 1);
     }
+    this.flushLayer(bitLayer);
   }
 
   buildPortals() {

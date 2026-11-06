@@ -202,6 +202,27 @@ file trong `shared/` thì thêm cả vào `shared/index.js`. Mỗi file tự g�
 
 ## Đưa lên server Ubuntu
 
+### Cách nhanh: một lệnh trên VPS
+
+Chép mã nguồn lên VPS (ví dụ `/opt/anphong`), rồi chạy:
+
+```bash
+cd /opt/anphong
+sudo bash deploy/setup-vps.sh --domain game.ten-mien-cua-ban.vn
+```
+
+Script [deploy/setup-vps.sh](deploy/setup-vps.sh) cài Node.js 24, PostgreSQL 18 và Nginx. Nó tạo role và database `anphong` với mật khẩu ngẫu nhiên, lưu trong `/etc/anphong.env`, tạo bảng, cài dịch vụ systemd, đặt lịch sao lưu lúc 3 giờ sáng và cấu hình Nginx. Chạy lại script nhiều lần cũng an toàn: dữ liệu và mật khẩu cũ được giữ nguyên. Không có tên miền thì bỏ `--domain` và vào game bằng IP.
+
+**Mang dữ liệu từ máy đang chạy lên VPS:** trên máy cũ chạy `npm run backup`, chép file `.dump` lên VPS, rồi chạy script kèm `--restore`:
+
+```bash
+sudo bash deploy/setup-vps.sh --domain game.ten-mien-cua-ban.vn --restore /tmp/anphong-2026-....dump
+```
+
+Script chỉ phục hồi khi database trên VPS chưa có tài khoản nào, để không ghi đè dữ liệu thật.
+
+### Cách làm tay
+
 Các lệnh dưới dùng tên miền ví dụ `game.ten-mien-cua-ban.vn`, hãy thay bằng tên miền của bạn.
 
 ```bash

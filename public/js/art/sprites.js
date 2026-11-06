@@ -62,26 +62,39 @@ const Sprites = (() => {
     return { chars, mobs };
   }
 
-  // Xếp hàng tải các bộ hình (only = null: tải hết phần còn thiếu). Trả về số file được xếp hàng.
-  // ?v= là mã phiên bản ảnh: trình duyệt lưu lâu dài, chỉ tải lại khi ảnh thay đổi.
-  function preload(scene, only) {
+  // Danh sách file ảnh còn thiếu (only = null: mọi bộ hình). ?v= là mã phiên bản ảnh: trình duyệt lưu lâu dài.
+  function missing(scene, only) {
     const v = window.BUILD ? '?v=' + BUILD.assets : '';
-    let n = 0;
-    const add = (key, url, fw, fh) => {
-      if (scene.textures.exists(key)) return;
-      scene.load.spritesheet(key, url + v, { frameWidth: fw, frameHeight: fh });
-      n++;
-    };
+    const list = [];
     for (const [id, c] of Object.entries(CHARS)) {
       if (only && !only.chars.has(id)) continue;
-      for (const a of Object.keys(c.anims)) add(`ch_${id}_${a}`, `/assets/chars/${id}/${a}.png`, c.fw, c.fh);
+      for (const a of Object.keys(c.anims)) list.push({ key: `ch_${id}_${a}`, url: `/assets/chars/${id}/${a}.png` + v, fw: c.fw, fh: c.fh });
     }
     for (const [id, m] of Object.entries(MOBS)) {
       if (only && !only.mobs.has(id)) continue;
-      for (const a of Object.keys(m.anims)) add(`mb_${id}_${a}`, `/assets/mobs/${id}/${a}.png`, m.fw, m.fh);
+      for (const a of Object.keys(m.anims)) list.push({ key: `mb_${id}_${a}`, url: `/assets/mobs/${id}/${a}.png` + v, fw: m.fw, fh: m.fh });
     }
-    return n;
+    return list.filter(f => !scene.textures.exists(f.key));
   }
+
+  // Xếp hàng tải các bộ hình (only = null: tải hết phần còn thiếu). Trả về số file được xếp hàng.
+  function preload(scene, only) {
+    const list = missing(scene, only);
+    for (const f of list) scene.load.spritesheet(f.key, f.url, { frameWidth: f.fw, frameHeight: f.fh });
+    return list.length;
+  }
+
+  // Thứ tự tải ngầm sau khi đã vào game: class đang chơi (vừa đổi class) → quái ở các bản đồ kề cổng → còn lại
+  function background(scene, mapId, school) {
+    const meta = GameData.MAPS[mapId] || {};
+    const near = { chars: new Set([CHARS[school] ? school : 'none']), mobs: new Set() };
+    for (const ch in meta.portals || {}) for (const m of needed(meta.portals[ch].to, school).mobs) near.mobs.add(m);
+    const first = missing(scene, near);
+    const keys = new Set(first.map(f => f.key));
+    return first.concat(missing(scene, null).filter(f => !keys.has(f.key))).filter(f => !skipped.has(f.key));
+  }
+  const skipped = new Set();
+  const skip = (key) => skipped.add(key);
 
   function createAnims(scene) {
     const mk = (prefix, id, a, n, rate, loop) => {
@@ -141,5 +154,5 @@ const Sprites = (() => {
     if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
   }
 
-  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob };
+  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob };
 })();

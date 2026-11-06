@@ -359,6 +359,25 @@ body.touch #game { touch-action: none; }
 }
 #rotate div { font-size: 54px; margin-bottom: 10px; }
 @media (orientation: portrait) { body.touch #rotate { display: flex; } }
+#rotate .note { max-width: 300px; font-size: 13px; color: var(--muted); margin-top: 4px; }
+.ios-only { display: none; }
+body.standalone [data-act="fullscreen"] { display: none; }   /* đã chạy như ứng dụng thì vốn toàn màn hình */
+body.ios .ios-only { display: block; }
+
+/* Gợi ý cài như ứng dụng (iPhone mở bằng Safari) */
+#install-tip {
+  position: fixed; z-index: 60; left: 50%; transform: translateX(-50%);
+  top: calc(8px + env(safe-area-inset-top)); width: min(440px, calc(100vw - 24px)); padding: 10px 40px 10px 14px;
+  background: rgba(8, 14, 32, 0.94); border: 1px solid var(--line-2); border-radius: 10px; box-shadow: var(--glow);
+  font-size: 13px; line-height: 1.45;
+}
+#install-tip p { margin: 3px 0 0; color: var(--muted); }
+#install-tip p b { color: var(--text); }
+#install-close {
+  position: absolute; right: 4px; top: 4px; width: 32px; height: 32px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--muted); font-size: 15px;
+}
+.ios-share { width: 14px; height: 16px; vertical-align: -2px; color: var(--sys); }
 
 body.touch #skillbar, body.touch #hint { display: none !important; }
 body.touch .menu i, body.touch .sk .key { display: none; }
