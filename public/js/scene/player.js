@@ -352,7 +352,9 @@ WorldScene.mix(class WorldPlayer {
     const ss = GameData.summonStats(App.player), states = App.player.summons?.states || {};
     ids.forEach((id, index) => {
       const c = this.summonSprites[id];
-      if (c) this.updateSummon(id, c, index, time, delta, ss, states[id]);
+      if (!c) return;
+      const state = states[id] || (states[id] = { hp: ss.maxHp, mp: ss.maxMp, sta: ss.maxSta });
+      this.updateSummon(id, c, index, time, delta, ss, state);
     });
   }
   updateSummon(id, c, index, time, delta, ss, state) {
