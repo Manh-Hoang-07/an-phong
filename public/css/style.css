@@ -119,13 +119,18 @@ input { font: inherit; }
   background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.15), rgba(0, 0, 0, 0.4));
   border: 2px solid var(--accent); box-shadow: 0 0 12px var(--accent);
 }
+.level-badge {
+  position: absolute; top: -7px; right: -7px; width: 21px; height: 21px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; color: #1d1710; background: #f0c879;
+  border: 1px solid rgba(255,255,255,.8); font-size: 10px; line-height: 1; font-weight: 800; box-shadow: 0 2px 7px rgba(0,0,0,.5);
+}
 .rank {
   position: absolute; right: -6px; bottom: -4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 4px;
   background: #0a0f22; border: 1px solid var(--accent); color: var(--accent); font-size: 11px; line-height: 16px; text-align: center;
 }
 .hud-id { min-width: 0; }
 .hud-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud-name .lv { color: var(--accent); font-weight: 600; margin-left: 4px; font-size: 12px; }
+.hud-name { display: flex; align-items: center; gap: 6px; }
 .hud-school { font-size: 11.5px; color: var(--muted); }
 .bar { position: relative; height: 13px; background: rgba(0, 0, 0, 0.55); border-radius: 3px; margin-top: 4px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.06); }
 .bar > div { height: 100%; transition: width 0.15s; position: relative; }
@@ -156,12 +161,10 @@ input { font: inherit; }
   background: var(--hp); font-size: 10px; line-height: 17px; font-weight: 700; box-shadow: 0 0 8px var(--hp);
 }
 #quest-track {
-  max-width: 250px; padding: 7px 10px; border-radius: 8px; font-size: 12px;
+  width: max-content; max-width: min(250px, calc(var(--gw, 100vw) * .3)); padding: 6px 10px; border-radius: 8px; font-size: 12px; line-height: 1.4;
   background: rgba(6, 11, 26, 0.72); border: 1px solid var(--line); border-left: 3px solid var(--sys);
 }
 #quest-track:empty { display: none; }
-#quest-track b { color: var(--sys); display: block; font-size: 12.5px; }
-#quest-track b::before { content: 'NHIỆM VỤ · '; color: var(--muted); font-size: 10px; letter-spacing: 1px; }
 #quest-track .done { color: var(--ok); }
 
 #log {
@@ -244,6 +247,7 @@ input { font: inherit; }
 .inv { display: grid; grid-template-columns: 200px 1fr; gap: 14px; }
 .inv-detail { grid-column: 1 / -1; }
 .inv-detail .detail { margin-top: 0; }
+.inv-detail { min-height: 0; overscroll-behavior: contain; }
 .equip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-content: start; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 5px; }
 .cell {
@@ -403,7 +407,8 @@ html.compact .panel-head { padding: 6px 10px; }
 html.compact #panel-close { width: 40px; height: 40px; font-size: 18px; }
 html.compact #panel-body { padding: 10px; }
 html.compact .inv { grid-template-columns: 124px 1fr 220px; gap: 10px; }
-html.compact .inv-detail { grid-column: auto; }
+html.compact .inv { grid-template-columns: 108px minmax(0, 1fr) 176px; gap: 8px; }
+html.compact .inv-detail { grid-column: auto; max-height: calc(var(--gh, 100vh) * .58); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 html.compact .equip-grid { gap: 4px; }
 html.compact .equip-grid .cell { font-size: 18px; }
 html.compact .grid { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); }
@@ -754,6 +759,27 @@ body { background: #100f12; }
 .tb-attack { border-color: var(--accent); box-shadow: 0 0 17px rgba(231,182,107,.28), inset 0 0 18px rgba(255,255,255,.08); }
 .tb-talk { color: #251913; background: linear-gradient(180deg, #f1d49b, #d7a45b); border-color: #f1d49b; }
 #install-tip { background: rgba(28,26,27,.96); border-color: var(--line-2); box-shadow: 0 12px 30px rgba(0,0,0,.35); }
+
+/* Bảng gọn hơn trên điện thoại; phần mô tả vật phẩm có vùng cuộn riêng để túi đồ đứng yên. */
+body.touch .panel-box { width: calc(var(--gw, 100vw) * .92); max-height: calc(var(--gh, 100dvh) * .88); }
+body.touch .panel-box.fixed { width: calc(var(--gw, 100vw) * .92); height: calc(var(--gh, 100dvh) * .88); max-height: calc(var(--gh, 100dvh) * .88); }
+body.touch #panel-body { min-height: 0; overscroll-behavior: contain; }
+body.touch .inv-detail { max-height: calc(var(--gh, 100dvh) * .28); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+body.touch .inv-detail .detail { margin-top: 0; }
+body.touch #tbtns { width: 310px; height: 270px; }
+body.touch #tbtns .tb-attack { right: 0; bottom: 0; }
+body.touch #tbtns .tb-s0 { right: 16px; bottom: 96px; }
+body.touch #tbtns .tb-s1 { right: 76px; bottom: 96px; }
+body.touch #tbtns .tb-s2 { right: 136px; bottom: 96px; }
+body.touch #tbtns .tb-s3 { right: 196px; bottom: 96px; }
+body.touch #tbtns .tb-ult { right: 14px; bottom: 174px; }
+body.touch #tbtns .tb-s4 { right: 78px; bottom: 178px; }
+body.touch #tbtns .tb-form { right: 137px; bottom: 177px; }
+body.touch #tbtns .tb-pets { right: 202px; bottom: 182px; }
+body.touch #tbtns .tb-hp { right: 157px; bottom: 17px; }
+body.touch #tbtns .tb-mp { right: 102px; bottom: 17px; }
+html.compact body.touch #quest-track { width: min(190px, calc(var(--gw, 100vw) * .25)); max-width: 190px; padding: 6px 9px; font-size: 10.5px; line-height: 1.35; }
+.inv-wallet { margin: 0 0 8px; padding: 7px 10px; border: 1px solid rgba(231,182,107,.2); border-radius: 8px; color: var(--gold); font-size: 12px; font-weight: 700; }
 
 @media (max-width: 600px) {
   .login-box { padding: 26px 22px 20px; }

@@ -92,7 +92,7 @@
   //   max = base + perLevel × (cấp − 1) + perAgi × điểm Nhanh nhẹn
   //   attack: tốn mỗi đòn thường (nhân theo tốc độ đánh của vũ khí: cooldown / 400ms)
   //   regen: hồi mỗi giây khi đã ngừng đánh `delay` ms; đang đánh thì chỉ hồi `activeMul` phần
-  const STAMINA = { base: 100, perLevel: 2, perAgi: 1, attack: 6, skill: 14, ult: 30, regen: 16, delay: 800, activeMul: 0.3, unlock: 0.3 };
+  const STAMINA = { base: 100, perLevel: 2, perAgi: 1, attack: 6, skill: 14, ult: 30, regen: 12, delay: 800, activeMul: 0.3, unlock: 0.3 };
   // Máu / năng lượng tự hồi mỗi giây khi không giao chiến (không đánh, không dùng kỹ năng, không bị đánh trong calmMs).
   // Đang biến hình thì không hồi. Thể lực hồi riêng theo STAMINA ở trên.
   const REGEN = { hp: 1, mp: 1, calmMs: 2000 };

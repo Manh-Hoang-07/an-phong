@@ -67,32 +67,49 @@ WorldScene.mix(class WorldPlayer {
   // Đổi sang / trở về bộ hình biến hình và vừa lại kích thước
   applyFormLook() {
     const aw = App.form ? GameData.awakenOf(App.player) : null;
-    this.formTier = aw && this.sheetId && Sprites.makeFormSheets(this, this.sheetId, aw.tier) ? aw.tier : 0;
+    const ready = !!(aw && this.sheetId && Sprites.formSheetsReady(this, this.sheetId, aw.tier));
+    this.formTier = ready ? aw.tier : 0;
+    if (aw && this.sheetId && !ready) this.prewarmForm();
     if (!this.sheetId || !this.player) return;
     this.fitFacing = this.facing || 1;
     Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow(), 0);
+    if (aw && !ready) this.player.setTint(aw.aura);
     this.player.setFlipX(this.fitFacing < 0);
     this.attackUntil = 0;
     this.player.play(this.charAnim('idle'));
   }
 
-  // Tạo sẵn ngầm bộ hình biến hình + lớp màng: mỗi nhịp (~30ms) chỉ xử lý MỘT khung ảnh (vài ms) → không khựng.
-  // Xong rồi thì bấm biến hình là có ngay. Ảnh tạo ra dùng chung cả phiên chơi (đổi bản đồ không phải tạo lại).
+  // Tạo sẵn ngầm bộ hình biến hình + lớp màng; hoãn từng bước khi nhân vật đang di chuyển/đánh.
   prewarmForm() {
     const aw = GameData.awakenOf(App.player);
     if (!aw || !this.sheetId || !this.sys.isActive()) return;
-    const id = this.sheetId, anims = Object.keys(Sprites.CHARS[id].anims);
+    const id = this.sheetId, tier = aw.tier, token = `${id}:${tier}`;
+    if (Sprites.formSheetsReady(this, id, tier)) return;
+    if (this.formWarmKey === token) return;
+    this.formWarmKey = token;
+    const anims = Object.keys(Sprites.CHARS[id].anims);
     let i = 0, job = null;
     const tick = () => {
-      if (!this.sys.isActive() || this.sheetId !== id || App.form) return;   // đang biến hình thì đã tạo đủ rồi
+      if (!this.sys.isActive() || this.sheetId !== id || this.formWarmKey !== token) {
+        if (this.formWarmKey === token) this.formWarmKey = null;
+        return;
+      }
+      const body = this.player && this.player.body;
+      const busy = !App.panelOpen && (Math.abs(body?.velocity?.x || 0) > 20 || Math.abs(body?.velocity?.y || 0) > 60 ||
+        this.time.now < (this.attackUntil || 0) || this.swinging);
+      if (busy) { this.time.delayedCall(90, tick); return; }
       if (!job) {
-        while (i < anims.length && !(job = Sprites.formJob(this, id, aw.tier, anims[i]))) i++;
-        if (!job) return;   // xong hết
+        while (i < anims.length && !(job = Sprites.formJob(this, id, tier, anims[i]))) i++;
+        if (!job) {
+          this.formWarmKey = null;
+          if (App.form && GameData.awakenOf(App.player)?.tier === tier && Sprites.formSheetsReady(this, id, tier)) this.applyFormLook();
+          return;
+        }
       }
       if (job.step()) { job = null; i++; }
-      this.time.delayedCall(30, tick);
+      this.time.delayedCall(45, tick);
     };
-    tick();
+    this.time.delayedCall(100, tick);
   }
 
   // Dùng hình vẽ sẵn (có hoạt ảnh) nếu có, không thì dùng hình vẽ bằng code
@@ -424,12 +441,7 @@ WorldScene.mix(class WorldPlayer {
     // Lớp màng hào quang: hình riêng nằm NGAY SAU nhân vật, mỗi khung hình chép đúng khung của nhân vật (drawAura)
     this.formShell = this.add.sprite(this.player.x, this.player.y, '__DEFAULT').setDepth(3.9).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
     // Quầng sáng mềm tỏa ra NGOÀI lớp màng (WebGL), không chạm vào người
-    if (this.webgl && this.formShell.preFX && !Quality.low) {
-      try {
-        this.formShell.preFX.setPadding(16);
-        this.formGlow = this.formShell.preFX.addGlow(aw.aura, t2 ? 2.5 : 1.8, 0, false, 0.1, t2 ? 12 : 9);
-      } catch { this.formGlow = null; }
-    }
+    // Màng sprite đã được tạo sẵn; tránh khởi tạo shader glow đúng lúc người chơi kích hoạt biến hình.
     // Vài đốm sáng nhỏ bay lên từ mép màng (xuất phát quanh viền ngoài, không bay ngang qua người)
     if (!Quality.low) {
       this.formEms = [this.add.particles(0, 0, 'fx_spark', {
@@ -446,7 +458,7 @@ WorldScene.mix(class WorldPlayer {
     this.formEms = [];
     if (this.formShell) { this.formShell.destroy(); this.formShell = null; }
     this.formGlow = null;
-    if (!App.form && this.formTier) this.applyFormLook();   // trở về bộ hình thường, kích thước thường
+    if (!App.form) this.applyFormLook();   // luôn khôi phục màu và kích thước thường, kể cả khi ảnh biến hình còn đang tạo
   }
 
   drawAura(time) {

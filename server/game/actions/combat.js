@@ -81,13 +81,18 @@ function killOne(p, a, ev, lk, now) {
 
     if (questActive(p, currentQuest(p)?.id)) {
       const q = currentQuest(p);
-      if (q.obj.kill && q.obj.kill[a.monster]) {
+      if (q.obj.kill) {
         const pr = p.quest.progress;
         pr.kill = pr.kill || {};
-        const cur = pr.kill[a.monster] || 0;
-        if (cur < q.obj.kill[a.monster]) {
-          pr.kill[a.monster] = cur + 1;
-          ev.push({ t: 'msg', text: `${q.name}: ${mon.name} ${cur + 1}/${q.obj.kill[a.monster]}`, color: '#a5d6a7' });
+        // Mỗi lần chỉ đếm mục tiêu quái đầu tiên chưa xong; khi đủ tự chuyển sang loại tiếp theo.
+        for (const target in q.obj.kill) {
+          const cur = pr.kill[target] || 0, need = q.obj.kill[target];
+          if (cur >= need) continue;
+          if (target === a.monster) {
+            pr.kill[target] = cur + 1;
+            ev.push({ t: 'msg', text: `${q.name}: ${mon.name} ${cur + 1}/${need}`, color: '#a5d6a7' });
+          }
+          break;
         }
       }
     }

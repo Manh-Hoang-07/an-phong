@@ -103,7 +103,7 @@ const Sprites = (() => {
       scene.anims.create({ key, frames: scene.anims.generateFrameNumbers(key, { start: 0, end: n - 1 }), frameRate: rate, repeat: loop ? -1 : 0 });
     };
     const loops = new Set(['idle', 'run', 'fall']);
-    for (const [id, c] of Object.entries(CHARS)) for (const [a, [n, r]] of Object.entries(c.anims)) mk('ch', id, a, n, r, loops.has(a));
+    for (const [id, c] of Object.entries(CHARS)) for (const [a, [n, r]] of Object.entries(c.anims)) mk('ch', id, a, n, a === 'run' ? Math.max(16, r) : r, loops.has(a));
     for (const [id, m] of Object.entries(MOBS)) for (const [a, [n, r]] of Object.entries(m.anims)) mk('mb', id, a, n, r, loops.has(a));
   }
 
@@ -204,7 +204,8 @@ const Sprites = (() => {
     if (!c || !scene.textures.exists(src)) return null;
     const finishAnim = () => {
       if (scene.anims.exists(key) || !scene.textures.exists(key)) return;
-      const [n, rate] = c.anims[a];
+      const [n, baseRate] = c.anims[a];
+      const rate = a === 'run' ? Math.max(16, baseRate) : baseRate;
       scene.anims.create({ key, frames: scene.anims.generateFrameNumbers(key, { start: 0, end: n - 1 }), frameRate: rate, repeat: ['idle', 'run', 'fall'].includes(a) ? -1 : 0 });
     };
     if (scene.textures.exists(key)) { finishAnim(); return null; }
@@ -239,14 +240,12 @@ const Sprites = (() => {
       },
     };
   }
-  // Tạo ngay (đồng bộ) mọi hoạt ảnh còn thiếu. Trả về true khi đã đủ.
-  function makeFormSheets(scene, id, tier) {
+  // Kiểm tra trạng thái tạo sẵn mà không làm nặng khung hình lúc người chơi kích hoạt biến hình.
+  function formSheetsReady(scene, id, tier) {
     const c = CHARS[id];
     if (!c) return false;
     for (const a of Object.keys(c.anims)) {
-      if (!scene.textures.exists(`ch_${id}_${a}`)) return false;
-      const job = formJob(scene, id, tier, a);
-      if (job) while (!job.step()) { /* làm hết các khung */ }
+      if (!scene.textures.exists(`ch_${id}_${a}`) || !scene.textures.exists(formKey(id, tier, a)) || !scene.textures.exists(shellKey(id, tier, a))) return false;
     }
     return true;
   }
@@ -269,5 +268,5 @@ const Sprites = (() => {
     if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
   }
 
-  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, makeFormSheets, formJob };
+  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
 })();

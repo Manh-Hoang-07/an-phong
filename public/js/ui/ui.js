@@ -64,14 +64,12 @@ const UI = (() => {
     const p = App.player;
     if (!p) return;
     const st = App.stats;
-    $('h-name').textContent = p.name;
-    $('h-level').textContent = 'Cấp ' + p.level;
     const sc = p.school && G.SCHOOLS[p.school];
-    $('h-school').textContent = (sc ? sc.name : 'Chưa thức tỉnh') + ' · Hạng ' + G.playerRank(p);
+    $('h-name').textContent = sc ? sc.name : 'Chưa thức tỉnh';
+    $('h-level').textContent = p.level;
     $('h-rank').textContent = G.playerRank(p);
     $('h-ava').textContent = sc ? sc.icon : '👤';
     document.documentElement.style.setProperty('--accent', sc ? '#' + sc.color.toString(16).padStart(6, '0') : '#3fd0ff');
-    $('h-gold').textContent = fmt(p.gold) + ' xu';
     const need = G.expToNext(p.level);
     const ep = p.level >= G.MAX_LEVEL ? 100 : (p.exp / need) * 100;
     $('h-exp').style.width = ep + '%';
@@ -147,15 +145,6 @@ const UI = (() => {
     $('h-sta').style.width = Math.max(0, sta / st.maxSta * 100) + '%';
     $('h-sta-t').textContent = App.staLocked ? 'Kiệt sức…' : `${fmt(Math.floor(sta))} / ${fmt(st.maxSta)}`;
     $('h-sta-bar').classList.toggle('locked', !!App.staLocked);
-    // Bùa nhân đôi kinh nghiệm: hiện thời gian còn lại (giờ server)
-    const boost = G.boostLeft(App.player, 'exp', App.serverNow());
-    const bEl = $('h-boost');
-    if (bEl.classList.contains('hidden') === boost > 0) bEl.classList.toggle('hidden', boost <= 0);
-    if (boost > 0) {
-      const m = Math.floor(boost / 60000), s = Math.floor(boost / 1000) % 60;
-      const txt = `✨ x2 KN ${m >= 60 ? Math.floor(m / 60) + 'g' + String(m % 60).padStart(2, '0') : m + ':' + String(s).padStart(2, '0')}`;
-      if (bEl.textContent !== txt) bEl.textContent = txt;
-    }
     const len = scene.cooldownLen || {};
     const p = App.player;
     // Nút đánh thường mờ đi khi không đủ thể lực
@@ -248,15 +237,18 @@ const UI = (() => {
     return p.quest.state === 'active' && questLines(p).every(l => l[1]);
   }
 
+  function currentQuestLine(p) {
+    return questLines(p).find(([, done]) => !done) || null;
+  }
+
   function renderQuestTrack() {
     const p = App.player;
     const q = G.QUESTS[p.quest.step];
     const el = $('quest-track');
-    if (!q) { el.innerHTML = '<b>Cốt truyện</b>Đã hoàn thành tất cả chương.' + sideTrack() + dailyTrack(); return; }
-    if (p.quest.state === 'none') { el.innerHTML = `<b>${esc(q.name)}</b>📍 Gặp ${esc(G.npcAt(p, q.npc))} để nhận nhiệm vụ.` + sideTrack() + dailyTrack(); return; }
-    const lines = questLines(p);
-    el.innerHTML = `<b>${esc(q.name)}</b>` + lines.map(([t, ok]) => `<div class="${ok ? 'done' : ''}">${ok ? '✓' : '•'} ${esc(t)}</div>`).join('') +
-      (questReady() ? `<div class="done">🏁 Về gặp ${esc(G.npcAt(p, q.npc))} để trả nhiệm vụ</div>` : '') + sideTrack() + dailyTrack();
+    if (!q) { el.textContent = 'Đã hoàn thành cốt truyện.'; return; }
+    if (p.quest.state === 'none') { el.textContent = `Gặp ${G.npcAt(p, q.npc)} để nhận nhiệm vụ.`; return; }
+    const line = currentQuestLine(p);
+    el.textContent = line ? line[0] : `Trả nhiệm vụ cho ${G.npcAt(p, q.npc)}.`;
   }
 
   // Phụ tuyến đang làm, hiển thị gọn dưới nhiệm vụ chính
@@ -348,9 +340,12 @@ const UI = (() => {
     document.querySelector('.panel-box').classList.toggle('fixed', fixed);
     $('panel-title').textContent = title;
     const body = $('panel-body');
-    const scroll = panel.lastName === panel.name ? body.scrollTop : 0;
     const same = panel.lastName === panel.name;
+    const detailKey = S.selected ? `${S.selected.where}:${S.selected.key}` : '';
+    const detailScroll = same && panel.lastDetailKey === detailKey ? (body.querySelector('.inv-detail')?.scrollTop || 0) : 0;
+    const scroll = same ? body.scrollTop : 0;
     panel.lastName = panel.name;
+    panel.lastDetailKey = detailKey;
     // Bảng được vẽ lại mỗi khi server trả lời (kể cả lần tự lưu 10 giây một lần). Giữ nguyên chữ đang gõ và con trỏ
     // trong các ô nhập, nếu không thì đang nhập mã giữa chừng sẽ mất chữ và bàn phím điện thoại tự đóng.
     const typed = {};
@@ -367,6 +362,8 @@ const UI = (() => {
       if (el && body.contains(el)) { el.focus({ preventScroll: true }); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch { /* bỏ qua */ } }
     }
     body.scrollTop = scroll;
+    const detail = body.querySelector('.inv-detail');
+    if (detail) detail.scrollTop = detailScroll;
   }
 
   function act(type, params) { return Net.action(type, params); }

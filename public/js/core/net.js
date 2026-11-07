@@ -164,6 +164,7 @@ App.onEvent = function (ev) {
       const aw = GameData.awakenOf(App.player);
       UI.banner((aw ? aw.name : 'THỨC TỈNH').toUpperCase(), 2600);
       if (App.scene && App.scene.awakenFx) App.scene.awakenFx(ev.tier);
+      if (App.scene && App.scene.prewarmForm) App.scene.prewarmForm();
       break;
     }
     case 'unlock': UI.banner('MỞ KHÓA CLASS ĐẶC BIỆT', 2200); break;

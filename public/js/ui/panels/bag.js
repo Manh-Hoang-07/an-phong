@@ -1,7 +1,7 @@
 'use strict';
 /* UI · Bảng túi đồ. */
 (() => {
-  const { G, $, cellHtml, itemInfo, shopHere, selectedEntry } = UI._;
+  const { G, $, fmt, cellHtml, itemInfo, shopHere, selectedEntry } = UI._;
 
   // ---------- Túi đồ
   function panelBag() {
@@ -31,7 +31,7 @@
       detail = `<div class="detail">${itemInfo(entry, { sell: where === 'bag' && shopHere(), compare: where === 'bag' })}<div class="row" style="margin-top:8px">${btns}</div></div>`;
     }
     return [`Túi đồ (${p.bag.length}/${G.bagSize(p)})`,
-      `<div class="inv"><div>${eq}</div><div>${grid}</div><div class="inv-detail">${detail}
+      `<div class="inv-wallet">🪙 ${fmt(p.gold)} xu</div><div class="inv"><div>${eq}</div><div>${grid}</div><div class="inv-detail">${detail}
        <p class="muted" style="margin:10px 0 0;font-size:12px">${shopHere() ? 'Đang ở làng: có thể bán đồ trực tiếp từ túi.' : 'Về làng để bán đồ.'}</p></div></div>`];
   }
 
