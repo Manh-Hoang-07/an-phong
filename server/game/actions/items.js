@@ -65,6 +65,19 @@ const actions = {
     const e = p.bag.find(x => x.id === a.item);
     if (!e) fail('Hết ' + (G.ITEMS[a.item]?.name || 'vật phẩm') + '.');
     const def = G.ITEMS[e.id];
+    if (def.kind === 'ult_book') {
+      const ult = G.availableSkills(p).map(id => [id, G.SKILLS[id]])
+        .find(([, sk]) => sk.ult && sk.school === p.school);
+      if (!ult) fail('Class hiện tại không có tuyệt kỹ tương ứng.');
+      const [id, sk] = ult;
+      if (G.skillLevel(p, id)) fail('Bạn đã học tuyệt kỹ này rồi.');
+      e.qty--;
+      if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+      p.skills[id] = 1;
+      p.skillSlots[G.ULT_SLOT] = id;
+      ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách Tuyệt Kỹ: đã học ${sk.name}.`, color: '#ffd54f' });
+      return;
+    }
     if (def.kind === 'book') {
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);

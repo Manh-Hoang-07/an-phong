@@ -33,6 +33,14 @@
       type: 'sword_fall', power: 6, radius: 180, count: 1, desc: 'Triệu hồi thanh kiếm khổng lồ đâm xuống phía trước.',
       m5: { radius: 230 }, t5: 'Vùng sát thương rộng hơn.',
       m10: { count: 3 }, t10: 'Ba thanh kiếm cùng giáng xuống.' },
+    pa6: { school: 'kiem_si', icon: '🌪️', name: 'Kiếm Vũ Liên Hoàn', level: 25, mp: 42, cd: 12,
+      type: 'melee', power: 1.25, hits: 6, range: 150, finisher: 2.4, desc: 'Xoay kiếm chém liên tiếp, nhát cuối tung đòn kết liễu.',
+      m5: { hits: 8 }, t5: 'Tăng thành 8 nhát chém.',
+      m10: { finisher: 3.2, range: 180 }, t10: 'Nhát cuối mạnh hơn, tầm chém rộng hơn.' },
+    pa7: { school: 'kiem_si', icon: '🌠', name: 'Phá Quân Trảm', level: 35, mp: 58, cd: 18,
+      type: 'melee', power: 1.8, hits: 4, range: 190, finisher: 3.2, desc: 'Dồn lực chém bốn nhát, kết thúc bằng đòn phá giáp.',
+      m5: { hits: 5 }, t5: 'Tăng thành 5 nhát chém.',
+      m10: { finisher: 4.2, range: 230 }, t10: 'Đòn cuối mạnh hơn và tầm chém xa hơn.' },
 
     // ----- Cung Thủ
     hl1: { school: 'cung_thu', icon: '🔥', name: 'Tiễn Xuyên Phá', level: 5, mp: 10, cd: 2.5,
@@ -52,9 +60,17 @@
       m5: { duration: 10 }, t5: 'Kéo dài 10 giây.',
       m10: { critBuff: 40 }, t10: 'Chí mạng +40%.' },
     hl5: { school: 'cung_thu', icon: '🌧️', name: 'Mưa Tên', level: 20, mp: 60, cd: 40, ult: true,
-      type: 'arrow_rain', power: 0.9, arrows: 12, width: 360, desc: 'Trút mưa tên xuống vùng phía trước.',
+      type: 'arrow_rain', power: 2.2, arrows: 12, width: 360, desc: 'Trút mưa tên xuống vùng phía trước.',
       m5: { arrows: 18 }, t5: '18 mũi tên.',
       m10: { width: 480, slow: 2 }, t10: 'Vùng rộng hơn, quái trúng tên bị chậm.' },
+    hl6: { school: 'cung_thu', icon: '🎯', name: 'Tam Tiễn Truy Kích', level: 25, mp: 42, cd: 11,
+      type: 'projectile', power: 1.65, pierce: true, range: 620, count: 3, slow: 1, desc: 'Bắn ba mũi tên xuyên giáp theo đường thẳng.',
+      m5: { range: 760 }, t5: 'Tầm bắn xa hơn.',
+      m10: { count: 5, slow: 2 }, t10: 'Bắn năm tên, làm chậm mục tiêu lâu hơn.' },
+    hl7: { school: 'cung_thu', icon: '🏹', name: 'Bão Tên Định Mệnh', level: 35, mp: 56, cd: 17,
+      type: 'arrow_rain', power: 1.25, arrows: 16, width: 430, desc: 'Gọi một loạt tên dày đặc xuống khu vực phía trước.',
+      m5: { arrows: 22 }, t5: 'Mưa tên dày hơn.',
+      m10: { width: 540, slow: 2 }, t10: 'Vùng tên rộng hơn và làm chậm quái.' },
 
     // ----- Pháp Sư
     tn1: { school: 'phap_su', icon: '🌊', name: 'Sóng Băng', level: 5, mp: 10, cd: 3,
@@ -77,6 +93,14 @@
       type: 'meteor', power: 7, radius: 200, count: 1, desc: 'Gọi thiên thạch rơi xuống phía trước.',
       m5: { radius: 250 }, t5: 'Vụ nổ rộng hơn.',
       m10: { count: 3 }, t10: 'Ba thiên thạch liên tiếp.' },
+    tn6: { school: 'phap_su', icon: '🌌', name: 'Băng Lưu Bạo', level: 25, mp: 48, cd: 16,
+      type: 'aoe', power: 2.6, radius: 190, freeze: 2, desc: 'Gọi luồng băng nổ quanh người, gây sát thương và đóng băng quái.',
+      m5: { radius: 240 }, t5: 'Vùng băng lan rộng hơn.',
+      m10: { freeze: 3, power: 3.1 }, t10: 'Đóng băng lâu hơn, sát thương tăng.' },
+    tn7: { school: 'phap_su', icon: '🔥', name: 'Hỏa Tinh Bạo Liệt', level: 35, mp: 62, cd: 19,
+      type: 'meteor', power: 4.8, radius: 250, count: 2, desc: 'Triệu hồi hai thiên thạch lửa phát nổ trên chiến trường.',
+      m5: { radius: 300 }, t5: 'Vụ nổ lan rộng hơn.',
+      m10: { count: 3, power: 5.5 }, t10: 'Gọi thêm một thiên thạch với sức công phá lớn hơn.' },
 
     // ----- Toàn Năng (riêng)
     vn1: { school: 'toan_nang', icon: '🌟', name: 'Thức Tỉnh Tối Thượng', level: 20, mp: 80, cd: 60, ult: true,
@@ -84,6 +108,14 @@
       desc: 'Giải phóng toàn bộ sức mạnh: tăng tấn công, chí mạng, tốc đánh.',
       m5: { duration: 13 }, t5: 'Kéo dài 13 giây.',
       m10: { atkBuff: 0.8 }, t10: 'Tấn công +80%.' },
+    vn2: { school: 'toan_nang', icon: '💫', name: 'Hợp Nhất Nguyên Tố', level: 30, mp: 58, cd: 24,
+      type: 'aoe', power: 3.0, radius: 210, freeze: 1, heal: 0.18, desc: 'Hợp nhất các nguyên tố, gây sát thương diện rộng và hồi một phần máu.',
+      m5: { radius: 260, heal: 0.24 }, t5: 'Vùng ảnh hưởng rộng hơn và hồi thêm máu.',
+      m10: { power: 3.8, freeze: 2 }, t10: 'Sát thương mạnh hơn, đóng băng quái lâu hơn.' },
+    vn3: { school: 'toan_nang', icon: '🌈', name: 'Dòng Chảy Toàn Năng', level: 40, mp: 68, cd: 28,
+      type: 'buff', buff: 'awaken', duration: 8, atkBuff: 0.3, critBuff: 12, speedBuff: 0.25, desc: 'Cân bằng các sức mạnh, tăng công kích, chí mạng và tốc độ.',
+      m5: { duration: 10 }, t5: 'Duy trì trạng thái lâu hơn.',
+      m10: { atkBuff: 0.4, critBuff: 18 }, t10: 'Tăng thêm công kích và tỷ lệ chí mạng.' },
 
     // ----- Sát Thủ
     st1: { school: 'sat_thu', icon: '💨', name: 'Lướt Bóng', level: 5, mp: 10, cd: 2.5,
@@ -106,6 +138,14 @@
       type: 'spread', power: 1.8, count: 5, range: 380, desc: 'Phóng 5 dao ngắn tỏa ra phía trước.',
       m5: { count: 8 }, t5: '8 dao.',
       m10: { slow: 2 }, t10: 'Dao trúng làm chậm quái 2 giây.' },
+    st6: { school: 'sat_thu', icon: '🌑', name: 'Ảnh Trảm Liên Kích', level: 25, mp: 40, cd: 11,
+      type: 'dash', power: 2.1, distance: 230, after: 1.2, desc: 'Lướt xuyên mục tiêu rồi để lại một nhát chém bóng tối.',
+      m5: { distance: 290 }, t5: 'Lướt xa hơn.',
+      m10: { after: 1.8 }, t10: 'Vệt chém gây sát thương lớn hơn.' },
+    st7: { school: 'sat_thu', icon: '🩸', name: 'Huyết Ảnh Truy Sát', level: 35, mp: 56, cd: 16,
+      type: 'dash', power: 3.0, distance: 280, after: 2.0, desc: 'Lướt chớp nhoáng qua kẻ địch, để lại bóng ảnh chém bồi.',
+      m5: { distance: 340 }, t5: 'Tăng tầm lướt.',
+      m10: { after: 2.8 }, t10: 'Bóng ảnh gây sát thương mạnh hơn.' },
 
     // ----- Tanker
     tk1: { school: 'tanker', icon: '🛡️', name: 'Khiên Phá', level: 5, mp: 14, cd: 3.5,
@@ -128,6 +168,14 @@
       type: 'sword_fall', power: 5, radius: 220, count: 1, desc: 'Đập kiếm xuống đất, sóng thép nổ diện rộng.',
       m5: { radius: 270 }, t5: 'Vùng nổ rộng hơn.',
       m10: { count: 2 }, t10: 'Hai vụ nổ liên tiếp.' },
+    tk6: { school: 'tanker', icon: '🌋', name: 'Địa Chấn', level: 25, mp: 48, cd: 16,
+      type: 'aoe', power: 2.8, radius: 220, desc: 'Dậm mạnh xuống đất, tạo chấn động quanh người.',
+      m5: { radius: 270 }, t5: 'Chấn động lan xa hơn.',
+      m10: { power: 3.6 }, t10: 'Sát thương chấn động tăng mạnh.' },
+    tk7: { school: 'tanker', icon: '🪨', name: 'Pháo Đài Bất Khuất', level: 35, mp: 58, cd: 24,
+      type: 'guard', duration: 8, reduce: 0.65, desc: 'Dựng thế phòng thủ vững chắc, giảm mạnh sát thương nhận vào.',
+      m5: { duration: 10 }, t5: 'Kéo dài trạng thái phòng thủ.',
+      m10: { duration: 10, reduce: 0.78 }, t10: 'Giảm sát thương nhiều hơn trong thời gian dài hơn.' },
 
     // ----- Trị Liệu Sư
     tl1: { school: 'tri_lieu_su', icon: '💚', name: 'Chữa Lành', level: 5, mp: 20, cd: 8,
@@ -151,6 +199,14 @@
       type: 'aoe', power: 3.5, radius: 240, freeze: 0, heal: 0.25, desc: 'Nổ tung ánh sáng thánh xung quanh, gây sát thương lớn và hồi máu.',
       m5: { radius: 300 }, t5: 'Vùng rộng hơn.',
       m10: { power: 5.0 }, t10: 'Sát thương tăng mạnh.' },
+    tl6: { school: 'tri_lieu_su', icon: '🌿', name: 'Thánh Quang Hộ Thể', level: 25, mp: 46, cd: 18,
+      type: 'heal', heal: 0.3, mpHeal: 0.12, desc: 'Ánh sáng hồi phục máu và một phần năng lượng.',
+      m5: { heal: 0.42 }, t5: 'Hồi máu nhiều hơn.',
+      m10: { heal: 0.5, mpHeal: 0.2 }, t10: 'Hồi 50% máu và 20% năng lượng.' },
+    tl7: { school: 'tri_lieu_su', icon: '🌼', name: 'Kết Giới Sinh Mệnh', level: 35, mp: 60, cd: 25,
+      type: 'aoe', power: 2.0, radius: 260, heal: 0.35, desc: 'Tỏa ánh sáng quanh thân, gây sát thương và hồi phục sinh lực.',
+      m5: { radius: 320, heal: 0.42 }, t5: 'Vùng ảnh hưởng và lượng hồi phục tăng.',
+      m10: { power: 2.8, heal: 0.5 }, t10: 'Sát thương và hồi phục tăng mạnh.' },
   };
 
   // Nội tại cốt truyện: nhận từ nhiệm vụ chính, cộng dồn suốt game

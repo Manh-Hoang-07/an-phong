@@ -630,6 +630,42 @@
         '[Hệ thống] Chế độ End-game đã mở. Cổng SS xuất hiện ở phía đông Tân Đô.',
       ],
       reward: { exp: 10000, gold: 10000, skillPoints: 10, perk: 'tu_do', items: [['sach_ky_nang_vo_dinh', 1]] } },
+
+    // ===== HẬU TRUYỆN: TÀN DƯ CỔNG VĨNH HẰNG
+    { id: 'c5q7', name: 'Tàn dư trong Vực Không Cùng', npc: 'lao_su',
+      start: [
+        'Hội trưởng Khải: Cổng Vĩnh Hằng đã khép, nhưng Cổng SS vẫn phát ra tín hiệu lạ.',
+        'Hội trưởng Khải: Vào Vực Không Cùng, dọn sạch 30 Quái Hư Không rồi báo cho ta.',
+      ],
+      obj: { kill: { quai_hu_khong: 30 } },
+      end: [
+        'Hội trưởng Khải: Tín hiệu yếu đi rồi. Nhưng ta cảm nhận được một nguồn năng lượng khác ở Đỉnh Cổng.',
+        '[Hệ thống] Đã mở nhiệm vụ hậu truyện tiếp theo.',
+      ],
+      reward: { exp: 18000, gold: 12000, skillPoints: 4, items: [['da_cuong_hoa_than_thoai', 4]] } },
+
+    { id: 'c5q8', name: 'Dư ảnh của Thiên', npc: 'lao_su',
+      start: [
+        'Hội trưởng Khải: Những Kỵ Sĩ Hư Không ở Đỉnh Cổng đang tụ tập quanh một vệt sáng.',
+        'Hội trưởng Khải: Hạ 20 tên. Có lẽ dấu vết của Thiên vẫn còn lưu lại ở đó.',
+      ],
+      obj: { kill: { ky_si_hu_khong: 20 } },
+      end: [
+        'Hội trưởng Khải: Cậu đã giải phóng nơi đó. Một tín hiệu mới xuất hiện ở Tâm Điểm Dị Giới.',
+      ],
+      reward: { exp: 22000, gold: 15000, skillPoints: 4, items: [['sach_ky_nang', 3]] } },
+
+    { id: 'c5q9', name: 'Bình minh sau cánh cổng', npc: 'lao_su',
+      start: [
+        'Hội trưởng Khải: Tâm Điểm vẫn còn Ma Thần Trắng Trơn. Chúng đang bảo vệ tàn tích cuối cùng.',
+        'Hội trưởng Khải: Hạ 15 con để chắc chắn Cổng SS không còn đe dọa thế giới.',
+      ],
+      obj: { kill: { ma_than_trang_tron: 15 } },
+      end: [
+        'Hội trưởng Khải: Lần này thì thật sự yên bình rồi. Tân Đô sẽ luôn mở cửa chào đón cậu.',
+        '[Hệ thống] Hậu truyện hoàn thành. Cổng SS vẫn mở để thợ săn tiếp tục khám phá.',
+      ],
+      reward: { exp: 30000, gold: 20000, skillPoints: 6, items: [['sach_tuyet_ky', 1], ['sach_ky_nang_vo_dinh', 1], ['da_cuong_hoa_than_thoai', 8]] } },
   ];
 
   Object.assign(G, { QUESTS });

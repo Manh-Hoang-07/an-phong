@@ -169,7 +169,7 @@
       gear: [1, ['than_kiem_vinh_hang', 'kiem_vinh_hang', 'cung_vinh_hang', 'truong_vinh_hang', 'ao_vinh_hang', 'mu_vinh_hang', 'gang_vinh_hang', 'dai_vinh_hang', 'quan_vinh_hang', 'giay_vinh_hang', 'nhan_vinh_hang', 'day_chuyen_vinh_hang', 'ngoc_boi_vinh_hang'], 0.35] },
     thuc_the_bkc: { name: 'Thực Thể Bên Kia Cổng', level: 50, hp: 300, atk: 280, def: 90, exp: 150, gold: [10000, 15000],
       speed: 55, respawn: 300, look: 'golem', boss: true, style: 'void', minion: 'sv_ky_sinh_hk', finalBoss: true,
-      drops: [['da_cuong_hoa_than_thoai', 1], ['da_cuong_hoa_than_thoai', 0.6], ['sach_ky_nang', 0.5], ['sach_ky_nang_vo_dinh', 0.3], ['manh_he_thong', 1, 'c5q5']],
+      drops: [['da_cuong_hoa_than_thoai', 1], ['da_cuong_hoa_than_thoai', 0.6], ['sach_ky_nang', 0.5], ['sach_tuyet_ky', 0.2], ['sach_ky_nang_vo_dinh', 0.3], ['manh_he_thong', 1, 'c5q5']],
       gear: [1, ['than_kiem_vinh_hang', 'kiem_vinh_hang', 'cung_vinh_hang', 'truong_vinh_hang', 'ao_vinh_hang', 'mu_vinh_hang', 'gang_vinh_hang', 'dai_vinh_hang', 'quan_vinh_hang', 'giay_vinh_hang', 'nhan_vinh_hang', 'day_chuyen_vinh_hang', 'ngoc_boi_vinh_hang'], 0.5] },
   };
 

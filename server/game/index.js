@@ -116,6 +116,11 @@ function migrate(p) {
         p.skills[id] = 1; p.skillPoints--; p.skillSlots[i] = id;
       }
     });
+    const oldUlt = old[G.ULT_SLOT];
+    if (oldUlt && G.SKILLS[oldUlt]?.ult && G.availableSkills(p).includes(oldUlt)) {
+      p.skills[oldUlt] = 1;
+      p.skillSlots[G.ULT_SLOT] = oldUlt;
+    }
   }
   if (!Number.isFinite(p.skillPoints)) p.skillPoints = 0;
   while (p.skillSlots.length < G.SKILL_SLOTS) p.skillSlots.push(null);

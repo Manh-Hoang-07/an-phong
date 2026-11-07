@@ -5,8 +5,20 @@ WorldScene.mix(class WorldMap {
   parseMap() {
     const raw = this.cache.text.get('map_' + this.mapId).replace(/\r/g, '').split('\n').filter(l => l.length);
     this.rows = raw.length;
-    this.cols = Math.max(...raw.map(l => l.length));
-    this.grid = raw.map(l => l.padEnd(this.cols, '.').split(''));
+    const sourceCols = Math.max(...raw.map(l => l.length));
+    this.cols = Math.ceil(sourceCols * 1.5);
+    // Kéo giãn từng cột 1,5 lần; các ký hiệu chức năng chỉ giữ ở bản sao đầu tiên
+    // để không nhân đôi cổng, NPC hay điểm xuất hiện quái.
+    const meta = GameData.MAPS[this.mapId];
+    const markers = new Set(['S', ...Object.keys(meta.spawns || {}), ...Object.keys(meta.npcs || {}), ...Object.keys(meta.portals || {}), meta.gate].filter(Boolean));
+    this.grid = raw.map(line => {
+      const source = line.padEnd(sourceCols, '.').split('');
+      return Array.from({ length: this.cols }, (_, col) => {
+        const oldCol = Math.min(sourceCols - 1, Math.floor(col / 1.5));
+        const ch = source[oldCol];
+        return markers.has(ch) && col !== Math.ceil(oldCol * 1.5) ? '.' : ch;
+      });
+    });
     // Chỉ thêm vừa đủ hàng đất để lấp kín khung hình (đỡ trơ và không bị nút cảm ứng che)
     const extraRows = Math.max(0, 17 - this.grid.length);
     for (let i = 0; i < extraRows; i++) this.grid.push(Array(this.cols).fill('#'));

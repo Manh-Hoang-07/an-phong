@@ -60,7 +60,14 @@
     // Danh sách kỹ năng
     html += '<div class="muted" style="margin:12px 0 4px;font-size:12px">KỸ NĂNG CHỦ ĐỘNG</div><div class="list">';
     let lastSchool = null;
-    const ids = G.availableSkills(p).sort((a, b) => (G.SKILLS[a].school === G.SKILLS[b].school ? G.SKILLS[a].level - G.SKILLS[b].level : 0));
+    const ids = G.availableSkills(p);
+    const schoolOrder = [...new Set(ids.map(id => G.SKILLS[id].school))];
+    ids.sort((a, b) => {
+      const sa = G.SKILLS[a], sb = G.SKILLS[b];
+      if (!!sa.ult !== !!sb.ult) return sa.ult ? 1 : -1;
+      const group = schoolOrder.indexOf(sa.school) - schoolOrder.indexOf(sb.school);
+      return group || sa.level - sb.level;
+    });
     for (const id of ids) {
       const base = G.SKILLS[id];
       if (tn && base.school !== lastSchool) {
@@ -68,7 +75,7 @@
         lastSchool = base.school;
       }
       const lv = G.skillLevel(p, id);
-      const locked = base.level > p.level;
+      const locked = base.ult ? !lv : base.level > p.level;
       const cur = G.skillAt(id, Math.max(1, lv));
       const next = lv && lv < G.SKILL_MAX ? G.skillAt(id, lv + 1) : null;
       const canUp = !locked && lv < G.SKILL_MAX && p.skillPoints > 0;
@@ -82,7 +89,7 @@
         <div class="ic">${base.icon}</div>
         <div class="main">
           <b>${esc(base.name)}</b> ${base.ult ? '<span class="tag-ult">TUYỆT KỸ</span>' : ''}
-          <span class="lvl">${locked ? `🔒 Mở ở cấp ${base.level}` : lv ? `Cấp ${lv}/${G.SKILL_MAX}` : 'Chưa học'}</span>
+          <span class="lvl">${locked ? (base.ult ? '🔒 Cần Sách Tuyệt Kỹ' : `🔒 Mở ở cấp ${base.level}`) : lv ? `Cấp ${lv}/${G.SKILL_MAX}` : 'Chưa học'}</span>
           <small>${esc(base.desc)}</small>
           <small>${skillNumbers(cur)} · ${Math.round(cur.mp * st.costMul)} năng lượng · hồi ${Math.round(cur.cd * 10) / 10}s</small>
           ${next ? `<small class="okc">Cấp ${lv + 1}: ${skillNumbers(next)}</small>` : ''}

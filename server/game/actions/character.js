@@ -47,6 +47,7 @@ const actions = {
   learn_skill(p, a, ev) {
     const sk = G.SKILLS[a.skill];
     if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
+    if (sk.ult && !G.skillLevel(p, a.skill)) fail('Cần dùng Sách Tuyệt Kỹ để học tuyệt kỹ này.');
     if (sk.level > p.level) fail(`Cần đạt cấp ${sk.level}.`);
     const lv = G.skillLevel(p, a.skill);
     if (lv >= G.SKILL_MAX) fail('Kỹ năng đã đạt cấp tối đa.');
@@ -68,14 +69,17 @@ const actions = {
   // Tẩy điểm kỹ năng ở Hội trưởng
   reset_skills(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải.');
-    const spent = Object.values(p.skills).reduce((x, y) => x + y, 0);
+    const ultId = Object.keys(p.skills).find(id => G.SKILLS[id]?.ult && G.skillLevel(p, id) > 0);
+    const totalLevels = Object.values(p.skills).reduce((x, y) => x + y, 0);
+    const spent = totalLevels - (ultId ? 1 : 0);
     if (!spent) fail('Bạn chưa cộng điểm kỹ năng nào.');
     const cost = resetCost(p);
     if (p.gold < cost) fail('Không đủ xu.');
     p.gold -= cost;
     p.skillPoints += spent;
-    p.skills = {};
+    p.skills = ultId ? { [ultId]: 1 } : {};
     p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+    if (ultId) p.skillSlots[G.ULT_SLOT] = ultId;
     ev.push({ t: 'msg', text: `Đã tẩy điểm kỹ năng, nhận lại ${spent} điểm (-${fmt(cost)} xu).`, color: '#ffd54f' });
   },
 
