@@ -18,6 +18,12 @@ function killOne(p, a, ev, lk, now) {
     if (mon.boss) lk.boss[a.monster] = now;
 
     p.kills[a.monster] = (p.kills[a.monster] || 0) + 1;
+    const aq = p.advancement?.quest;
+    if (aq && aq.need > (aq.progress || 0) && a.source === 'player' && !mon.passive) {
+      aq.progress = (aq.progress || 0) + 1;
+      ev.push({ t: 'msg', text: `Thử thách bí mật: hạ quái ${aq.progress}/${aq.need}.`, color: '#c6a7ff' });
+      if (aq.progress >= aq.need) ev.push({ t: 'msg', text: 'Thử thách hoàn tất. Hãy quay về NPC ẩn ở Tân Đô.', color: '#ffd54f' });
+    }
     // Tiến độ nhiệm vụ tuần và phụ tuyến
     ensureWeekly(p);
     p.weekly.kills++;
@@ -36,11 +42,25 @@ function killOne(p, a, ev, lk, now) {
     // Quái thấp hơn mình 5 cấp trở lên cho ít kinh nghiệm
     const diff = p.level - mon.level;
     const expMul = diff >= 8 ? 0.1 : diff >= 5 ? 0.4 : 1;
-    const st = G.calcStats(p);
+    const st = G.calcStats(p, { form: !!p.formActive });
     // exp gốc đã được chia cho hệ số hạng quái; nhân lại hệ số (tinh anh x10, thủ lĩnh x100, boss x200)
     // Bùa nhân đôi kinh nghiệm (p.boosts.exp) nhân thêm x2
     gainExp(p, Math.max(1, Math.round(G.monExp(mon) * expMul * (1 + st.expfind / 100) * G.expBoostMul(p, now))), ev);
     gainGold(p, Math.round(rand(mon.gold[0], mon.gold[1]) * (1 + st.goldfind / 100)), ev);
+
+    // Necromancer thu phục quái do chính người chơi kết liễu; không thay bóng cũ khi đủ chỗ.
+    if ((p.school === 'tu_linh_thuat_su' || (p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formActive && p.formChoice === 'evolution')) && a.source === 'player' && !mon.boss && !mon.leader && !mon.passive && !mon.finalBoss) {
+      p.shadows = p.shadows || { roster: [], active: [], enabled: false, nextId: 1 };
+      if (p.shadows.roster.length < 12) {
+        const soul = { uid: p.shadows.nextId++, monster: a.monster };
+        p.shadows.roster.push(soul);
+        if (p.shadows.enabled && p.shadows.active.length < 3) p.shadows.active.push(soul.uid);
+        ev.push({ t: 'msg', text: `${mon.name} đã được lưu thành bóng ma (${p.shadows.roster.length}/12).`, color: '#c6a7ff' });
+      } else if (!p.shadows.fullNotice) {
+        p.shadows.fullNotice = true;
+        ev.push({ t: 'msg', text: 'Bộ sưu tập bóng ma đã đầy. Hãy giải phóng chỗ trong bảng Bóng Ma để thu thêm.', color: '#ffb74d' });
+      }
+    }
 
     // Đồ rơi ra đất ở chỗ quái chết, người chơi đi qua để nhặt
     const x = Number.isFinite(a.x) ? Math.round(a.x) : p.x || 0;

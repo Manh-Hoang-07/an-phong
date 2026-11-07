@@ -21,6 +21,9 @@
     try {
     switch (a) {
       case 'close': closePanel(); break;
+      case 'advancement_accept': { const r=await act('advancement_accept',{milestone:ds.milestone}); if(r.ok) openNpc('npc_an'); break; }
+      case 'advancement_complete': { const r=await act('advancement_complete'); if(r.ok) openNpc('npc_an'); break; }
+      case 'form_select': { const r=await act('form_select',{choice:ds.choice}); if(r.ok) { if(App.scene?.refreshPlayerLook) App.scene.refreshPlayerLook(); renderPanel(); } break; }
       case 'open':
         if (ds.panel === 'npc_lu') { openNpc('lu_khach'); break; }
         openPanel(ds.panel, { npc: ds.npc, force: true });
@@ -82,7 +85,10 @@
       case 'fullscreen': if (App.fullscreen) App.fullscreen(); break;
       case 'equip': await act('equip', { uid: Number(ds.uid) }); S.selected = null; renderPanel(); break;
       case 'unequip': await act('unequip', { slot: ds.slot }); S.selected = null; renderPanel(); break;
-      case 'use': App.scene.usePotion(ds.item === 'thuoc_nhiem_do' || ds.item.startsWith('binh_mau') ? 'hp' : 'mp', ds.item); break;
+      case 'use':
+        if (G.ITEMS[ds.item]?.kind === 'transform_book') { await act('use', { item: ds.item }); renderPanel(); }
+        else App.scene.usePotion(ds.item === 'thuoc_nhiem_do' || ds.item.startsWith('binh_mau') ? 'hp' : 'mp', ds.item);
+        break;
       case 'sell': await act('sell', { uid: Number(ds.uid), qty: Number(ds.qty) }); break;
       case 'buy': await act('buy', { npc: ds.npc, item: ds.item, qty: Number(ds.qty) }); break;
       case 'add_stat': await act('add_stat', { stat: ds.stat, n: Number(ds.n) }); break;
@@ -148,6 +154,11 @@
       }
       case 'rank_eval': await act('rank_eval'); break;
       case 'mount_set': await act('mount_set', { id: ds.id }); renderPanel(); break;
+      case 'shadow_toggle': await act('shadow_toggle'); renderPanel(); break;
+      case 'shadow_party': await act('shadow_party', { uid: Number(ds.uid) }); renderPanel(); break;
+      case 'shadow_release':
+        if (S.confirmShadowRelease !== Number(ds.uid)) { S.confirmShadowRelease = Number(ds.uid); renderPanel(); break; }
+        await act('shadow_release', { uid: Number(ds.uid) }); S.confirmShadowRelease = null; renderPanel(); break;
       case 'pet_skill': await act('pet_skill_set', { id: ds.id, skill: ds.skill }); renderPanel(); break;
       case 'use_boost': await act('use', { item: ds.item }); renderPanel(); break;
       case 'gate_go': closePanel(); if (App.scene) App.scene.usePortal(ds.ch); break;

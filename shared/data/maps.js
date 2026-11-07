@@ -139,8 +139,13 @@
     // ===== END-GAME: Cổng SS mở sau khi phá xong Cổng Vĩnh Hằng
     cong_ss: { name: 'Cổng SS – Vực Không Cùng', theme: 'redgate', require: 'c5q6',
       spawns: { a: 'quai_hu_khong', b: 'ky_si_hu_khong', c: 'ma_than_trang_tron', z: 'thuc_the_bkc' },
-      npcs: {},
-      portals: { '<': { to: 'lang', at: '|' } } },
+      npcs: { M: 'lao_su' },
+      portals: { '<': { to: 'lang', at: '|' }, '>': { to: 'thien_khoi', at: '<', require: 'c5q9' } } },
+    thien_khoi: { name: 'Vùng Thiên Khôi – Cấp 51–60', theme: 'redgate', require: 'c5q9', spawns: { a: 'tan_du_thien_khoi', b: 'ho_vuong_thien_khoi', z: 'tru_mong_thien_khoi' }, npcs: { M: 'lao_su', R: 'tho_ren' }, portals: { '<': { to: 'cong_ss', at: '>' }, '>': { to: 'long_mach', at: '<', require: 'c6q3' } } },
+    long_mach: { name: 'Vùng Long Mạch – Cấp 61–70', theme: 'redgate', require: 'c6q3', spawns: { a: 'tan_du_long_mach', b: 'ho_vuong_long_mach', z: 'tru_mong_long_mach' }, npcs: { M: 'lao_su', R: 'tho_ren' }, portals: { '<': { to: 'thien_khoi', at: '>' }, '>': { to: 'tinh_van', at: '<', require: 'c6q6' } } },
+    tinh_van: { name: 'Vùng Tinh Vân – Cấp 71–80', theme: 'redgate', require: 'c6q6', spawns: { a: 'tan_du_tinh_van', b: 'ho_vuong_tinh_van', z: 'tru_mong_tinh_van' }, npcs: { M: 'lao_su', R: 'tho_ren' }, portals: { '<': { to: 'long_mach', at: '>' }, '>': { to: 'than_mong', at: '<', require: 'c6q9' } } },
+    than_mong: { name: 'Vùng Thần Mộng – Cấp 81–90', theme: 'redgate', require: 'c6q9', spawns: { a: 'tan_du_than_mong', b: 'ho_vuong_than_mong', z: 'tru_mong_than_mong' }, npcs: { M: 'lao_su', R: 'tho_ren' }, portals: { '<': { to: 'tinh_van', at: '>' }, '>': { to: 'sang_the', at: '<', require: 'c6q12' } } },
+    sang_the: { name: 'Vùng Sáng Thế – Cấp 91–100', theme: 'redgate', require: 'c6q12', spawns: { a: 'tan_du_sang_the', b: 'ho_vuong_sang_the', z: 'tru_mong_sang_the' }, npcs: { M: 'lao_su', R: 'tho_ren' }, portals: { '<': { to: 'than_mong', at: '>' } } },
   };
   const NEW_PLAYER_MAP = 'cong_do';
 

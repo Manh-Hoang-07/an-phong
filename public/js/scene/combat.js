@@ -116,7 +116,10 @@ WorldScene.mix(class WorldCombat {
 
   damageMonster(m, mult, extra = {}) {
     if (!m.alive) return;
-    let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : extra.pet
+    m.lastHitSource = extra.pet ? 'pet' : extra.shadow ? 'shadow' : 'player';
+    let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : extra.shadow
+      ? { dmg: Math.max(1, Math.round(GameData.calcStats(App.player).atk * mult - m.def.def * 0.35)), crit: false }
+      : extra.pet
       ? { dmg: Math.max(1, Math.round(GameData.petStats(App.player).atk * mult - m.def.def * 0.35)), crit: false }
       : this.calcDamage(mult, m);
     if (extra.basic && m.def.resist) dmg = Math.max(1, Math.round(dmg * (1 - m.def.resist)));

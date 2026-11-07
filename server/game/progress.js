@@ -13,7 +13,7 @@ function gainExp(p, amount, ev) {
     p.level++;
     p.freePoints += G.STAT_POINTS_PER_LEVEL;
     p.skillPoints = (p.skillPoints || 0) + 1;
-    const st = G.calcStats(p);
+    const st = G.calcStats(p, { form: !!p.formActive });
     p.hp = st.maxHp; p.mp = st.maxMp;
     ev.push({ t: 'levelup', level: p.level });
     ev.push({ t: 'msg', text: `[Hệ thống] Thăng cấp! Đạt cấp ${p.level}: +${G.STAT_POINTS_PER_LEVEL} điểm tiềm năng, +1 điểm kỹ năng.`, color: '#ffd54f' });
@@ -33,12 +33,17 @@ function gainGold(p, amount, ev) {
 
 // Đặt class: trả lại toàn bộ điểm kỹ năng đã cộng, xóa ô kỹ năng
 function setSchool(p, school, ev) {
-  const spent = Object.values(p.skills || {}).reduce((x, y) => x + y, 0);
-  p.skillPoints += spent;
-  p.skills = {};
-  p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+  const evolve = p.school === 'trieu_hoi_su' && school === 'tu_linh_thuat_su';
+  if (!evolve) {
+    const spent = Object.values(p.skills || {}).reduce((x, y) => x + y, 0);
+    p.skillPoints += spent;
+    p.skills = {};
+    p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+  }
   p.school = school;
-  const st = G.calcStats(p);
+  if (school !== 'tu_linh_thuat_su' && p.shadows) p.shadows.enabled = false;
+  p.formActive = false;
+  const st = G.calcStats(p, { form: false });
   p.hp = st.maxHp; p.mp = st.maxMp;
   ev.push({ t: 'msg', text: `[Hệ thống] Thức tỉnh class ${G.SCHOOLS[school].name} thành công! Mở bảng Kỹ năng để học kỹ năng.`, color: '#ffd54f' });
   ev.push({ t: 'school', school });
@@ -47,7 +52,7 @@ function setSchool(p, school, ev) {
 function resetCost(p) { return 100 * p.level; }
 
 function clampHpMp(p) {
-  const st = G.calcStats(p);
+  const st = G.calcStats(p, { form: !!p.formActive });
   if (p.hp != null) p.hp = Math.min(p.hp, st.maxHp);
   if (p.mp != null) p.mp = Math.min(p.mp, st.maxMp);
 }

@@ -93,7 +93,7 @@ WorldScene.mix(class WorldMonsters {
     if (m.def.boss) { this.cameras.main.shake(400, 0.012); this.slowMo(0.3, 900); }
     if (m.def.leader) { this.cameras.main.shake(250, 0.008); this.slowMo(0.4, 600); }
     const dropY = m.def.fly ? this.groundY(Math.floor(s.y / T), Math.floor(s.x / T)) : s.y;
-    this.pendingKills.push({ monster: m.id, x: Math.round(s.x), y: Math.round(dropY) });
+    this.pendingKills.push({ monster: m.id, x: Math.round(s.x), y: Math.round(dropY), source: m.lastHitSource || 'player' });
     if (!this.killFlush) this.killFlush = this.time.delayedCall(120, () => this.flushKills());
     if (m.def.boss) this.hitstop(120);
     if (m.def.leader) this.hitstop(60);

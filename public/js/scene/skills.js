@@ -32,6 +32,7 @@ WorldScene.mix(class WorldSkills {
     const lv = GameData.skillLevel(p, id);
     if (!lv) return;
     const sk = GameData.skillAt(id, lv);
+    if ((sk.evolutionKey || sk.school === 'tu_linh_thuat_su') && !App.form) { UI.log('Cần bật hình thái tiến hóa để dùng kỹ năng nhánh.', '#c6a7ff'); return; }
     if (time < (this.cooldowns[id] || 0)) return;
     const cost = Math.round(sk.mp * App.stats.costMul);
     if (App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }
@@ -44,12 +45,27 @@ WorldScene.mix(class WorldSkills {
     this.cooldownLen[id] = cdMs;
     const pw = sk.power ? sk.power * App.stats.skillMul : 0;
     const pl = this.player, f = this.facing;
+    if (sk.ult && (p.school === 'tu_linh_thuat_su' || p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su)) this.shadowPowerUntil = time + 8000;
     this.floatText(pl.x, pl.y - 52, sk.name, sk.ult ? '#ffd54f' : '#fff59d', sk.ult ? 17 : 14);
     this.attackAnim(time, sk.type === 'melee' ? (sk.hits || 3) * 110 : 420, 'skill');
     if (sk.ult) { this.cameras.main.flash(180, 255, 230, 160); }
     Sound.play(sk.ult ? 'ult' : sk.type === 'heal' ? 'heal' : 'skill');
 
     switch (sk.type) {
+      case 'shadow_toggle':
+        Net.action('shadow_toggle').then(() => { if (this.sys.isActive()) this.buildShadows(); });
+        this.floatText(pl.x, pl.y - 52, App.player.shadows?.enabled ? 'Giải trừ' : 'Triệu hồi', '#c6a7ff', 14);
+        break;
+      case 'shadow_command': {
+        const target = this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive && Math.abs(m.sprite.x - pl.x) < 500 && Math.abs(m.sprite.y - pl.y) < 200)
+          .sort((a, b) => Math.abs(a.sprite.x - pl.x) - Math.abs(b.sprite.x - pl.x))[0];
+        if (target) {
+          this.shadowFocusTarget = target;
+          this.shadowFocusUntil = time + 6000;
+          this.hitCircle(target.sprite.x, target.sprite.y, sk.radius, pw, { freeze: sk.freeze });
+        } else this.hitCircle(pl.x + f * 100, pl.y, sk.radius, pw, { freeze: sk.freeze });
+        break;
+      }
       case 'dash': {
         this.dashing = true;
         const startX = pl.x;

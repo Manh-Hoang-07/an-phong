@@ -42,6 +42,7 @@ class WorldScene extends Phaser.Scene {
     this.nextPetTargetScan = 0;
     this.formWarmKey = null;
     this.npcs = [];
+    this.hiddenNpcSprite = null;
     this.portals = [];
     this.projectiles = this.add.group();
     this.enemyShots = [];              // đạn của trùm (không dùng chung với đạn người chơi)
@@ -54,6 +55,8 @@ class WorldScene extends Phaser.Scene {
     this.portalReady = this.time.now + 800;
     this.gateArmed = false;   // vừa tới nơi (đứng ngay cổng): phải bước ra khỏi cổng rồi mới mở danh sách
     this.companionSprites = {};
+    this.shadowSprites = {};
+    this.nextShadowScan = 0; this.shadowTarget = null; this.shadowFocusTarget = null; this.shadowFocusUntil = 0; this.shadowPowerUntil = 0;
     this.formOn = false; this.formShell = null; this.formEms = []; this.formGlow = null; this.formTier = 0;   // hiệu ứng biến hình của cảnh cũ đã bị hủy; drawAura tự dựng lại nếu còn biến hình
     this.lastGroundAt = 0;
     this.jumpBufferedAt = -1000;
@@ -67,8 +70,10 @@ class WorldScene extends Phaser.Scene {
     this.buildPortals();
     this.buildNpcs();
     this.buildPlayer();
+    if (this.mapId === 'lang' && App.player.hiddenNpcActive) this.addHiddenNpc();
     this.buildCompanions();
     this.buildMonsters();
+    this.buildShadows();
     this.setupJuice();
     this.loots = new Map();
     for (const l of App.player.loot || []) if (l.map === this.mapId) this.addLoot(l, false);
@@ -199,10 +204,12 @@ class WorldScene extends Phaser.Scene {
     // Hành động
     if (canAct) {
       if (this.pressed('KeyP') || this.tpressed('pets')) UI.openPanel('mount');
+      if (this.pressed('KeyY')) UI.hiddenChat();
       if (this.key('KeyJ') || App.touch.attack) this.basicAttack(time);
       for (let i = 0; i < 5; i++) if (this.pressed('Digit' + (i + 1)) || this.tpressed('s' + i)) this.useSkill(i, time);
       if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOT, time);
       if (this.pressed('KeyT') || this.tpressed('form')) this.toggleForm(time);
+      if (this.pressed('KeyV') || this.tpressed('career')) Net.action('career_toggle');
       if (this.pressed('KeyQ') || this.tpressed('hp')) this.usePotion('hp');
       if (this.pressed('KeyE') || this.tpressed('mp')) this.usePotion('mp');
       if (this.pressed('KeyF') || this.pressed('Enter') || this.tpressed('interact')) this.interact();
@@ -234,6 +241,7 @@ class WorldScene extends Phaser.Scene {
     this.placeWeapon();
     this.juiceUpdate(time, onGround, move);
     this.companionUpdate(time, delta);
+    this.shadowUpdate(time, delta);
     this.nameTag.setPosition(pl.x, pl.y - 44);
     this.shadow.setPosition(pl.x, pl.y + 29).setVisible(onGround).setScale(1, 1);
 
@@ -294,6 +302,7 @@ class WorldScene extends Phaser.Scene {
     this.facing = x > this.player.x ? 1 : -1;
     // Mở bảng hội thoại ngay; server ghi nhận lượt nói chuyện xong thì UI.refresh tự vẽ lại bảng (nhiệm vụ có thể vừa đổi)
     UI.openNpc(id);
+    if (id === 'npc_an') return;
     Net.action('talk', { npc: id }).then(() => { if (this.sys.isActive()) this.refreshNpcMarks(); });
   }
 

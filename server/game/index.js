@@ -20,7 +20,8 @@ const actions = Object.assign({},
   require('./actions/quests'),
   require('./actions/items'),
   require('./actions/smith'),
-  require('./actions/character')
+  require('./actions/character'),
+  require('./actions/advancement')
 );
 
 async function handle(userId, player, action) {
@@ -44,6 +45,13 @@ function migrate(p) {
   const OLD_ITEM = { phi_tieu_sat: 'cung_go', phi_tieu_lua: 'cung_hop_kim', phi_tieu_thach_quy: 'cung_thach_vuong',
     quat_tre: 'truong_go', quat_suong: 'truong_pha_le', quat_thach_quy: 'truong_thach_vuong' };
   if (OLD_SCHOOL[p.school]) p.school = OLD_SCHOOL[p.school];
+  if (!p.advancement || typeof p.advancement !== 'object') p.advancement = { quest: null, done: {}, unlocked: {} };
+  if (!p.advancement.done) p.advancement.done = {};
+  if (!p.advancement.unlocked) p.advancement.unlocked = {};
+  p.hiddenNpcActive = false; // lần nạp lại hoặc đổi map đều cần gọi NPC lại
+  if (!p.formChoice) p.formChoice = p.awakenTier >= 2 ? 'awaken2' : 'awaken1';
+  // Dữ liệu Necromancer cũ được giữ làm nhánh tiến hóa thay vì đổi class nền.
+  if (p.school === 'tu_linh_thuat_su') { p.school = 'trieu_hoi_su'; p.advancement.unlocked.tu_linh_thuat_su = true; }
   const fixId = (e) => { if (e && OLD_ITEM[e.id]) e.id = OLD_ITEM[e.id]; return e; };
   p.bag = p.bag.map(fixId).filter(e => G.ITEMS[e.id]);
   p.storage = p.storage.map(fixId).filter(e => G.ITEMS[e.id]);
@@ -68,6 +76,13 @@ function migrate(p) {
   for (const id of p.mounts.owned) if (!G.PET_SKILLS[p.mounts.skills[id]]) p.mounts.skills[id] = G.PET_SKILLS[p.mounts.skill] ? p.mounts.skill : 'bite';
   const petStats = G.petStats(p);
   if (!p.pets || typeof p.pets !== 'object' || Array.isArray(p.pets)) p.pets = {};
+  if (!p.shadows || typeof p.shadows !== 'object' || Array.isArray(p.shadows)) p.shadows = { roster: [], active: [], enabled: false, nextId: 1 };
+  if (!Array.isArray(p.shadows.roster)) p.shadows.roster = [];
+  p.shadows.roster = p.shadows.roster.filter(x => x && Number.isInteger(x.uid) && G.MONSTERS[x.monster]).slice(0, 12);
+  if (!Array.isArray(p.shadows.active)) p.shadows.active = [];
+  p.shadows.active = [...new Set(p.shadows.active.filter(uid => p.shadows.roster.some(x => x.uid === uid)))].slice(0, 3);
+  p.shadows.enabled = !!p.shadows.enabled;
+  if (!Number.isInteger(p.shadows.nextId) || p.shadows.nextId < 1) p.shadows.nextId = Math.max(0, ...p.shadows.roster.map(x => x.uid)) + 1;
   const legacyPetId = p.mounts.active || p.mounts.owned[0];
   if (legacyPetId && !p.pets[legacyPetId] && p.pet && typeof p.pet === 'object') p.pets[legacyPetId] = p.pet;
   for (const id of p.mounts.owned) {

@@ -25,9 +25,8 @@
     toan_nang: {
       name: 'Toàn Năng', weapon: 'all', color: 0xffc94a, icon: '✴️', special: true,
       desc: 'Class đặc biệt, chỉ thức tỉnh được bằng mật mã. Dùng mọi vũ khí, học mọi kỹ năng của các class, ' +
-        'có cả 3 nội tại, thêm 1 ô kỹ năng và tuyệt kỹ riêng. Máu, tấn công, năng lượng, thể lực +200%.',
-      // +200% = nhân 3. Muốn nhẹ hơn thì giảm các số này (ví dụ 2 = +100%). sta: thể lực tối đa
-      bonus: { hp: 3, atk: 3, mp: 3, sta: 3 },
+        'có cả 3 nội tại, thêm 1 ô kỹ năng và tuyệt kỹ riêng. Kỹ năng gây 80% sức mạnh và tốn thêm 20% năng lượng.',
+      skillPower: 0.8, skillCost: 1.2, bonus: {},
     },
     sat_thu: {
       name: 'Sát Thủ', weapon: 'kiem', color: 0xe040fb, icon: '🗡️',
@@ -44,6 +43,16 @@
       desc: 'Hồi máu, bảo vệ đồng đội, năng lượng dồi dào. Máu +15%, năng lượng +50%, hồi chiêu kỹ năng -10%.',
       bonus: { hp: 1.15, mp: 1.50, cdrAdd: 10 },
     },
+    trieu_hoi_su: {
+      name: 'Triệu Hồi Sư', weapon: 'truong', color: 0x8d78d6, icon: '🔮',
+      desc: 'Dùng linh lực gọi thực thể hỗ trợ chiến đấu. Năng lượng +20%, sức mạnh kỹ năng +8%.',
+      bonus: { mp: 1.2, skillPower: 1.08 },
+    },
+    tu_linh_thuat_su: {
+      name: 'Tử Linh Thuật Sư', weapon: 'truong', color: 0xb46bff, icon: '☠️', special: true,
+      desc: 'Nhánh tiến hóa của Triệu Hồi Sư. Thu phục quái làm bóng ma, lưu tối đa 12 và gọi tối đa 3 cùng lúc.',
+      bonus: { mp: 1.3, skillPower: 1.12 },
+    },
   };
 
   // ---------------------------------------------------------------- Thức tỉnh (biến hình)
@@ -53,7 +62,7 @@
   const AWAKENS = [
     // Thức tỉnh = kỹ năng BIẾN HÌNH bật/tắt (phím T / nút ⚡). Chỉ số `mul` chỉ có tác dụng khi đang biến hình.
     // drain: mỗi giây biến hình tốn bấy nhiêu năng lượng (MP) và thể lực; cạn một trong hai thì tự trở lại dạng thường.
-    { tier: 1, level: 25, npc: 'lao_su', name: 'Thức tỉnh · Ấn thứ nhất', drain: 2,
+    { tier: 1, level: 20, npc: 'lao_su', name: 'Biến hình · Ấn thứ nhất', drain: 2,
       mul: { hp: 1.3, mp: 1.2, atk: 1.3, def: 1.15 }, tint: 0xffe082, aura: 0xffd54f, aura2: 0xfff3b0,
       desc: 'Mở khóa BIẾN HÌNH (phím T / nút ⚡): máu +30%, năng lượng +20%, tấn công +30%, phòng thủ +15%, hào quang vàng rực. Tốn 2 năng lượng và 2 thể lực mỗi giây.',
       start: [
@@ -65,7 +74,7 @@
         '[Hệ thống] Dấu ấn thức tỉnh thứ nhất đã kích hoạt. Cơ thể vượt qua giới hạn cũ.',
         'Hội trưởng Khải: Nhìn cậu đi... Đúng là người được Hệ thống chọn.',
       ] },
-    { tier: 2, level: 45, npc: 'lu_khach', name: 'Thức tỉnh · Ấn thứ hai', drain: 5,
+    { tier: 2, level: 45, npc: 'lu_khach', name: 'Biến hình · Ấn thứ hai', drain: 5,
       mul: { hp: 1.6, mp: 1.5, atk: 1.6, def: 1.3 }, tint: 0xff80ab, aura: 0xff6ec7, aura2: 0xffd6f0,
       desc: 'Nâng BIẾN HÌNH lên dạng dị giới: máu +60%, năng lượng +50%, tấn công +60%, phòng thủ +30%, hào quang hồng tím kèm tia điện. Tốn 5 năng lượng và 5 thể lực mỗi giây.',
       start: [
@@ -105,7 +114,15 @@
     sat_thu: { icon: '🌑', name: 'Bóng Tối', desc: 'Chí mạng đầu tiên sau kỹ năng lướt gây 250% sát thương.' },
     tanker: { icon: '⚔️', name: 'Thành Đồng', desc: 'Giảm thêm 10% sát thương nhận vào khi máu dưới 50%.' },
     tri_lieu_su: { icon: '🌿', name: 'Sinh Lực', desc: 'Kỹ năng hồi máu hồi thêm 20% theo máu tối đa.' },
+    trieu_hoi_su: { icon: '🔮', name: 'Liên Kết Linh Thể', desc: 'Thực thể được triệu hồi gây thêm 10% sát thương.' },
+    tu_linh_thuat_su: { icon: '☠️', name: 'Thu Hồn', desc: 'Quái thường và tinh anh do bạn kết liễu được lưu thành bóng ma. Bộ sưu tập tối đa 12 bóng.' },
   };
 
-  Object.assign(G, { SCHOOLS, AWAKENS, WEAPON_TYPES, PASSIVES, STAMINA, REGEN });
+  const EVOLUTIONS = {
+    kiem_si: 'kiem_thanh', cung_thu: 'than_xa', phap_su: 'dai_phap_su', sat_thu: 'anh_vuong',
+    tanker: 'ho_ve_bat_khuat', tri_lieu_su: 'thanh_linh', trieu_hoi_su: 'tu_linh_thuat_su', toan_nang: 'toan_nang_tinh_thong',
+  };
+  const EVOLUTION_NAMES = { kiem_thanh:'Kiếm Thánh', than_xa:'Thần Xạ', dai_phap_su:'Đại Pháp Sư', anh_vuong:'Ảnh Vương',
+    ho_ve_bat_khuat:'Hộ Vệ Bất Khuất', thanh_linh:'Thánh Linh', tu_linh_thuat_su:'Tử Linh Thuật Sư', toan_nang_tinh_thong:'Toàn Năng Tinh Thông' };
+  Object.assign(G, { SCHOOLS, AWAKENS, EVOLUTIONS, EVOLUTION_NAMES, WEAPON_TYPES, PASSIVES, STAMINA, REGEN });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

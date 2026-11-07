@@ -534,6 +534,9 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
 .sk-form.active .ico, .tb-form.active .ico { color: #fff; }
 @keyframes formpulse { to { box-shadow: 0 0 6px var(--form, #ffd54f); } }
 .tb-form { right: 175px; bottom: 150px; width: 56px; height: 56px; }
+.tb-career { right: 175px; bottom: 216px; width: 56px; height: 56px; border-color: #c7a2ff !important; color: #e4ceff; }
+.sk-career { border-color: #c7a2ff !important; color: #e4ceff; }
+.sk-career.active, .tb-career.active { box-shadow: 0 0 16px rgba(188, 140, 255, .75); background: linear-gradient(180deg, #7c4db5, #38244e); }
 
 /* Hướng dẫn nhiệm vụ: nhận ở đâu / làm ở đâu / trả cho ai */
 .quest-guide { margin: 6px 0 10px; padding: 7px 10px; border-radius: 8px; background: rgba(63, 208, 255, 0.05); border: 1px solid var(--line); font-size: 12.5px; }

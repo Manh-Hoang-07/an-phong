@@ -3,7 +3,14 @@
 WorldScene.mix(class WorldPlayer {
   // ------------------------------------------------------------------ Nhân vật
   playerTexKey(frame) {
-    return `hunter_${App.player.school || 'none'}_${frame}`;
+    const school = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : App.player.school;
+    return `hunter_${school || 'none'}_${frame}`;
+  }
+  activeAwaken() {
+    const choice = App.player?.formChoice;
+    if (choice === 'awaken1') return GameData.AWAKENS[0] || null;
+    if (choice === 'awaken2') return GameData.AWAKENS[1] || null;
+    return null;
   }
 
   buildPlayer() {
@@ -66,14 +73,14 @@ WorldScene.mix(class WorldPlayer {
   formGrow() { return this.formTier ? (this.formTier >= 2 ? 1.25 : 1.15) : 1; }
   // Đổi sang / trở về bộ hình biến hình và vừa lại kích thước
   applyFormLook() {
-    const aw = App.form ? GameData.awakenOf(App.player) : null;
+    const aw = App.form ? this.activeAwaken() : null;
     const ready = !!(aw && this.sheetId && Sprites.formSheetsReady(this, this.sheetId, aw.tier));
-    this.formTier = ready ? aw.tier : 0;
+    this.formTier = ready ? aw.tier : (App.form ? 1 : 0);
     if (aw && this.sheetId && !ready) this.prewarmForm();
     if (!this.sheetId || !this.player) return;
     this.fitFacing = this.facing || 1;
     Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow(), 0);
-    if (aw && !ready) this.player.setTint(aw.aura);
+    if (App.form && !ready) this.player.setTint(aw?.aura || GameData.SCHOOLS[App.player.school]?.color || 0xb46bff);
     this.player.setFlipX(this.fitFacing < 0);
     this.attackUntil = 0;
     this.player.play(this.charAnim('idle'));
@@ -81,7 +88,7 @@ WorldScene.mix(class WorldPlayer {
 
   // Tạo sẵn ngầm bộ hình biến hình + lớp màng; hoãn từng bước khi nhân vật đang di chuyển/đánh.
   prewarmForm() {
-    const aw = GameData.awakenOf(App.player);
+    const aw = this.activeAwaken();
     if (!aw || !this.sheetId || !this.sys.isActive()) return;
     const id = this.sheetId, tier = aw.tier, token = `${id}:${tier}`;
     if (Sprites.formSheetsReady(this, id, tier)) return;
@@ -102,7 +109,7 @@ WorldScene.mix(class WorldPlayer {
         while (i < anims.length && !(job = Sprites.formJob(this, id, tier, anims[i]))) i++;
         if (!job) {
           this.formWarmKey = null;
-          if (App.form && GameData.awakenOf(App.player)?.tier === tier && Sprites.formSheetsReady(this, id, tier)) this.applyFormLook();
+          if (App.form && this.activeAwaken()?.tier === tier && Sprites.formSheetsReady(this, id, tier)) this.applyFormLook();
           return;
         }
       }
@@ -114,10 +121,11 @@ WorldScene.mix(class WorldPlayer {
 
   // Dùng hình vẽ sẵn (có hoạt ảnh) nếu có, không thì dùng hình vẽ bằng code
   refreshPlayerLook() {
-    const id = App.player.school || 'none';
+    const id = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : (App.player.school || 'none');
     const sheet = Sprites.hasChar(this, id) ? id : null;
-    if (sheet === this.sheetId && this.sheetId !== undefined && this.fitDone) return;
+    if (sheet === this.sheetId && this.lookSchool === id && this.sheetId !== undefined && this.fitDone) return;
     this.sheetId = sheet;
+    this.lookSchool = id;
     this.fitDone = true;
     const pl = this.player;
     if (sheet) {
@@ -132,6 +140,7 @@ WorldScene.mix(class WorldPlayer {
       pl.anims.stop();
       this.fitDrawnHero();
       pl.setTexture(this.playerTexKey('idle'));
+      if (GameData.SCHOOLS[id]?.color) pl.setTint(GameData.SCHOOLS[id].color);
     }
   }
 
@@ -307,6 +316,85 @@ WorldScene.mix(class WorldPlayer {
     });
     UI.tickPets(ps, pets, ids);
   }
+  buildShadows() {
+    if (!this.shadowSprites) this.shadowSprites = {};
+    const data = App.player.shadows || { roster: [], active: [], enabled: false };
+    const ids = data.enabled ? data.active.slice(0, data.roster.length ? 3 : 0) : [];
+    const wanted = new Set(ids.map(uid => String(uid)));
+    for (const [uid, c] of Object.entries(this.shadowSprites)) {
+      if (wanted.has(uid)) continue;
+      c.sprite.destroy();
+      if (c.label) c.label.destroy();
+      delete this.shadowSprites[uid];
+    }
+    ids.forEach((uid, index) => {
+      const soul = data.roster.find(x => x.uid === uid), def = soul && GameData.MONSTERS[soul.monster];
+      if (!def) return;
+      const sheet = Sprites.hasMob(this, def.look) ? Sprites.mobOf(def.look) : null;
+      const texture = sheet ? `mb_${sheet}_idle` : `m_${def.look}_0`;
+      if (this.shadowSprites[uid]) {
+        if (!this.shadowSprites[uid].label || !this.textures.exists(texture)) return;
+        this.shadowSprites[uid].sprite.destroy();
+        this.shadowSprites[uid].label.destroy();
+        delete this.shadowSprites[uid];
+      }
+      let sprite, label = null;
+      if (this.textures.exists(texture)) {
+        sprite = this.physics.add.sprite(this.player.x - 40 - index * 24, this.player.body.bottom, texture).setDepth(3.7 + index * 0.001);
+        if (sheet) { Sprites.fitMob(sprite, def.look, !def.fly); sprite.play(`mb_${sheet}_idle`); }
+        else sprite.body.setSize(sprite.width * 0.7, sprite.height * 0.8).setOffset(sprite.width * 0.15, sprite.height * 0.1);
+        sprite.body.setAllowGravity(false); sprite.body.setVelocity(0, 0);
+        sprite.setTint(0xb58cff);
+      } else {
+        sprite = this.add.ellipse(this.player.x - 40 - index * 24, this.player.body.bottom - 22, 30, 38, 0x7045a8, 0.9).setDepth(3.7 + index * 0.001);
+        label = this.add.text(sprite.x, sprite.y - 8, '☠', { fontSize: '18px', color: '#e6d8ff' }).setOrigin(0.5).setDepth(3.8 + index * 0.001);
+      }
+      this.shadowSprites[uid] = { sprite, label, nextAttack: 0, attackUntil: 0 };
+    });
+  }
+  shadowUpdate(time, delta) {
+    this.buildShadows();
+    const data = App.player.shadows || {}, ids = data.enabled ? (data.active || []).slice(0, 3) : [];
+    if (!ids.length) return;
+    const pl = this.player;
+    if (time >= (this.nextShadowScan || 0)) {
+      this.shadowTarget = this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive && Math.abs(m.sprite.y - pl.y) < 150 && Math.abs(m.sprite.x - pl.x) < 230)
+        .sort((a, b) => Math.abs(a.sprite.x - pl.x) - Math.abs(b.sprite.x - pl.x))[0] || null;
+      this.nextShadowScan = time + 220;
+    }
+    ids.forEach((uid, index) => {
+      const c = this.shadowSprites[String(uid)];
+      if (!c) return;
+      const sprite = c.sprite, target = this.shadowTarget?.alive && this.shadowTarget.sprite?.body?.enable ? this.shadowTarget : null;
+      const focused = time < (this.shadowFocusUntil || 0) && this.shadowFocusTarget?.alive && this.shadowFocusTarget.sprite?.body?.enable
+        ? this.shadowFocusTarget : null;
+      const attackTarget = focused || target;
+      let tx = pl.x - this.facing * (42 + index * 25), ty = pl.body.bottom - 2;
+      if (attackTarget && !this.dead && !App.panelOpen && !this.changing) {
+        const dx = attackTarget.sprite.x - sprite.x;
+        if (Math.abs(dx) > 58) { tx = attackTarget.sprite.x - Math.sign(dx) * 48; ty = attackTarget.sprite.body.bottom; }
+        else if (time >= c.nextAttack) {
+          const boost = this.buffOn('frenzy', time) || this.buffOn('rage', time);
+          c.nextAttack = time + 1250 / (1 + (boost?.speed || 0));
+          c.attackUntil = time + 300;
+          const ultBoost = time < (this.shadowPowerUntil || 0) ? 0.5 : 0;
+          this.damageMonster(attackTarget, 0.32 * (1 + (boost?.atk || 0) + ultBoost), { shadow: true, dir: Math.sign(dx) || 1 });
+        }
+      }
+      sprite.x = Phaser.Math.Linear(sprite.x, tx, Math.min(1, delta / 130));
+      sprite.y = Phaser.Math.Linear(sprite.y, ty, Math.min(1, delta / 150));
+      sprite.setFlipX(sprite.x > pl.x);
+      if (c.label) c.label.setPosition(sprite.x, sprite.y - 8);
+      else {
+        const def = GameData.MONSTERS[data.roster.find(x => x.uid === uid)?.monster];
+        const sheet = def && Sprites.hasMob(this, def.look) ? Sprites.mobOf(def.look) : null;
+        if (sheet) {
+          const anim = time < c.attackUntil ? `mb_${sheet}_attack` : (Math.abs(sprite.x - tx) > 5 ? `mb_${sheet}_run` : `mb_${sheet}_idle`);
+          if (sprite.anims.currentAnim?.key !== anim && this.anims.exists(anim)) sprite.play(anim, true);
+        }
+      }
+    });
+  }
   updateCompanion(id, c, index, time, delta, ps, state) {
     const def = this.companionDef(id), sprite = c.sprite;
     if (state.hp <= 0) {
@@ -339,15 +427,17 @@ WorldScene.mix(class WorldPlayer {
         attacking = true;
         const skillId = App.player.mounts.skills?.[id] || App.player.mounts.skill || 'bite';
         const skill = GameData.PET_SKILLS[skillId] || GameData.PET_SKILLS.bite;
+        const command = this.buffOn('rage', time);
+        const classMul = this.hasPassive('trieu_hoi_su') ? 1.1 : 1;
         const useSkill = time >= c.nextAttack && state.mp >= skill.mp && state.sta >= skill.sta && Math.abs(dx) <= skill.range;
         if (useSkill) {
-          state.mp -= skill.mp; state.sta -= skill.sta; c.nextAttack = time + skill.cooldown;
-          this.damageMonster(target, skill.mult * def.atk, { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
+          state.mp -= skill.mp; state.sta -= skill.sta; c.nextAttack = time + skill.cooldown / (1 + (command?.speed || 0));
+          this.damageMonster(target, skill.mult * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
           c.lastCombat = time; c.attackUntil = time + 420;
           this.floatText(sprite.x, sprite.y - 32, skill.name, '#8be9ff', 11);
         } else if (time >= c.nextAttack && state.sta >= 4) {
-          state.sta -= 4; c.nextAttack = time + 1150;
-          this.damageMonster(target, 0.82 * def.atk, { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
+          state.sta -= 4; c.nextAttack = time + 1150 / (1 + (command?.speed || 0));
+          this.damageMonster(target, 0.82 * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
           c.lastCombat = time; c.attackUntil = time + 320;
         }
       }
@@ -371,11 +461,13 @@ WorldScene.mix(class WorldPlayer {
   // Bật/tắt bằng phím T hoặc nút ⚡. Đang biến hình: chỉ số nhân theo ấn, hào quang lửa, mỗi giây tốn `drain` năng lượng
   // và thể lực (ấn 1: 1, ấn 2: 2); MP và thể lực không tự hồi. Cạn một trong hai thì tự trở lại dạng thường.
   toggleForm(time) {
+    const aw = this.activeAwaken();
+    const unlocked = App.player.formChoice === 'evolution' ? !!App.player.advancement?.unlocked?.[GameData.EVOLUTIONS[App.player.school]] : App.player.formChoice === 'awaken2' ? App.player.awakenTier >= 2 : App.player.awakenTier >= 1;
+    if (!unlocked) { UI.log('Hình thái chưa được mở khóa. Hãy hoàn thành nhiệm vụ NPC ẩn và dùng sách tương ứng.', '#bdbdbd'); return; }
     if (App.form) { this.endForm(); return; }
-    const aw = GameData.awakenOf(App.player);
-    if (!aw) { UI.log('Chưa thức tỉnh. Đạt cấp 25 rồi gặp Hội trưởng Khải để nhận Ấn thứ nhất.', '#bdbdbd'); return; }
     if (time < (this.formReadyAt || 0)) return;
-    const need = aw.drain * 3;   // phải đủ ít nhất 3 giây biến hình
+    const drain = aw?.drain || 3;
+    const need = drain * 3;   // phải đủ ít nhất 3 giây biến hình
     if (App.mp < need || App.sta < need || App.staLocked) { UI.log(`Không đủ năng lượng / thể lực để biến hình (cần ${need}).`, '#ffca28'); return; }
     // Giữ nguyên % máu và % năng lượng khi giá trị tối đa tăng (không thì thanh MP tụt xuống như bị mất MP)
     const hpRatio = App.hp / App.stats.maxHp, mpRatio = App.mp / App.stats.maxMp;
@@ -385,15 +477,17 @@ WorldScene.mix(class WorldPlayer {
     App.mp = Math.round(App.stats.maxMp * mpRatio);
     this.formDrainAcc = 0;
     this.formReadyAt = time + 1500;
-    this.awakenFx(aw.tier);
+    if (aw) this.awakenFx(aw.tier);
     this.formStart();
-    UI.banner(aw.tier >= 2 ? 'BIẾN HÌNH · ẤN THỨ HAI' : 'BIẾN HÌNH · ẤN THỨ NHẤT', 1400);
+    Net.action('form_toggle');
+    UI.banner(App.player.formChoice === 'evolution' ? (GameData.EVOLUTION_NAMES[GameData.EVOLUTIONS[App.player.school]] || 'TIẾN HÓA') : aw?.tier >= 2 ? 'BIẾN HÌNH · ẤN THỨ HAI' : 'BIẾN HÌNH · ẤN THỨ NHẤT', 1400);
     UI.refresh();
   }
   endForm(reason) {
     if (!App.form) return;
     const hpRatio = App.hp / App.stats.maxHp, mpRatio = App.mp / App.stats.maxMp;
     App.form = false;
+    Net.action('form_toggle');
     App.recalcStats();
     App.hp = Math.max(1, Math.round(App.stats.maxHp * hpRatio));
     App.mp = Math.max(0, Math.round(App.stats.maxMp * mpRatio));
@@ -405,14 +499,15 @@ WorldScene.mix(class WorldPlayer {
   }
   formTick(time, delta) {
     if (!App.form) return;
-    const aw = GameData.awakenOf(App.player);
-    if (!aw || this.dead) { this.endForm(); return; }
+    const aw = this.activeAwaken();
+    if ((!aw && App.player.formChoice !== 'evolution') || this.dead) { this.endForm(); return; }
     // Trừ theo từng giây tròn (hiện số trên thanh đổi đều 1, 2 mỗi giây)
     this.formDrainAcc = (this.formDrainAcc || 0) + delta;
     while (this.formDrainAcc >= 1000) {
       this.formDrainAcc -= 1000;
-      App.mp = Math.max(0, App.mp - aw.drain);
-      App.sta = Math.max(0, App.sta - aw.drain);
+      const drain = aw?.drain || 3;
+      App.mp = Math.max(0, App.mp - drain);
+      App.sta = Math.max(0, App.sta - drain);
     }
     if (App.mp <= 0) this.endForm('Hết năng lượng, biến hình kết thúc.');
     else if (App.sta <= 0) { App.staLocked = true; this.endForm('Hết thể lực, biến hình kết thúc.'); }
@@ -431,11 +526,11 @@ WorldScene.mix(class WorldPlayer {
 
   // Hiệu ứng biến hình: lưỡi lửa bốc lên quanh người (hạt), quầng sáng sau lưng (vẽ trong drawAura)
   formStart() {
-    const aw = GameData.awakenOf(App.player);
-    if (!aw || !this.player) return;
+    const aw = this.activeAwaken();
+    if ((!aw && App.player.formChoice !== 'evolution') || !this.player) return;
     this.formStop();
     this.formOn = true;
-    const t2 = aw.tier >= 2;
+    const t2 = (aw?.tier || 1) >= 2;
     // Đổi hình dạng: bộ hình tô màu ấn + to hơn (tạo luôn lớp màng hào quang cùng khung hình)
     this.applyFormLook();
     // Lớp màng hào quang: hình riêng nằm NGAY SAU nhân vật, mỗi khung hình chép đúng khung của nhân vật (drawAura)
@@ -448,7 +543,7 @@ WorldScene.mix(class WorldPlayer {
         emitZone: { type: 'edge', source: new Phaser.Geom.Ellipse(0, -2, t2 ? 62 : 54, t2 ? 92 : 82), quantity: 24 },
         speedY: { min: -40, max: -90 }, speedX: { min: -8, max: 8 }, scale: { start: t2 ? 0.8 : 0.6, end: 0 },
         alpha: { start: 0.6, end: 0 }, lifespan: { min: 380, max: 700 }, frequency: t2 ? 70 : 110,
-        tint: [aw.aura, aw.aura2], blendMode: 'ADD', maxParticles: 24,
+        tint: [aw?.aura || GameData.SCHOOLS[App.player.school]?.color || 0xb46bff, aw?.aura2 || 0xffffff], blendMode: 'ADD', maxParticles: 24,
       }).setDepth(3.8).startFollow(this.player)];
     }
   }

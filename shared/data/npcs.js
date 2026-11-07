@@ -7,6 +7,7 @@
   // ---------------------------------------------------------------- NPC
   // appear: NPC chỉ xuất hiện ở bản đồ đó khi tiến độ cốt truyện (chỉ số nhiệm vụ) nằm trong khoảng [từ, đến]
   const NPCS = {
+    npc_an: { name: 'Người Gác Màn', role: 'hidden', color: 0xb46bff, greet: 'Ta chỉ xuất hiện khi cậu gọi đúng mật hiệu.' },
     he_thong: { name: 'Hệ thống', role: 'quest', color: 0x3fd0ff,
       greet: '[Hệ thống] Người chơi đã tỉnh lại. Đang chờ lệnh.' },
     lao_su: { name: 'Hội trưởng Khải', role: 'quest', color: 0x2b3a55,

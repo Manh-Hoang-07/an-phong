@@ -8,7 +8,7 @@
   // Mỗi kỹ năng có cấp 1–10, nâng bằng điểm kỹ năng:
   //   mỗi cấp: sức mạnh +10%, năng lượng tốn +4%; cấp 10: hồi chiêu -15%
   //   m5 / m10: thay đổi thêm khi đạt cấp 5 / cấp 10 (kèm mô tả t5 / t10)
-  // type: dash | melee | projectile | spread | aoe | heal | buff | guard | backstep | manashield
+  // type: dash | melee | projectile | spread | aoe | heal | buff | guard | backstep | manashield | shadow_toggle | shadow_command
   //       sword_fall | arrow_rain | meteor   (ult: true = tuyệt kỹ, đặt ở ô tuyệt kỹ)
   const SKILL_MAX = 10;
   const SKILLS = {
@@ -207,7 +207,66 @@
       type: 'aoe', power: 2.0, radius: 260, heal: 0.35, desc: 'Tỏa ánh sáng quanh thân, gây sát thương và hồi phục sinh lực.',
       m5: { radius: 320, heal: 0.42 }, t5: 'Vùng ảnh hưởng và lượng hồi phục tăng.',
       m10: { power: 2.8, heal: 0.5 }, t10: 'Sát thương và hồi phục tăng mạnh.' },
+
+    // ----- Triệu Hồi Sư → Tử Linh Thuật Sư
+    th1: { school: 'trieu_hoi_su', icon: '✨', name: 'Linh Tiễn', level: 5, mp: 12, cd: 3,
+      type: 'projectile', power: 1.5, pierce: true, range: 360, count: 1, desc: 'Bắn linh tiễn xuyên qua hàng quái.',
+      m5: { range: 460 }, t5: 'Tăng tầm bắn.', m10: { count: 2 }, t10: 'Bắn thêm một linh tiễn.' },
+    th2: { school: 'trieu_hoi_su', icon: '🌀', name: 'Linh Thể Hộ Vệ', level: 8, mp: 24, cd: 14,
+      type: 'guard', duration: 5, reduce: 0.35, desc: 'Gọi linh thể che chắn, giảm sát thương nhận vào.',
+      m5: { duration: 7 }, t5: 'Kéo dài thời gian bảo vệ.', m10: { reduce: 0.5 }, t10: 'Giảm sát thương nhiều hơn.' },
+    th3: { school: 'trieu_hoi_su', icon: '🔷', name: 'Nổ Linh Lực', level: 12, mp: 32, cd: 12,
+      type: 'aoe', power: 2.0, radius: 170, desc: 'Giải phóng linh lực thành vụ nổ quanh người.',
+      m5: { radius: 220 }, t5: 'Vùng nổ rộng hơn.', m10: { power: 2.7 }, t10: 'Linh lực gây sát thương mạnh hơn.' },
+    th4: { school: 'trieu_hoi_su', icon: '🪄', name: 'Hiệu Lệnh Triệu Hồi', level: 18, mp: 35, cd: 10,
+      type: 'buff', buff: 'rage', duration: 7, atkBuff: 0.18, speedBuff: 0.2, desc: 'Cường hóa sức mạnh và tốc độ của thú đồng hành.',
+      m5: { duration: 9 }, t5: 'Cường hóa lâu hơn.', m10: { atkBuff: 0.28 }, t10: 'Linh thể được tăng thêm sức tấn công.' },
+    nl1: { school: 'tu_linh_thuat_su', icon: '☠️', name: 'Lời Nguyền Tàn Lụi', level: 25, mp: 30, cd: 10,
+      type: 'projectile', power: 1.7, range: 380, slow: 2, count: 1, desc: 'Nguyền mục tiêu, gây sát thương và làm chậm.',
+      m5: { count: 2 }, t5: 'Nguyền thêm một mục tiêu trên đường bay.', m10: { slow: 3, power: 2.2 }, t10: 'Lời nguyền mạnh hơn và kéo dài hơn.' },
+    nl2: { school: 'tu_linh_thuat_su', icon: '🌑', name: 'Triệu Hồi Bóng', level: 25, mp: 18, cd: 3,
+      type: 'shadow_toggle', desc: 'Bật/tắt đội bóng ma đã chọn. Giải trừ chỉ làm bóng ẩn đi, không xóa bộ sưu tập.',
+      m5: { cd: 2 }, t5: 'Hồi chiêu bật/tắt nhanh hơn.', m10: { cd: 1 }, t10: 'Gọi hoặc giải trừ gần như tức thì.' },
+    nl3: { school: 'tu_linh_thuat_su', icon: '🩸', name: 'Hút Linh', level: 30, mp: 42, cd: 14,
+      type: 'aoe', power: 2.4, radius: 190, heal: 0.16, desc: 'Hút sinh lực quanh người, gây sát thương và hồi máu.',
+      m5: { radius: 240 }, t5: 'Hút linh lực trong vùng rộng hơn.', m10: { power: 3.1, heal: 0.22 }, t10: 'Tăng sát thương và hồi phục.' },
+    nl4: { school: 'tu_linh_thuat_su', icon: '👻', name: 'Đội Quân U Ảnh', level: 35, mp: 48, cd: 20,
+      type: 'buff', buff: 'frenzy', duration: 8, atkBuff: 0.2, speedBuff: 0.25, desc: 'Cường hóa các bóng ma đang chiến đấu.',
+      m5: { duration: 10 }, t5: 'Cường hóa lâu hơn.', m10: { atkBuff: 0.3, speedBuff: 0.4 }, t10: 'Bóng ma mạnh và nhanh hơn.' },
+    nl5: { school: 'tu_linh_thuat_su', icon: '🕳️', name: 'Cổng Âm Giới', level: 20, mp: 75, cd: 42, ult: true,
+      type: 'meteor', power: 8, radius: 250, count: 2, desc: 'Mở cổng âm giới, giáng thiên thạch và cường hóa bóng ma đang theo.',
+      m5: { radius: 300 }, t5: 'Vùng nổ lớn hơn.', m10: { count: 3, power: 9.5 }, t10: 'Cổng gọi ba đợt thiên thạch với sức công phá tăng.' },
+    nl6: { school: 'tu_linh_thuat_su', icon: '⚡', name: 'Phân Hồn', level: 40, mp: 56, cd: 18,
+      type: 'shadow_command', power: 3.2, radius: 240, freeze: 1, desc: 'Phóng xung kích bóng tối, khiến đội bóng ma tập trung tấn công mục tiêu gần nhất.',
+      m5: { radius: 300 }, t5: 'Xung kích lan rộng hơn.', m10: { power: 4, freeze: 2 }, t10: 'Tăng sát thương và khóa chân quái lâu hơn.' },
   };
+
+  Object.assign(SKILLS, {
+    ks25:{school:'kiem_si',evolutionKey:'kiem_thanh',icon:'⚔️',name:'Kiếm Khí Hoành Tảo',level:25,mp:34,cd:8,type:'melee',power:1.45,hits:3,range:190,desc:'Chém một đường kiếm rộng xuyên qua quái.'},
+    ks30:{school:'kiem_si',evolutionKey:'kiem_thanh',icon:'🛡️',name:'Kiếm Tâm Phản Kích',level:30,mp:38,cd:18,type:'guard',duration:4,reduce:.45,reflect:.45,desc:'Giảm sát thương và phản kích khi bị đánh.'},
+    ks35:{school:'kiem_si',evolutionKey:'kiem_thanh',icon:'🐉',name:'Long Ảnh Liên Trảm',level:35,mp:48,cd:13,type:'dash',power:2.5,distance:190,desc:'Lướt đến trước mặt mục tiêu và tung đòn dồn sát thương.'},
+    ks40:{school:'kiem_si',evolutionKey:'kiem_thanh',icon:'🌠',name:'Vạn Kiếm Quy Tông',level:40,mp:64,cd:24,type:'aoe',power:3.6,radius:230,desc:'Gọi kiếm khí chém nhiều hướng trong vùng rộng.'},
+    xa25:{school:'cung_thu',evolutionKey:'than_xa',icon:'🎯',name:'Ấn Tâm Tiễn',level:25,mp:28,cd:7,type:'projectile',power:2.4,pierce:true,range:600,desc:'Bắn tên xuyên giáp và đánh dấu mục tiêu.'},
+    xa30:{school:'cung_thu',evolutionKey:'than_xa',icon:'🏹',name:'Bước Lùi Liên Xạ',level:30,mp:34,cd:10,type:'backstep',power:1.1,count:4,distance:160,desc:'Lùi khỏi quái gần nhất và bắn loạt tên.'},
+    xa35:{school:'cung_thu',evolutionKey:'than_xa',icon:'🔱',name:'Tên Nảy Liên Hoàn',level:35,mp:44,cd:12,type:'spread',power:1.8,count:3,range:520,slow:1,desc:'Bắn tên tỏa ra, làm chậm mục tiêu.'},
+    xa40:{school:'cung_thu',evolutionKey:'than_xa',icon:'🌧️',name:'Thiên Võng Xạ Kích',level:40,mp:62,cd:22,type:'arrow_rain',power:3.1,arrows:18,width:420,desc:'Trút mưa tên xuống một vùng chiến trường.'},
+    ps25:{school:'phap_su',evolutionKey:'dai_phap_su',icon:'⚡',name:'Lôi Xà',level:25,mp:34,cd:9,type:'projectile',power:2.2,range:430,count:2,slow:1,desc:'Phóng tia sét xuyên qua nhiều mục tiêu.'},
+    ps30:{school:'phap_su',evolutionKey:'dai_phap_su',icon:'🔥',name:'Hỏa Tường',level:30,mp:42,cd:13,type:'aoe',power:2.5,radius:210,desc:'Dựng một dải lửa ma thuật quanh người.'},
+    ps35:{school:'phap_su',evolutionKey:'dai_phap_su',icon:'💎',name:'Tinh Thạch Hộ Thể',level:35,mp:46,cd:20,type:'manashield',duration:10,absorb:.82,desc:'Tạo lớp khiên tinh thạch hấp thụ sát thương.'},
+    ps40:{school:'phap_su',evolutionKey:'dai_phap_su',icon:'🌌',name:'Bão Nguyên Tố',level:40,mp:66,cd:24,type:'meteor',power:3.6,radius:250,count:3,desc:'Gọi ba đợt nguyên tố xuống vùng mục tiêu.'},
+    av25:{school:'sat_thu',evolutionKey:'anh_vuong',icon:'🌑',name:'Ảnh Bộ Đoạt Mệnh',level:25,mp:30,cd:8,type:'dash',power:2.6,distance:190,desc:'Lướt xuyên mục tiêu và chém ở điểm kết thúc.'},
+    av30:{school:'sat_thu',evolutionKey:'anh_vuong',icon:'🔪',name:'Phi Đao U Ảnh',level:30,mp:36,cd:9,type:'projectile',power:2.3,range:420,count:2,slow:1,desc:'Phóng hai phi đao bóng tối tầm trung.'},
+    av35:{school:'sat_thu',evolutionKey:'anh_vuong',icon:'👤',name:'Thế Thân Bóng Tối',level:35,mp:42,cd:18,type:'guard',duration:3,reduce:.7,desc:'Tạo bóng thế thân để né đòn kế tiếp.'},
+    av40:{school:'sat_thu',evolutionKey:'anh_vuong',icon:'🗡️',name:'Bách Ảnh Sát',level:40,mp:60,cd:22,type:'melee',power:1.7,hits:7,range:160,finisher:3.4,desc:'Dồn loạt đòn liên tiếp lên mục tiêu trước mặt.'},
+    hv25:{school:'tanker',evolutionKey:'ho_ve_bat_khuat',icon:'📣',name:'Khiêu Chiến',level:25,mp:28,cd:14,type:'guard',duration:5,reduce:.25,desc:'Thách thức quái gần đó và giảm sát thương nhận vào.'},
+    hv30:{school:'tanker',evolutionKey:'ho_ve_bat_khuat',icon:'🛡️',name:'Thuẫn Trận',level:30,mp:38,cd:18,type:'guard',duration:7,reduce:.55,desc:'Dựng thế thủ, giảm sát thương và chống đẩy lùi.'},
+    hv35:{school:'tanker',evolutionKey:'ho_ve_bat_khuat',icon:'🌋',name:'Chấn Địa',level:35,mp:45,cd:14,type:'aoe',power:1.8,radius:220,slow:2,desc:'Dậm đất gây sát thương và làm chậm quái xung quanh.'},
+    hv40:{school:'tanker',evolutionKey:'ho_ve_bat_khuat',icon:'🏰',name:'Pháo Đài Tiến Quân',level:40,mp:58,cd:22,type:'dash',power:2.5,distance:140,desc:'Tiến lên trong tư thế phòng thủ, đánh bật quái phía trước.'},
+    tl25:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'🌿',name:'Thánh Vực',level:25,mp:38,cd:16,type:'heal',heal:.42,desc:'Gọi thánh quang hồi phục sinh lực.'},
+    tl30:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'✨',name:'Quang Tiễn',level:30,mp:34,cd:9,type:'projectile',power:2.1,pierce:true,range:440,slow:1,desc:'Bắn mũi tên thánh xuyên qua kẻ địch.'},
+    tl35:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'🔰',name:'Kết Giới Sinh Mệnh',level:35,mp:48,cd:20,type:'manashield',duration:9,absorb:.75,desc:'Tạo kết giới bảo vệ bản thân và đồng hành.'},
+    tl40:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'🌅',name:'Bình Minh Tái Sinh',level:40,mp:64,cd:30,type:'heal',heal:.72,desc:'Hồi phục lượng máu lớn bằng ánh bình minh.'},
+  });
 
   // Nội tại cốt truyện: nhận từ nhiệm vụ chính, cộng dồn suốt game
   const PERKS = {

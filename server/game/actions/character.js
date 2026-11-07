@@ -87,7 +87,10 @@ const actions = {
   awaken_special(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lu_khach')) fail('Hãy đến gặp Lữ khách bí ẩn.');
     const sc = G.SCHOOLS[a.school];
-    if (!sc || !sc.special || !p.unlocks[a.school]) fail('Bạn chưa mở khóa class này.');
+    if (!sc || !sc.special) fail('Class này chưa mở khóa.');
+    if (a.school === 'tu_linh_thuat_su') {
+      fail('Tiến hóa bằng Sách Tiến Hóa Chức Nghiệp từ NPC ẩn.');
+    } else if (!p.unlocks[a.school]) fail('Bạn chưa mở khóa class này.');
     if (p.school === a.school) fail('Bạn đã là ' + sc.name + ' rồi.');
     if (p.level < 5) fail('Cần đạt cấp 5.');
     setSchool(p, a.school, ev);
@@ -119,6 +122,44 @@ const actions = {
     for (const id of ids) p.mounts.skills[id] = a.skill;
   },
 
+  shadow_toggle(p, a, ev) {
+    if (p.school !== 'tu_linh_thuat_su' && !(p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formActive && p.formChoice === 'evolution')) fail('Chỉ Tử Linh Thuật Sư đang biến hình mới điều khiển được bóng ma.');
+    p.shadows = p.shadows || { roster: [], active: [], enabled: false, nextId: 1 };
+    if (!p.shadows.enabled) {
+      p.shadows.enabled = true;
+      if (!p.shadows.active.length) p.shadows.active = p.shadows.roster.slice(0, 3).map(x => x.uid);
+      ev.push({ t: 'msg', text: p.shadows.active.length ? `Đã gọi ${p.shadows.active.length} bóng ma.` : 'Chưa có bóng ma trong đội hình.', color: '#c6a7ff' });
+    } else {
+      p.shadows.enabled = false;
+      ev.push({ t: 'msg', text: 'Đã giải trừ bóng ma. Bộ sưu tập vẫn được lưu.', color: '#c6a7ff' });
+    }
+  },
+
+  shadow_party(p, a, ev) {
+    if (p.school !== 'tu_linh_thuat_su' && !(p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formChoice === 'evolution')) fail('Chỉ Tử Linh Thuật Sư mới quản lý được bóng ma.');
+    const uid = Number(a.uid);
+    const soul = p.shadows?.roster?.find(x => x.uid === uid);
+    if (!soul) fail('Không tìm thấy bóng ma này.');
+    const i = p.shadows.active.indexOf(uid);
+    if (i >= 0) p.shadows.active.splice(i, 1);
+    else {
+      if (p.shadows.active.length >= 3) fail('Đội đã đủ 3 bóng. Hãy bỏ chọn một bóng trước.');
+      p.shadows.active.push(uid);
+    }
+    ev.push({ t: 'msg', text: i >= 0 ? 'Đã đưa bóng ma về bộ sưu tập.' : 'Đã thêm bóng ma vào đội hình.', color: '#c6a7ff' });
+  },
+
+  shadow_release(p, a, ev) {
+    if (p.school !== 'tu_linh_thuat_su' && !(p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formChoice === 'evolution')) fail('Chỉ Tử Linh Thuật Sư mới giải phóng được bóng ma.');
+    const uid = Number(a.uid);
+    const i = p.shadows?.roster?.findIndex(x => x.uid === uid) ?? -1;
+    if (i < 0) fail('Không tìm thấy bóng ma này.');
+    p.shadows.roster.splice(i, 1);
+    p.shadows.active = p.shadows.active.filter(x => x !== uid);
+    p.shadows.fullNotice = false;
+    ev.push({ t: 'msg', text: 'Đã giải phóng bóng ma. Có thể thu phục bóng mới.', color: '#c6a7ff' });
+  },
+
   // Đánh giá hạng thợ săn ở Hội trưởng Khải: đủ cấp thì lên đúng MỘT hạng (người chơi tự chọn lúc nào đi đánh giá)
   rank_eval(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải ở Hiệp Hội để được đánh giá.');
@@ -133,16 +174,7 @@ const actions = {
 
   // Thức tỉnh (biến hình) bậc kế tiếp: ấn 1 ở Hội trưởng Khải (cấp 25), ấn 2 ở Lữ khách (cấp 45)
   awaken_next(p, a, ev) {
-    const aw = G.nextAwaken(p);
-    if (!aw) fail('Bạn đã thức tỉnh tối đa.');
-    if (!p.school) fail('Hãy chọn class trước khi thức tỉnh.');
-    if (!onCurrentMapNpc(p, aw.npc)) fail(`Hãy đến gặp ${G.NPCS[aw.npc].name}.`);
-    if (p.level < aw.level) fail(`Cần đạt cấp ${aw.level}.`);
-    p.awakenTier = aw.tier;
-    const st = G.calcStats(p);
-    p.hp = st.maxHp; p.mp = st.maxMp;
-    ev.push({ t: 'msg', text: `[Hệ thống] ${aw.name} thành công! ${aw.desc}`, color: '#ffd54f' });
-    ev.push({ t: 'awaken', tier: aw.tier });
+    fail('Hoàn thành nhiệm vụ NPC ẩn và sử dụng Sách Biến Hình tương ứng.');
   },
 
   // Nhập mật mã ở Lữ khách bí ẩn. Mã nằm trong PostgreSQL: mỗi tài khoản một lần,

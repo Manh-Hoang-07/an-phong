@@ -7,7 +7,8 @@ const UI = (() => {
   const fmt = (n) => Number(Math.floor(n)).toLocaleString('vi-VN');
 
   const skIcon = (id) => (G.SKILLS[id] && G.SKILLS[id].icon) || '✨';
-  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi']];
+  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi'], ['shadows', '☠ Bóng ma']];
+  const visibleTabs = () => MENU_TABS.filter(([k]) => k !== 'shadows' || App.player?.school === 'tu_linh_thuat_su' || (App.player?.school === 'trieu_hoi_su' && App.player?.advancement?.unlocked?.tu_linh_thuat_su));
   let lastMenuTab = 'bag';
   const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿' };
   const WEAPON_ICONS = { kiem: '🗡️', cung: '🏹', truong: '🪄' };
@@ -35,6 +36,7 @@ const UI = (() => {
     if (id.startsWith('binh_mau')) return '🧪';
     if (id === 'thuoc_nhiem_do') return '🧴';
     if (d.kind === 'boost') return '📜';
+    if (d.kind === 'transform_book') return d.transform === 'evolution' ? '📕' : '📗';
     if (id.startsWith('binh_nl')) return '💧';
     if (id === 'da_cuong_hoa') return '💎';
     if (id === 'manh_vai_den') return '🏴';
@@ -66,6 +68,7 @@ const UI = (() => {
     const st = App.stats;
     const sc = p.school && G.SCHOOLS[p.school];
     $('h-name').textContent = sc ? sc.name : 'Chưa thức tỉnh';
+    $('tb-hidden-chat').classList.toggle('hidden', p.map !== 'lang');
     $('h-level').textContent = p.level;
     $('h-rank').textContent = G.playerRank(p);
     $('h-ava').textContent = sc ? sc.icon : '👤';
@@ -82,6 +85,8 @@ const UI = (() => {
     document.querySelectorAll('.sk-extra, .tb-s4').forEach(el => el.classList.toggle('hidden', !tn));
     // Nút biến hình: chỉ hiện khi đã có ấn thức tỉnh; sáng lên khi đang biến hình
     const awk = G.awakenOf(p);
+    const hasForm = (p.awakenTier > 0) || !!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]];
+    const hasCareer = !!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]];
     const summoned = Array.isArray(p.mounts?.summoned) ? p.mounts.summoned : (p.mounts?.active ? [p.mounts.active] : []);
     $('hud-pet').classList.toggle('hidden', !summoned.length);
     const petStats = G.petStats(p), petStates = p.pets || {};
@@ -96,9 +101,17 @@ const UI = (() => {
       tickPets(petStats, petStates, summoned);
     }
     document.querySelectorAll('.sk-form, .tb-form').forEach(el => {
-      el.classList.toggle('hidden', !awk);
+      el.classList.toggle('hidden', !hasForm);
       el.classList.toggle('active', !!App.form);
-      if (awk) el.style.setProperty('--form', '#' + awk.aura.toString(16).padStart(6, '0'));
+      if (hasForm) el.style.setProperty('--form', '#' + (awk?.aura || G.SCHOOLS[p.school]?.color || 0xb46bff).toString(16).padStart(6, '0'));
+    });
+    const careerName = G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]] || 'Tiến hóa';
+    const careerShort = careerName.split(' ')[0];
+    document.querySelectorAll('.sk-career, .tb-career').forEach(el => {
+      el.classList.toggle('hidden', !hasCareer);
+      el.classList.toggle('active', !!p.formActive && p.formChoice === 'evolution');
+      const ico = el.querySelector('.ico');
+      if (ico) setHtml(ico, `${p.school === 'trieu_hoi_su' ? '☠' : '✦'}<small>${esc(careerShort)}</small>`);
     });
 
     // thanh kỹ năng
@@ -307,7 +320,7 @@ const UI = (() => {
   // ------------------------------------------------------------ Bảng
   function openPanel(name, ctx = {}) {
     if (panel && panel.name === name && !ctx.force) { closePanel(); return; }
-    if (MENU_TABS.some(([k]) => k === name)) lastMenuTab = name;
+    if (visibleTabs().some(([k]) => k === name)) lastMenuTab = name;
     panel = { name, ctx };
     if (!ctx.keepSel) S.selected = null;
     App.panelOpen = true;
@@ -329,14 +342,14 @@ const UI = (() => {
     const fns = PANELS;
     const [title, html0] = fns[panel.name](panel.ctx);
     let html = html0;
-    if (MENU_TABS.some(([k]) => k === panel.name)) {
+    if (visibleTabs().some(([k]) => k === panel.name)) {
       const p = App.player;
       const count = { char: p.freePoints || 0, skills: p.skillPoints || 0 };
-      html = '<div class="tabs">' + MENU_TABS.map(([k, n]) =>
+      html = '<div class="tabs">' + visibleTabs().map(([k, n]) =>
         `<button class="btn tab ${panel.name === k ? 'active' : ''}" data-act="tab" data-tab="${k}">${n}${count[k] ? ` <b class="tabcount">${count[k]}</b>` : ''}</button>`).join('') + '</div>' + html;
     }
     // Bảng có nhiều tab (menu, thợ rèn) giữ cố định kích cỡ, chuyển tab không bị co giãn
-    const fixed = MENU_TABS.some(([k]) => k === panel.name) || panel.name === 'smith';
+    const fixed = visibleTabs().some(([k]) => k === panel.name) || panel.name === 'smith';
     document.querySelector('.panel-box').classList.toggle('fixed', fixed);
     $('panel-title').textContent = title;
     const body = $('panel-body');
@@ -446,6 +459,13 @@ const UI = (() => {
     tip.style.top = Math.min(window.innerHeight - tip.offsetHeight - 6, r.top) + 'px';
   }
   function hideTip() { $('tooltip').classList.add('hidden'); }
+  async function hiddenChat() {
+    if (App.player?.map !== 'lang') { log('Không có hồi đáp.', '#bdbdbd'); return; }
+    const text = window.prompt('Chat NPC ẩn tại Tân Đô. Nhập "npc an" (hoặc "ncp an"):','npc an');
+    if (text == null) return;
+    const r = await Net.action('hidden_chat', { text });
+    if (r.ok && App.scene?.addHiddenNpc) App.scene.addHiddenNpc();
+  }
 
   function init() {
     $('panel-body').addEventListener('click', (e) => lib.onClick(e));
@@ -454,6 +474,7 @@ const UI = (() => {
     $('panel-body').addEventListener('mouseover', showTip);
     $('panel-body').addEventListener('mouseleave', hideTip);
     $('panel-close').addEventListener('click', closePanel);
+    $('tb-hidden-chat').addEventListener('click', hiddenChat);
     $('panel').addEventListener('click', (e) => { if (e.target.id === 'panel') closePanel(); });
     document.querySelectorAll('#skillbar .sk').forEach(b => b.addEventListener('click', () => {
       const k = b.dataset.k, sc = App.scene;
@@ -461,6 +482,7 @@ const UI = (() => {
       if (k === 'atk') sc.basicAttack(sc.time.now);
       else if (k === 'hp' || k === 'mp') sc.usePotion(k);
       else if (k === 'form') sc.toggleForm(sc.time.now);
+      else if (k === 'career') Net.action('career_toggle');
       else if (k === 'mount') openPanel('mount');
       else if (k === 'pets') openPanel('mount');
       else sc.useSkill(Number(k), sc.time.now);
@@ -471,7 +493,7 @@ const UI = (() => {
   const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
 
   return {
-    init, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questReady,
+    init, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questReady, hiddenChat,
     openPanel, closePanel, itemIcon, isOpen: () => !!panel,   // openNpc, upgradeResult: gắn trong ui/panels
     _: lib,
   };

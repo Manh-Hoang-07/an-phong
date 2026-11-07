@@ -278,12 +278,24 @@ WorldScene.mix(class WorldMap {
     this.refreshNpcMarks();
   }
 
+  addHiddenNpc() {
+    if (this.mapId !== 'lang' || !App.player.hiddenNpcActive || this.hiddenNpcSprite) return;
+    const x = Phaser.Math.Clamp((this.player?.x || this.worldW * 0.5) + 100, 50, this.worldW - 50);
+    const y = this.groundY(Math.max(0, Math.floor((this.player?.y || 0) / T)), Math.floor(x / T));
+    const sprite = this.add.container(x, y - 28).setDepth(5);
+    const g = this.add.graphics(); g.fillStyle(0x251a35, .95).fillRoundedRect(-18,-27,36,48,10).lineStyle(2,0xb46bff,.9).strokeRoundedRect(-18,-27,36,48,10);
+    const face = this.add.text(0,-6,'☠',{fontSize:'21px'}).setOrigin(.5);
+    const label = this.add.text(0,-52,'Người Gác Màn',{fontSize:'12px',color:'#e1c6ff',stroke:'#000',strokeThickness:3}).setOrigin(.5);
+    sprite.add([g,face,label]).setSize(44,62).setInteractive(new Phaser.Geom.Rectangle(-22,-58,44,62),Phaser.Geom.Rectangle.Contains).on('pointerdown',()=>this.talkTo('npc_an',x));
+    this.hiddenNpcSprite=sprite; this.npcs.push({id:'npc_an',x,y,sprite,label,mark:{setVisible(){}},visible:true});
+  }
+
   refreshNpcMarks() {
     const p = App.player;
     if (this.portals) this.refreshPortals();
     const q = GameData.QUESTS[p.quest.step];
     for (const n of this.npcs) {
-      n.visible = GameData.npcHere(p, this.mapId, n.id);
+      n.visible = n.id === 'npc_an' ? this.mapId === 'lang' && !!p.hiddenNpcActive : GameData.npcHere(p, this.mapId, n.id);
       n.sprite.setVisible(n.visible); n.label.setVisible(n.visible);
       if (n.shadow) n.shadow.setVisible(n.visible);
       if (!n.visible) { n.mark.setVisible(false); continue; }
@@ -294,7 +306,7 @@ WorldScene.mix(class WorldMap {
       }
       if (q && p.quest.state === 'active' && q.obj.visit && q.obj.visit.includes(n.id) && !p.quest.progress.visit?.[n.id]) key = 'mark_quest';
       n.mark.setVisible(!!key);
-      if (key) n.mark.setTexture(key);
+      if (key && n.mark.setTexture) n.mark.setTexture(key);
     }
   }
 });

@@ -46,7 +46,21 @@
       skin: 0xf5d0ac, skin2: 0xd6a37d, pants: 0x1a3a2a, boot: 0x0f2018,
       eye: 0x69f0ae, long: true, longHair: true,
     },
+    trieu_hoi_su: {
+      coat: 0x4e3c79, inner: 0xc9b9eb, accent: 0x9c83e8, hair: 0x25213a,
+      skin: 0xf0c9aa, skin2: 0xd29a78, pants: 0x302846, boot: 0x191625,
+      eye: 0xb8a5ff, long: true, longHair: true,
+    },
+    tu_linh_thuat_su: {
+      coat: 0x171321, inner: 0x36234b, accent: 0xc17aff, hair: 0x17111f,
+      skin: 0xe2c4b2, skin2: 0xb99283, pants: 0x21182c, boot: 0x100d17,
+      eye: 0xd29aff, long: true, longHair: true,
+    },
   };
+
+  for (const [id, base, accent] of [['kiem_thanh','kiem_si',0xffd54f],['than_xa','cung_thu',0x42f5bb],
+    ['dai_phap_su','phap_su',0x72c8ff],['anh_vuong','sat_thu',0xc75aff],['ho_ve_bat_khuat','tanker',0x8bdcff],
+    ['thanh_linh','tri_lieu_su',0x9dffd0],['toan_nang_tinh_thong','toan_nang',0xffe782]]) HUNTERS[id] = { ...HUNTERS[base], accent, eye: accent };
 
   // Thân người dùng chung cho nhân vật và NPC. Texture 40x60, chân chạm đáy khung.
   function drawHunter(g, pal, frame, opt = {}) {

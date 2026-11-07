@@ -29,7 +29,11 @@
     if (!player.school) return [];
     return Object.keys(SKILLS).filter(id => {
       const s = SKILLS[id];
+      if (s.evolutionKey && !player.advancement?.unlocked?.[s.evolutionKey]) return false;
+      if (s.type === 'shadow_toggle' && player.school !== 'trieu_hoi_su' && player.school !== 'tu_linh_thuat_su') return false;
       if (player.school === 'toan_nang') return true;
+      if (player.school === 'tu_linh_thuat_su') return s.school === 'trieu_hoi_su' || s.school === 'tu_linh_thuat_su';
+      if (player.school === 'trieu_hoi_su' && player.advancement?.unlocked?.tu_linh_thuat_su) return s.school === 'trieu_hoi_su' || s.school === 'tu_linh_thuat_su';
       return s.school === player.school;
     });
   }

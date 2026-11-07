@@ -115,15 +115,25 @@ const Net = (() => {
 // Chỉ số hiện tại: đang biến hình (App.form) thì nhân thêm theo ấn thức tỉnh
 App.form = false;
 App.recalcStats = function () {
-  if (App.form && !(App.player.awakenTier > 0)) App.form = false;
+  App.form = !!App.player.formActive;
+  if (App.form && !(App.player.awakenTier > 0) && !(App.player.advancement?.unlocked?.[GameData.EVOLUTIONS[App.player.school]])) App.form = false;
   App.stats = GameData.calcStats(App.player, { form: App.form });
   App.hp = Math.min(App.hp, App.stats.maxHp);
   App.mp = Math.min(App.mp, App.stats.maxMp);
 };
 
 App.setPlayer = function (p) {
+  const oldPlayer = App.player, oldStats = App.stats;
+  const formChanged = !!oldPlayer && (!!oldPlayer.formActive !== !!p.formActive || oldPlayer.formChoice !== p.formChoice);
+  const hpRatio = formChanged && oldStats?.maxHp ? App.hp / oldStats.maxHp : null;
+  const mpRatio = formChanged && oldStats?.maxMp ? App.mp / oldStats.maxMp : null;
   App.player = p;
+  App.form = !!p.formActive;
   App.stats = GameData.calcStats(p, { form: App.form });
+  if (formChanged) {
+    App.hp = Math.max(1, Math.round(App.stats.maxHp * hpRatio));
+    App.mp = Math.max(0, Math.round(App.stats.maxMp * mpRatio));
+  }
   App.hp = Math.min(App.hp, App.stats.maxHp);
   App.mp = Math.min(App.mp, App.stats.maxMp);
   if (App.sta != null) App.sta = Math.min(App.sta, App.stats.maxSta);
@@ -133,6 +143,7 @@ App.setPlayer = function (p) {
 App.onEvent = function (ev) {
   const sc = App.scene;
   switch (ev.t) {
+    case 'form': App.form = !!ev.active; if (sc?.refreshPlayerLook) sc.refreshPlayerLook(); if (sc?.formStart && ev.active) sc.formStart(); else if (sc?.formStop && !ev.active) sc.formStop(); App.recalcStats(); UI.refresh(); break;
     case 'msg': UI.log(ev.text, ev.color); break;
     case 'float': if (sc && sc.player) sc.floatText(sc.player.x, sc.player.y - 40, ev.text, ev.color); if (/xu$/.test(ev.text)) Sound.play('coin'); break;
     case 'levelup':

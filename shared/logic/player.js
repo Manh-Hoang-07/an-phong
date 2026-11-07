@@ -17,6 +17,7 @@
   function passivesOf(player) {
     if (!player.school) return [];
     if (player.school === 'toan_nang') return Object.keys(PASSIVES);
+    if (player.school === 'trieu_hoi_su' && player.formActive && player.advancement?.unlocked?.tu_linh_thuat_su) return ['tu_linh_thuat_su'];
     return PASSIVES[player.school] ? [player.school] : [];
   }
 
@@ -78,20 +79,23 @@
       if (b.atk) atk *= b.atk;
       if (b.def) def *= b.def;
       if (b.critAdd) crit += b.critAdd;
-      if (sc.skillPower) skillMul *= sc.skillPower;
+      if (b.skillPower || sc.skillPower) skillMul *= b.skillPower || sc.skillPower;
       if (sc.skillCost) costMul = sc.skillCost;
     }
     // bonus speed nhân (sat_thu: speed: 1.15 — nhân trực tiếp vào base speed)
     const scSpeed = sc && sc.bonus && sc.bonus.speed ? sc.bonus.speed : 1;
     hp *= perkMul.hp; mp *= perkMul.mp; atk *= perkMul.atk; def *= perkMul.def;
     // Thức tỉnh: chỉ nhân thêm khi ĐANG BIẾN HÌNH (opts.form, do client bật/tắt). Server tính không có opts → chỉ số thường.
-    const aw = opts.form ? awakenOf(player) : null;
+    const aw = opts.form && player.formChoice !== 'evolution' ? (player.formChoice === 'awaken1' ? AWAKENS[0] : player.formChoice === 'awaken2' ? AWAKENS[1] : awakenOf(player)) : null;
     if (aw && aw.mul) {
       const m = aw.mul;
       if (m.hp) hp *= m.hp;
       if (m.mp) mp *= m.mp;
       if (m.atk) atk *= m.atk;
       if (m.def) def *= m.def;
+    }
+    if (opts.form && player.school === 'toan_nang' && player.formChoice === 'evolution') {
+      hp *= 3; mp *= 3; atk *= 3;
     }
     crit += perkAdd.crit;
     const w = player.equip.weapon;
@@ -103,7 +107,7 @@
     const speedFinal = Math.round(Math.min(290, Math.min(260, 190 + p.agi * 2) * scSpeed + eq.speed));
     return {
       maxHp: Math.round(hp), maxMp: Math.round(mp), atk: Math.round(atk), def: Math.round(def),
-      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)),
+      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1) * (opts.form && player.school === 'toan_nang' && player.formChoice === 'evolution' ? 3 : 1)),
       crit: Math.min(60, r1(crit)), speed: speedFinal, skillMul, costMul, wtype,
       lifesteal: Math.min(15, r1(eq.lifesteal + scLifesteal)),
       cdr: Math.min(30, r1(eq.cdr + perkAdd.cdr + scCdr)),
@@ -121,7 +125,8 @@
       name,
       level: 1, exp: 0, gold: 50,
       school: null,
-      awakenTier: 0,
+      awakenTier: 0, formChoice: 'awaken1', formActive: false, hiddenNpcActive: false,
+      advancement: { quest: null, done: {}, unlocked: {} },
       points: { str: 5, vit: 5, agi: 5, spi: 5 }, freePoints: 0,
       hp: null, mp: null,
       map: NEW_PLAYER_MAP, x: null, y: null,
@@ -132,6 +137,7 @@
       unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
       mounts: { owned: [], active: null, summoned: [], skill: 'bite', skills: {} },   // giữ active / skill để đọc dữ liệu client cũ
       pets: {},
+      shadows: { roster: [], active: [], enabled: false, nextId: 1 },
       pet: { hp: null, mp: null, sta: null },   // trạng thái thú cũ, migrate chuyển sang pets
       quest: { step: 0, state: 'none', progress: {}, ver: QUEST_VERSION },
       side: { active: {}, done: [] },

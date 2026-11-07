@@ -1,7 +1,7 @@
 'use strict';
 /*
  * Phục vụ file tĩnh cho nhanh:
- *  - Gộp toàn bộ file JS của game (theo thứ tự trong public/index.html) và 27 file bản đồ thành MỘT file
+ *  - Gộp toàn bộ file JS của game (theo thứ tự trong public/index.html) và 32 file bản đồ thành MỘT file
  *    /app.<mã>.js. Mã đổi khi nội dung đổi → trình duyệt lưu lâu dài, chỉ tải lại khi có bản mới.
  *    Tự gộp lại khi file nguồn thay đổi (không cần khởi động lại server, không cần công cụ build).
  *  - Nén brotli/gzip sẵn trong bộ nhớ (nén một lần, dùng lại cho mọi lượt tải).

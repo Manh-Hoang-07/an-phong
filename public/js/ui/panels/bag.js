@@ -25,6 +25,7 @@
         if (d.slot) btns += `<button class="btn primary" data-act="equip" data-uid="${entry.uid}">Trang bị</button>`;
         if (d.kind === 'potion') btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Dùng</button>`;
         if (d.kind === 'boost') btns += `<button class="btn primary" data-act="use_boost" data-item="${entry.id}">Dùng</button>`;
+        if (d.kind === 'transform_book') btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Đọc sách</button>`;
         if (shopHere() && d.price && d.kind !== 'quest') btns += `<button class="btn" data-act="sell" data-uid="${entry.uid}" data-qty="1">Bán 1</button>`;
         if (shopHere() && d.price && d.kind !== 'quest' && entry.qty > 1) btns += `<button class="btn" data-act="sell" data-uid="${entry.uid}" data-qty="${entry.qty}">Bán hết</button>`;
       } else btns += `<button class="btn" data-act="unequip" data-slot="${sel.key}">Tháo ra</button>`;

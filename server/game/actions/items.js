@@ -65,6 +65,20 @@ const actions = {
     const e = p.bag.find(x => x.id === a.item);
     if (!e) fail('Hết ' + (G.ITEMS[a.item]?.name || 'vật phẩm') + '.');
     const def = G.ITEMS[e.id];
+    if (def.kind === 'transform_book') {
+      const id=def.transform;
+      if (id==='awaken1' && (p.awakenTier>=1 || p.level<20 || !p.advancement.done.awaken1)) fail('Sách này chưa thể sử dụng.');
+      if (id==='awaken2' && (p.awakenTier>=2 || p.level<45 || !p.advancement.done.awaken2)) fail('Sách này chưa thể sử dụng.');
+      if (id==='evolution') { const evo=G.EVOLUTIONS[p.school]; if (p.school==='toan_nang' || !evo || p.level<25 || !p.advancement.done.evolution || p.advancement.unlocked[evo]) fail('Sách này chưa thể sử dụng với class/cấp hiện tại.'); p.advancement.unlocked[evo]=true; }
+      if(id==='awaken1') p.awakenTier=1;
+      if(id==='awaken2' && p.school==='toan_nang') p.advancement.unlocked.toan_nang_tinh_thong=true;
+      else if(id==='awaken2') p.awakenTier=2;
+      e.qty--; if(e.qty<=0) p.bag.splice(p.bag.indexOf(e),1);
+      p.formChoice=id==='awaken1'?'awaken1':id==='awaken2'?(p.school==='toan_nang'?'evolution':'awaken2'):'evolution';
+      const label=id==='evolution'?G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]]:id==='awaken1'?'Biến Hình I':p.school==='toan_nang'?'Toàn Năng Tinh Thông':'Biến Hình II';
+      ev.push({t:'msg',text:`[Hệ thống] Đã mở khóa hình thái ${label}. Có thể bật/tắt bằng nút biến hình.`,color:'#ffd54f'});
+      return;
+    }
     if (def.kind === 'ult_book') {
       const ult = G.availableSkills(p).map(id => [id, G.SKILLS[id]])
         .find(([, sk]) => sk.ult && sk.school === p.school);
@@ -103,7 +117,7 @@ const actions = {
     const now = Date.now();
     if (now - (lastPotion.get(userId) || 0) < 400) fail('Từ từ thôi!');
     lastPotion.set(userId, now);
-    const st = G.calcStats(p);
+    const st = G.calcStats(p, { form: !!p.formActive });
     const hp = Number.isFinite(a.hp) ? a.hp : p.hp ?? st.maxHp;
     const mp = Number.isFinite(a.mp) ? a.mp : p.mp ?? st.maxMp;
     const healHp = (def.hp || 0) + (def.hpPct ? Math.round(st.maxHp * def.hpPct) : 0);

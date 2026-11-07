@@ -80,6 +80,7 @@
         <div class="sk sk-extra hidden" data-k="4"><span class="key">5</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-ult" data-k="5"><span class="key">R</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-form hidden" data-k="form" title="Biến hình (thức tỉnh): bấm lần nữa để trở lại dạng thường"><span class="key">T</span><span class="ico">⚡<small>Biến hình</small></span></div>
+        <div class="sk sk-career hidden" data-k="career" title="Bật/tắt hình thái chức nghiệp tiến hóa"><span class="key">V</span><span class="ico">✦<small>Tiến hóa</small></span></div>
         <div class="sk pot" data-k="hp"><span class="key">Q</span><span class="ico">❤</span><span class="cnt" id="pot-hp"></span></div>
         <div class="sk pot" data-k="mp"><span class="key">E</span><span class="ico">💧</span><span class="cnt" id="pot-mp"></span></div>
         <div class="sk" data-k="pets" title="Thú triệu hồi"><span class="key">P</span><span class="ico">🐾</span></div>
@@ -104,11 +105,13 @@
         <button data-t="s4" class="tb tb-skill tb-s4 hidden"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="ult" class="tb tb-skill tb-ult"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="form" class="tb tb-skill tb-form hidden"><span class="ico">⚡<small>Biến</small></span></button>
+        <button data-t="career" class="tb tb-skill tb-career hidden" title="Bật/tắt hình thái chức nghiệp"><span class="ico">✦<small>Tiến hóa</small></span></button>
         <button data-t="hp" class="tb tb-pot tb-hp">🧪<b id="tpot-hp"></b></button>
         <button data-t="mp" class="tb tb-pot tb-mp">💧<b id="tpot-mp"></b></button>
         <button data-t="pets" class="tb tb-pets" aria-label="Thú triệu hồi">🐾</button>
       </div>
       <button id="tb-talk" data-t="interact" class="tb tb-talk hidden">💬 <span></span></button>
+      <button id="tb-hidden-chat" class="tb tb-talk" title="Chat lệnh với NPC ẩn">⌨️ <span>Chat</span></button>
     </div>
 
     <div id="panel" class="hidden">
@@ -171,6 +174,7 @@
   <script src="/js/ui/panels/school.js"></script>
   <script src="/js/ui/panels/gate.js"></script>
   <script src="/js/ui/panels/mount.js"></script>
+  <script src="/js/ui/panels/shadows.js"></script>
   <script src="/js/ui/actions.js"></script>
   <!-- Cảnh chơi: khung WorldScene + các phần gắn thêm method -->
   <script src="/js/scene/world.js"></script>
