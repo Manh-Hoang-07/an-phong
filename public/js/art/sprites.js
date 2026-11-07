@@ -9,32 +9,32 @@
  */
 const Sprites = (() => {
   const CHARS = {
-    none: { fw: 162, fh: 162, cx: 85.5, fy: 101, s: 1.25, combo: ['attack1', 'attack2', 'attack3'],
+    none: { fw: 324, fh: 324, cx: 171, fy: 202, s: 0.625, combo: ['attack1', 'attack2', 'attack3'],
       anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 18], attack2: [7, 18], attack3: [8, 18], hit: [3, 12], death: [7, 10] } },
-    kiem_si: { fw: 126, fh: 126, cx: 67.5, fy: 82, s: 1.35, combo: ['attack1', 'attack2', 'attack3'],
+    kiem_si: { fw: 252, fh: 252, cx: 135, fy: 164, s: 0.675, combo: ['attack1', 'attack2', 'attack3'],
       anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 20], attack2: [6, 20], attack3: [9, 20], hit: [3, 12], death: [11, 12] } },
-    cung_thu: { fw: 100, fh: 100, cx: 50.5, fy: 67, s: 1.55, combo: ['attack1'],
+    cung_thu: { fw: 200, fh: 200, cx: 101, fy: 134, s: 0.775, combo: ['attack1'],
       anims: { idle: [10, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [6, 16], hit: [3, 12], death: [10, 12] } },
-    phap_su: { fw: 231, fh: 190, cx: 110, fy: 141, s: 0.68, combo: ['attack1', 'attack2'],
+    phap_su: { fw: 462, fh: 380, cx: 220, fy: 282, s: 0.34, combo: ['attack1', 'attack2'],
       anims: { idle: [6, 8], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [4, 12], death: [7, 10] } },
-    toan_nang: { fw: 250, fh: 250, cx: 136, fy: 167, s: 0.9, combo: ['attack1', 'attack2'],
+    toan_nang: { fw: 500, fh: 500, cx: 272, fy: 334, s: 0.45, combo: ['attack1', 'attack2'],
       anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [3, 12], death: [7, 10] } },
     // ---- 3 class mới
-    // Sát Thủ: Martial Hero 3 (fw=126, tay không/dao nhanh, 3 combo)
-    sat_thu: { fw: 126, fh: 126, cx: 67.5, fy: 82, s: 1.35, combo: ['attack1', 'attack2', 'attack3'],
+    // Sát Thủ: Martial Hero 3 (fw=252, tay không/dao nhanh, 3 combo)
+    sat_thu: { fw: 252, fh: 252, cx: 135, fy: 164, s: 0.675, combo: ['attack1', 'attack2', 'attack3'],
       anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 22], attack2: [6, 22], attack3: [9, 22], hit: [3, 12], death: [11, 12] } },
-    // Tanker: Fantasy Warrior (fw=162, kiếm to + khiên, 3 combo)
-    tanker: { fw: 162, fh: 162, cx: 85.5, fy: 101, s: 1.25, combo: ['attack1', 'attack2', 'attack3'],
+    // Tanker: Fantasy Warrior (fw=324, kiếm to + khiên, 3 combo)
+    tanker: { fw: 324, fh: 324, cx: 171, fy: 202, s: 0.625, combo: ['attack1', 'attack2', 'attack3'],
       anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 16], attack2: [7, 16], attack3: [8, 16], hit: [3, 12], death: [7, 10] } },
-    // Trị Liệu Sư: Evil Wizard 2 tái dụng với tint xanh lá (fw=250, staff heal)
-    tri_lieu_su: { fw: 250, fh: 250, cx: 136, fy: 167, s: 0.9, combo: ['attack1', 'attack2'],
+    // Trị Liệu Sư: Evil Wizard 2 tái dụng với tint xanh lá (fw=500, staff heal)
+    tri_lieu_su: { fw: 500, fh: 500, cx: 272, fy: 334, s: 0.45, combo: ['attack1', 'attack2'],
       tint: 0x80ffb0,  // tint xanh lá nhạt để phân biệt với toan_nang
       anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [3, 12], death: [7, 10] } },
-    // Triệu Hồi Sư: Evil Wizard 3 (fw=140, pháp trượng đầu lâu, áo đỏ)
-    trieu_hoi_su: { fw: 140, fh: 140, cx: 72, fy: 99, s: 1.35, combo: ['attack1'],
+    // Triệu Hồi Sư: Evil Wizard 3 (fw=280, pháp trượng đầu lâu, áo đỏ)
+    trieu_hoi_su: { fw: 280, fh: 280, cx: 144, fy: 198, s: 0.675, combo: ['attack1'],
       anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [13, 18], hit: [3, 12], death: [18, 10] } },
-    // Tử Linh Thuật Sư: Evil Wizard 2 (fw=250, pháp trượng lửa tím)
-    tu_linh_thuat_su: { fw: 250, fh: 250, cx: 136, fy: 166, s: 0.9, combo: ['attack1', 'attack2'],
+    // Tử Linh Thuật Sư: Evil Wizard 2 (fw=500, pháp trượng lửa tím)
+    tu_linh_thuat_su: { fw: 500, fh: 500, cx: 272, fy: 332, s: 0.45, combo: ['attack1', 'attack2'],
       anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [3, 12], death: [7, 10] } },
   };
   // bw, bh: khung va chạm trong game (px); fly: quái bay (cy = tâm thân theo chiều dọc)
