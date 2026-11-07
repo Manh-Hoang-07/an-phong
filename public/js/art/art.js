@@ -19,7 +19,7 @@ const Art = (() => {
   // Ô đất, cỏ sỏi (dán vào ảnh ghép) và hình nhỏ khác giữ 1× kiểu điểm ảnh cho khớp với nhân vật.
   // Nền xa giữ 1× nhưng lọc mượt (cảnh xa mềm tự nhiên, không bị vỡ khối).
   const HD = 2;
-  const HD_KEYS = /^(npc_|d_(shop|lamp|tree|dtree|shroom|crystal|redcrystal|stalactite|portal))/;
+  const HD_KEYS = /^(npc_|mt_|d_(shop|lamp|tree|dtree|shroom|crystal|redcrystal|stalactite|portal))/;   // mt_: thú cưỡi
   const SMOOTH_KEYS = /^(bg_|fx_vignette$|fx_grade$|shadow$)/;
   const hdSet = new Set();
   // Nền lớn (960×576) chỉ vẽ cho chủ đề của bản đồ đang vào; chủ đề khác vẽ khi tới bản đồ đó → vào game nhanh hơn

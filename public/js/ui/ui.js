@@ -7,7 +7,7 @@ const UI = (() => {
   const fmt = (n) => Number(Math.floor(n)).toLocaleString('vi-VN');
 
   const skIcon = (id) => (G.SKILLS[id] && G.SKILLS[id].icon) || '✨';
-  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ']];
+  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐎 Thú cưỡi']];
   let lastMenuTab = 'bag';
   const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿' };
   const WEAPON_ICONS = { kiem: '🗡️', cung: '🏹', truong: '🪄' };
@@ -84,6 +84,9 @@ const UI = (() => {
     document.querySelectorAll('.sk-extra, .tb-s4').forEach(el => el.classList.toggle('hidden', !tn));
     // Nút biến hình: chỉ hiện khi đã có ấn thức tỉnh; sáng lên khi đang biến hình
     const awk = G.awakenOf(p);
+    // Nút thú cưỡi: chỉ hiện khi đã có thú; sáng khi đang cưỡi
+    const hasMount = !!(p.mounts && p.mounts.owned && p.mounts.owned.length);
+    document.querySelectorAll('.sk-mount, .tb-mount').forEach(el => { el.classList.toggle('hidden', !hasMount); el.classList.toggle('active', !!App.mounted); });
     document.querySelectorAll('.sk-form, .tb-form').forEach(el => {
       el.classList.toggle('hidden', !awk);
       el.classList.toggle('active', !!App.form);
@@ -432,6 +435,7 @@ const UI = (() => {
       if (k === 'atk') sc.basicAttack(sc.time.now);
       else if (k === 'hp' || k === 'mp') sc.usePotion(k);
       else if (k === 'form') sc.toggleForm(sc.time.now);
+      else if (k === 'mount') sc.toggleMount(sc.time.now);
       else sc.useSkill(Number(k), sc.time.now);
     }));
   }

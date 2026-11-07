@@ -147,6 +147,8 @@
         break;
       }
       case 'rank_eval': await act('rank_eval'); break;
+      case 'mount_set': await act('mount_set', { id: ds.id }); renderPanel(); break;
+      case 'mount_ride': closePanel(); if (App.scene) App.scene.toggleMount(App.scene.time.now); break;
       case 'use_boost': await act('use', { item: ds.item }); renderPanel(); break;
       case 'gate_go': closePanel(); if (App.scene) App.scene.usePortal(ds.ch); break;
       case 'school_pick': openPanel('school', { confirm: ds.school, force: true }); break;

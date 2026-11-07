@@ -15,18 +15,20 @@
  *   --skill-points 2        tặng điểm kỹ năng
  *   --item da_cuong_hoa 5   tặng vật phẩm (lặp lại được nhiều lần)
  *   --unlock-class toan_nang
+ *   --mount soi_xam         tặng thú cưỡi (lặp lại được): soi_xam, than_lan, soi_tuyet, hac_may, ky_lan
  *
  * Không đặt mã thì tự sinh dạng QUA-XXXXXX. Mỗi tài khoản dùng mỗi mã một lần.
  */
 const crypto = require('crypto');
 const store = require('../db');
 const codes = require('../codes');
+const G = require('../../shared');
 
 function usage() {
   console.log('Cách dùng:');
   console.log('  node server/tools/giftcode.js list');
   console.log('  node server/tools/giftcode.js add [MÃ] [--note "..."] [--max-uses N] [--expires YYYY-MM-DD]');
-  console.log('                                      [--gold N] [--exp N] [--skill-points N] [--unlock-class ten]');
+  console.log('                                      [--gold N] [--exp N] [--skill-points N] [--unlock-class ten] [--mount id]');
   console.log('                                      [--item id_danh_muc so_luong]');
   console.log('  node server/tools/giftcode.js remove MÃ');
 }
@@ -42,6 +44,11 @@ function parse(argv) {
     else if (a === '--exp') out.rewards.exp = Number(argv[++i]);
     else if (a === '--skill-points') out.rewards.skillPoints = Number(argv[++i]);
     else if (a === '--unlock-class') out.rewards.unlockClass = argv[++i];
+    else if (a === '--mount') {
+      const id = argv[++i];
+      if (!G.MOUNTS[id]) { console.error('Không có thú cưỡi:', id, '— có:', Object.keys(G.MOUNTS).join(', ')); process.exit(1); }
+      (out.rewards.mounts || (out.rewards.mounts = [])).push(id);
+    }
     else if (a === '--item') {
       const id = argv[++i];
       const n = Number(argv[++i]);

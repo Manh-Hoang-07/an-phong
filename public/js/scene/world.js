@@ -47,6 +47,7 @@ class WorldScene extends Phaser.Scene {
     this.invulnUntil = this.time.now + 2000;   // bất tử 2 giây khi vừa vào bản đồ
     this.portalReady = this.time.now + 800;
     this.gateArmed = false;   // vừa tới nơi (đứng ngay cổng): phải bước ra khỏi cổng rồi mới mở danh sách
+    this.mountSprite = null; this.mountId = null; this.cropKey = null;   // thú cưỡi của cảnh cũ đã bị hủy; mountUpdate tự dựng lại nếu còn cưỡi
     this.formOn = false; this.formShell = null; this.formEms = []; this.formGlow = null; this.formTier = 0;   // hiệu ứng biến hình của cảnh cũ đã bị hủy; drawAura tự dựng lại nếu còn biến hình
     this.lastGroundAt = 0;
     this.jumpBufferedAt = -1000;
@@ -161,7 +162,9 @@ class WorldScene extends Phaser.Scene {
     const canAct = !App.panelOpen && !this.changing;
     const speedMul = 1 + this.buffTotals(time).speed * 0.3;
     let speed = st.speed * speedMul;
-    if (time < (this.playerSlowUntil || 0)) speed *= 0.6;   // nước dâng / băng của trùm
+    const mdef = App.mounted ? this.mountDef() : null;
+    if (time < (this.playerSlowUntil || 0) && !(mdef && mdef.swim)) speed *= 0.6;   // nước dâng / băng của trùm (thú biết bơi thì không)
+    if (mdef) speed = Math.min(GameData.MOUNT_SPEED_MAX, speed * (1 + mdef.speed));   // đang cưỡi thú
     const onGround = body.blocked.down || body.touching.down;
     // Không cho văng ra ngoài mép bản đồ
     if (pl.x < 14 || pl.x > this.worldW - 14) { pl.x = Phaser.Math.Clamp(pl.x, 14, this.worldW - 14); body.setVelocityX(0); }
@@ -185,7 +188,7 @@ class WorldScene extends Phaser.Scene {
       this.jumpBufferedAt = -1000;
       if ((this.key('ArrowDown', 'KeyS') || App.touch.down) && body.touching.down && this.onPlatform()) {
         this.dropping = true; this.time.delayedCall(250, () => { this.dropping = false; });
-      } else { body.setVelocityY(-JUMP_V); this.jumpedAir = true; this.jumpFx(); }
+      } else { body.setVelocityY(-JUMP_V * (mdef ? mdef.jump : 1)); this.jumpedAir = true; this.jumpFx(); }
     }
 
     // Hành động
@@ -194,6 +197,7 @@ class WorldScene extends Phaser.Scene {
       for (let i = 0; i < 5; i++) if (this.pressed('Digit' + (i + 1)) || this.tpressed('s' + i)) this.useSkill(i, time);
       if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOT, time);
       if (this.pressed('KeyT') || this.tpressed('form')) this.toggleForm(time);
+      if (this.pressed('KeyM') || this.tpressed('mount')) this.toggleMount(time);
       if (this.pressed('KeyQ') || this.tpressed('hp')) this.usePotion('hp');
       if (this.pressed('KeyE') || this.tpressed('mp')) this.usePotion('mp');
       if (this.pressed('KeyF') || this.pressed('Enter') || this.tpressed('interact')) this.interact();
@@ -224,8 +228,9 @@ class WorldScene extends Phaser.Scene {
 
     this.placeWeapon();
     this.juiceUpdate(time, onGround, move);
-    this.nameTag.setPosition(pl.x, pl.y - 44);
-    this.shadow.setPosition(pl.x, pl.y + 29).setVisible(onGround);
+    this.mountUpdate(time, onGround);
+    this.nameTag.setPosition(pl.x, pl.y - 44 - this.riderLift());
+    this.shadow.setPosition(pl.x, pl.y + 29).setVisible(onGround).setScale(App.mounted ? 2.2 : 1, 1);
 
     // Gợi ý tương tác
     const near = this.nearestInteract();

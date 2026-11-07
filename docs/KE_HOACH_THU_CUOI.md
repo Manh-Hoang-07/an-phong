@@ -1,8 +1,9 @@
 # THỨC TỈNH — KẾ HOẠCH BỔ SUNG THÚ CƯỠI
 
-> **Loại tài liệu:** Kế hoạch tính năng (chưa làm)
-> **Phạm vi:** Thú cưỡi cho cấp 10 – 50, chơi được cả máy tính và điện thoại
-> **Trạng thái:** Đề xuất, chờ duyệt
+> **Loại tài liệu:** Kế hoạch tính năng
+> **Phạm vi:** Thú cưỡi, chơi được cả máy tính và điện thoại
+> **Trạng thái:** ĐÃ LÀM giai đoạn 1 + 2 (5 thú vẽ bằng code, mã `--mount`, tab Thú cưỡi, phím M / nút 🐎; cưỡi được khi biến hình). Giai đoạn 3 (nâng cấp thú) chưa làm.
+> Code: `shared/data/mounts.js`, `public/js/art/mounts.js`, `public/js/ui/panels/mount.js`, phần "Thú cưỡi" trong `public/js/scene/player.js`.
 
 ---
 

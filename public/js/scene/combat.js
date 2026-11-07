@@ -21,6 +21,7 @@ WorldScene.mix(class WorldCombat {
     const w = GameData.WEAPON_TYPES[App.stats.wtype];
     const fast = 1 / (1 + this.buffTotals(time).speed);
     if (time < this.cooldowns.atk) return;
+    if (App.mounted) this.dismount();   // đang cưỡi: xuống thú rồi ra đòn luôn
     const sta = this.attackStaminaCost();
     if (!this.canSpendStamina(sta)) { this.cooldowns.atk = time + 250; return; }
     this.spendStamina(sta);
@@ -172,6 +173,7 @@ WorldScene.mix(class WorldCombat {
       if (dmg <= 0) { this.invulnUntil = now + 500; return; }
     }
     App.hp -= dmg;
+    if (App.mounted && dmg >= App.stats.maxHp * 0.1) this.dismount(true);   // trúng đòn mạnh: ngã khỏi thú
     this.hitAnimUntil = now + 260;
     Sound.play('hurt');
     this.lastHurt = now;
@@ -185,6 +187,7 @@ WorldScene.mix(class WorldCombat {
   async die() {
     if (this.dead) return;
     this.endForm();
+    this.dismount();
     this.dead = true;
     App.hp = 0;
     if (this.sheetId) { this.attackUntil = 0; this.player.setAngle(0); this.player.play(this.charAnim('death')); }

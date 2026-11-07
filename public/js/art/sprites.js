@@ -129,14 +129,15 @@ const Sprites = (() => {
 
   // Đặt gốc tọa độ và khung va chạm sao cho: x là tâm thân, chân ở y+30, khung va chạm 18x46 như cũ.
   // grow: phóng to thêm khi biến hình (khung va chạm trong thế giới game giữ nguyên, chân vẫn chạm đất)
-  function fitPlayer(sprite, id, flip, grow = 1) {
+  // lift: nâng HÌNH lên bấy nhiêu px (đang cưỡi thú: ngồi trên lưng thú) — khung va chạm vẫn ở chỗ cũ
+  function fitPlayer(sprite, id, flip, grow = 1, lift = 0) {
     const c = CHARS[id];
     const s = c.s * grow;
     const cx = flip ? c.fw - c.cx : c.cx;
     sprite.setScale(s);
-    sprite.setOrigin(cx / c.fw, (c.fy - 30 / s) / c.fh);
+    sprite.setOrigin(cx / c.fw, (c.fy - (30 - lift) / s) / c.fh);
     sprite.body.setSize(18 / s, 46 / s, false);
-    sprite.body.setOffset(cx - 9 / s, c.fy - 46 / s);
+    sprite.body.setOffset(cx - 9 / s, c.fy - (46 - lift) / s);
     // Tint cố định theo class (ví dụ tri_lieu_su tái dụng sheet toan_nang với màu xanh lá)
     if (c.tint && grow === 1) sprite.setTint(c.tint); else sprite.clearTint();
   }

@@ -56,6 +56,9 @@ function migrate(p) {
   p.storage.forEach(G.normalizeInst);
   if (!G.MAPS[p.map]) { p.map = G.START_MAP; p.x = null; p.y = null; }
   if (!Array.isArray(p.loot)) p.loot = [];
+  if (!p.mounts || !Array.isArray(p.mounts.owned)) p.mounts = { owned: [], active: null };
+  p.mounts.owned = p.mounts.owned.filter(id => G.MOUNTS[id]);
+  if (p.mounts.active && !p.mounts.owned.includes(p.mounts.active)) p.mounts.active = null;
   if (!p.unlocks || typeof p.unlocks !== 'object') p.unlocks = {};
   if (!Array.isArray(p.perks)) p.perks = [];
   p.perks = p.perks.filter(id => G.PERKS[id]);

@@ -130,6 +130,7 @@
       skillSlots: Array(SKILL_SLOTS).fill(null),
       skills: {}, skillPoints: 0,
       unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
+      mounts: { owned: [], active: null },   // thú cưỡi (chỉ có qua mã quà tặng)
       quest: { step: 0, state: 'none', progress: {}, ver: QUEST_VERSION },
       side: { active: {}, done: [] },
       daily: null, weekly: null, shopDiscount: 0,

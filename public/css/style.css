@@ -520,3 +520,10 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
 .qg-row { display: grid; grid-template-columns: 20px 38px 1fr; gap: 4px; padding: 2px 0; color: var(--muted); }
 .qg-row b { color: var(--text); font-weight: 600; }
 .qg-row.on, .qg-row.on b { color: var(--sys); }
+
+/* Thú cưỡi */
+.tb-mount { right: 238px; bottom: 122px; width: 50px; height: 50px; }
+.sk-mount.active, .tb-mount.active { border-color: #ffca28 !important; box-shadow: 0 0 14px rgba(255, 202, 40, 0.7); }
+.mount-li.locked { opacity: 0.55; }
+.mount-li.on { border-color: var(--sys); }
+.mount-li .ic { font-size: 26px; }

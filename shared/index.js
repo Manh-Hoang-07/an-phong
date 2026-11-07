@@ -10,6 +10,7 @@ require('./data/equipment');
 require('./data/monsters');
 require('./data/npcs');
 require('./data/maps');
+require('./data/mounts');
 require('./data/quests/chapter1');
 require('./data/quests/side');
 require('./data/quests/legacy');

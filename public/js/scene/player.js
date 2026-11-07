@@ -1,5 +1,8 @@
 'use strict';
 /* WorldScene · Nhân vật: dựng hình, vũ khí, hoạt ảnh, thuốc, hồi phục, vầng quang, hiệu ứng lên cấp / thức tỉnh. */
+// Thắt lưng nhân vật cách bàn chân bao nhiêu px (người cưỡi thú chỉ hiện phần trên)
+const RIDER_WAIST = 22;
+
 WorldScene.mix(class WorldPlayer {
   // ------------------------------------------------------------------ Nhân vật
   playerTexKey(frame) {
@@ -70,7 +73,7 @@ WorldScene.mix(class WorldPlayer {
     this.formTier = aw && this.sheetId && Sprites.makeFormSheets(this, this.sheetId, aw.tier) ? aw.tier : 0;
     if (!this.sheetId || !this.player) return;
     this.fitFacing = this.facing || 1;
-    Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow());
+    Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow(), this.riderLift());
     this.player.setFlipX(this.fitFacing < 0);
     this.attackUntil = 0;
     this.player.play(this.charAnim('idle'));
@@ -107,14 +110,13 @@ WorldScene.mix(class WorldPlayer {
       this.formTier = 0;
       pl.setTexture(`ch_${sheet}_idle`, 0);
       this.fitFacing = this.facing || 1;
-      Sprites.fitPlayer(pl, sheet, this.fitFacing < 0);
+      Sprites.fitPlayer(pl, sheet, this.fitFacing < 0, 1, this.riderLift());
       pl.setFlipX(this.fitFacing < 0);
       pl.play(`ch_${sheet}_idle`);
       if (App.form) this.applyFormLook();
     } else {
       pl.anims.stop();
-      pl.setScale(1).setOrigin(0.5);
-      pl.body.setSize(18, 46).setOffset(11, 14);
+      this.fitDrawnHero();
       pl.setTexture(this.playerTexKey('idle'));
     }
   }
@@ -124,12 +126,13 @@ WorldScene.mix(class WorldPlayer {
     const pl = this.player, id = this.sheetId;
     if (this.fitFacing !== this.facing) {
       this.fitFacing = this.facing;
-      Sprites.fitPlayer(pl, id, this.facing < 0, this.formGrow());
+      Sprites.fitPlayer(pl, id, this.facing < 0, this.formGrow(), this.riderLift());
       pl.setFlipX(this.facing < 0);
     }
     if (time < (this.attackUntil || 0)) return;
     let a;
     if (time < (this.hitAnimUntil || 0)) a = 'hit';
+    else if (App.mounted) a = 'idle';   // đang cưỡi thú: ngồi yên trên lưng
     else if (!onGround) a = pl.body.velocity.y < 0 ? 'jump' : 'fall';
     else if (Math.abs(pl.body.velocity.x) > 10) a = 'run';
     else a = 'idle';
@@ -239,6 +242,105 @@ WorldScene.mix(class WorldPlayer {
     return Math.max(1, Math.round(S.attack * w.cooldown / 400));
   }
   skillStaminaCost(sk) { return sk.ult ? GameData.STAMINA.ult : GameData.STAMINA.skill; }
+
+  // ------------------------------------------------------------------ Thú cưỡi
+  // Phím M / nút 🐎. Chỉ có qua mã quà tặng. Đang cưỡi: chạy nhanh hơn, nhảy theo thú, không tốn thể lực khi đi;
+  // bấm đánh / kỹ năng thì tự xuống thú rồi ra đòn; trúng đòn mạnh (≥ 10% máu) thì ngã khỏi thú, 3 giây sau mới gọi lại.
+  mountDef() {
+    const m = App.player.mounts;
+    return m && m.active ? GameData.MOUNTS[m.active] || null : null;
+  }
+  // Người cưỡi được nâng lên ngồi trên lưng thú (chỉ phần hình, khung va chạm giữ nguyên)
+  // Người cưỡi chỉ hiện nửa trên (cắt ở thắt lưng, cách bàn chân RIDER_WAIST px) và thắt lưng đặt đúng mặt yên của thú.
+  // Chân người cưỡi đã vẽ sẵn trong hình thú (vắt bên hông, ủng trong bàn đạp).
+  riderLift() {
+    if (!App.mounted || !this.mountDef()) return 0;
+    return Art.mountSeat(App.player.mounts.active).h - RIDER_WAIST - 1;
+  }
+  // Cắt / bỏ cắt hình người cưỡi ở thắt lưng (chỉ gọi lại khi có gì thay đổi)
+  applyRiderCrop() {
+    const pl = this.player;
+    if (!pl) return;
+    const c = this.sheetId && Sprites.CHARS[this.sheetId];
+    const h = !App.mounted ? 0 : c ? Math.round(c.fy - RIDER_WAIST / (c.s * this.formGrow())) : Math.round((pl.frame.height || 60) - RIDER_WAIST);
+    const key = [App.mounted, this.sheetId || '', h].join('|');
+    if (this.cropKey === key) return;
+    this.cropKey = key;
+    if (h > 0) pl.setCrop(0, 0, c ? c.fw : pl.frame.width, h); else pl.setCrop();
+  }
+  // Nhân vật vẽ bằng code (chưa có bộ hình): đặt gốc / khung va chạm, có tính độ nâng khi cưỡi
+  fitDrawnHero() {
+    const pl = this.player, lift = this.riderLift();
+    pl.setScale(1).setOrigin(0.5, 0.5 + lift / (pl.height || 60));
+    pl.body.setSize(18, 46).setOffset(11, 14 + lift);
+  }
+  refitRider() {
+    if (!this.player) return;
+    if (this.sheetId) {
+      this.fitFacing = this.facing || 1;
+      Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow(), this.riderLift());
+    } else this.fitDrawnHero();
+  }
+  toggleMount(time) {
+    if (App.mounted) { this.dismount(); return; }
+    const p = App.player, owned = (p.mounts && p.mounts.owned) || [];
+    if (!owned.length) { UI.log('Chưa có thú cưỡi. Nhận thú cưỡi qua mã quà tặng ở Lữ khách bí ẩn.', '#bdbdbd'); return; }
+    const def = this.mountDef();
+    if (!def) { UI.openPanel('mount'); return; }
+    if (p.level < (def.level || 1)) { UI.log(`Cần đạt cấp ${def.level} để cưỡi ${def.name}.`, '#ffca28'); return; }
+    if (time < (this.mountReadyAt || 0)) { UI.log('Vừa ngã khỏi thú, chờ chút rồi gọi lại.', '#bdbdbd'); return; }
+    if (time - (this.lastHurt || -1e9) < 800) return;
+    App.mounted = true;
+    this.mountUpdate(time, true);
+    if (this.dustEm) this.dustEm.explode(14, this.player.x, this.player.y + 28);
+    Sound.play('portal');
+    UI.refresh();
+  }
+  // fall: bị đánh ngã khỏi thú
+  dismount(fall) {
+    if (!App.mounted) return;
+    App.mounted = false;
+    if (this.mountSprite) { this.mountSprite.destroy(); this.mountSprite = null; this.mountId = null; }
+    this.refitRider();
+    this.applyRiderCrop();
+    if (this.player && this.dustEm) this.dustEm.explode(8, this.player.x, this.player.y + 28);
+    if (fall) {
+      this.mountReadyAt = this.time.now + 3000;
+      if (this.player) this.floatText(this.player.x, this.player.y - 50, 'Ngã khỏi thú!', '#ffca28', 13);
+    }
+    UI.refresh();
+  }
+  // Mỗi khung hình: đặt thú dưới chân, chọn khung chạy / nhảy / đứng, lướt khi rơi (thú có glide)
+  mountUpdate(time, onGround) {
+    const def = App.mounted ? this.mountDef() : null;
+    if (!def) {
+      if (this.mountSprite) { this.mountSprite.destroy(); this.mountSprite = null; this.mountId = null; this.refitRider(); }
+      if (App.mounted) App.mounted = false;
+      this.applyRiderCrop();
+      return;
+    }
+    const pl = this.player, id = App.player.mounts.active;
+    if (!this.mountSprite || this.mountId !== id) {
+      if (this.mountSprite) this.mountSprite.destroy();
+      const key = Art.mount(this, id);
+      // Thú vẽ TRƯỚC người cưỡi (che phần chân) → trông như đang ngồi trên lưng
+      // Thú vẽ SAU người cưỡi (người ngồi trên yên); chân người cưỡi vẽ sẵn trong hình thú
+      this.mountSprite = this.add.image(pl.x, pl.body.bottom, key).setOrigin(0.5, 1).setDepth(3.95).setScale(Art.hdScale(key));
+      this.mountId = id;
+      this.refitRider();
+    }
+    const vx = Math.abs(pl.body.velocity.x);
+    const frame = !onGround ? 'jump' : vx > 10 ? 'run' + (Math.floor(time / (vx > 300 ? 70 : 95)) % 4) : 'idle';
+    const key = `mt_${id}_${frame}`;
+    const ms = this.mountSprite;
+    if (ms.texture.key !== key) ms.setTexture(key);
+    // Đặt thú sao cho mặt yên nằm ngay dưới người cưỡi
+    const seat = Art.mountSeat(id), dir = this.facing < 0 ? -1 : 1;
+    ms.setPosition(pl.x - seat.dx * dir, pl.body.bottom + 1).setFlipX(dir < 0).setAlpha(pl.alpha);
+    this.applyRiderCrop();
+    if (App.form) { const aw = GameData.awakenOf(App.player); ms.setTint(aw ? aw.tint : 0xffffff); } else ms.clearTint();
+    if (def.glide && !onGround && pl.body.velocity.y > 150) pl.body.setVelocityY(150);   // lướt chậm khi rơi
+  }
 
   // ------------------------------------------------------------------ Biến hình (thức tỉnh)
   // Bật/tắt bằng phím T hoặc nút ⚡. Đang biến hình: chỉ số nhân theo ấn, hào quang lửa, mỗi giây tốn `drain` năng lượng
@@ -353,6 +455,7 @@ WorldScene.mix(class WorldPlayer {
         sh.setVisible(true).setPosition(pl.x, pl.y).setOrigin(pl.originX, pl.originY)
           .setScale(pl.scaleX * breathe, pl.scaleY * breathe).setFlipX(pl.flipX)
           .setAlpha((0.55 + Math.sin(time / 90) * 0.12) * pl.alpha);   // nhạt, khẽ nhấp nháy
+        if (pl.isCropped) { const cr = pl._crop; sh.setCrop(cr.x, cr.y, cr.width, cr.height); } else if (sh.isCropped) sh.setCrop();
       } else sh.setVisible(false);
     }
     const guard = this.buffOn('guard', time), shield = this.buffOn('manashield', time);

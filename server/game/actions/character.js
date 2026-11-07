@@ -89,6 +89,15 @@ const actions = {
     setSchool(p, a.school, ev);
   },
 
+  // Chọn thú cưỡi đang dùng (chỉ thú đã sở hữu)
+  mount_set(p, a) {
+    const id = a.id || null;
+    if (id && !G.MOUNTS[id]) fail('Không có thú cưỡi này.');
+    if (id && !p.mounts.owned.includes(id)) fail('Bạn chưa có thú cưỡi này. Nhận qua mã quà tặng ở Lữ khách bí ẩn.');
+    if (id && p.level < (G.MOUNTS[id].level || 1)) fail(`Cần đạt cấp ${G.MOUNTS[id].level} để cưỡi.`);
+    p.mounts.active = id;
+  },
+
   // Đánh giá hạng thợ săn ở Hội trưởng Khải: đủ cấp thì lên đúng MỘT hạng (người chơi tự chọn lúc nào đi đánh giá)
   rank_eval(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải ở Hiệp Hội để được đánh giá.');
@@ -135,6 +144,11 @@ const actions = {
       const items = Array.isArray(r.items) ? r.items.filter(([id]) => G.ITEMS[id]) : [];
       const need = items.reduce((s2, [id, n]) => s2 + slotsNeeded(p, id, n), 0);
       if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô.`);
+      // Thú cưỡi: mã chỉ toàn thú đã có → báo lỗi và trả lại lượt (không mất mã)
+      const mounts = (Array.isArray(r.mounts) ? r.mounts : []).filter(id => G.MOUNTS[id]);
+      const newMounts = mounts.filter(id => !p.mounts.owned.includes(id));
+      const onlyMounts = !r.unlockClass && !r.gold && !r.exp && !r.skillPoints && !items.length;
+      if (mounts.length && !newMounts.length && onlyMounts) fail(`Bạn đã có ${mounts.map(id => G.MOUNTS[id].name).join(', ')} rồi.`);
       p.redeemed.push(key);
       ev.push({ t: 'msg', text: '[Hệ thống] Mật mã hợp lệ.', color: '#ffd54f' });
       if (r.unlockClass && G.SCHOOLS[r.unlockClass]) {
@@ -146,6 +160,12 @@ const actions = {
       if (r.exp) gainExp(p, Math.max(0, Math.floor(r.exp)), ev);
       if (r.skillPoints) p.skillPoints += Math.max(0, Math.floor(r.skillPoints));
       for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
+      for (const id of newMounts) {
+        p.mounts.owned.push(id);
+        if (!p.mounts.active) p.mounts.active = id;   // thú đầu tiên: chọn luôn
+        ev.push({ t: 'mount_new', id });
+        ev.push({ t: 'msg', text: `[Hệ thống] Nhận thú cưỡi: ${G.MOUNTS[id].icon} ${G.MOUNTS[id].name}! Bấm phím M hoặc nút 🐎 để cưỡi.`, color: '#ffc94a' });
+      }
     } catch (e) {
       // Không phát được quà (ví dụ túi đầy) thì trả lại lượt cho mã
       await codes.release(userId, key);
