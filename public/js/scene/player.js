@@ -316,6 +316,100 @@ WorldScene.mix(class WorldPlayer {
     });
     UI.tickPets(ps, pets, ids);
   }
+  // Linh thú mặc định của Triệu Hồi Sư (kỹ năng th5): gọi theo số lượng của cấp kỹ năng
+  summonedSummonIds() {
+    const s = App.player.summons;
+    if (!s || !s.enabled) return [];
+    const n = GameData.summonCount(App.player);
+    return Object.keys(GameData.SUMMONS).slice(0, n);
+  }
+  buildSummons() {
+    if (!this.summonSprites) this.summonSprites = {};
+    const ids = this.summonedSummonIds(), wanted = new Set(ids);
+    for (const [id, c] of Object.entries(this.summonSprites)) {
+      if (wanted.has(id)) continue;
+      c.sprite.destroy();
+      delete this.summonSprites[id];
+    }
+    const ss = GameData.summonStats(App.player), states = App.player.summons.states || (App.player.summons.states = {});
+    ids.forEach((id, index) => {
+      if (this.summonSprites[id]) return;
+      const def = GameData.SUMMONS[id], tex = PetSprites.textureKey(def.look);
+      PetSprites.createAnims(this, def.look);
+      if (!this.textures.exists(tex)) return;
+      const state = states[id] || (states[id] = { hp: ss.maxHp, mp: ss.maxMp, sta: ss.maxSta });
+      for (const [k, max] of [['hp', ss.maxHp], ['mp', ss.maxMp], ['sta', ss.maxSta]]) state[k] = Math.max(0, Math.min(max, Number.isFinite(state[k]) ? state[k] : max));
+      const scale = { wolf: 1.3, horse: 0.82, bird: 1.6, lizard: 0.52 }[def.look] || 1.2;
+      const x = this.player.x + this.facing * (42 + index * 24);
+      const sprite = this.add.sprite(x, this.player.body.bottom, tex, 0).setOrigin(0.5, 1).setDepth(3.65 + index * 0.001).setScale(scale).setTint(def.tint || 0xffffff);
+      if (!PetSprites.def(def.look).static) sprite.play(`pet_${def.look}_walk_anim`);
+      this.summonSprites[id] = { sprite, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
+    });
+  }
+  summonUpdate(time, delta) {
+    const ids = this.summonedSummonIds();
+    this.buildSummons();
+    const ss = GameData.summonStats(App.player), states = App.player.summons?.states || {};
+    ids.forEach((id, index) => {
+      const c = this.summonSprites[id];
+      if (c) this.updateSummon(id, c, index, time, delta, ss, states[id]);
+    });
+  }
+  updateSummon(id, c, index, time, delta, ss, state) {
+    const def = GameData.SUMMONS[id], sprite = c.sprite;
+    if (state.hp <= 0) {
+      if (!c.deadUntil) {
+        c.deadUntil = time + 15000;
+        sprite.setVisible(false);
+        UI.log(`${def.name} đã gục, sẽ hồi sinh sau 15 giây.`, '#ffb74d');
+      }
+      if (time >= c.deadUntil) {
+        c.deadUntil = 0; state.hp = Math.max(1, Math.round(ss.maxHp * 0.5)); state.mp = ss.maxMp; state.sta = ss.maxSta;
+        sprite.setVisible(true);
+      } else return;
+    }
+    const regen = delta / 1000;
+    if (time - c.lastCombat >= 3000) {
+      state.hp = Math.min(ss.maxHp, state.hp + ss.maxHp * 0.018 * regen);
+      state.mp = Math.min(ss.maxMp, state.mp + 5 * regen);
+      state.sta = Math.min(ss.maxSta, state.sta + 14 * regen);
+    }
+    const pl = this.player;
+    const target = this.petTarget && this.petTarget.alive && this.petTarget.sprite?.body?.enable ? this.petTarget : null;
+    let tx = pl.x + this.facing * (42 + index * 24), ty = pl.body.bottom;
+    let attacking = false;
+    if (target && !this.dead && !App.panelOpen && !this.changing) {
+      const dx = target.sprite.x - sprite.x;
+      if (Math.abs(dx) > 58) {
+        const lane = (index % 2 ? 1 : -1) * Math.ceil(index / 2) * 18;
+        tx = target.sprite.x - Math.sign(dx) * 48 + lane; ty = target.sprite.body.bottom;
+      } else {
+        attacking = true;
+        const command = this.buffOn('rage', time);
+        const classMul = this.hasPassive('trieu_hoi_su') ? 1.1 : 1;
+        if (time >= c.nextAttack && state.sta >= 4) {
+          state.sta -= 4; c.nextAttack = time + 1150 / (1 + (command?.speed || 0));
+          this.damageMonster(target, 0.82 * def.atk * ss.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
+          c.lastCombat = time; c.attackUntil = time + 320;
+        }
+      }
+    }
+    sprite.x = Phaser.Math.Linear(sprite.x, tx, Math.min(1, delta / (attacking ? 90 : 140)));
+    const visual = PetSprites.def(def.look);
+    const faceLeft = this.facing < 0;
+    sprite.setFlipX(visual.baseLeft ? !faceLeft : faceLeft);
+    if (visual.static) sprite.y = Phaser.Math.Linear(sprite.y, ty, Math.min(1, delta / 140)) + Math.sin(time / 160 + index) * 2;
+    else {
+      sprite.y = Phaser.Math.Linear(sprite.y, ty, Math.min(1, delta / 140));
+      const anim = attacking ? 'run' : (Math.abs(sprite.x - tx) > 4 ? 'run' : 'walk');
+      const key = `pet_${def.look}_${anim}_anim`;
+      if (visual.frames.attack && time < c.attackUntil) {
+        const attackKey = `pet_${def.look}_attack_anim`;
+        if (sprite.anims.currentAnim?.key !== attackKey) sprite.play(attackKey, true);
+      } else if (sprite.anims.currentAnim?.key !== key) sprite.play(key, true);
+    }
+    sprite.setTint(time < c.lastCombat + 120 ? 0xffffff : (def.tint || 0xffffff));
+  }
   buildShadows() {
     if (!this.shadowSprites) this.shadowSprites = {};
     const data = App.player.shadows || { roster: [], active: [], enabled: false };

@@ -6,6 +6,17 @@
     const p = App.player, own = (p.mounts && p.mounts.owned) || [], summoned = p.mounts?.summoned || (p.mounts?.active ? [p.mounts.active] : []);
     const ps = G.petStats(p), pets = p.pets || {};
     let html = `<p class="muted" style="margin-top:0">Thú nhận qua mã quà tặng ở Lữ khách bí ẩn. Bạn có thể triệu hồi nhiều thú cùng lúc. Chúng đi theo, tự đánh quái gần đó và nhận một phần sát thương khi bạn bị đánh; HP, MP và thể lực tự hồi khi yên chiến.</p>`;
+    if (p.school === 'trieu_hoi_su' || p.school === 'tu_linh_thuat_su' || p.school === 'toan_nang') {
+      const n = G.summonCount(p), ss = G.summonStats(p), states = p.summons?.states || {};
+      html += `<p class="muted">🐾 <b>Linh thú mặc định</b> (kỹ năng Triệu Hồi Linh Thú): ${p.summons?.enabled ? `đang gọi ${n} con` : 'chưa gọi'} · Sức mạnh theo cấp nhân vật và cấp kỹ năng. Nâng kỹ năng lên cấp 5 gọi 2 con, cấp 10 gọi 3 con.</p><div class="list">`;
+      for (const [id, m] of Object.entries(G.SUMMONS)) {
+        const on = (p.summons?.enabled && Object.keys(G.SUMMONS).slice(0, n).includes(id));
+        const st = states[id] || {};
+        html += `<div class="li mount-li${on ? ' on' : ''}"><div class="ic">${m.icon}</div>
+          <div class="main"><b>${esc(m.name)}${on ? ' <span class="okc">· đang theo chủ</span>' : ''}</b><small>${esc(m.desc)}</small>${on ? `<small>HP ${Math.round(st.hp ?? ss.maxHp)}/${ss.maxHp} · MP ${Math.round(st.mp ?? ss.maxMp)}/${ss.maxMp} · Thể lực ${Math.round(st.sta ?? ss.maxSta)}/${ss.maxSta}</small>` : '<small class="muted">Bật kỹ năng Triệu Hồi Linh Thú để gọi</small>'}</div></div>`;
+      }
+      html += '</div>';
+    }
     html += '<div class="list">';
     for (const [id, m] of Object.entries(G.MOUNTS)) {
       const has = own.includes(id), on = summoned.includes(id), pet = pets[id] || {};

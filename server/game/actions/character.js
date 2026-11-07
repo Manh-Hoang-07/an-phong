@@ -122,6 +122,16 @@ const actions = {
     for (const id of ids) p.mounts.skills[id] = a.skill;
   },
 
+  // Bật / thu hồi linh thú mặc định của Triệu Hồi Sư (kỹ năng th5)
+  summon_toggle(p, a, ev) {
+    if (p.school !== 'trieu_hoi_su' && p.school !== 'tu_linh_thuat_su' && p.school !== 'toan_nang') fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
+    if (!G.skillLevel(p, 'th5')) fail('Hãy học kỹ năng "Triệu Hồi Linh Thú" trước.');
+    p.summons = p.summons || { enabled: false, states: {} };
+    p.summons.enabled = !p.summons.enabled;
+    const n = G.summonCount(p);
+    ev.push({ t: 'msg', text: p.summons.enabled ? `Đã gọi ${n} linh thú mặc định.` : 'Đã thu hồi linh thú.', color: '#8be9ff' });
+  },
+
   shadow_toggle(p, a, ev) {
     if (p.school !== 'tu_linh_thuat_su' && !(p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formActive && p.formChoice === 'evolution')) fail('Chỉ Tử Linh Thuật Sư đang biến hình mới điều khiển được bóng ma.');
     p.shadows = p.shadows || { roster: [], active: [], enabled: false, nextId: 1 };

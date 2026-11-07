@@ -52,6 +52,10 @@ WorldScene.mix(class WorldSkills {
     Sound.play(sk.ult ? 'ult' : sk.type === 'heal' ? 'heal' : 'skill');
 
     switch (sk.type) {
+      case 'summon':
+        Net.action('summon_toggle').then(() => { if (this.sys.isActive()) this.buildSummons(); });
+        this.floatText(pl.x, pl.y - 52, App.player.summons?.enabled ? 'Thu hồi' : 'Triệu hồi', '#8be9ff', 14);
+        break;
       case 'shadow_toggle':
         Net.action('shadow_toggle').then(() => { if (this.sys.isActive()) this.buildShadows(); });
         this.floatText(pl.x, pl.y - 52, App.player.shadows?.enabled ? 'Giải trừ' : 'Triệu hồi', '#c6a7ff', 14);

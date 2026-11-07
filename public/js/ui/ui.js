@@ -471,6 +471,7 @@ const UI = (() => {
     $('panel-body').addEventListener('click', (e) => lib.onClick(e));
     $('panel-body').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'code-input') { e.preventDefault(); lib.onClick({ target: document.querySelector('[data-act="redeem"]') }); } });
     $('btn-menu').addEventListener('click', () => openPanel(lastMenuTab));
+    $('btn-map').addEventListener('click', () => openPanel('map'));
     $('panel-body').addEventListener('mouseover', showTip);
     $('panel-body').addEventListener('mouseleave', hideTip);
     $('panel-close').addEventListener('click', closePanel);

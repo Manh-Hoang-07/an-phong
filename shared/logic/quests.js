@@ -107,6 +107,35 @@
     return Object.keys((m && m.portals) || {}).map(ch => ({ ch, to: m.portals[ch].to, name: G.MAPS[m.portals[ch].to].name, ...portalStatus(player, mapId, ch) }));
   }
 
+  // ---------------------------------------------------------------- Danh sách toàn bộ bản đồ (bảng Map)
+  // Trả về [{ id, name, theme, here, ok, reason, via, mobs, npcs }] theo thứ tự khai báo trong MAPS.
+  // ok: đã mở (đủ điều kiện nhiệm vụ). via: ký hiệu cổng ở bản đồ hiện tại dẫn tới map này (nếu có).
+  function mapList(player) {
+    const cur = player.map;
+    const curPortals = (MAPS[cur] && MAPS[cur].portals) || {};
+    const viaOf = (to) => Object.keys(curPortals).find(ch => curPortals[ch].to === to) || null;
+    return Object.keys(MAPS).map(id => {
+      const m = MAPS[id];
+      const here = id === cur;
+      const via = here ? null : viaOf(id);
+      let ok = here, reason = here ? 'Bạn đang ở đây' : '';
+      if (!here) {
+        if (via) {
+          const st = portalStatus(player, cur, via);
+          ok = st.ok; reason = st.ok ? 'Đã mở' : st.reason;
+        } else if (m.require && !questDone(player, m.require)) {
+          const q = QUESTS.find(x => x.id === m.require);
+          ok = false; reason = q ? `Cần hoàn thành nhiệm vụ "${q.name}"` : 'Chưa mở';
+        } else {
+          ok = false; reason = 'Chưa có đường đi từ đây';
+        }
+      }
+      const mobs = [...new Set(Object.values(m.spawns || {}).map(mid => MONSTERS[mid] && MONSTERS[mid].name).filter(Boolean))];
+      const npcs = [...new Set(Object.values(m.npcs || {}).map(nid => NPCS[nid] && NPCS[nid].name).filter(Boolean))];
+      return { id, name: m.name, theme: m.theme, here, ok, reason, via, mobs, npcs };
+    });
+  }
+
   // ---------------------------------------------------------------- Phụ tuyến: truy vấn
 
   function sideById(id) { return SIDE_QUESTS.find(q => q.id === id); }
@@ -140,5 +169,5 @@
     return sideLines(player, q).every(l => l[1]);
   }
 
-  Object.assign(G, { questGuide, npcAt, gateOf, portalStatus, gateDestinations, npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
+  Object.assign(G, { questGuide, npcAt, gateOf, portalStatus, gateDestinations, mapList, npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

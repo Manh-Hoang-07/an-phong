@@ -241,6 +241,7 @@ class WorldScene extends Phaser.Scene {
     this.placeWeapon();
     this.juiceUpdate(time, onGround, move);
     this.companionUpdate(time, delta);
+    this.summonUpdate(time, delta);
     this.shadowUpdate(time, delta);
     this.nameTag.setPosition(pl.x, pl.y - 44);
     this.shadow.setPosition(pl.x, pl.y + 29).setVisible(onGround).setScale(1, 1);
@@ -348,6 +349,11 @@ class WorldScene extends Phaser.Scene {
     if (summoned.length) state.pets = Object.fromEntries(summoned.map(id => {
       const pet = App.player.pets[id] || {};
       return [id, { hp: Math.round(pet.hp), mp: Math.round(pet.mp), sta: Math.round(pet.sta) }];
+    }));
+    const summonIds = this.summonedSummonIds ? this.summonedSummonIds() : [];
+    if (summonIds.length) state.summons = Object.fromEntries(summonIds.map(id => {
+      const st = App.player.summons.states[id] || {};
+      return [id, { hp: Math.round(st.hp), mp: Math.round(st.mp), sta: Math.round(st.sta) }];
     }));
     return state;
   }

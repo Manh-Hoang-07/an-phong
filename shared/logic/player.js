@@ -137,6 +137,7 @@
       unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
       mounts: { owned: [], active: null, summoned: [], skill: 'bite', skills: {} },   // giữ active / skill để đọc dữ liệu client cũ
       pets: {},
+      summons: { enabled: false, states: {} },   // linh thú mặc định của Triệu Hồi Sư (kỹ năng th5)
       shadows: { roster: [], active: [], enabled: false, nextId: 1 },
       pet: { hp: null, mp: null, sta: null },   // trạng thái thú cũ, migrate chuyển sang pets
       quest: { step: 0, state: 'none', progress: {}, ver: QUEST_VERSION },

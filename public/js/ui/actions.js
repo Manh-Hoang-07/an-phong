@@ -162,6 +162,29 @@
       case 'pet_skill': await act('pet_skill_set', { id: ds.id, skill: ds.skill }); renderPanel(); break;
       case 'use_boost': await act('use', { item: ds.item }); renderPanel(); break;
       case 'gate_go': closePanel(); if (App.scene) App.scene.usePortal(ds.ch); break;
+      case 'map_go': {
+        const sc = App.scene;
+        if (!sc || sc.changing) break;
+        closePanel();
+        sc.changing = true;
+        sc.flushKills();
+        const s = sc.saveState();
+        Sound.play('portal');
+        sc.cameras.main.fadeOut(250);
+        const res = await Net.action('change_map_to', { to: ds.to, hp: s.hp, mp: s.mp, pet: s.pet });
+        if (!sc.sys.isActive()) break;
+        if (res.ok) {
+          const arrive = res.player.arrive || 'S';
+          sc.time.delayedCall(260, () => sc.scene.restart({ map: res.player.map, arrive }));
+        } else {
+          sc.cameras.main.resetFX();
+          sc.cameras.main.fadeIn(200);
+          sc.changing = false;
+          sc.portalReady = sc.time.now + 1500;
+          UI.log(res.error || 'Không thể dịch chuyển.', '#ffb74d');
+        }
+        break;
+      }
       case 'school_pick': openPanel('school', { confirm: ds.school, force: true }); break;
       case 'choose_school': {
         const r = await act('choose_school', { school: ds.school });
