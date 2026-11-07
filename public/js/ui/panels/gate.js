@@ -1,5 +1,5 @@
 'use strict';
-/* UI · Bảng chọn nơi đến khi vào cổng dịch chuyển (mỗi bản đồ một cổng, xem GameData.gateDestinations). */
+/* UI · Bảng chọn điểm đến cho cổng gom có nhiều lối ra. */
 (() => {
   const { G, esc } = UI._;
 

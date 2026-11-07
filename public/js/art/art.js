@@ -1,9 +1,9 @@
 'use strict';
 /*
- * Toàn bộ hình ảnh của game được vẽ bằng code.
+ * Một số hình ảnh của game được dựng bằng code; nhân vật, quái và thú đồng hành dùng sprite sheet.
  * Phong cách: pixel art mềm — dựng khối bằng đường cong và nhiều tông màu,
  * viền tối màu cùng họ với màu nền thay vì viền đen cứng từng ô.
- * Sau này muốn dùng ảnh vẽ tay, chỉ cần nạp ảnh PNG cùng tên key trong preload là được.
+ * Hình code giữ vai trò dự phòng cho phần chưa có sprite sheet.
  *
  * File này chỉ có bút vẽ dùng chung; từng nhóm hình nằm trong public/js/art/*.js
  * và tự gắn hàm vẽ vào Art._ (nội bộ) cùng phần công khai vào Art.
@@ -19,7 +19,7 @@ const Art = (() => {
   // Ô đất, cỏ sỏi (dán vào ảnh ghép) và hình nhỏ khác giữ 1× kiểu điểm ảnh cho khớp với nhân vật.
   // Nền xa giữ 1× nhưng lọc mượt (cảnh xa mềm tự nhiên, không bị vỡ khối).
   const HD = 2;
-  const HD_KEYS = /^(npc_|mt_|d_(shop|lamp|tree|dtree|shroom|crystal|redcrystal|stalactite|portal))/;   // mt_: thú cưỡi
+  const HD_KEYS = /^(npc_|d_(shop|lamp|tree|dtree|shroom|crystal|redcrystal|stalactite|portal))/;
   const SMOOTH_KEYS = /^(bg_|fx_vignette$|fx_grade$|shadow$)/;
   const hdSet = new Set();
   // Nền lớn (960×576) chỉ vẽ cho chủ đề của bản đồ đang vào; chủ đề khác vẽ khi tới bản đồ đó → vào game nhanh hơn

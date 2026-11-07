@@ -37,7 +37,6 @@ WorldScene.mix(class WorldSkills {
     if (App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }
     const sta = this.skillStaminaCost(sk);
     if (!this.canSpendStamina(sta)) return;
-    if (App.mounted) this.dismount();   // đang cưỡi: xuống thú rồi dùng kỹ năng
     App.mp -= cost;
     this.spendStamina(sta);
     const cdMs = sk.cd * 1000 * (1 - (App.stats.cdr || 0) / 100);

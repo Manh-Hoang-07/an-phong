@@ -89,13 +89,30 @@ const actions = {
     setSchool(p, a.school, ev);
   },
 
-  // Chọn thú cưỡi đang dùng (chỉ thú đã sở hữu)
+  // Bật / thu hồi một thú đồng hành (giữ tên hành động để tương thích client cũ)
   mount_set(p, a) {
-    const id = a.id || null;
-    if (id && !G.MOUNTS[id]) fail('Không có thú cưỡi này.');
-    if (id && !p.mounts.owned.includes(id)) fail('Bạn chưa có thú cưỡi này. Nhận qua mã quà tặng ở Lữ khách bí ẩn.');
-    if (id && p.level < (G.MOUNTS[id].level || 1)) fail(`Cần đạt cấp ${G.MOUNTS[id].level} để cưỡi.`);
-    p.mounts.active = id;
+    const id = a.id;
+    if (!G.MOUNTS[id]) fail('Không có thú triệu hồi này.');
+    if (!p.mounts.owned.includes(id)) fail('Bạn chưa có thú này. Nhận qua mã quà tặng ở Lữ khách bí ẩn.');
+    if (p.level < (G.MOUNTS[id].level || 1)) fail(`Cần đạt cấp ${G.MOUNTS[id].level} để triệu hồi ${G.MOUNTS[id].name}.`);
+    if (p.mounts.summoned.includes(id)) p.mounts.summoned = p.mounts.summoned.filter(petId => petId !== id);
+    else {
+      const summonCost = 10;
+      if (p.mp < summonCost) fail(`Không đủ MP để triệu hồi (cần ${summonCost} MP).`);
+      p.mp -= summonCost;
+      p.mounts.summoned.push(id);
+    }
+    p.mounts.active = p.mounts.summoned[0] || null;
+    if (p.mounts.active) p.pet = p.pets[p.mounts.active];
+  },
+
+  pet_skill_set(p, a) {
+    if (!p.mounts.summoned.length) fail('Hãy triệu hồi ít nhất một thú trước.');
+    if (!G.PET_SKILLS[a.skill]) fail('Kỹ năng thú đồng hành không hợp lệ.');
+    p.mounts.skill = a.skill;
+    const ids = a.id ? [a.id] : p.mounts.summoned;
+    if (ids.some(id => !p.mounts.summoned.includes(id))) fail('Thú này chưa được triệu hồi.');
+    for (const id of ids) p.mounts.skills[id] = a.skill;
   },
 
   // Đánh giá hạng thợ săn ở Hội trưởng Khải: đủ cấp thì lên đúng MỘT hạng (người chơi tự chọn lúc nào đi đánh giá)
@@ -144,7 +161,7 @@ const actions = {
       const items = Array.isArray(r.items) ? r.items.filter(([id]) => G.ITEMS[id]) : [];
       const need = items.reduce((s2, [id, n]) => s2 + slotsNeeded(p, id, n), 0);
       if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô.`);
-      // Thú cưỡi: mã chỉ toàn thú đã có → báo lỗi và trả lại lượt (không mất mã)
+      // Thú đồng hành: mã chỉ toàn thú đã có → báo lỗi và trả lại lượt (không mất mã)
       const mounts = (Array.isArray(r.mounts) ? r.mounts : []).filter(id => G.MOUNTS[id]);
       const newMounts = mounts.filter(id => !p.mounts.owned.includes(id));
       const onlyMounts = !r.unlockClass && !r.gold && !r.exp && !r.skillPoints && !items.length;
@@ -162,9 +179,12 @@ const actions = {
       for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
       for (const id of newMounts) {
         p.mounts.owned.push(id);
-        if (!p.mounts.active) p.mounts.active = id;   // thú đầu tiên: chọn luôn
+        const petStats = G.petStats(p);
+        p.pets[id] = { hp: petStats.maxHp, mp: petStats.maxMp, sta: petStats.maxSta };
+        p.mounts.skills[id] = p.mounts.skill || 'bite';
+        p.mounts.active = p.mounts.summoned[0] || null;
         ev.push({ t: 'mount_new', id });
-        ev.push({ t: 'msg', text: `[Hệ thống] Nhận thú cưỡi: ${G.MOUNTS[id].icon} ${G.MOUNTS[id].name}! Bấm phím M hoặc nút 🐎 để cưỡi.`, color: '#ffc94a' });
+        ev.push({ t: 'msg', text: `[Hệ thống] Nhận thú triệu hồi: ${G.MOUNTS[id].icon} ${G.MOUNTS[id].name}! Mở Menu → Thú triệu hồi để gọi thú.`, color: '#ffc94a' });
       }
     } catch (e) {
       // Không phát được quà (ví dụ túi đầy) thì trả lại lượt cho mã

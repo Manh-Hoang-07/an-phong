@@ -130,7 +130,9 @@
       skillSlots: Array(SKILL_SLOTS).fill(null),
       skills: {}, skillPoints: 0,
       unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
-      mounts: { owned: [], active: null },   // thú cưỡi (chỉ có qua mã quà tặng)
+      mounts: { owned: [], active: null, summoned: [], skill: 'bite', skills: {} },   // giữ active / skill để đọc dữ liệu client cũ
+      pets: {},
+      pet: { hp: null, mp: null, sta: null },   // trạng thái thú cũ, migrate chuyển sang pets
       quest: { step: 0, state: 'none', progress: {}, ver: QUEST_VERSION },
       side: { active: {}, done: [] },
       daily: null, weekly: null, shopDiscount: 0,

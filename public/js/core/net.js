@@ -167,7 +167,7 @@ App.onEvent = function (ev) {
       break;
     }
     case 'unlock': UI.banner('MỞ KHÓA CLASS ĐẶC BIỆT', 2200); break;
-    case 'mount_new': UI.banner('NHẬN THÚ CƯỠI · ' + (GameData.MOUNTS[ev.id] ? GameData.MOUNTS[ev.id].name.toUpperCase() : ''), 2200); Sound.play('levelup'); break;
+    case 'mount_new': UI.banner('THÚ TRIỆU HỒI MỚI · ' + (GameData.MOUNTS[ev.id] ? GameData.MOUNTS[ev.id].name.toUpperCase() : ''), 2200); Sound.play('levelup'); break;
     case 'rank':
       UI.banner('THỢ SĂN HẠNG ' + ev.rank, 2200);
       Sound.play('levelup');

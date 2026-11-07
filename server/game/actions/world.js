@@ -12,6 +12,17 @@ const actions = {
     if (Number.isFinite(a.y)) p.y = Math.round(a.y);
     if (Number.isFinite(a.hp)) p.hp = Math.max(1, Math.min(st.maxHp, Math.round(a.hp)));
     if (Number.isFinite(a.mp)) p.mp = Math.max(0, Math.min(st.maxMp, Math.round(a.mp)));
+    if (p.mounts && Array.isArray(p.mounts.summoned) && a.pets && typeof a.pets === 'object') {
+      const ps = G.petStats(p);
+      for (const id of p.mounts.summoned) {
+        const incoming = a.pets[id];
+        if (!incoming || typeof incoming !== 'object') continue;
+        if (!p.pets[id]) p.pets[id] = {};
+        for (const [key, max] of [['hp', ps.maxHp], ['mp', ps.maxMp], ['sta', ps.maxSta]])
+          if (Number.isFinite(incoming[key])) p.pets[id][key] = Math.max(0, Math.min(max, Math.round(incoming[key])));
+      }
+      if (p.mounts.active) p.pet = p.pets[p.mounts.active];
+    }
   },
 
   change_map(p, a, ev) {
@@ -20,10 +31,10 @@ const actions = {
     if (!portal) fail('Không có cổng này.');
     const st = G.portalStatus(p, p.map, a.portal);
     if (!st.ok) fail(`Chưa thể vào ${G.MAPS[portal.to].name}. ${st.reason}.`);
-    if (Number.isFinite(a.hp)) actions.save(p, { map: p.map, hp: a.hp, mp: a.mp });
+    if (Number.isFinite(a.hp)) actions.save(p, { map: p.map, hp: a.hp, mp: a.mp, pets: a.pets });
     p.map = portal.to;
     p.x = null; p.y = null;
-    p.arrive = G.gateOf(portal.to) || 'S';   // mỗi bản đồ một cổng: tới nơi thì đứng ở cổng đó
+    p.arrive = portal.at || G.gateOf(portal.to) || 'S';   // tới đúng lối vào ứng với cổng vừa đi qua
     ev.push({ t: 'map', map: p.map });
   },
 

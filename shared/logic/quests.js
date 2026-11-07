@@ -82,9 +82,9 @@
   }
 
   // ---------------------------------------------------------------- Cổng dịch chuyển
-  // Mỗi bản đồ chỉ có MỘT cổng, đặt ở chỗ ký hiệu cổng đầu tiên trong G.MAPS[id].portals (file bản đồ giữ nguyên).
-  // Đi vào cổng: chọn một trong các điểm đến của bản đồ đó. Tới nơi thì xuất hiện ở cổng của bản đồ mới.
-  // Cổng luôn ở đầu hoặc cuối bản đồ: dùng MAPS[id].gate nếu có, không thì ký hiệu cổng đầu tiên
+  // Bản đồ nhánh có thể khai báo gate để gom nhiều điểm đến tại một cổng.
+  // Các bản đồ tuyến tính giữ từng ký hiệu portal riêng ở hai đầu.
+  // Helper này trả vị trí cổng gom hoặc cổng đầu tiên làm điểm xuất hiện mặc định.
   function gateOf(mapId) {
     const m = G.MAPS[mapId];
     if (!m) return null;

@@ -7,7 +7,7 @@ const UI = (() => {
   const fmt = (n) => Number(Math.floor(n)).toLocaleString('vi-VN');
 
   const skIcon = (id) => (G.SKILLS[id] && G.SKILLS[id].icon) || '✨';
-  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐎 Thú cưỡi']];
+  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi']];
   let lastMenuTab = 'bag';
   const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿' };
   const WEAPON_ICONS = { kiem: '🗡️', cung: '🏹', truong: '🪄' };
@@ -84,9 +84,19 @@ const UI = (() => {
     document.querySelectorAll('.sk-extra, .tb-s4').forEach(el => el.classList.toggle('hidden', !tn));
     // Nút biến hình: chỉ hiện khi đã có ấn thức tỉnh; sáng lên khi đang biến hình
     const awk = G.awakenOf(p);
-    // Nút thú cưỡi: chỉ hiện khi đã có thú; sáng khi đang cưỡi
-    const hasMount = !!(p.mounts && p.mounts.owned && p.mounts.owned.length);
-    document.querySelectorAll('.sk-mount, .tb-mount').forEach(el => { el.classList.toggle('hidden', !hasMount); el.classList.toggle('active', !!App.mounted); });
+    const summoned = Array.isArray(p.mounts?.summoned) ? p.mounts.summoned : (p.mounts?.active ? [p.mounts.active] : []);
+    $('hud-pet').classList.toggle('hidden', !summoned.length);
+    const petStats = G.petStats(p), petStates = p.pets || {};
+    setHtml($('hud-pets-list'), summoned.map(id => {
+      const def = G.MOUNTS[id];
+      if (!def) return '';
+      const skill = G.PET_SKILLS[p.mounts?.skills?.[id] || p.mounts?.skill] || G.PET_SKILLS.bite;
+      return `<div class="pet-hud-unit"><b>${def.icon} ${esc(def.name)} <small>${skill.icon} ${esc(skill.name)}</small></b><div class="bar hp"><div id="pet-hp-${id}"></div><span id="pet-hp-t-${id}"></span></div><div class="bar mp"><div id="pet-mp-${id}"></div><span id="pet-mp-t-${id}"></span></div><div class="bar sta"><div id="pet-sta-${id}"></div><span id="pet-sta-t-${id}"></span></div></div>`;
+    }).join(''));
+    if (summoned.length) {
+      $('pet-skill-slot').textContent = `Mỗi thú tự dùng kỹ năng riêng · ${summoned.length} thú đang triệu hồi`;
+      tickPets(petStats, petStates, summoned);
+    }
     document.querySelectorAll('.sk-form, .tb-form').forEach(el => {
       el.classList.toggle('hidden', !awk);
       el.classList.toggle('active', !!App.form);
@@ -165,6 +175,25 @@ const UI = (() => {
         el.classList.toggle('nomp', noMp);
         el.classList.toggle('nosta', noSta);
       }
+    }
+  }
+
+  let lastPetTick = 0;
+  function tickPets(stats, pets, ids) {
+    const now = performance.now();
+    if (now - lastPetTick < 250) return;
+    lastPetTick = now;
+    for (const id of ids) {
+      const pet = pets[id];
+      if (!pet) continue;
+      for (const [key, value, max] of [['hp', pet.hp, stats.maxHp], ['mp', pet.mp, stats.maxMp], ['sta', pet.sta, stats.maxSta]]) {
+        const bar = $(`pet-${key}-${id}`), label = $(`pet-${key}-t-${id}`);
+        if (!bar || !label) continue;
+        bar.style.width = Math.max(0, Math.min(100, value / max * 100)) + '%';
+        label.textContent = `${fmt(Math.max(0, value))}/${fmt(max)}`;
+      }
+      const staLabel = $(`pet-sta-t-${id}`);
+      if (staLabel) staLabel.textContent = `${fmt(Math.max(0, pet.sta))}/${fmt(stats.maxSta)} thể lực`;
     }
   }
 
@@ -435,16 +464,17 @@ const UI = (() => {
       if (k === 'atk') sc.basicAttack(sc.time.now);
       else if (k === 'hp' || k === 'mp') sc.usePotion(k);
       else if (k === 'form') sc.toggleForm(sc.time.now);
-      else if (k === 'mount') sc.toggleMount(sc.time.now);
+      else if (k === 'mount') openPanel('mount');
+      else if (k === 'pets') openPanel('mount');
       else sc.useSkill(Number(k), sc.time.now);
     }));
   }
 
   // Dùng nội bộ cho các file ui/panels/*.js và ui/actions.js (không gọi từ ngoài UI)
-  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, refresh, tick, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
+  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
 
   return {
-    init, refresh, tick, log, banner, hint, setMap, setAttackIcon, questReady,
+    init, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questReady,
     openPanel, closePanel, itemIcon, isOpen: () => !!panel,   // openNpc, upgradeResult: gắn trong ui/panels
     _: lib,
   };

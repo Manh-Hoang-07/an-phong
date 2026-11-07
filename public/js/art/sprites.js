@@ -129,7 +129,7 @@ const Sprites = (() => {
 
   // Đặt gốc tọa độ và khung va chạm sao cho: x là tâm thân, chân ở y+30, khung va chạm 18x46 như cũ.
   // grow: phóng to thêm khi biến hình (khung va chạm trong thế giới game giữ nguyên, chân vẫn chạm đất)
-  // lift: nâng HÌNH lên bấy nhiêu px (đang cưỡi thú: ngồi trên lưng thú) — khung va chạm vẫn ở chỗ cũ
+  // lift: tùy chọn nâng HÌNH mà không đổi khung va chạm.
   function fitPlayer(sprite, id, flip, grow = 1, lift = 0) {
     const c = CHARS[id];
     const s = c.s * grow;

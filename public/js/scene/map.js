@@ -210,11 +210,11 @@ WorldScene.mix(class WorldMap {
     this.flushLayer(bitLayer);
   }
 
-  // Mỗi bản đồ chỉ dựng MỘT cổng (ở ký hiệu cổng đầu tiên, xem GameData.gateOf); các ký hiệu cổng khác bỏ qua.
-  // Đi vào cổng thì chọn điểm đến (enterGate trong world.js).
+  // Bản đồ có gate chỉ dựng một cổng gom nhiều điểm đến; bản đồ thường dựng cổng
+  // ở từng ký hiệu để giữ riêng lối vào và lối ra.
   buildPortals() {
-    const gate = GameData.gateOf(this.mapId);
-    for (const ch of gate ? [gate] : []) {
+    const gates = this.meta.gate ? [this.meta.gate] : Object.keys(this.meta.portals || {});
+    for (const ch of gates) {
       const pos = this.findChar(ch);
       if (!pos) continue;
       const def = this.meta.portals[ch];
@@ -233,8 +233,12 @@ WorldScene.mix(class WorldMap {
     const dests = GameData.gateDestinations(App.player, this.mapId);
     const open = dests.filter(d => d.ok).length;
     for (const p of this.portals) {
-      if (dests.length === 1) p.label.setText((open ? '' : '🔒 ') + dests[0].name).setColor(open ? '#e1d5ff' : '#bbbbbb');
-      else p.label.setText(`Cổng dịch chuyển · ${open}/${dests.length} nơi`).setColor(open ? '#e1d5ff' : '#bbbbbb');
+      if (this.meta.gate) {
+        p.label.setText(`Cổng dịch chuyển · ${open}/${dests.length} nơi`).setColor(open ? '#e1d5ff' : '#bbbbbb');
+      } else {
+        const d = dests.find(x => x.ch === p.ch);
+        if (d) p.label.setText((d.ok ? '' : '🔒 ') + d.name).setColor(d.ok ? '#e1d5ff' : '#bbbbbb');
+      }
     }
   }
 

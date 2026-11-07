@@ -64,6 +64,7 @@
         <div class="bar exp"><div id="h-exp"></div><span id="h-exp-t"></span></div>
         <div class="hud-gold">🪙 <span id="h-gold"></span><span id="h-boost" class="hud-boost hidden" title="Bùa nhân đôi kinh nghiệm đang có hiệu lực"></span></div>
       </div>
+      <div id="hud-pet" class="hidden"><div id="hud-pets-list"></div><div id="pet-skill-slot"></div></div>
       <div id="hud-right">
         <div id="h-map"></div>
         <div class="menu">
@@ -81,9 +82,9 @@
         <div class="sk sk-extra hidden" data-k="4"><span class="key">5</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-ult" data-k="5"><span class="key">R</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-form hidden" data-k="form" title="Biến hình (thức tỉnh): bấm lần nữa để trở lại dạng thường"><span class="key">T</span><span class="ico">⚡<small>Biến hình</small></span></div>
-        <div class="sk sk-mount hidden" data-k="mount" title="Cưỡi / xuống thú cưỡi"><span class="key">M</span><span class="ico">🐎<small>Thú cưỡi</small></span></div>
         <div class="sk pot" data-k="hp"><span class="key">Q</span><span class="ico">❤</span><span class="cnt" id="pot-hp"></span></div>
         <div class="sk pot" data-k="mp"><span class="key">E</span><span class="ico">💧</span><span class="cnt" id="pot-mp"></span></div>
+        <div class="sk" data-k="pets" title="Thú triệu hồi"><span class="key">P</span><span class="ico">🐾</span></div>
       </div>
       <div id="hint"></div>
     </div>
@@ -105,9 +106,9 @@
         <button data-t="s4" class="tb tb-skill tb-s4 hidden"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="ult" class="tb tb-skill tb-ult"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="form" class="tb tb-skill tb-form hidden"><span class="ico">⚡<small>Biến</small></span></button>
-        <button data-t="mount" class="tb tb-skill tb-mount hidden"><span class="ico">🐎<small>Cưỡi</small></span></button>
         <button data-t="hp" class="tb tb-pot tb-hp">🧪<b id="tpot-hp"></b></button>
         <button data-t="mp" class="tb tb-pot tb-mp">💧<b id="tpot-mp"></b></button>
+        <button data-t="pets" class="tb tb-pets" aria-label="Thú triệu hồi">🐾</button>
       </div>
       <button id="tb-talk" data-t="interact" class="tb tb-talk hidden">💬 <span></span></button>
     </div>
@@ -156,7 +157,7 @@
   <script src="/js/art/backgrounds.js"></script>
   <script src="/js/art/fx.js"></script>
   <script src="/js/art/sprites.js"></script>
-  <script src="/js/art/mounts.js"></script>
+  <script src="/js/art/pets.js"></script>
   <!-- Giao diện: lõi UI, từng bảng, xử lý nút -->
   <script src="/js/ui/ui.js"></script>
   <script src="/js/ui/panels/daily.js"></script>

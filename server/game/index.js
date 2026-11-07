@@ -59,6 +59,25 @@ function migrate(p) {
   if (!p.mounts || !Array.isArray(p.mounts.owned)) p.mounts = { owned: [], active: null };
   p.mounts.owned = p.mounts.owned.filter(id => G.MOUNTS[id]);
   if (p.mounts.active && !p.mounts.owned.includes(p.mounts.active)) p.mounts.active = null;
+  if (!Array.isArray(p.mounts.summoned)) p.mounts.summoned = p.mounts.active ? [p.mounts.active] : [];
+  p.mounts.summoned = [...new Set(p.mounts.summoned.filter(id => p.mounts.owned.includes(id)))];
+  if (p.mounts.active && !p.mounts.summoned.includes(p.mounts.active)) p.mounts.summoned.unshift(p.mounts.active);
+  p.mounts.active = p.mounts.summoned[0] || null;
+  if (!G.PET_SKILLS[p.mounts.skill]) p.mounts.skill = 'bite';
+  if (!p.mounts.skills || typeof p.mounts.skills !== 'object' || Array.isArray(p.mounts.skills)) p.mounts.skills = {};
+  for (const id of p.mounts.owned) if (!G.PET_SKILLS[p.mounts.skills[id]]) p.mounts.skills[id] = G.PET_SKILLS[p.mounts.skill] ? p.mounts.skill : 'bite';
+  const petStats = G.petStats(p);
+  if (!p.pets || typeof p.pets !== 'object' || Array.isArray(p.pets)) p.pets = {};
+  const legacyPetId = p.mounts.active || p.mounts.owned[0];
+  if (legacyPetId && !p.pets[legacyPetId] && p.pet && typeof p.pet === 'object') p.pets[legacyPetId] = p.pet;
+  for (const id of p.mounts.owned) {
+    const state = p.pets[id] && typeof p.pets[id] === 'object' ? p.pets[id] : (p.pets[id] = {});
+    for (const [key, max] of [['hp', petStats.maxHp], ['mp', petStats.maxMp], ['sta', petStats.maxSta]]) {
+      if (!Number.isFinite(state[key])) state[key] = max;
+      state[key] = Math.max(0, Math.min(max, Math.round(state[key])));
+    }
+  }
+  p.pet = p.pets[p.mounts.active] || { hp: petStats.maxHp, mp: petStats.maxMp, sta: petStats.maxSta };
   if (!p.unlocks || typeof p.unlocks !== 'object') p.unlocks = {};
   if (!Array.isArray(p.perks)) p.perks = [];
   p.perks = p.perks.filter(id => G.PERKS[id]);

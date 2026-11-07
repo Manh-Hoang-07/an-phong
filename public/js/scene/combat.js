@@ -21,7 +21,6 @@ WorldScene.mix(class WorldCombat {
     const w = GameData.WEAPON_TYPES[App.stats.wtype];
     const fast = 1 / (1 + this.buffTotals(time).speed);
     if (time < this.cooldowns.atk) return;
-    if (App.mounted) this.dismount();   // đang cưỡi: xuống thú rồi ra đòn luôn
     const sta = this.attackStaminaCost();
     if (!this.canSpendStamina(sta)) { this.cooldowns.atk = time + 250; return; }
     this.spendStamina(sta);
@@ -117,15 +116,17 @@ WorldScene.mix(class WorldCombat {
 
   damageMonster(m, mult, extra = {}) {
     if (!m.alive) return;
-    let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : this.calcDamage(mult, m);
+    let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : extra.pet
+      ? { dmg: Math.max(1, Math.round(GameData.petStats(App.player).atk * mult - m.def.def * 0.35)), crit: false }
+      : this.calcDamage(mult, m);
     if (extra.basic && m.def.resist) dmg = Math.max(1, Math.round(dmg * (1 - m.def.resist)));
     m.hp -= dmg;
     m.aggro = true;
-    if (App.stats.lifesteal && !m.def.passive && !this.dead) {
+    if (!extra.pet && App.stats.lifesteal && !m.def.passive && !this.dead) {
       App.hp = Math.min(App.stats.maxHp, App.hp + dmg * App.stats.lifesteal / 100);
     }
     // Nội tại Kiếm Tâm: đánh thường trúng quái hồi 1% máu
-    if (extra.basic && !m.def.passive && !this.dead && this.hasPassive('kiem_si') && this.time.now > (this.healTick || 0)) {
+    if (!extra.pet && extra.basic && !m.def.passive && !this.dead && this.hasPassive('kiem_si') && this.time.now > (this.healTick || 0)) {
       this.healTick = this.time.now + 120;
       App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * 0.01);
     }
@@ -173,7 +174,18 @@ WorldScene.mix(class WorldCombat {
       if (dmg <= 0) { this.invulnUntil = now + 500; return; }
     }
     App.hp -= dmg;
-    if (App.mounted && dmg >= App.stats.maxHp * 0.1) this.dismount(true);   // trúng đòn mạnh: ngã khỏi thú
+    const companions = this.summonedPetIds();
+    if (companions.length) {
+      const petDef = GameData.petStats(App.player), share = dmg * 0.18 / companions.length;
+      for (const id of companions) {
+        const petState = App.player.pets[id];
+        if (!petState || petState.hp <= 0) continue;
+        const petDamage = Math.max(1, Math.round(share - petDef.def * 0.25));
+        petState.hp = Math.max(0, petState.hp - petDamage);
+        const companion = this.companionSprites[id];
+        this.floatText(companion ? companion.sprite.x : this.player.x - 35, this.player.y - 36, `-${petDamage}`, '#ff9b9b', 12);
+      }
+    }
     this.hitAnimUntil = now + 260;
     Sound.play('hurt');
     this.lastHurt = now;
@@ -187,7 +199,6 @@ WorldScene.mix(class WorldCombat {
   async die() {
     if (this.dead) return;
     this.endForm();
-    this.dismount();
     this.dead = true;
     App.hp = 0;
     if (this.sheetId) { this.attackUntil = 0; this.player.setAngle(0); this.player.play(this.charAnim('death')); }

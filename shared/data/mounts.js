@@ -1,32 +1,21 @@
-/*
- * Thú cưỡi. CHỈ lấy được qua mã quà tặng:  npm run giftcode -- add QUA-SOI --mount soi_xam --max-uses 1
- *   speed: tốc chạy cộng thêm (0.3 = +30%)      jump: hệ số độ cao nhảy (1 = như đi bộ)
- *   glide: rơi chậm (lướt) khi đang trên không   swim: không bị làm chậm bởi nước dâng / băng của trùm
- *   level: cấp tối thiểu để cưỡi                 look: kiểu hình vẽ (public/js/art/mounts.js)
- *   (mặt yên / chỗ người cưỡi ngồi theo kiểu hình: SEAT trong public/js/art/mounts.js)
- */
+/* Thú triệu hồi. Cờ quà tặng --mount và dữ liệu cũ vẫn được giữ tương thích. */
 (function (G) {
   'use strict';
-
   const MOUNTS = {
-    soi_xam: { name: 'Sói Xám', icon: '🐺', level: 1, speed: 0.3, jump: 1, look: 'wolf',
-      colors: { body: 0x7b8290, belly: 0xb9bec8, mane: 0x4e5461, eye: 0xffd54f },
-      desc: 'Sói hoang được Hiệp Hội thuần hóa. Bền bỉ, chạy đều.' },
-    than_lan: { name: 'Thằn Lằn Đầm', icon: '🦎', level: 1, speed: 0.35, jump: 0.9, swim: true, look: 'lizard',
-      colors: { body: 0x4f7a3a, belly: 0xc8d98a, mane: 0x2f4d22, eye: 0xff7043 },
-      desc: 'Thân thấp, nhảy kém nhưng không bị nước hay băng làm chậm.' },
-    soi_tuyet: { name: 'Sói Tuyết Bạc', icon: '🐺', level: 1, speed: 0.45, jump: 1.15, look: 'wolf',
-      colors: { body: 0xdfe8f2, belly: 0xffffff, mane: 0x9fb4c8, eye: 0x4fc3f7 },
-      desc: 'Sói núi tuyết, chân dài, nhảy cao hơn sói thường.' },
-    hac_may: { name: 'Hạc Mây Đá', icon: '🕊️', level: 1, speed: 0.5, jump: 1.4, glide: true, look: 'crane',
-      colors: { body: 0xe8ecf2, belly: 0xffffff, mane: 0x37474f, eye: 0xff5252 },
-      desc: 'Nhảy rất cao và lướt chậm khi rơi, qua được những vực rộng.' },
-    ky_lan: { name: 'Kỳ Lân', icon: '🦄', level: 1, speed: 0.7, jump: 1.25, look: 'unicorn',
-      colors: { body: 0xfff3d6, belly: 0xffffff, mane: 0xffb74d, eye: 0x7e57c2, horn: 0xffd54f },
-      desc: 'Thú cưỡi nhanh nhất, bờm vàng rực như ánh bình minh.' },
+    soi_xam: { name: 'Sói Xám', icon: '🐺', level: 1, look: 'wolf', tint: 0xb8c1cc, atk: 1, desc: 'Sói đồng hành nhanh nhẹn, lao vào cắn mục tiêu.' },
+    than_lan: { name: 'Thằn Lằn Đầm', icon: '🦎', level: 1, look: 'lizard', tint: 0xffffff, atk: 1.05, desc: 'Thằn lằn đồng hành, dùng vuốt cào mục tiêu.' },
+    soi_tuyet: { name: 'Sói Tuyết Bạc', icon: '🐺', level: 1, look: 'wolf', tint: 0xe5f3ff, atk: 1.12, desc: 'Sói núi tuyết khỏe hơn, chuyên tấn công áp sát.' },
+    hac_may: { name: 'Hạc Mây Đá', icon: '🕊️', level: 1, look: 'bird', tint: 0xffffff, atk: 1.08, desc: 'Hạc linh hoạt, dùng mỏ và cánh tấn công quái.' },
+    ky_lan: { name: 'Kỳ Lân', icon: '🦄', level: 1, look: 'horse', tint: 0xffe8c4, atk: 1.15, desc: 'Kỳ lân đồng hành, có sức tấn công mạnh nhất.' },
   };
-  // Tổng tốc chạy khi cưỡi không vượt quá mức này (tránh chạy xuyên bản đồ)
-  const MOUNT_SPEED_MAX = 460;
-
-  Object.assign(G, { MOUNTS, MOUNT_SPEED_MAX });
+  const PET_SKILLS = {
+    bite: { name: 'Cắn Xé', icon: '🦷', mp: 4, sta: 8, cooldown: 1800, range: 74, mult: 1.35, desc: 'Cắn mục tiêu gần nhất.' },
+    pounce: { name: 'Vồ Mồi', icon: '🐾', mp: 8, sta: 14, cooldown: 3600, range: 115, mult: 1.9, desc: 'Vồ tới mục tiêu và gây sát thương lớn.' },
+    howl: { name: 'Gầm Hống', icon: '🌟', mp: 12, sta: 20, cooldown: 6000, range: 150, mult: 1.25, desc: 'Tiếng gầm dồn sức vào đòn đánh.' },
+  };
+  function petStats(player) {
+    const lv = Math.max(1, player.level || 1);
+    return { maxHp: 70 + 16 * (lv - 1), maxMp: 28 + 5 * (lv - 1), maxSta: 80 + 2 * (lv - 1), atk: 7 + 2.1 * (lv - 1), def: 1 + Math.floor((lv - 1) * 0.8) };
+  }
+  Object.assign(G, { MOUNTS, PET_SKILLS, petStats });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

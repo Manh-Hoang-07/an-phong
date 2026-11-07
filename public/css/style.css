@@ -100,6 +100,18 @@ input { font: inherit; }
   background: linear-gradient(180deg, rgba(14, 26, 58, 0.82), rgba(6, 11, 26, 0.78));
   border: 1px solid var(--line-2); border-radius: 10px; box-shadow: var(--glow);
 }
+#hud-pet {
+  position: absolute; left: 10px; top: 188px; width: 250px; max-height: 42vh; overflow-y: auto; padding: 7px 10px;
+  background: linear-gradient(180deg, rgba(14, 26, 58, 0.82), rgba(6, 11, 26, 0.8));
+  border: 1px solid rgba(92, 242, 165, 0.55); border-radius: 9px; box-shadow: 0 0 14px rgba(92, 242, 165, 0.12);
+}
+.pet-hud-unit { padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.pet-hud-unit:last-child { border-bottom: 0; margin-bottom: 0; }
+.pet-hud-unit > b { display: block; font-size: 11px; }
+#hud-pet .bar { height: 9px; margin-top: 3px; }
+#hud-pet .bar span { font-size: 8px; line-height: 8px; }
+#hud-pet .bar.sta { height: 8px; }
+#pet-skill-slot { margin-top: 5px; padding: 3px 6px; border-radius: 5px; background: rgba(63,208,255,.09); color: #bfeeff; font-size: 10px; text-align: center; }
 .hud-top { display: flex; gap: 9px; align-items: center; margin-bottom: 5px; }
 .hud-ava {
   position: relative; flex: none; width: 40px; height: 40px; border-radius: 50%;
@@ -345,6 +357,7 @@ html.rot #game-wrap { inset: auto; left: 0; top: 0; transform-origin: 0 0; }
 .tb-pot b { position: absolute; right: 4px; bottom: 1px; font-size: 11px; text-shadow: 0 1px 2px #000; }
 .tb-hp { right: 206px; bottom: 16px; }
 .tb-mp { right: 206px; bottom: 70px; }
+.tb-pets { right: 206px; bottom: 124px; width: 46px; height: 46px; font-size: 22px; }
 .tb-talk {
   right: calc(16px + var(--sar)); bottom: 204px; width: auto; height: 44px; padding: 0 16px; border-radius: 22px;
   font-size: 15px; font-weight: 700; color: #031022; background: linear-gradient(180deg, #7fe3ff, #26a8e0); border-color: #dff8ff;
@@ -375,13 +388,14 @@ body.touch #skillbar, body.touch #hint { display: none !important; }
 body.touch .menu i, body.touch .sk .key { display: none; }
 body.touch .menu button { width: 42px; height: 42px; }
 body.touch #btn-full { display: block; }
-body.touch #log { left: calc(10px + var(--sal)); bottom: auto; top: 124px; width: calc(var(--gw, 100vw) * 0.38); font-size: 11.5px; }
+body.touch #log { left: calc(195px + var(--sal)); bottom: auto; top: 124px; width: calc(var(--gw, 100vw) * 0.32); font-size: 11.5px; }
 body.touch #hud-char { left: calc(10px + var(--sal)); }
 body.touch #hud-right { right: calc(10px + var(--sar)); }
 body.panel-open #touch, body.panel-open #tb-talk { display: none !important; }
 
 /* Màn hình thấp (điện thoại xoay ngang) */
 html.compact #hud-char { width: 220px; padding: 6px 8px; transform: scale(0.82); transform-origin: top left; }
+html.compact #hud-pet { width: 220px; left: 6px; top: 158px; transform: scale(0.82); transform-origin: top left; }
 html.compact #hud-right { transform: scale(0.82); transform-origin: top right; }
 html.compact #quest-track { max-width: 220px; font-size: 11.5px; }
 html.compact .panel-box { width: calc(var(--gw, 100vw) - 16px); max-height: calc(var(--gh, 100dvh) - 10px); }
@@ -484,10 +498,11 @@ html.compact .panel-box.fixed { width: calc(var(--gw, 100vw) - 16px); height: ca
    ================================================================ */
 html.compact { --ui: 0.74; }
 html.compact body.touch #hud-char { transform: scale(0.7); }
+html.compact body.touch #hud-pet { left: calc(10px + var(--sal)); top: 132px; transform: scale(0.7); transform-origin: top left; }
 html.compact body.touch #hud-right { transform: scale(0.72); }
 html.compact body.touch #hud-char, html.compact body.touch #hud-right { top: 6px; }
 html.compact body.touch #quest-track { max-width: 230px; font-size: 11px; }
-html.compact body.touch #log { top: 108px; width: calc(var(--gw, 100vw) * 0.34); font-size: 10.5px; gap: 1px; }
+html.compact body.touch #log { left: calc(185px + var(--sal)); top: 108px; width: calc(var(--gw, 100vw) * 0.3); font-size: 10.5px; gap: 1px; }
 html.compact body.touch #log div:nth-last-child(n+5) { display: none; }   /* chỉ giữ 4 dòng nhật ký mới nhất */
 html.compact body.touch #tbtns, html.compact body.touch #arrows, html.compact body.touch #tb-talk { zoom: var(--ui); }
 html.compact body.touch #banner { font-size: 15px; }
@@ -521,9 +536,13 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
 .qg-row b { color: var(--text); font-weight: 600; }
 .qg-row.on, .qg-row.on b { color: var(--sys); }
 
-/* Thú cưỡi */
-.tb-mount { right: 238px; bottom: 122px; width: 50px; height: 50px; }
-.sk-mount.active, .tb-mount.active { border-color: #ffca28 !important; box-shadow: 0 0 14px rgba(255, 202, 40, 0.7); }
+/* Thú triệu hồi */
 .mount-li.locked { opacity: 0.55; }
 .mount-li.on { border-color: var(--sys); }
 .mount-li .ic { font-size: 26px; }
+.pet-sheet { margin: 0 0 12px; padding: 10px; border: 1px solid rgba(92,242,165,.35); border-radius: 8px; background: rgba(92,242,165,.045); }
+.pet-sheet > b, .pet-sheet > small { display: block; margin-bottom: 5px; }
+.pet-sheet .pet-slot-title { margin-top: 10px; }
+.pet-skills { flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.pet-skills .btn { flex: 1 1 28%; min-width: 100px; }
+.pet-skills .btn small { display: block; font-size: 9px; opacity: .75; }

@@ -15,7 +15,7 @@
  *   --skill-points 2        tặng điểm kỹ năng
  *   --item da_cuong_hoa 5   tặng vật phẩm (lặp lại được nhiều lần)
  *   --unlock-class toan_nang
- *   --mount soi_xam         tặng thú cưỡi (lặp lại được): soi_xam, than_lan, soi_tuyet, hac_may, ky_lan
+ *   --mount soi_xam         tặng thú triệu hồi (tên cờ giữ tương thích): soi_xam, than_lan, soi_tuyet, hac_may, ky_lan
  *
  * Không đặt mã thì tự sinh dạng QUA-XXXXXX. Mỗi tài khoản dùng mỗi mã một lần.
  */
@@ -46,7 +46,7 @@ function parse(argv) {
     else if (a === '--unlock-class') out.rewards.unlockClass = argv[++i];
     else if (a === '--mount') {
       const id = argv[++i];
-      if (!G.MOUNTS[id]) { console.error('Không có thú cưỡi:', id, '— có:', Object.keys(G.MOUNTS).join(', ')); process.exit(1); }
+      if (!G.MOUNTS[id]) { console.error('Không có thú triệu hồi:', id, '— có:', Object.keys(G.MOUNTS).join(', ')); process.exit(1); }
       (out.rewards.mounts || (out.rewards.mounts = [])).push(id);
     }
     else if (a === '--item') {

@@ -19,7 +19,7 @@
     lang: { name: 'Tân Đô – Khu Hiệp Hội', theme: 'city',
       spawns: { d: 'hinh_nhan' },
       npcs: { L: 'lao_su', V: 'vy', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', M: 'lu_khach' },
-      // gate: ký hiệu đặt cổng duy nhất của bản đồ (mặc định: ký hiệu cổng đầu tiên). Làng đặt ở cuối bản đồ, không ở giữa
+      // gate: gộp nhiều điểm đến vào một cổng tại ký hiệu này (dùng cho ngã rẽ ở Tân Đô).
       gate: '|',
       portals: {
         '>': { to: 'rung', at: '<' },

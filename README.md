@@ -290,5 +290,6 @@ Mở trang game, tạo tài khoản đầu tiên là xong. Nhớ vào game và t
 ## Hình ảnh
 
 - Nhân vật và quái dùng sprite sheet của **LuizMelo** (giấy phép CC0, xem `public/assets/CREDITS.txt`): Fantasy Warrior (chưa thức tỉnh), Martial Hero 3 (Kiếm Sĩ), Huntress 2 (Cung Thủ), Wizard Pack (Pháp Sư), EVil Wizard 2 (Toàn Năng), Monsters Creatures Fantasy 1 và 2 (Nấm Độc, Yêu Tinh, Slime Sương, Dơi Hang, Bộ Xương Pha Lê, Mắt Đỏ).
+- Thú triệu hồi dùng sprite từ các bộ CC0: **Animated Wild Animals** (ScratchIO), **pixel horse** (alizard), ảnh hạc của rmazanek và ảnh thằn lằn của Karmabub. Có thể gọi nhiều thú cùng lúc; nguồn trong `public/assets/CREDITS.txt`.
 - Cỡ và vị trí chân của từng bộ chỉnh trong `public/js/sprites.js`. Thiếu ảnh nào thì game tự dùng lại hình vẽ bằng code (`public/js/art.js`).
 - Hiệu ứng (tia lửa, bụi bước chân, phát sáng, thời tiết, quay chậm) nằm trong `public/js/juice.js`.

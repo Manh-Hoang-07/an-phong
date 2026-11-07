@@ -22,6 +22,7 @@ class WorldScene extends Phaser.Scene {
     this.load.on('loaderror', () => { /* thiếu ảnh thì dùng hình vẽ bằng code */ });
     // Chỉ tải hình cần ngay: class của mình + quái trên bản đồ này. Phần còn lại tải ngầm sau khi vào game.
     Sprites.preload(this, Sprites.needed(this.mapId, App.player.school || 'none'));
+    for (const look of new Set(Object.values(GameData.MOUNTS).map(def => def.look))) PetSprites.preload(this, look);
     this.load.on('progress', (v) => Loading.set(0.2 + v * 0.7));
   }
 
@@ -32,6 +33,7 @@ class WorldScene extends Phaser.Scene {
     Art.makeAll(this, this.theme);
     Fx.makeAll(this, this.theme);
     Sprites.createAnims(this);
+    for (const look of new Set(Object.values(GameData.MOUNTS).map(def => def.look))) PetSprites.createAnims(this, look);
     this.parseMap();
 
     this.monsters = [];
@@ -47,7 +49,7 @@ class WorldScene extends Phaser.Scene {
     this.invulnUntil = this.time.now + 2000;   // bất tử 2 giây khi vừa vào bản đồ
     this.portalReady = this.time.now + 800;
     this.gateArmed = false;   // vừa tới nơi (đứng ngay cổng): phải bước ra khỏi cổng rồi mới mở danh sách
-    this.mountSprite = null; this.mountId = null; this.cropKey = null;   // thú cưỡi của cảnh cũ đã bị hủy; mountUpdate tự dựng lại nếu còn cưỡi
+    this.companionSprites = {};
     this.formOn = false; this.formShell = null; this.formEms = []; this.formGlow = null; this.formTier = 0;   // hiệu ứng biến hình của cảnh cũ đã bị hủy; drawAura tự dựng lại nếu còn biến hình
     this.lastGroundAt = 0;
     this.jumpBufferedAt = -1000;
@@ -61,6 +63,7 @@ class WorldScene extends Phaser.Scene {
     this.buildPortals();
     this.buildNpcs();
     this.buildPlayer();
+    this.buildCompanions();
     this.buildMonsters();
     this.setupJuice();
     this.loots = new Map();
@@ -162,9 +165,7 @@ class WorldScene extends Phaser.Scene {
     const canAct = !App.panelOpen && !this.changing;
     const speedMul = 1 + this.buffTotals(time).speed * 0.3;
     let speed = st.speed * speedMul;
-    const mdef = App.mounted ? this.mountDef() : null;
-    if (time < (this.playerSlowUntil || 0) && !(mdef && mdef.swim)) speed *= 0.6;   // nước dâng / băng của trùm (thú biết bơi thì không)
-    if (mdef) speed = Math.min(GameData.MOUNT_SPEED_MAX, speed * (1 + mdef.speed));   // đang cưỡi thú
+    if (time < (this.playerSlowUntil || 0)) speed *= 0.6;
     const onGround = body.blocked.down || body.touching.down;
     // Không cho văng ra ngoài mép bản đồ
     if (pl.x < 14 || pl.x > this.worldW - 14) { pl.x = Phaser.Math.Clamp(pl.x, 14, this.worldW - 14); body.setVelocityX(0); }
@@ -188,16 +189,16 @@ class WorldScene extends Phaser.Scene {
       this.jumpBufferedAt = -1000;
       if ((this.key('ArrowDown', 'KeyS') || App.touch.down) && body.touching.down && this.onPlatform()) {
         this.dropping = true; this.time.delayedCall(250, () => { this.dropping = false; });
-      } else { body.setVelocityY(-JUMP_V * (mdef ? mdef.jump : 1)); this.jumpedAir = true; this.jumpFx(); }
+      } else { body.setVelocityY(-JUMP_V); this.jumpedAir = true; this.jumpFx(); }
     }
 
     // Hành động
     if (canAct) {
+      if (this.pressed('KeyP') || this.tpressed('pets')) UI.openPanel('mount');
       if (this.key('KeyJ') || App.touch.attack) this.basicAttack(time);
       for (let i = 0; i < 5; i++) if (this.pressed('Digit' + (i + 1)) || this.tpressed('s' + i)) this.useSkill(i, time);
       if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOT, time);
       if (this.pressed('KeyT') || this.tpressed('form')) this.toggleForm(time);
-      if (this.pressed('KeyM') || this.tpressed('mount')) this.toggleMount(time);
       if (this.pressed('KeyQ') || this.tpressed('hp')) this.usePotion('hp');
       if (this.pressed('KeyE') || this.tpressed('mp')) this.usePotion('mp');
       if (this.pressed('KeyF') || this.pressed('Enter') || this.tpressed('interact')) this.interact();
@@ -228,9 +229,9 @@ class WorldScene extends Phaser.Scene {
 
     this.placeWeapon();
     this.juiceUpdate(time, onGround, move);
-    this.mountUpdate(time, onGround);
-    this.nameTag.setPosition(pl.x, pl.y - 44 - this.riderLift());
-    this.shadow.setPosition(pl.x, pl.y + 29).setVisible(onGround).setScale(App.mounted ? 2.2 : 1, 1);
+    this.companionUpdate(time, delta);
+    this.nameTag.setPosition(pl.x, pl.y - 44);
+    this.shadow.setPosition(pl.x, pl.y + 29).setVisible(onGround).setScale(1, 1);
 
     // Gợi ý tương tác
     const near = this.nearestInteract();
@@ -241,14 +242,16 @@ class WorldScene extends Phaser.Scene {
     // một lần rồi mới tự mở lại (gateArmed), để không bật lên liên tục.
     if (!near || near.type !== 'portal') this.gateArmed = true;
     else if (this.gateArmed && !this.changing && !App.panelOpen && time > (this.portalReady || 0) && move !== 0 && time >= (this.knockUntil || 0)) {
-      this.enterGate();
+      this.enterGate(near.portal.ch);
     }
   }
 
-  // Vào cổng: một nơi đến thì đi luôn, nhiều nơi thì hiện danh sách (nơi chưa mở có khóa)
-  enterGate() {
+  // Cổng gom mở danh sách; cổng riêng của bản đồ tuyến tính chỉ đi tới đúng bản đồ kế bên.
+  enterGate(ch) {
     this.gateArmed = false;
-    const dests = GameData.gateDestinations(App.player, this.mapId);
+    const all = GameData.gateDestinations(App.player, this.mapId);
+    const dests = this.meta.gate ? all : all.filter(d => d.ch === ch);
+    if (!dests.length) return;
     if (dests.length === 1) {
       if (dests[0].ok) this.usePortal(dests[0].ch);
       else UI.log(`🔒 ${dests[0].name}: ${dests[0].reason}.`, '#ffb74d');
@@ -279,7 +282,7 @@ class WorldScene extends Phaser.Scene {
   interact() {
     const n = this.nearestInteract();
     if (n && n.type === 'npc') this.talkTo(n.id, n.x);
-    else if (n && n.type === 'portal' && !this.changing) this.enterGate();
+    else if (n && n.type === 'portal' && !this.changing) this.enterGate(n.portal.ch);
   }
 
   talkTo(id, x) {
@@ -302,10 +305,10 @@ class WorldScene extends Phaser.Scene {
     const t0 = Date.now();
     Sound.play('portal');
     this.cameras.main.fadeOut(250);
-    const res = await Net.action('change_map', { portal: ch, hp: s.hp, mp: s.mp });
+    const res = await Net.action('change_map', { portal: ch, hp: s.hp, mp: s.mp, pet: s.pet });
     if (!this.sys.isActive()) return;
     if (res.ok) {
-      const arrive = GameData.gateOf(res.player.map) || 'S';
+      const arrive = res.player.arrive || 'S';
       this.time.delayedCall(Math.max(0, 260 - (Date.now() - t0)), () => this.scene.restart({ map: res.player.map, arrive }));
     } else {
       this.cameras.main.resetFX();
@@ -327,7 +330,13 @@ class WorldScene extends Phaser.Scene {
   }
 
   saveState() {
-    return { map: this.mapId, x: Math.round(this.player.x), y: Math.round(this.player.y), hp: Math.round(App.hp), mp: Math.round(App.mp) };
+    const state = { map: this.mapId, x: Math.round(this.player.x), y: Math.round(this.player.y), hp: Math.round(App.hp), mp: Math.round(App.mp) };
+    const summoned = App.player.mounts?.summoned || (App.player.mounts?.active ? [App.player.mounts.active] : []);
+    if (summoned.length) state.pets = Object.fromEntries(summoned.map(id => {
+      const pet = App.player.pets[id] || {};
+      return [id, { hp: Math.round(pet.hp), mp: Math.round(pet.mp), sta: Math.round(pet.sta) }];
+    }));
+    return state;
   }
 
   autoSave() {

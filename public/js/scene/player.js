@@ -1,8 +1,5 @@
 'use strict';
 /* WorldScene · Nhân vật: dựng hình, vũ khí, hoạt ảnh, thuốc, hồi phục, vầng quang, hiệu ứng lên cấp / thức tỉnh. */
-// Thắt lưng nhân vật cách bàn chân bao nhiêu px (người cưỡi thú chỉ hiện phần trên)
-const RIDER_WAIST = 22;
-
 WorldScene.mix(class WorldPlayer {
   // ------------------------------------------------------------------ Nhân vật
   playerTexKey(frame) {
@@ -73,7 +70,7 @@ WorldScene.mix(class WorldPlayer {
     this.formTier = aw && this.sheetId && Sprites.makeFormSheets(this, this.sheetId, aw.tier) ? aw.tier : 0;
     if (!this.sheetId || !this.player) return;
     this.fitFacing = this.facing || 1;
-    Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow(), this.riderLift());
+    Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow(), 0);
     this.player.setFlipX(this.fitFacing < 0);
     this.attackUntil = 0;
     this.player.play(this.charAnim('idle'));
@@ -110,7 +107,7 @@ WorldScene.mix(class WorldPlayer {
       this.formTier = 0;
       pl.setTexture(`ch_${sheet}_idle`, 0);
       this.fitFacing = this.facing || 1;
-      Sprites.fitPlayer(pl, sheet, this.fitFacing < 0, 1, this.riderLift());
+      Sprites.fitPlayer(pl, sheet, this.fitFacing < 0, 1, 0);
       pl.setFlipX(this.fitFacing < 0);
       pl.play(`ch_${sheet}_idle`);
       if (App.form) this.applyFormLook();
@@ -126,13 +123,12 @@ WorldScene.mix(class WorldPlayer {
     const pl = this.player, id = this.sheetId;
     if (this.fitFacing !== this.facing) {
       this.fitFacing = this.facing;
-      Sprites.fitPlayer(pl, id, this.facing < 0, this.formGrow(), this.riderLift());
+      Sprites.fitPlayer(pl, id, this.facing < 0, this.formGrow(), 0);
       pl.setFlipX(this.facing < 0);
     }
     if (time < (this.attackUntil || 0)) return;
     let a;
     if (time < (this.hitAnimUntil || 0)) a = 'hit';
-    else if (App.mounted) a = 'idle';   // đang cưỡi thú: ngồi yên trên lưng
     else if (!onGround) a = pl.body.velocity.y < 0 ? 'jump' : 'fall';
     else if (Math.abs(pl.body.velocity.x) > 10) a = 'run';
     else a = 'idle';
@@ -243,106 +239,118 @@ WorldScene.mix(class WorldPlayer {
   }
   skillStaminaCost(sk) { return sk.ult ? GameData.STAMINA.ult : GameData.STAMINA.skill; }
 
-  // ------------------------------------------------------------------ Thú cưỡi
-  // Phím M / nút 🐎. Chỉ có qua mã quà tặng. Đang cưỡi: chạy nhanh hơn, nhảy theo thú, không tốn thể lực khi đi;
-  // bấm đánh / kỹ năng thì tự xuống thú rồi ra đòn; trúng đòn mạnh (≥ 10% máu) thì ngã khỏi thú, 3 giây sau mới gọi lại.
-  mountDef() {
-    const m = App.player.mounts;
-    return m && m.active ? GameData.MOUNTS[m.active] || null : null;
-  }
-  // Người cưỡi được nâng lên ngồi trên lưng thú (chỉ phần hình, khung va chạm giữ nguyên)
-  // Người cưỡi chỉ hiện nửa trên (cắt ở thắt lưng, cách bàn chân RIDER_WAIST px) và thắt lưng đặt đúng mặt yên của thú.
-  // Chân người cưỡi đã vẽ sẵn trong hình thú (vắt bên hông, ủng trong bàn đạp).
-  riderLift() {
-    if (!App.mounted || !this.mountDef()) return 0;
-    return Art.mountSeat(App.player.mounts.active).h - RIDER_WAIST - 1;
-  }
-  // Cắt / bỏ cắt hình người cưỡi ở thắt lưng (chỉ gọi lại khi có gì thay đổi)
-  applyRiderCrop() {
-    const pl = this.player;
-    if (!pl) return;
-    const c = this.sheetId && Sprites.CHARS[this.sheetId];
-    const h = !App.mounted ? 0 : c ? Math.round(c.fy - RIDER_WAIST / (c.s * this.formGrow())) : Math.round((pl.frame.height || 60) - RIDER_WAIST);
-    const key = [App.mounted, this.sheetId || '', h].join('|');
-    if (this.cropKey === key) return;
-    this.cropKey = key;
-    if (h > 0) pl.setCrop(0, 0, c ? c.fw : pl.frame.width, h); else pl.setCrop();
-  }
-  // Nhân vật vẽ bằng code (chưa có bộ hình): đặt gốc / khung va chạm, có tính độ nâng khi cưỡi
+  // ------------------------------------------------------------------ Thú đồng hành
   fitDrawnHero() {
-    const pl = this.player, lift = this.riderLift();
-    pl.setScale(1).setOrigin(0.5, 0.5 + lift / (pl.height || 60));
-    pl.body.setSize(18, 46).setOffset(11, 14 + lift);
+    const pl = this.player;
+    pl.setScale(1).setOrigin(0.5, 0.5);
+    pl.body.setSize(18, 46).setOffset(11, 14);
   }
-  refitRider() {
-    if (!this.player) return;
-    if (this.sheetId) {
-      this.fitFacing = this.facing || 1;
-      Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow(), this.riderLift());
-    } else this.fitDrawnHero();
+  companionDef(id) { return GameData.MOUNTS[id] || null; }
+  summonedPetIds() {
+    const m = App.player.mounts || {};
+    const ids = Array.isArray(m.summoned) ? m.summoned : (m.active ? [m.active] : []);
+    return [...new Set(ids)].filter(id => m.owned.includes(id) && GameData.MOUNTS[id]);
   }
-  toggleMount(time) {
-    if (App.mounted) { this.dismount(); return; }
-    const p = App.player, owned = (p.mounts && p.mounts.owned) || [];
-    if (!owned.length) { UI.log('Chưa có thú cưỡi. Nhận thú cưỡi qua mã quà tặng ở Lữ khách bí ẩn.', '#bdbdbd'); return; }
-    const def = this.mountDef();
-    if (!def) { UI.openPanel('mount'); return; }
-    if (p.level < (def.level || 1)) { UI.log(`Cần đạt cấp ${def.level} để cưỡi ${def.name}.`, '#ffca28'); return; }
-    if (time < (this.mountReadyAt || 0)) { UI.log('Vừa ngã khỏi thú, chờ chút rồi gọi lại.', '#bdbdbd'); return; }
-    if (time - (this.lastHurt || -1e9) < 800) return;
-    App.mounted = true;
-    this.mountUpdate(time, true);
-    if (this.dustEm) this.dustEm.explode(14, this.player.x, this.player.y + 28);
-    Sound.play('portal');
-    UI.refresh();
-  }
-  // fall: bị đánh ngã khỏi thú
-  dismount(fall) {
-    if (!App.mounted) return;
-    App.mounted = false;
-    if (this.mountSprite) { this.mountSprite.destroy(); this.mountSprite = null; this.mountId = null; }
-    this.refitRider();
-    this.applyRiderCrop();
-    if (this.player && this.dustEm) this.dustEm.explode(8, this.player.x, this.player.y + 28);
-    if (fall) {
-      this.mountReadyAt = this.time.now + 3000;
-      if (this.player) this.floatText(this.player.x, this.player.y - 50, 'Ngã khỏi thú!', '#ffca28', 13);
+  buildCompanions() {
+    if (!this.companionSprites) this.companionSprites = {};
+    const ids = this.summonedPetIds(), wanted = new Set(ids);
+    for (const [id, c] of Object.entries(this.companionSprites)) {
+      if (wanted.has(id)) continue;
+      c.sprite.destroy();
+      delete this.companionSprites[id];
     }
-    UI.refresh();
+    const ps = GameData.petStats(App.player), pets = App.player.pets || (App.player.pets = {});
+    ids.forEach((id, index) => {
+      if (this.companionSprites[id]) return;
+      const def = this.companionDef(id), tex = PetSprites.textureKey(def.look);
+      PetSprites.createAnims(this, def.look);
+      if (!this.textures.exists(tex)) return;
+      const state = pets[id] || (pets[id] = { hp: ps.maxHp, mp: ps.maxMp, sta: ps.maxSta });
+      for (const [k, max] of [['hp', ps.maxHp], ['mp', ps.maxMp], ['sta', ps.maxSta]]) state[k] = Math.max(0, Math.min(max, Number.isFinite(state[k]) ? state[k] : max));
+      const scale = { wolf: 1.3, horse: 0.82, bird: 1.6, lizard: 0.52 }[def.look] || 1.2;
+      const x = this.player.x - this.facing * (42 + index * 24);
+      const sprite = this.add.sprite(x, this.player.body.bottom, tex, 0).setOrigin(0.5, 1).setDepth(3.6 + index * 0.001).setScale(scale).setTint(def.tint || 0xffffff);
+      if (!PetSprites.def(def.look).static) sprite.play(`pet_${def.look}_walk_anim`);
+      this.companionSprites[id] = { sprite, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
+    });
   }
-  // Mỗi khung hình: đặt thú dưới chân, chọn khung chạy / nhảy / đứng, lướt khi rơi (thú có glide)
-  mountUpdate(time, onGround) {
-    const def = App.mounted ? this.mountDef() : null;
-    if (!def) {
-      if (this.mountSprite) { this.mountSprite.destroy(); this.mountSprite = null; this.mountId = null; this.refitRider(); }
-      if (App.mounted) App.mounted = false;
-      this.applyRiderCrop();
-      return;
+  companionUpdate(time, delta) {
+    const ids = this.summonedPetIds();
+    this.buildCompanions();
+    const ps = GameData.petStats(App.player), pets = App.player.pets || {};
+    if (time >= (this.nextPetTargetScan || 0)) {
+      const pl = this.player;
+      this.petTarget = this.monsters.filter(m => m.alive && !m.def.passive && Math.abs(m.sprite.y - pl.y) < 180 && Math.abs(m.sprite.x - pl.x) < 260)
+        .sort((a, b) => Math.abs(a.sprite.x - pl.x) - Math.abs(b.sprite.x - pl.x))[0] || null;
+      this.nextPetTargetScan = time + 220;
     }
-    const pl = this.player, id = App.player.mounts.active;
-    if (!this.mountSprite || this.mountId !== id) {
-      if (this.mountSprite) this.mountSprite.destroy();
-      const key = Art.mount(this, id);
-      // Thú vẽ TRƯỚC người cưỡi (che phần chân) → trông như đang ngồi trên lưng
-      // Thú vẽ SAU người cưỡi (người ngồi trên yên); chân người cưỡi vẽ sẵn trong hình thú
-      this.mountSprite = this.add.image(pl.x, pl.body.bottom, key).setOrigin(0.5, 1).setDepth(3.95).setScale(Art.hdScale(key));
-      this.mountId = id;
-      this.refitRider();
-    }
-    const vx = Math.abs(pl.body.velocity.x);
-    const frame = !onGround ? 'jump' : vx > 10 ? 'run' + (Math.floor(time / (vx > 300 ? 70 : 95)) % 4) : 'idle';
-    const key = `mt_${id}_${frame}`;
-    const ms = this.mountSprite;
-    if (ms.texture.key !== key) ms.setTexture(key);
-    // Đặt thú sao cho mặt yên nằm ngay dưới người cưỡi
-    const seat = Art.mountSeat(id), dir = this.facing < 0 ? -1 : 1;
-    ms.setPosition(pl.x - seat.dx * dir, pl.body.bottom + 1).setFlipX(dir < 0).setAlpha(pl.alpha);
-    this.applyRiderCrop();
-    if (App.form) { const aw = GameData.awakenOf(App.player); ms.setTint(aw ? aw.tint : 0xffffff); } else ms.clearTint();
-    if (def.glide && !onGround && pl.body.velocity.y > 150) pl.body.setVelocityY(150);   // lướt chậm khi rơi
+    ids.forEach((id, index) => {
+      const c = this.companionSprites[id];
+      if (c) this.updateCompanion(id, c, index, time, delta, ps, pets[id]);
+    });
+    UI.tickPets(ps, pets, ids);
   }
-
-  // ------------------------------------------------------------------ Biến hình (thức tỉnh)
+  updateCompanion(id, c, index, time, delta, ps, state) {
+    const def = this.companionDef(id), sprite = c.sprite;
+    if (state.hp <= 0) {
+      if (!c.deadUntil) {
+        c.deadUntil = time + 15000;
+        sprite.setVisible(false);
+        UI.log(`${def.name} đã gục, sẽ hồi sinh sau 15 giây.`, '#ffb74d');
+      }
+      if (time >= c.deadUntil) {
+        c.deadUntil = 0; state.hp = Math.max(1, Math.round(ps.maxHp * 0.5)); state.mp = ps.maxMp; state.sta = ps.maxSta;
+        sprite.setVisible(true);
+      } else return;
+    }
+    const regen = delta / 1000;
+    if (time - c.lastCombat >= 3000) {
+      state.hp = Math.min(ps.maxHp, state.hp + ps.maxHp * 0.018 * regen);
+      state.mp = Math.min(ps.maxMp, state.mp + 5 * regen);
+      state.sta = Math.min(ps.maxSta, state.sta + 14 * regen);
+    }
+    const pl = this.player;
+    const target = this.petTarget && this.petTarget.alive ? this.petTarget : null;
+    let tx = pl.x - this.facing * (42 + index * 24), ty = pl.body.bottom;
+    let attacking = false;
+    if (target && !this.dead && !App.panelOpen && !this.changing) {
+      const dx = target.sprite.x - sprite.x;
+      if (Math.abs(dx) > 58) {
+        const lane = (index % 2 ? 1 : -1) * Math.ceil(index / 2) * 18;
+        tx = target.sprite.x - Math.sign(dx) * 48 + lane; ty = target.sprite.body.bottom;
+      } else {
+        attacking = true;
+        const skillId = App.player.mounts.skills?.[id] || App.player.mounts.skill || 'bite';
+        const skill = GameData.PET_SKILLS[skillId] || GameData.PET_SKILLS.bite;
+        const useSkill = time >= c.nextAttack && state.mp >= skill.mp && state.sta >= skill.sta && Math.abs(dx) <= skill.range;
+        if (useSkill) {
+          state.mp -= skill.mp; state.sta -= skill.sta; c.nextAttack = time + skill.cooldown;
+          this.damageMonster(target, skill.mult * def.atk, { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
+          c.lastCombat = time; c.attackUntil = time + 420;
+          this.floatText(sprite.x, sprite.y - 32, skill.name, '#8be9ff', 11);
+        } else if (time >= c.nextAttack && state.sta >= 4) {
+          state.sta -= 4; c.nextAttack = time + 1150;
+          this.damageMonster(target, 0.82 * def.atk, { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
+          c.lastCombat = time; c.attackUntil = time + 320;
+        }
+      }
+    }
+    sprite.x = Phaser.Math.Linear(sprite.x, tx, Math.min(1, delta / (attacking ? 90 : 140)));
+    const visual = PetSprites.def(def.look);
+    const faceLeft = this.facing < 0;
+    sprite.setFlipX(visual.baseLeft ? !faceLeft : faceLeft);
+    if (visual.static) sprite.y = Phaser.Math.Linear(sprite.y, ty, Math.min(1, delta / 140)) + Math.sin(time / 160 + index) * 2;
+    else {
+      sprite.y = Phaser.Math.Linear(sprite.y, ty, Math.min(1, delta / 140));
+      const anim = attacking ? 'run' : (Math.abs(sprite.x - tx) > 4 ? 'run' : 'walk');
+      const key = `pet_${def.look}_${anim}_anim`;
+      if (visual.frames.attack && time < c.attackUntil) {
+        const attackKey = `pet_${def.look}_attack_anim`;
+        if (sprite.anims.currentAnim?.key !== attackKey) sprite.play(attackKey, true);
+      } else if (sprite.anims.currentAnim?.key !== key) sprite.play(key, true);
+    }
+    sprite.setTint(time < c.lastCombat + 120 ? 0xffffff : (def.tint || 0xffffff));
+  }  // ------------------------------------------------------------------ Biến hình (thức tỉnh)
   // Bật/tắt bằng phím T hoặc nút ⚡. Đang biến hình: chỉ số nhân theo ấn, hào quang lửa, mỗi giây tốn `drain` năng lượng
   // và thể lực (ấn 1: 1, ấn 2: 2); MP và thể lực không tự hồi. Cạn một trong hai thì tự trở lại dạng thường.
   toggleForm(time) {
