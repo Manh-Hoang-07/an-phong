@@ -10,8 +10,8 @@
  *  - Quái ở xa ngoài màn hình tạm dừng xử lý và không vẽ.
  */
 const Quality = (() => {
-  let mode = 'auto';
-  try { mode = localStorage.getItem('tt_quality') || 'auto'; } catch { /* bỏ qua */ }
+  let mode = 'high';
+  try { mode = localStorage.getItem('tt_quality') || 'high'; } catch { /* bỏ qua */ }
   let autoLow = false;
   return {
     get mode() { return mode; },
@@ -25,8 +25,8 @@ const Quality = (() => {
  * Khung nhìn: game luôn tính toán trong khung "logic" cao 540 (rộng 720–1280 theo tỉ lệ màn hình),
  * nhưng canvas được vẽ bằng đúng số điểm ảnh thật của màn hình rồi phóng camera lên k lần.
  * Nhờ vậy tọa độ, kích thước, va chạm giữ nguyên như cũ mà hình thì nét theo màn hình.
- *   w, H : kích thước logic      k : số điểm ảnh thật trên 1 đơn vị logic
- * Để giữ mượt: k tối đa 2.5 (đồ họa Thấp: 1.5).
+ *   w, H : kích thước logic      k : số điểm ảnh vẽ trên 1 đơn vị logic
+ * Chế độ Cao supersample tới 1.5× trên màn hình thường và tận dụng thêm màn hình Retina.
  */
 const View = {
   H: 540, w: 960, k: 1,
@@ -38,8 +38,10 @@ const View = {
     // Chiều cao canvas thực sự chiếm trên màn hình (chế độ FIT, có thể có viền đen khi màn hình quá dài)
     const cssH = Math.min(ih, iw * this.H / this.w);
     const dpr = window.devicePixelRatio || 1;
-    const cap = Quality.low ? 1.5 : 2.5;
-    this.k = Math.max(0.75, Math.min(cap, cssH * dpr / this.H));
+    const high = Quality.mode === 'high';
+    const cap = Quality.low ? 1.5 : high ? 3.5 : 2.5;
+    const boost = high ? 1.5 : 1;
+    this.k = Math.max(0.75, Math.min(cap, cssH * dpr / this.H * boost));
     return this;
   },
   get pw() { return Math.round(this.w * this.k); },

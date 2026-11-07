@@ -107,13 +107,11 @@ const Sprites = (() => {
     for (const [id, m] of Object.entries(MOBS)) for (const [a, [n, r]] of Object.entries(m.anims)) mk('mb', id, a, n, r, loops.has(a));
   }
 
-  // Chọn kiểu lọc ảnh theo độ phóng thực trên màn hình (tỉ lệ bộ hình × độ nét khung nhìn k):
-  //  - phóng từ ~1.75 lần trở lên: giữ điểm ảnh sắc (NEAREST), các ô vuông gần như đều nhau
-  //  - phóng ít hoặc thu nhỏ (Pháp Sư, Toàn Năng...): lọc mượt (LINEAR) để không mất hàng điểm ảnh, không răng cưa
+  // Giữ cạnh sprite pixel-art rõ: chỉ nội suy mượt khi ảnh bị thu nhỏ dưới một điểm ảnh nguồn.
   function applyFilters(scene, k) {
     const { NEAREST, LINEAR } = Phaser.Textures.FilterMode;
     const set = (prefix, id, def) => {
-      const mode = def.s * k >= 1.75 ? NEAREST : LINEAR;
+      const mode = def.s * k >= 1 ? NEAREST : LINEAR;
       for (const a of Object.keys(def.anims)) {
         const key = `${prefix}_${id}_${a}`;
         if (scene.textures.exists(key)) scene.textures.get(key).setFilter(mode);
@@ -232,7 +230,7 @@ const Sprites = (() => {
         if (!scene.textures.exists(key)) {
           const { NEAREST, LINEAR } = Phaser.Textures.FilterMode;
           scene.textures.addSpriteSheet(key, bodyCv, { frameWidth: c.fw, frameHeight: c.fh });
-          scene.textures.get(key).setFilter(c.s * View.k >= 1.75 ? NEAREST : LINEAR);
+          scene.textures.get(key).setFilter(c.s * View.k >= 1 ? NEAREST : LINEAR);
           scene.textures.addSpriteSheet(skey, shellCv, { frameWidth: c.fw, frameHeight: c.fh });
           scene.textures.get(skey).setFilter(LINEAR);
         }

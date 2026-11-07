@@ -280,7 +280,7 @@ WorldScene.mix(class WorldPlayer {
     const ps = GameData.petStats(App.player), pets = App.player.pets || {};
     if (time >= (this.nextPetTargetScan || 0)) {
       const pl = this.player;
-      this.petTarget = this.monsters.filter(m => m.alive && !m.def.passive && Math.abs(m.sprite.y - pl.y) < 180 && Math.abs(m.sprite.x - pl.x) < 260)
+      this.petTarget = this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive && Math.abs(m.sprite.y - pl.y) < 180 && Math.abs(m.sprite.x - pl.x) < 260)
         .sort((a, b) => Math.abs(a.sprite.x - pl.x) - Math.abs(b.sprite.x - pl.x))[0] || null;
       this.nextPetTargetScan = time + 220;
     }
@@ -310,7 +310,7 @@ WorldScene.mix(class WorldPlayer {
       state.sta = Math.min(ps.maxSta, state.sta + 14 * regen);
     }
     const pl = this.player;
-    const target = this.petTarget && this.petTarget.alive ? this.petTarget : null;
+    const target = this.petTarget && this.petTarget.alive && this.petTarget.sprite?.body?.enable ? this.petTarget : null;
     let tx = pl.x - this.facing * (42 + index * 24), ty = pl.body.bottom;
     let attacking = false;
     if (target && !this.dead && !App.panelOpen && !this.changing) {

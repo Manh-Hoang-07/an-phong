@@ -37,6 +37,9 @@ class WorldScene extends Phaser.Scene {
     this.parseMap();
 
     this.monsters = [];
+    // Scene.restart() giữ lại instance WorldScene; không mang mục tiêu thú từ map cũ sang.
+    this.petTarget = null;
+    this.nextPetTargetScan = 0;
     this.npcs = [];
     this.portals = [];
     this.projectiles = this.add.group();

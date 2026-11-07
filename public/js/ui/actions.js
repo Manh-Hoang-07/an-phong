@@ -37,7 +37,7 @@
         const next = { auto: 'high', high: 'low', low: 'auto' }[Quality.mode];
         Quality.set(next);
         if (Quality.low && App.scene) App.scene.applyLowQuality();
-        else UI.log('Đồ họa cao sẽ áp dụng khi bạn chuyển bản đồ.', '#bdbdbd');
+        else if (next === 'high') UI.log('Đã bật đồ họa chất lượng cao.', '#d7bd8a');
         if (App.refit) App.refit();   // đổi độ nét khung hình (Thấp: tối đa 1.5×)
         renderPanel();
         break;

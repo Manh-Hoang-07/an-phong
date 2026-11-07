@@ -75,16 +75,19 @@ WorldScene.mix(class WorldMap {
     View.calc();
     this.applyView();
     const w = this.viewW, h = this.viewH;
-    const sky = this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_sky`).setOrigin(0).setScrollFactor(0).setDepth(-30);
-    this.bgFar = this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_far`).setOrigin(0).setScrollFactor(0).setDepth(-20);
-    this.bgNear = this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_near`).setOrigin(0).setScrollFactor(0).setDepth(-10);
+    const bgTile = (layer, depth) => this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_${layer}`)
+      .setOrigin(0).setScrollFactor(0).setDepth(depth).setTileScale(Art.hdScale(`bg_${this.theme}_${layer}`));
+    const sky = bgTile('sky', -30);
+    this.bgFar = bgTile('far', -20);
+    this.bgNear = bgTile('near', -10);
     this.screenLayers = [sky, this.bgFar, this.bgNear];
     // Lớp giữa (chiều sâu) và sương sát đất (nối nền với mặt đất); đồ họa Thấp bỏ qua cho nhẹ
     this.bgMid = null;
     if (!Quality.low) {
-      this.bgMid = this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_mid`).setOrigin(0).setScrollFactor(0).setDepth(-15);
+      this.bgMid = bgTile('mid', -15);
       const hazeTint = { city: 0xd3a37c, forest: 0xc8c4a0, cave: 0x91b7b2, redgate: 0xd89178 }[this.theme] || 0xb8aaa0;
-      const hz = this.add.tileSprite(0, 0, w, h, 'bg_haze').setOrigin(0).setScrollFactor(0).setDepth(-7).setTint(hazeTint);
+      const hz = this.add.tileSprite(0, 0, w, h, 'bg_haze').setOrigin(0).setScrollFactor(0).setDepth(-7)
+        .setTileScale(Art.hdScale('bg_haze')).setTint(hazeTint);
       // Ánh sáng chung của bản đồ: phủ rất nhẹ (nhân màu) lên cảnh, nhân vật, quái, NPC
       // để mọi thứ cùng một tông, không bị "dán" lên nền. Chữ và hiệu ứng nằm trên lớp này nên không bị ảnh hưởng.
       const gradeTint = { city: 0xffeedc, forest: 0xffead1, cave: 0xd7ece4, redgate: 0xffd9c2 }[this.theme] || 0xffffff;

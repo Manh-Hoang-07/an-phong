@@ -16,12 +16,12 @@ const Art = (() => {
   // ---------------------------------------------------------------- Bút vẽ
   // Hình vẽ nét cong (nhà, cây, đèn, pha lê, cổng, NPC) được tạo ở độ phân giải gấp HD lần và lọc mượt,
   // nên phóng to trên màn hình nét vẫn mịn. Khi đặt hình phải nhân scale với Art.hdScale(key) (xem scene.artImage).
-  // Ô đất, cỏ sỏi (dán vào ảnh ghép) và hình nhỏ khác giữ 1× kiểu điểm ảnh cho khớp với nhân vật.
-  // Nền xa giữ 1× nhưng lọc mượt (cảnh xa mềm tự nhiên, không bị vỡ khối).
+  // Ô đất và chi tiết pixel nhỏ giữ 1×; nền vẽ ở 2× để rõ trên màn hình độ phân giải cao.
   const HD = 2;
+  const BG_HD = 2;
   const HD_KEYS = /^(npc_|d_(shop|lamp|tree|dtree|shroom|crystal|redcrystal|stalactite|portal))/;
   const SMOOTH_KEYS = /^(bg_|fx_vignette$|fx_grade$|shadow$)/;
-  const hdSet = new Set();
+  const textureScale = new Map();
   // Nền lớn (960×576) chỉ vẽ cho chủ đề của bản đồ đang vào; chủ đề khác vẽ khi tới bản đồ đó → vào game nhanh hơn
   const THEME_BG = /^bg_(city|forest|cave|redgate)_/;
   let onlyTheme = null;
@@ -29,15 +29,15 @@ const Art = (() => {
     if (scene.textures.exists(key)) return;
     if (onlyTheme) { const m = THEME_BG.exec(key); if (m && m[1] !== onlyTheme) return; }
     const g = scene.make.graphics({ x: 0, y: 0, add: false });
-    const hd = HD_KEYS.test(key);
-    if (hd) g.scaleCanvas(HD, HD);
+    const scale = HD_KEYS.test(key) ? HD : (/^bg_/.test(key) || key === 'fx_vignette' ? BG_HD : 1);
+    if (scale > 1) g.scaleCanvas(scale, scale);
     draw(g);
-    g.generateTexture(key, hd ? w * HD : w, hd ? h * HD : h);
+    g.generateTexture(key, Math.round(w * scale), Math.round(h * scale));
     g.destroy();
-    if (hd) hdSet.add(key);
-    if (hd || SMOOTH_KEYS.test(key)) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
+    if (scale > 1) textureScale.set(key, scale);
+    if (scale > 1 || SMOOTH_KEYS.test(key)) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
   }
-  const hdScale = (key) => (hdSet.has(key) ? 1 / HD : 1);
+  const hdScale = (key) => 1 / (textureScale.get(key) || 1);
   const ell = (g, c, x, y, rx, ry, a = 1) => { g.fillStyle(c, a); g.fillEllipse(x, y, rx * 2, ry * 2); };
   const rect = (g, c, x, y, w, h, a = 1) => { g.fillStyle(c, a); g.fillRect(x, y, w, h); };
   const rrect = (g, c, x, y, w, h, r, a = 1) => { g.fillStyle(c, a); g.fillRoundedRect(x, y, w, h, r); };
