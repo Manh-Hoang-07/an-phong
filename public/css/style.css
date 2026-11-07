@@ -235,6 +235,8 @@ input { font: inherit; }
   background: linear-gradient(180deg, #7fe3ff, #26a8e0); box-shadow: 0 0 14px rgba(63, 208, 255, 0.45);
 }
 .btn.big { width: 100%; padding: 12px; font-size: 15px; letter-spacing: 1px; }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+.btn.ghost:hover:not(:disabled) { color: var(--text); }
 .btn.small { padding: 4px 10px; font-size: 12px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .muted { color: var(--muted); }

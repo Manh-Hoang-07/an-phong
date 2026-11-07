@@ -48,21 +48,42 @@
     if (document.readyState === 'complete') navigator.serviceWorker.register('/sw.js').catch(() => { /* bỏ qua */ });
   }
 
-  // ------------------------------------------------------------ Đăng nhập
+  // ------------------------------------------------------------ Đăng nhập / Đăng ký
   function showLogin(registerOpen, error) {
     $('login').classList.remove('hidden');
-    const reg = !!registerOpen;
-    $('lf-char').classList.toggle('hidden', !reg);
-    $('lf-submit').textContent = reg ? 'Tạo tài khoản và vào game' : 'Vào game';
-    $('lf-pass').autocomplete = reg ? 'new-password' : 'current-password';
-    $('lf-note').textContent = reg ? 'Lần đầu chạy game: tạo tài khoản của bạn. Sau đó sẽ không ai tạo thêm tài khoản được.' : '';
+    let mode = 'login';   // 'login' | 'register'
+    const canRegister = !!registerOpen;
+
+    function render() {
+      const reg = mode === 'register';
+      $('lf-char').classList.toggle('hidden', !reg);
+      $('lf-submit').textContent = reg ? 'Tạo tài khoản và vào game' : 'Vào game';
+      $('lf-pass').autocomplete = reg ? 'new-password' : 'current-password';
+      $('lf-note').textContent = reg
+        ? 'Tạo tài khoản mới để bắt đầu hành trình.'
+        : (canRegister ? '' : 'Đăng ký hiện đang đóng.');
+      const toggle = $('lf-toggle');
+      toggle.classList.toggle('hidden', !canRegister);
+      toggle.textContent = reg ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký';
+    }
+
+    $('lf-toggle').onclick = () => {
+      mode = mode === 'register' ? 'login' : 'register';
+      $('lf-error').textContent = '';
+      render();
+      $('lf-user').focus();
+    };
+
+    render();
     if (error) $('lf-error').textContent = error;
     $('login-form').onsubmit = async (e) => {
       e.preventDefault();
       $('lf-error').textContent = '';
       $('lf-submit').disabled = true;
       const u = $('lf-user').value.trim(), p = $('lf-pass').value;
-      const r = reg ? await Net.register(u, p, $('lf-char').value.trim() || u) : await Net.login(u, p);
+      const r = mode === 'register'
+        ? await Net.register(u, p, $('lf-char').value.trim() || u)
+        : await Net.login(u, p);
       $('lf-submit').disabled = false;
       if (!r.ok) { $('lf-error').textContent = r.error || 'Có lỗi xảy ra.'; return; }
       const me = await Net.me();

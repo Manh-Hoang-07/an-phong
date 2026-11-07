@@ -235,6 +235,6 @@ if [[ $WITH_NGINX -eq 1 ]]; then
 fi
 if [[ -z "$RESTORE" ]]; then
   echo
-  echo " Vào game và tạo tài khoản đầu tiên NGAY (sau đó trang đăng ký tự đóng)."
+  echo "Vào game và tạo tài khoản đầu tiên (đăng ký luôn mở, ai cũng có thể tạo tài khoản)."
 fi
 echo "================================================================"

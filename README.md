@@ -28,7 +28,7 @@ PGDATABASE=anphong
 
 Muốn dùng một chuỗi kết nối duy nhất thì thay cả 5 dòng trên bằng `DATABASE_URL=postgres://user:pass@127.0.0.1:5432/anphong`.
 
-Mở http://127.0.0.1:3100. Lần đầu vào, bạn tạo tài khoản. Sau đó trang đăng ký tự đóng, người khác không tạo thêm tài khoản được.
+Mở http://127.0.0.1:3100. Đăng ký luôn mở: bấm "Chưa có tài khoản? Đăng ký" để tạo tài khoản mới bất cứ lúc nào. Muốn đóng đăng ký thì đặt `ALLOW_REGISTER=0` khi chạy server.
 
 - Muốn điện thoại cùng wifi vào chơi: chạy `HOST=0.0.0.0 npm start` (trên Windows PowerShell: `$env:HOST='0.0.0.0'; npm start`) rồi mở `http://<IP máy tính>:3100` trên điện thoại.
 - Dữ liệu nằm trong **một** database PostgreSQL. Sao lưu: `npm run backup` (dùng `pg_dump`, file `.dump` trong `backups/`; phục hồi bằng `pg_restore --clean --no-owner -d anphong backups/anphong-....dump`).

@@ -6,7 +6,7 @@
  *   PORT=3100            cổng
  *   HOST=127.0.0.1       0.0.0.0 để điện thoại cùng wifi vào chơi được
  *   COOKIE_SECURE=1      bật khi chạy sau HTTPS (Nginx + Let's Encrypt)
- *   ALLOW_REGISTER=1     cho phép tạo thêm tài khoản (mặc định chỉ tạo được tài khoản đầu tiên)
+ *   ALLOW_REGISTER=0     đóng đăng ký tài khoản mới (mặc định đăng ký luôn mở)
  *   DATABASE_URL=...     chuỗi kết nối PostgreSQL (hoặc dùng PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE)
  */
 const http = require('http');

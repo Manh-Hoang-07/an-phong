@@ -64,13 +64,10 @@ function log(entry) {
   store.logAuth(entry).catch((e) => console.error('Ghi nhật ký tài khoản lỗi:', e.message));
 }
 
-// Chỉ cho đăng ký khi chưa có tài khoản nào, trừ khi bật ALLOW_REGISTER=1.
-// Game đưa lên internet thì người lạ không tự tạo tài khoản được.
-let anyUser = false;
+// Đăng ký luôn mở: ai cũng có thể tạo tài khoản mới bất cứ lúc nào.
+// Đặt ALLOW_REGISTER=0 để đóng đăng ký (mặc định mở).
 async function registerOpen() {
-  if (process.env.ALLOW_REGISTER === '1') return true;
-  if (!anyUser) anyUser = (await store.countUsers()) > 0;
-  return !anyUser;
+  return process.env.ALLOW_REGISTER !== '0';
 }
 
 // Chống dò mật khẩu: tối đa 10 lần sai mỗi 10 phút cho mỗi IP
