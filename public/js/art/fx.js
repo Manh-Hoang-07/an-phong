@@ -65,7 +65,7 @@ const Fx = (() => {
     });
 
     // ---------------------------------------------------------------- Chủ đề Cổng đỏ (bản đồ mở đầu)
-    const RED = { top: 0x5a2630, top2: 0x3e1a22, fill: 0x2a1218, fill2: 0x1e0c12, glow: 0xff4d5e };
+    const RED = { top: 0x87634e, top2: 0x68443e, fill: 0x302932, fill2: 0x24202b, glow: 0xd89872 };
     make(scene, 'tile_redgate_top', 32, 32, (g) => {
       rect(g, RED.fill, 0, 0, 32, 32);
       for (let i = 0; i < 6; i++) rect(g, RED.fill2, (i * 13) % 28, 12 + (i * 7) % 18, 4, 3);
@@ -79,26 +79,14 @@ const Fx = (() => {
       rect(g, RED.glow, 18, 20, 2, 2, 0.22);
     });
     make(scene, 'plank_redgate', 32, 12, (g) => {
-      rect(g, 0x120608, 0, 0, 32, 12); rect(g, 0x4a2028, 0, 1, 32, 8); rect(g, 0x6e3440, 0, 1, 32, 2); rect(g, 0x2a1016, 0, 9, 32, 3);
+      rect(g, 0x201a24, 0, 0, 32, 12); rect(g, 0x594044, 0, 1, 32, 8); rect(g, 0x987050, 0, 1, 32, 2); rect(g, 0x30242a, 0, 9, 32, 3);
       rect(g, RED.glow, 9, 4, 2, 2, 0.7);
     });
-    // trời: chuyển màu đỏ thẫm
-    Art._.gradient(scene, 'bg_redgate_sky', [0x0a0306, 0x1c070d, 0x3a0d18, 0x5a1420]);
-    make(scene, 'bg_redgate_far', 960, 576, (g) => {
-      for (let x = 0; x < 960; x += 110) { rect(g, 0x24090f, x + 18, 0, 46, 576); tri(g, 0x24090f, x, 0, x + 110, 0, x + 40, 160); }
-      g.fillStyle(0xff2d55, 0.12); g.fillCircle(480, 300, 160);
-      g.lineStyle(3, 0xff4d5e, 0.35); g.strokeEllipse(480, 300, 200, 300);
-      for (let i = 0; i < 40; i++) rect(g, 0xff6b7a, (i * 97) % 960, 80 + (i * 53) % 420, 2, 2, 0.45);
-    });
-    make(scene, 'bg_redgate_near', 960, 576, (g) => {
-      for (let x = 30; x < 960; x += 190) tri(g, 0x1a060b, x, 576, x + 70, 260, x + 140, 576);
-      g.fillStyle(0xff2d55, 0.06); g.fillRect(0, 430, 960, 90);
-    });
     make(scene, 'd_redcrystal', 50, 70, (g) => {
-      g.fillStyle(0xff4d5e, 0.22); g.fillCircle(25, 50, 24);
-      const cr = (x, h, w, c) => { tri(g, 0x12060a, x - w - 1, 70, x + w + 1, 70, x, 70 - h - 2); tri(g, c, x - w, 70, x + w, 70, x, 70 - h); };
-      cr(14, 32, 7, 0xb3263a); cr(36, 42, 8, 0xd6384c); cr(25, 60, 9, 0xff5c6e);
-      tri(g, 0xffd0d6, 25, 14, 22, 50, 26, 50, 0.7);
+      g.fillStyle(0xd89872, 0.18); g.fillCircle(25, 50, 24);
+      const cr = (x, h, w, c) => { tri(g, 0x241f29, x - w - 1, 70, x + w + 1, 70, x, 70 - h - 2); tri(g, c, x - w, 70, x + w, 70, x, 70 - h); };
+      cr(14, 32, 7, 0x825148); cr(36, 42, 8, 0xb26e55); cr(25, 60, 9, 0xd89872);
+      tri(g, 0xffd9a7, 25, 14, 22, 50, 26, 50, 0.7);
     });
 
     // ---------------------------------------------------------------- Quái Bóng Đỏ

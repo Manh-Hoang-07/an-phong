@@ -5,11 +5,11 @@
 
   // ---------------------------------------------------------------- Cảnh trí
   function decorations(scene) {
-    // Cửa hiệu kiểu đô thị: mái, biển hiệu phát sáng, cửa kính
+    // Cửa hiệu Tân Đô: gỗ sẫm, mái ngói và cửa giấy ấm màu
     const shops = [
-      { wall: 0x2b3350, neon: 0x3fd0ff, wall2: 0x1d2440 },
-      { wall: 0x3a2b4a, neon: 0xff4fa3, wall2: 0x2a1e38 },
-      { wall: 0x2f3d3a, neon: 0xffc94a, wall2: 0x232e2c },
+      { wall: 0x614238, neon: 0xd49a5e, wall2: 0x382b29 },
+      { wall: 0x594337, neon: 0xc98658, wall2: 0x342a29 },
+      { wall: 0x4b4838, neon: 0xd5b170, wall2: 0x302f2a },
     ];
     shops.forEach((s, i) => {
       make(scene, 'd_shop_' + i, 150, 170, (g) => {
@@ -18,15 +18,15 @@
         rect(g, s.wall2, 7, 1, 14, 169);                 // phía khuất
         rect(g, light(s.wall, 8), 100, 1, 43, 169, 0.35);
         // mái
-        poly(g, 0x171b26, [[0, 12], [150, 12], [140, 0], [10, 0]]);
-        poly(g, 0x2a3040, [[4, 11], [146, 11], [137, 2], [13, 2]]);
-        rect(g, s.neon, 6, 11.4, 138, 2.4, 0.55);
+        poly(g, 0x332527, [[0, 12], [150, 12], [140, 0], [10, 0]]);
+        poly(g, 0x68453a, [[4, 11], [146, 11], [137, 2], [13, 2]]);
+        rect(g, s.neon, 6, 11.4, 138, 2.4, 0.5);
         // dãy cửa sổ trên
         for (let y = 22; y < 92; y += 26) {
           for (let x = 22; x < 128; x += 30) {
             const on = ((x * 7 + y * 3 + i * 5) % 5) > 1;
-            rrect(g, 0x12151f, x - 1.5, y - 1.5, 25, 18, 3);
-            rrect(g, on ? 0xffd88a : 0x1b2130, x, y, 22, 15, 2);
+            rrect(g, 0x302725, x - 1.5, y - 1.5, 25, 18, 2);
+            rrect(g, on ? 0xd8ad75 : 0x40332d, x, y, 22, 15, 1);
             if (on) {
               rect(g, 0xfff1c9, x, y, 22, 3, 0.85);
               rect(g, 0xffe6ae, x + 3, y + 6, 6, 8, 0.45);
@@ -34,41 +34,34 @@
           }
         }
         // mái hiên
-        poly(g, 0x1a2130, [[10, 96], [140, 96], [132, 108], [18, 108]]);
-        poly(g, s.neon, [[12, 97], [138, 97], [134, 101], [16, 101]], 0.3);
-        rect(g, OUT, 12, 104, 126, 5);
-        rect(g, 0x2d3648, 13, 105, 124, 3);
-        // biển hiệu
-        rect(g, 0x0e1220, 18, 110, 114, 18, 0.95);
-        rect(g, s.neon, 20, 112, 110, 14, 0.22);
-        rect(g, s.neon, 26, 117, 98, 4, 0.9);
-        rect(g, 0xffffff, 26, 117, 98, 1.4, 0.8);
-        g.fillStyle(s.neon, 0.16); g.fillRect(12, 104, 126, 30);
-        // cửa kính
-        rrect(g, OUT, 18, 132, 114, 38, 4);
-        rrect(g, 0x101722, 20, 133, 110, 36, 3);
-        rect(g, 0xa8d8ff, 24, 137, 48, 28, 0.22);
-        rect(g, 0xa8d8ff, 78, 137, 48, 28, 0.22);
-        rect(g, s.neon, 20, 133, 110, 2.4, 0.75);
-        rect(g, 0x0b0f18, 68, 138, 16, 31);
-        // chi tiết: máy lạnh, ống nước
-        rrect(g, 0x3a4356, 118, 76, 20, 14, 2);
-        for (let k = 0; k < 3; k++) rect(g, 0x2b3242, 120, 78 + k * 4, 16, 1.4, 0.9);
-        rect(g, 0x2a3040, 8, 16, 3, 154, 0.8);
+        poly(g, 0x352827, [[10, 96], [140, 96], [132, 108], [18, 108]]);
+        poly(g, s.neon, [[12, 97], [138, 97], [134, 101], [16, 101]], 0.38);
+        rect(g, 0x302625, 12, 104, 126, 5); rect(g, 0x76503b, 13, 105, 124, 3);
+        // Biển vải treo và ô cửa shoji.
+        rect(g, 0x362728, 18, 110, 114, 18, .98);
+        rect(g, s.neon, 20, 112, 110, 14, .82);
+        for (let x = 26; x < 125; x += 13) rect(g, 0x78483c, x, 112, 1.5, 14, .48);
+        rect(g, 0xf0d3a0, 26, 116, 5, 6, .7); rect(g, 0xf0d3a0, 38, 116, 5, 6, .7);
+        // Cửa trượt gỗ, giấy ấm màu và khung đậm.
+        rrect(g, 0x2d2524, 18, 132, 114, 38, 3); rect(g, 0xc6a474, 21, 134, 108, 34, .7);
+        for (let x = 26; x < 126; x += 16) rect(g, 0x74503a, x, 134, 2, 34, .8);
+        rect(g, 0x74503a, 21, 150, 108, 2, .8); rect(g, 0x2e2524, 68, 136, 15, 32);
+        // Dầm gỗ chạy dọc mặt tiền.
+        rect(g, 0x332625, 8, 16, 4, 154, .85); rect(g, 0x936443, 11, 18, 2, 148, .55);
       });
     });
 
     // Đèn đường: thân cong, quầng sáng
     make(scene, 'd_lamp', 40, 96, (g) => {
-      g.fillStyle(0xffe6a0, 0.1); g.fillTriangle(28, 14, 6, 96, 40, 96);
-      rrect(g, 0x2e3546, 3, 6, 6, 90, 3);
-      rect(g, 0x59647a, 4.2, 8, 2, 86, 0.9);
-      bone(g, 0x2e3546, 7, 10, 26, 13, 5);
-      rrect(g, 0x2e3546, 22, 10, 14, 8, 3);
+      g.fillStyle(0xe9bd77, 0.1); g.fillTriangle(28, 14, 6, 96, 40, 96);
+      rrect(g, 0x40332c, 3, 6, 6, 90, 3);
+      rect(g, 0x8b6b4c, 4.2, 8, 2, 86, 0.9);
+      bone(g, 0x40332c, 7, 10, 26, 13, 5);
+      rrect(g, 0x40332c, 22, 10, 14, 8, 3);
       rrect(g, 0xfff0c0, 24, 12, 10, 5, 2);
       g.fillStyle(0xffe6a0, 0.3); g.fillCircle(29, 15, 10);
       g.fillStyle(0xfff8e0, 0.9); g.fillCircle(29, 14.6, 3.8);
-      rrect(g, 0x2e3546, 1, 92, 12, 4, 2);
+      rrect(g, 0x40332c, 1, 92, 12, 4, 2);
     });
 
     // Cây đô thị: bồn + tán lá nhiều lớp
@@ -137,39 +130,39 @@
 
     // Mỏ pha lê
     make(scene, 'd_crystal', 50, 70, (g) => {
-      g.fillStyle(0xb388ff, 0.18); g.fillCircle(25, 52, 24);
+      g.fillStyle(0x94c8b5, 0.15); g.fillCircle(25, 52, 24);
       const cr = (x, h, w, c) => {
         poly(g, shade(c, 35), [[x - w, 70], [x + w, 70], [x, 70 - h]]);
         poly(g, c, [[x - w * 0.6, 70], [x + w * 0.7, 70], [x, 70 - h + 2]]);
         poly(g, light(c, 25), [[x - w * 0.2, 70], [x + w * 0.2, 70], [x, 70 - h + 6]], 0.55);
       };
-      cr(14, 32, 7, 0x8a6cff);
-      cr(36, 42, 8, 0xa98bff);
-      cr(25, 58, 9, 0xc4b0ff);
-      ell(g, 0xffffff, 25, 18, 2, 5, 0.45);
-      ell(g, 0xe0d0ff, 25, 60, 14, 4, 0.35);
+      cr(14, 32, 7, 0x537f83);
+      cr(36, 42, 8, 0x78a79e);
+      cr(25, 58, 9, 0xb8d3b4);
+      ell(g, 0xffedc6, 25, 18, 2, 5, 0.45);
+      ell(g, 0xc1ddc5, 25, 60, 14, 4, 0.35);
     });
 
     // Nhũ đá treo
     make(scene, 'd_stalactite', 26, 52, (g) => {
-      poly(g, 0x2a2838, [[1, 0], [25, 0], [13, 52]]);
-      poly(g, 0x4e4f72, [[3, 0], [23, 0], [13, 46]]);
-      poly(g, 0x6a6a94, [[9, 0], [17, 0], [13, 34]], 0.8);
-      poly(g, 0xb388ff, [[11, 0], [15, 0], [13, 26]], 0.5);
-      g.fillStyle(0xb388ff, 0.14); g.fillCircle(13, 34, 10);
+      poly(g, 0x24333b, [[1, 0], [25, 0], [13, 52]]);
+      poly(g, 0x496167, [[3, 0], [23, 0], [13, 46]]);
+      poly(g, 0x72958a, [[9, 0], [17, 0], [13, 34]], 0.8);
+      poly(g, 0xc0ddc6, [[11, 0], [15, 0], [13, 26]], 0.5);
+      g.fillStyle(0x9bc8b8, 0.12); g.fillCircle(13, 34, 10);
     });
 
     // Cổng dịch chuyển: xoáy sáng nhiều lớp
     make(scene, 'd_portal', 80, 120, (g) => {
-      ell(g, 0x3fd0ff, 40, 60, 40, 60, 0.08);
-      ell(g, 0x3fd0ff, 40, 60, 33, 53, 0.14);
-      ell(g, 0x1f4fa0, 40, 60, 30, 50, 0.85);
-      ell(g, 0x2a68c8, 40, 58, 25, 44, 0.9);
-      ell(g, 0x3fd0ff, 40, 56, 18, 34, 0.55);
-      ell(g, 0x9fe8ff, 40, 54, 11, 22, 0.7);
-      ell(g, 0xeafaff, 40, 52, 5, 12, 0.85);
-      g.lineStyle(2.4, 0x9fe8ff, 0.85); g.strokeEllipse(40, 60, 66, 106);
-      g.lineStyle(1.2, 0xffffff, 0.6); g.strokeEllipse(40, 60, 54, 90);
+      ell(g, 0xe4a871, 40, 60, 40, 60, 0.1);
+      ell(g, 0xe4a871, 40, 60, 33, 53, 0.18);
+      ell(g, 0x512b41, 40, 60, 30, 50, 0.86);
+      ell(g, 0x713b4c, 40, 58, 25, 44, 0.9);
+      ell(g, 0xd28a65, 40, 56, 18, 34, 0.54);
+      ell(g, 0xf1c08a, 40, 54, 11, 22, 0.72);
+      ell(g, 0xffe5b2, 40, 52, 5, 12, 0.86);
+      g.lineStyle(2.4, 0xf0c080, 0.85); g.strokeEllipse(40, 60, 66, 106);
+      g.lineStyle(1.2, 0xffe2b4, 0.55); g.strokeEllipse(40, 60, 54, 90);
       // tia sáng vòng quanh
       for (let i = 0; i < 10; i++) {
         const an = i / 10 * Math.PI * 2;

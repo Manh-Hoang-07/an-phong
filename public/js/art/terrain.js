@@ -5,9 +5,9 @@
 
   // ---------------------------------------------------------------- Địa hình
   const THEMES = {
-    city: { top: 0x9aa0ad, top2: 0x6f7584, fill: 0x3b424e, fill2: 0x2b313b, plank: [0x3a4556, 0x8fa3c4, 0x222b38] },
-    forest: { top: 0x3c6e5c, top2: 0x2b5145, fill: 0x353b36, fill2: 0x272d28, glow: 0x7fffd4, plank: [0x4a5a52, 0x8aa79a, 0x2f3a35] },
-    cave: { top: 0x4e4f72, top2: 0x3a3a58, fill: 0x373754, fill2: 0x28283e, glow: 0xb388ff, plank: [0x4a4766, 0x7c76a8, 0x2c2a40] },
+    city: { top: 0x98816a, top2: 0x68594f, fill: 0x514941, fill2: 0x393537, plank: [0x5a4038, 0xb27b53, 0x30262a] },
+    forest: { top: 0x7e875b, top2: 0x55583f, fill: 0x514b3c, fill2: 0x35342e, glow: 0xe2ad67, plank: [0x674832, 0xb38653, 0x34291f] },
+    cave: { top: 0x68807f, top2: 0x43585e, fill: 0x34434b, fill2: 0x25323b, glow: 0xa8d6c4, plank: [0x43545a, 0x86aaa0, 0x26323a] },
   };
 
   function tiles(scene) {
@@ -18,26 +18,26 @@
         rect(g, c.fill, 0, 0, 32, 32);
         if (t === 'city') {
           // mép vỉa hè liền một dải, bên dưới là mặt nhựa mịn (không lát gạch)
-          rect(g, 0x8b93a1, 0, 0, 32, 0.9, 0.35);
-          rect(g, 0x6c7482, 0, 0.9, 32, 3.6);
-          rect(g, 0x828a98, 0, 0.9, 32, 1.1, 0.5);
-          ell(g, 0x646c7a, 9, 3.4, 7, 1.6, 0.5);
-          ell(g, 0x646c7a, 26, 2.6, 5, 1.4, 0.4);
-          rect(g, 0x4b525d, 0, 4.5, 32, 1.8);
-          rect(g, 0x242a33, 0, 6.3, 32, 1.5, 0.75);
+          rect(g, 0xd0ac76, 0, 0, 32, 0.9, 0.36);
+          rect(g, 0x92775d, 0, 0.9, 32, 3.6);
+          rect(g, 0xb39672, 0, 0.9, 32, 1.1, 0.5);
+          ell(g, 0x6d6256, 9, 3.4, 7, 1.6, 0.5);
+          ell(g, 0x6d6256, 26, 2.6, 5, 1.4, 0.4);
+          rect(g, 0x594e46, 0, 4.5, 32, 1.8);
+          rect(g, 0x373438, 0, 6.3, 32, 1.5, 0.75);
           // mảng loang rất nhẹ + một vết nứt mảnh cho đỡ phẳng
-          ell(g, 0x363d49, 7, 19, 11, 7, 0.28);
-          ell(g, 0x2c323c, 25, 25, 12, 6, 0.3);
-          line(g, 0x262c35, 12, 12, 19, 26, 0.8, 0.22);
+          ell(g, 0x65584b, 7, 19, 11, 7, 0.28);
+          ell(g, 0x403b3a, 25, 25, 12, 6, 0.3);
+          line(g, 0x302d2c, 12, 12, 19, 26, 0.8, 0.22);
         } else if (t === 'forest') {
-          rect(g, 0x7fffd4, 0, 0, 32, 1, 0.2);
+          rect(g, 0xe1b36e, 0, 0, 32, 1, 0.2);
           rect(g, c.top, 0, 0.6, 32, 4.6);
           rect(g, 0x4f9a62, 0, 0.6, 32, 2.4, 0.9);
           rect(g, 0x6fc07c, 0, 0.6, 32, 0.9, 0.55);
           // cỏ mọc tua tủa, nhiều sắc
           for (let i = 0; i < 14; i++) {
             const x = 0.6 + i * 2.3 + rnd(i) * 1.6, h = 2.6 + rnd(i, 3) * 4.6;
-            tri(g, i % 3 === 0 ? 0x7ad08a : i % 3 === 1 ? 0x5aa86e : 0x46895a, x, 1.4, x + 1.9, 1.4, x + 0.6, 1.4 - h);
+            tri(g, i % 3 === 0 ? 0xa5a466 : i % 3 === 1 ? 0x828a54 : 0x65754b, x, 1.4, x + 1.9, 1.4, x + 0.6, 1.4 - h);
           }
           rect(g, c.top2, 0, 5, 32, 2.2);
           rect(g, 0x4a3728, 0, 7.2, 32, 2.4, 0.95);

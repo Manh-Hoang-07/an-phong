@@ -83,19 +83,19 @@ WorldScene.mix(class WorldMap {
     this.bgMid = null;
     if (!Quality.low) {
       this.bgMid = this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_mid`).setOrigin(0).setScrollFactor(0).setDepth(-15);
-      const hazeTint = { city: 0x4a3a78, forest: 0x9ffff0, cave: 0x6a52a8, redgate: 0xa02838 }[this.theme] || 0x8899aa;
+      const hazeTint = { city: 0xd3a37c, forest: 0xc8c4a0, cave: 0x91b7b2, redgate: 0xd89178 }[this.theme] || 0xb8aaa0;
       const hz = this.add.tileSprite(0, 0, w, h, 'bg_haze').setOrigin(0).setScrollFactor(0).setDepth(-7).setTint(hazeTint);
       // Ánh sáng chung của bản đồ: phủ rất nhẹ (nhân màu) lên cảnh, nhân vật, quái, NPC
       // để mọi thứ cùng một tông, không bị "dán" lên nền. Chữ và hiệu ứng nằm trên lớp này nên không bị ảnh hưởng.
-      const gradeTint = { city: 0xeee8ff, forest: 0xe8f7f0, cave: 0xece4ff, redgate: 0xffe4e4 }[this.theme] || 0xffffff;
+      const gradeTint = { city: 0xffeedc, forest: 0xffead1, cave: 0xd7ece4, redgate: 0xffd9c2 }[this.theme] || 0xffffff;
       const grade = this.add.tileSprite(0, 0, w, h, 'fx_grade').setOrigin(0).setScrollFactor(0).setDepth(5.5)
         .setTint(gradeTint).setBlendMode(Phaser.BlendModes.MULTIPLY);
       this.screenLayers.push(this.bgMid, hz, grade);
     }
-    if (this.theme === 'cave') this.cameras.main.setBackgroundColor(0x0e1016);
-    if (this.theme === 'redgate') this.cameras.main.setBackgroundColor(0x12060a);
+    if (this.theme === 'cave') this.cameras.main.setBackgroundColor(0x182735);
+    if (this.theme === 'redgate') this.cameras.main.setBackgroundColor(0x21182c);
     // Hạt sáng bay lơ lửng
-    const moteColor = { city: 0xffe6a0, forest: 0x7fffd4, cave: 0xb388ff, redgate: 0xff5c5c }[this.theme];
+    const moteColor = { city: 0xf0c37f, forest: 0xe7b773, cave: 0xb7d9c7, redgate: 0xf1ae83 }[this.theme];
     this.motes = [];
     const moteCount = Quality.low ? 0 : 14;
     for (let i = 0; i < moteCount; i++) {
