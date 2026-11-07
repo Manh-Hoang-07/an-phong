@@ -30,6 +30,12 @@ const Sprites = (() => {
     tri_lieu_su: { fw: 250, fh: 250, cx: 136, fy: 167, s: 0.9, combo: ['attack1', 'attack2'],
       tint: 0x80ffb0,  // tint xanh lá nhạt để phân biệt với toan_nang
       anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [3, 12], death: [7, 10] } },
+    // Triệu Hồi Sư: Evil Wizard 3 (fw=140, pháp trượng đầu lâu, áo đỏ)
+    trieu_hoi_su: { fw: 140, fh: 140, cx: 72, fy: 99, s: 1.35, combo: ['attack1'],
+      anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [13, 18], hit: [3, 12], death: [18, 10] } },
+    // Tử Linh Thuật Sư: Evil Wizard 2 (fw=250, pháp trượng lửa tím)
+    tu_linh_thuat_su: { fw: 250, fh: 250, cx: 136, fy: 166, s: 0.9, combo: ['attack1', 'attack2'],
+      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [3, 12], death: [7, 10] } },
   };
   // bw, bh: khung va chạm trong game (px); fly: quái bay (cy = tâm thân theo chiều dọc)
   const MOBS = {
