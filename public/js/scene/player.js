@@ -348,7 +348,8 @@ WorldScene.mix(class WorldPlayer {
       const state = states[id] || (states[id] = { hp: ss.maxHp, mp: ss.maxMp, sta: ss.maxSta });
       for (const [k, max] of [['hp', ss.maxHp], ['mp', ss.maxMp], ['sta', ss.maxSta]]) state[k] = Math.max(0, Math.min(max, Number.isFinite(state[k]) ? state[k] : max));
       const scale = PetSprites.def(def.look)?.scale || 1.2;
-      const x = this.player.x + this.facing * PetSprites.gap(this.summonLooks, index);
+      const sl = PetSprites.slot(this.summonLooks, index, PetSprites.rowWidth(this.petLooks));
+      const x = this.player.x + this.facing * sl.side * sl.dist;
       const sprite = this.add.sprite(x, this.player.body.bottom, tex, 0).setOrigin(0.5, 1).setDepth(3.65 + index * 0.001).setScale(scale).setTint(def.tint || 0xffffff);
       if (!PetSprites.def(def.look).static) sprite.play(`pet_${def.look}_walk_anim`);
       this.summonSprites[id] = { sprite, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
@@ -386,7 +387,9 @@ WorldScene.mix(class WorldPlayer {
     }
     const pl = this.player;
     const target = this.petTarget && this.petTarget.alive && this.petTarget.sprite?.body?.enable ? this.petTarget : null;
-    let tx = pl.x + this.facing * PetSprites.gap(this.summonLooks || [def.look], index), ty = pl.body.bottom - (PetSprites.def(def.look)?.lift || 0);
+    // Linh thú đứng trước mặt; từ 3 con trở lên chia sang cả sau lưng (nối sau hàng thú đồng hành)
+    const sl = PetSprites.slot(this.summonLooks || [def.look], index, PetSprites.rowWidth(this.petLooks));
+    let tx = pl.x + this.facing * sl.side * sl.dist, ty = pl.body.bottom - (PetSprites.def(def.look)?.lift || 0);
     let attacking = false;
     if (target && !this.dead && !App.panelOpen && !this.changing) {
       const dx = target.sprite.x - sprite.x;
@@ -444,17 +447,28 @@ WorldScene.mix(class WorldPlayer {
       }
       let sprite, label = null;
       if (this.textures.exists(texture)) {
-        sprite = this.physics.add.sprite(this.player.x - 40 - index * 24, this.player.body.bottom, texture).setDepth(3.7 + index * 0.001);
+        sprite = this.physics.add.sprite(this.player.x + this.facing * this.shadowOffset(index, ids.length), this.player.body.bottom, texture).setDepth(3.7 + index * 0.001);
         if (sheet) { Sprites.fitMob(sprite, def.look, !def.fly); sprite.play(`mb_${sheet}_idle`); }
         else sprite.body.setSize(sprite.width * 0.7, sprite.height * 0.8).setOffset(sprite.width * 0.15, sprite.height * 0.1);
         sprite.body.setAllowGravity(false); sprite.body.setVelocity(0, 0);
         sprite.setTint(0xb58cff);
       } else {
-        sprite = this.add.ellipse(this.player.x - 40 - index * 24, this.player.body.bottom - 22, 30, 38, 0x7045a8, 0.9).setDepth(3.7 + index * 0.001);
+        sprite = this.add.ellipse(this.player.x + this.facing * this.shadowOffset(index, ids.length), this.player.body.bottom - 22, 30, 38, 0x7045a8, 0.9).setDepth(3.7 + index * 0.001);
         label = this.add.text(sprite.x, sprite.y - 8, '☠', { fontSize: '18px', color: '#e6d8ff' }).setOrigin(0.5).setDepth(3.8 + index * 0.001);
       }
       this.shadowSprites[uid] = { sprite, label, nextAttack: 0, attackUntil: 0 };
     });
+  }
+  // Bóng ma (Tử Linh): đứng sau lưng; từ 3 bóng trở lên chia xen kẽ sang trước mặt (nối sau hàng linh thú nếu có).
+  // Trả về độ lệch theo hướng nhìn: âm = sau lưng, dương = trước mặt.
+  shadowOffset(index, n) {
+    // Hàng đang đứng sẵn mỗi bên: sau lưng = thú đồng hành (+ linh thú bị chia sang); trước mặt = linh thú
+    const sm = this.summonLooks || [], split = sm.length > 2;
+    const front = sm.filter((_, i) => !split || i % 2 === 0), back = (this.petLooks || []).concat(sm.filter((_, i) => split && i % 2 === 1));
+    const start = (looks) => looks.length ? PetSprites.rowWidth(looks) + 20 : 42;
+    if (n <= 2) return -(start(back) + index * 25);
+    const k = Math.floor(index / 2);
+    return index % 2 === 0 ? -(start(back) + k * 44) : start(front) + k * 44;
   }
   shadowUpdate(time, delta) {
     this.buildShadows();
@@ -473,7 +487,7 @@ WorldScene.mix(class WorldPlayer {
       const focused = time < (this.shadowFocusUntil || 0) && this.shadowFocusTarget?.alive && this.shadowFocusTarget.sprite?.body?.enable
         ? this.shadowFocusTarget : null;
       const attackTarget = focused || target;
-      let tx = pl.x - this.facing * (42 + index * 25), ty = pl.body.bottom - 2;
+      let tx = pl.x + this.facing * this.shadowOffset(index, ids.length), ty = pl.body.bottom - 2;
       if (attackTarget && !this.dead && !App.panelOpen && !this.changing) {
         const dx = attackTarget.sprite.x - sprite.x;
         if (Math.abs(dx) > 58) { tx = attackTarget.sprite.x - Math.sign(dx) * 48; ty = attackTarget.sprite.body.bottom; }

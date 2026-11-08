@@ -71,5 +71,16 @@ const PetSprites = (() => {
     for (let i = 0; i < index && i < looks.length; i++) x += widthOf(looks[i]) * 0.85;
     return x + widthOf(looks[Math.min(index, looks.length - 1)]) * 0.5;
   }
-  return { preload, createAnims, textureKey, gap, def: (look) => DEF[look] };
+  // Bề ngang cả hàng thú (để hàng khác xếp nối sau, không chồng lên)
+  const rowWidth = (looks) => looks && looks.length ? 22 + looks.reduce((a, l) => a + widthOf(l) * 0.85, 0) : 0;
+  // Vị trí thú thứ index: side 1 = phía thường của hàng, -1 = phía đối diện; dist = khoảng cách tới nhân vật.
+  // Từ 3 con trở lên thì chia xen kẽ hai bên (con 1, 3 phía thường; con 2, 4 phía đối diện).
+  // otherBase: bề ngang hàng thú đã đứng sẵn ở phía đối diện (thú đồng hành) → hàng mới xếp nối sau.
+  function slot(looks, index, otherBase = 0) {
+    if (!looks || looks.length <= 2) return { side: 1, dist: gap(looks || [], index) };
+    const side = index % 2 === 0 ? 1 : -1;
+    const same = looks.filter((_, i) => (i % 2 === 0) === (side === 1));
+    return { side, dist: gap(same, Math.floor(index / 2)) + (side < 0 ? otherBase : 0) };
+  }
+  return { preload, createAnims, textureKey, gap, rowWidth, slot, def: (look) => DEF[look] };
 })();
