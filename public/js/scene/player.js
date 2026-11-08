@@ -286,6 +286,7 @@ WorldScene.mix(class WorldPlayer {
   buildCompanions() {
     if (!this.companionSprites) this.companionSprites = {};
     const ids = this.summonedPetIds(), wanted = new Set(ids);
+    this.petLooks = ids.map(i => this.companionDef(i).look);   // xếp hàng thú theo bề ngang từng con
     for (const [id, c] of Object.entries(this.companionSprites)) {
       if (wanted.has(id)) continue;
       c.sprite.destroy();
@@ -300,7 +301,7 @@ WorldScene.mix(class WorldPlayer {
       const state = pets[id] || (pets[id] = { hp: ps.maxHp, mp: ps.maxMp, sta: ps.maxSta });
       for (const [k, max] of [['hp', ps.maxHp], ['mp', ps.maxMp], ['sta', ps.maxSta]]) state[k] = Math.max(0, Math.min(max, Number.isFinite(state[k]) ? state[k] : max));
       const scale = PetSprites.def(def.look)?.scale || 1.2;
-      const x = this.player.x - this.facing * PetSprites.gap(def.look, index);
+      const x = this.player.x - this.facing * PetSprites.gap(this.petLooks, index);
       const sprite = this.add.sprite(x, this.player.body.bottom, tex, 0).setOrigin(0.5, 1).setDepth(3.6 + index * 0.001).setScale(scale).setTint(def.tint || 0xffffff);
       if (!PetSprites.def(def.look).static) sprite.play(`pet_${def.look}_walk_anim`);
       this.companionSprites[id] = { sprite, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
@@ -332,6 +333,7 @@ WorldScene.mix(class WorldPlayer {
   buildSummons() {
     if (!this.summonSprites) this.summonSprites = {};
     const ids = this.summonedSummonIds(), wanted = new Set(ids);
+    this.summonLooks = ids.map(i => GameData.SUMMONS[i].look);
     for (const [id, c] of Object.entries(this.summonSprites)) {
       if (wanted.has(id)) continue;
       c.sprite.destroy();
@@ -346,7 +348,7 @@ WorldScene.mix(class WorldPlayer {
       const state = states[id] || (states[id] = { hp: ss.maxHp, mp: ss.maxMp, sta: ss.maxSta });
       for (const [k, max] of [['hp', ss.maxHp], ['mp', ss.maxMp], ['sta', ss.maxSta]]) state[k] = Math.max(0, Math.min(max, Number.isFinite(state[k]) ? state[k] : max));
       const scale = PetSprites.def(def.look)?.scale || 1.2;
-      const x = this.player.x + this.facing * PetSprites.gap(def.look, index);
+      const x = this.player.x + this.facing * PetSprites.gap(this.summonLooks, index);
       const sprite = this.add.sprite(x, this.player.body.bottom, tex, 0).setOrigin(0.5, 1).setDepth(3.65 + index * 0.001).setScale(scale).setTint(def.tint || 0xffffff);
       if (!PetSprites.def(def.look).static) sprite.play(`pet_${def.look}_walk_anim`);
       this.summonSprites[id] = { sprite, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
@@ -384,13 +386,13 @@ WorldScene.mix(class WorldPlayer {
     }
     const pl = this.player;
     const target = this.petTarget && this.petTarget.alive && this.petTarget.sprite?.body?.enable ? this.petTarget : null;
-    let tx = pl.x + this.facing * PetSprites.gap(def.look, index), ty = pl.body.bottom;
+    let tx = pl.x + this.facing * PetSprites.gap(this.summonLooks || [def.look], index), ty = pl.body.bottom - (PetSprites.def(def.look)?.lift || 0);
     let attacking = false;
     if (target && !this.dead && !App.panelOpen && !this.changing) {
       const dx = target.sprite.x - sprite.x;
       if (Math.abs(dx) > 58) {
         const lane = (index % 2 ? 1 : -1) * Math.ceil(index / 2) * 18;
-        tx = target.sprite.x - Math.sign(dx) * 48 + lane; ty = target.sprite.body.bottom;
+        tx = target.sprite.x - Math.sign(dx) * 48 + lane; ty = target.sprite.body.bottom - (PetSprites.def(def.look)?.lift || 0);
       } else {
         attacking = true;
         const command = this.buffOn('rage', time);
@@ -518,13 +520,13 @@ WorldScene.mix(class WorldPlayer {
     }
     const pl = this.player;
     const target = this.petTarget && this.petTarget.alive && this.petTarget.sprite?.body?.enable ? this.petTarget : null;
-    let tx = pl.x - this.facing * PetSprites.gap(def.look, index), ty = pl.body.bottom;
+    let tx = pl.x - this.facing * PetSprites.gap(this.petLooks || [def.look], index), ty = pl.body.bottom - (PetSprites.def(def.look)?.lift || 0);
     let attacking = false;
     if (target && !this.dead && !App.panelOpen && !this.changing) {
       const dx = target.sprite.x - sprite.x;
       if (Math.abs(dx) > 58) {
         const lane = (index % 2 ? 1 : -1) * Math.ceil(index / 2) * 18;
-        tx = target.sprite.x - Math.sign(dx) * 48 + lane; ty = target.sprite.body.bottom;
+        tx = target.sprite.x - Math.sign(dx) * 48 + lane; ty = target.sprite.body.bottom - (PetSprites.def(def.look)?.lift || 0);
       } else {
         attacking = true;
         const skillId = App.player.mounts.skills?.[id] || App.player.mounts.skill || 'bite';

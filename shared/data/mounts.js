@@ -17,9 +17,9 @@
   // Nâng cấp kỹ năng tăng số lượng gọi ra và sức mạnh (xem skill th5).
   const SUMMONS = {
     linh_soi: { name: 'Linh Sói', icon: '🐺', look: 'wolf', tint: 0x9fd8ff, atk: 1, desc: 'Linh thú mặc định, nhanh nhẹn.' },
-    linh_hac: { name: 'Linh Hạc', icon: '🕊️', look: 'bird', tint: 0xffe9a8, atk: 1.05, desc: 'Linh thú mặc định, linh hoạt.' },
+    linh_hac: { name: 'Linh Phong', icon: '🐝', look: 'insect', tint: 0xffe9a8, atk: 1.05, desc: 'Linh thú mặc định, linh hoạt.' },
     linh_than: { name: 'Linh Thằn', icon: '🦎', look: 'lizard', tint: 0xa8ffb0, atk: 1.1, desc: 'Linh thú mặc định, khỏe.' },
-    linh_ky: { name: 'Linh Kỳ', icon: '🦄', look: 'horse', tint: 0xffd6f5, atk: 1.2, desc: 'Linh thú mặc định, mạnh nhất.' },
+    linh_ky: { name: 'Linh Hồ', icon: '🦊', look: 'fox', tint: 0xffe6f5, atk: 1.2, desc: 'Linh thú mặc định, mạnh nhất.' },
   };
   function petStats(player) {
     const lv = Math.max(1, player.level || 1);

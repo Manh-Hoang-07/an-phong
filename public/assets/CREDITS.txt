@@ -19,3 +19,7 @@ Các gói này không kèm file giấy phép riêng: cần kiểm tra lại đi�
 - Dạng tiến hóa: chars/kiem_thanh "Female Hero Pixel Art v1.1"; chars/dai_phap_su "Evil Wizard" (CC0);
   chars/ho_ve_bat_khuat "Hero Knight" (CC0); chars/toan_nang_tinh_thong "Medieval King Pack 2" (CC0).
 - chars/toan_nang: "Elementals fire knight FREE v1.1"; chars/tu_linh_thuat_su: Necromancer (creativekind).
+- Linh thú Triệu Hồi Sư: pets/fox-* (gói "Fox", cáo chín đuôi), pets/insect-* (gói "Insect").
+
+- chars/trieu_hoi_su: "Wanderer Magican" trong "Free Pixel Wizard 2D Art" (Free Game Assets / craftpix.net, https://free-game-assets.itch.io/free-wizard-sprite-sheets-pixel-art),
+  giấy phép craftpix: https://craftpix.net/file-licenses/ ; làm mịn 2× bằng Scale2x.

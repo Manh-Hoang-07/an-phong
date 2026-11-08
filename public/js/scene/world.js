@@ -22,7 +22,7 @@ class WorldScene extends Phaser.Scene {
     this.load.on('loaderror', () => { /* thiếu ảnh thì dùng hình vẽ bằng code */ });
     // Chỉ tải hình cần ngay: class của mình + quái trên bản đồ này. Phần còn lại tải ngầm sau khi vào game.
     Sprites.preload(this, Sprites.needed(this.mapId, App.player.school || 'none'));
-    for (const look of new Set(Object.values(GameData.MOUNTS).map(def => def.look))) PetSprites.preload(this, look);
+    for (const look of new Set([...Object.values(GameData.MOUNTS), ...Object.values(GameData.SUMMONS)].map(def => def.look))) PetSprites.preload(this, look);
     this.load.on('progress', (v) => Loading.set(0.2 + v * 0.7));
   }
 
@@ -33,7 +33,7 @@ class WorldScene extends Phaser.Scene {
     Art.makeAll(this, this.theme);
     Fx.makeAll(this, this.theme);
     Sprites.createAnims(this);
-    for (const look of new Set(Object.values(GameData.MOUNTS).map(def => def.look))) PetSprites.createAnims(this, look);
+    for (const look of new Set([...Object.values(GameData.MOUNTS), ...Object.values(GameData.SUMMONS)].map(def => def.look))) PetSprites.createAnims(this, look);
     this.parseMap();
 
     this.monsters = [];
