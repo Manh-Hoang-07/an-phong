@@ -288,7 +288,7 @@ WorldScene.mix(class WorldPlayer {
     const ids = this.summonedPetIds(), wanted = new Set(ids);
     this.petLooks = ids.map(i => this.companionDef(i).look);   // xếp hàng thú theo bề ngang từng con
     for (const [id, c] of Object.entries(this.companionSprites)) {
-      if (wanted.has(id)) continue;
+      if (wanted.has(id) && c.sprite.scene) continue;   // sprite đã bị hủy (đổi bản đồ) thì dựng lại
       c.sprite.destroy();
       delete this.companionSprites[id];
     }
@@ -335,7 +335,7 @@ WorldScene.mix(class WorldPlayer {
     const ids = this.summonedSummonIds(), wanted = new Set(ids);
     this.summonLooks = ids.map(i => GameData.SUMMONS[i].look);
     for (const [id, c] of Object.entries(this.summonSprites)) {
-      if (wanted.has(id)) continue;
+      if (wanted.has(id) && c.sprite.scene) continue;   // sprite đã bị hủy (đổi bản đồ) thì dựng lại
       c.sprite.destroy();
       delete this.summonSprites[id];
     }
@@ -429,7 +429,7 @@ WorldScene.mix(class WorldPlayer {
     const ids = data.enabled ? data.active.slice(0, data.roster.length ? 3 : 0) : [];
     const wanted = new Set(ids.map(uid => String(uid)));
     for (const [uid, c] of Object.entries(this.shadowSprites)) {
-      if (wanted.has(uid)) continue;
+      if (wanted.has(uid) && c.sprite.scene) continue;   // sprite đã bị hủy (đổi bản đồ) thì dựng lại
       c.sprite.destroy();
       if (c.label) c.label.destroy();
       delete this.shadowSprites[uid];

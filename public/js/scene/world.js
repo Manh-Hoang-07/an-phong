@@ -54,8 +54,11 @@ class WorldScene extends Phaser.Scene {
     this.invulnUntil = this.time.now + 2000;   // bất tử 2 giây khi vừa vào bản đồ
     this.portalReady = this.time.now + 800;
     this.gateArmed = false;   // vừa tới nơi (đứng ngay cổng): phải bước ra khỏi cổng rồi mới mở danh sách
+    // Sprite thú / linh thú / bóng ma của bản đồ cũ đã bị hủy cùng cảnh cũ → bỏ hết, update sẽ dựng lại
     this.companionSprites = {};
+    this.summonSprites = {};
     this.shadowSprites = {};
+    this.petLooks = []; this.summonLooks = [];
     this.nextShadowScan = 0; this.shadowTarget = null; this.shadowFocusTarget = null; this.shadowFocusUntil = 0; this.shadowPowerUntil = 0;
     this.formOn = false; this.formShell = null; this.formEms = []; this.formGlow = null; this.formTier = 0;   // hiệu ứng biến hình của cảnh cũ đã bị hủy; drawAura tự dựng lại nếu còn biến hình
     this.lastGroundAt = 0;
