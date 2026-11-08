@@ -102,7 +102,7 @@ const UI = (() => {
     }
     document.querySelectorAll('.sk-form, .tb-form').forEach(el => {
       el.classList.toggle('hidden', !hasForm);
-      el.classList.toggle('active', !!App.form);
+      el.classList.toggle('active', !!App.form && (p.formChoice !== 'evolution' || !!p.careerAwaken));   // nút biến hình chỉ sáng khi đang thức tỉnh
       if (hasForm) el.style.setProperty('--form', '#' + (awk?.aura || G.SCHOOLS[p.school]?.color || 0xb46bff).toString(16).padStart(6, '0'));
     });
     const careerName = G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]] || 'Tiến hóa';
@@ -170,12 +170,15 @@ const UI = (() => {
       const skNow = id && G.skillLevel(p, id) ? G.skillAt(id, G.skillLevel(p, id)) : null;
       const noMp = !!skNow && App.mp < Math.round(skNow.mp * st.costMul);
       const noSta = !!skNow && (!!App.staLocked || sta < (skNow.ult ? G.STAMINA.ult : G.STAMINA.skill));
+      // Khóa theo hình thái (chức nghiệp 1 / chức nghiệp 2): ô mờ hẳn đi
+      const formLock = !!skNow && !!G.skillFormBlock(p, skNow, !!App.form && p.formChoice === 'evolution');
       const touchCls = i === G.ULT_SLOT ? 'tb-ult' : 'tb-s' + i;
       for (const el of [document.querySelector(`#skillbar .sk[data-k="${i}"]`), document.querySelector(`#touch .${touchCls}`)]) {
         if (!el) continue;
         el.querySelector('.cd').style.height = h;
         el.classList.toggle('nomp', noMp);
         el.classList.toggle('nosta', noSta);
+        el.classList.toggle('formlock', formLock);
       }
     }
   }

@@ -125,7 +125,7 @@ const Sprites = (() => {
     const shadowData = App.player?.shadows || {};
     const activeSouls = shadowData.active?.length
       ? (shadowData.active || []).map(uid => shadowData.roster?.find(x => x.uid === uid)).filter(Boolean)
-      : (shadowData.roster || []).slice(0, 3);
+      : (shadowData.roster || []).slice(0, GameData.SHADOW_PARTY || 5);
     for (const soul of activeSouls) {
       const def = GameData.MONSTERS[soul.monster];
       if (def && LOOK[def.look]) mobs.add(LOOK[def.look]);

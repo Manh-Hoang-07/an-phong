@@ -32,7 +32,9 @@ WorldScene.mix(class WorldSkills {
     const lv = GameData.skillLevel(p, id);
     if (!lv) return;
     const sk = GameData.skillAt(id, lv);
-    if ((sk.evolutionKey || sk.school === 'tu_linh_thuat_su') && !App.form) { UI.log('Cần bật hình thái tiến hóa để dùng kỹ năng nhánh.', '#c6a7ff'); return; }
+    // Chức nghiệp 2 đang bật: chỉ dùng kỹ năng nhánh; tắt: chỉ dùng kỹ năng chức nghiệp 1
+    const blocked = GameData.skillFormBlock(p, sk, !!App.form && p.formChoice === 'evolution');
+    if (blocked) { if (time >= (this.formBlockMsgAt || 0)) { UI.log(blocked, '#c6a7ff'); this.formBlockMsgAt = time + 1200; } return; }
     if (time < (this.cooldowns[id] || 0)) return;
     const cost = Math.round(sk.mp * App.stats.costMul);
     if (App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }

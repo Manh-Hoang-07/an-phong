@@ -231,7 +231,7 @@ class WorldScene extends Phaser.Scene {
     const bt = this.buffTotals(time);
     // Tint: đang biến hình thì theo màu ấn thức tỉnh (ưu tiên); buff tạm thời dùng vàng nhạt;
     // khi không có gì thì dùng tint cố định của class (ví dụ tri_lieu_su xanh lá)
-    const formAw = App.form ? GameData.awakenOf(App.player) : null;
+    const formAw = this.inAwakenForm() ? this.activeAwaken() || GameData.awakenOf(App.player) : null;   // chức nghiệp (không chồng ấn): không màu ấn thức tỉnh
     const classSheet = Sprites.CHARS[this.sheetId];
     const classTint = this.evoTint || (classSheet && classSheet.tint);
     if (formAw && this.formTier) pl.clearTint();   // đã có bộ hình biến hình tô sẵn màu, không phủ thêm

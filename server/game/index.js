@@ -79,9 +79,11 @@ function migrate(p) {
   if (!p.pets || typeof p.pets !== 'object' || Array.isArray(p.pets)) p.pets = {};
   if (!p.shadows || typeof p.shadows !== 'object' || Array.isArray(p.shadows)) p.shadows = { roster: [], active: [], enabled: false, nextId: 1 };
   if (!Array.isArray(p.shadows.roster)) p.shadows.roster = [];
-  p.shadows.roster = p.shadows.roster.filter(x => x && Number.isInteger(x.uid) && G.MONSTERS[x.monster]).slice(0, 12);
+  p.shadows.roster = p.shadows.roster.filter(x => x && Number.isInteger(x.uid) && G.MONSTERS[x.monster]).slice(0, G.SHADOW_ROSTER);
   if (!Array.isArray(p.shadows.active)) p.shadows.active = [];
-  p.shadows.active = [...new Set(p.shadows.active.filter(uid => p.shadows.roster.some(x => x.uid === uid)))].slice(0, 3);
+  p.shadows.active = [...new Set(p.shadows.active.filter(uid => p.shadows.roster.some(x => x.uid === uid)))].slice(0, G.SHADOW_PARTY);
+  // Bóng ma thu từ trước khi có lưu thông số: bổ sung theo dữ liệu quái hiện tại
+  for (const soul of p.shadows.roster) if (!soul.stats && G.MONSTERS[soul.monster]) soul.stats = { ...G.monSnapshot(soul.monster, null), at: null };
   p.shadows.enabled = !!p.shadows.enabled;
   if (!Number.isInteger(p.shadows.nextId) || p.shadows.nextId < 1) p.shadows.nextId = Math.max(0, ...p.shadows.roster.map(x => x.uid)) + 1;
   const legacyPetId = p.mounts.active || p.mounts.owned[0];

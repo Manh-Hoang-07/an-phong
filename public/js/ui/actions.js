@@ -154,6 +154,7 @@
       }
       case 'rank_eval': await act('rank_eval'); break;
       case 'mount_set': await act('mount_set', { id: ds.id }); renderPanel(); break;
+      case 'summon_pick': await act('summon_pick', { id: ds.id }); renderPanel(); break;
       case 'shadow_toggle': await act('shadow_toggle'); renderPanel(); break;
       case 'shadow_party': await act('shadow_party', { uid: Number(ds.uid) }); renderPanel(); break;
       case 'shadow_release':

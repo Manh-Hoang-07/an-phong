@@ -32,12 +32,14 @@
     const mul = 1 + 0.12 * (skLv - 1);
     return { maxHp: Math.round((60 + 14 * (lv - 1)) * mul), maxMp: Math.round((24 + 4 * (lv - 1)) * mul), maxSta: Math.round((70 + 2 * (lv - 1)) * mul), atk: (6 + 1.9 * (lv - 1)) * mul, def: 1 + Math.floor((lv - 1) * 0.7) };
   }
-  // Số linh thú gọi ra theo cấp kỹ năng th5: cấp 1-4: 1 con, 5-9: 2 con, 10: 3 con
-  function summonCount(player) {
-    const skLv = (player.skills && player.skills.th5) || 0;
-    if (skLv >= 10) return 3;
-    if (skLv >= 5) return 2;
-    return skLv >= 1 ? 1 : 0;
+  // Mỗi lần chỉ gọi 1 linh thú (người chơi chọn con nào); cấp kỹ năng th5 chỉ tăng sức mạnh linh thú
+  function summonCount(player) { return ((player.skills && player.skills.th5) || 0) >= 1 ? 1 : 0; }
+  // Linh thú đang được chọn (mặc định con đầu tiên)
+  function summonChoice(player) {
+    const c = player.summons && player.summons.choice;
+    return SUMMONS[c] ? c : Object.keys(SUMMONS)[0];
   }
-  Object.assign(G, { MOUNTS, PET_SKILLS, SUMMONS, petStats, summonStats, summonCount });
+  // Bóng ma của Tử Linh Thuật Sư: tối đa 12 bóng lưu giữ, gọi ra cùng lúc tối đa 5 bóng
+  const SHADOW_ROSTER = 12, SHADOW_PARTY = 5;
+  Object.assign(G, { MOUNTS, PET_SKILLS, SUMMONS, petStats, summonStats, summonCount, summonChoice, SHADOW_ROSTER, SHADOW_PARTY });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

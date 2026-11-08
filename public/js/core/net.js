@@ -143,6 +143,16 @@ App.setPlayer = function (p) {
 App.onEvent = function (ev) {
   const sc = App.scene;
   switch (ev.t) {
+    case 'career_awaken': {
+      // Ấn thức tỉnh chồng lên chức nghiệp (Tử Linh): dựng lại hiệu ứng và bộ hình theo ấn
+      App.recalcStats();
+      if (sc?.formStop) { sc.formStop(); sc.formOn = false; sc.formDrainAcc = 0; }
+      if (sc?.formStart) sc.formStart();
+      if (ev.tier && sc?.awakenFx) sc.awakenFx(ev.tier);
+      UI.banner(ev.tier ? (ev.tier >= 2 ? 'TỬ LINH · ẤN THỨ HAI' : 'TỬ LINH · ẤN THỨ NHẤT') : 'TỬ LINH', 1200);
+      UI.refresh();
+      break;
+    }
     case 'form': App.form = !!ev.active; if (sc?.refreshPlayerLook) sc.refreshPlayerLook(); if (sc?.formStart && ev.active) sc.formStart(); else if (sc?.formStop && !ev.active) sc.formStop(); App.recalcStats(); UI.refresh(); break;
     case 'msg': UI.log(ev.text, ev.color); break;
     case 'float': if (sc && sc.player) sc.floatText(sc.player.x, sc.player.y - 40, ev.text, ev.color); if (/xu$/.test(ev.text)) Sound.play('coin'); break;

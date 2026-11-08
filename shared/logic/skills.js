@@ -38,6 +38,16 @@
     });
   }
   function skillLevel(player, id) { return (player.skills && player.skills[id]) || 0; }
+  // Kỹ năng nhánh chức nghiệp 2 (tiến hóa): có evolutionKey, hoặc kỹ năng Tử Linh Thuật Sư
+  const isCareerSkill = (s) => !!(s && (s.evolutionKey || s.school === 'tu_linh_thuat_su'));
+  // Kỹ năng có dùng được ở hình thái hiện tại không (careerOn: đang bật chức nghiệp 2). Trả về lý do khi KHÔNG dùng được.
+  // - Kỹ năng chức nghiệp 2 chỉ dùng khi đang bật chức nghiệp 2.
+  // - Đang bật chức nghiệp 2 thì mọi kỹ năng chức nghiệp 1 bị khóa. Ngoại lệ: Toàn Năng (Tinh Thông không có bộ kỹ năng riêng).
+  function skillFormBlock(player, s, careerOn) {
+    if (isCareerSkill(s)) return careerOn ? null : 'Cần bật chức nghiệp 2 để dùng kỹ năng nhánh này.';
+    if (careerOn && player.school !== 'toan_nang') return 'Đang ở chức nghiệp 2: kỹ năng chức nghiệp 1 không dùng được.';
+    return null;
+  }
 
-  Object.assign(G, { skillAt, availableSkills, skillLevel });
+  Object.assign(G, { skillAt, availableSkills, skillLevel, isCareerSkill, skillFormBlock });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

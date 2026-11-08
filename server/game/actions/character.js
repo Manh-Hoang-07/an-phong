@@ -128,8 +128,16 @@ const actions = {
     if (!G.skillLevel(p, 'th5')) fail('Hãy học kỹ năng "Triệu Hồi Linh Thú" trước.');
     p.summons = p.summons || { enabled: false, states: {} };
     p.summons.enabled = !p.summons.enabled;
-    const n = G.summonCount(p);
-    ev.push({ t: 'msg', text: p.summons.enabled ? `Đã gọi ${n} linh thú mặc định.` : 'Đã thu hồi linh thú.', color: '#8be9ff' });
+    ev.push({ t: 'msg', text: p.summons.enabled ? `Đã gọi ${G.SUMMONS[G.summonChoice(p)].name}.` : 'Đã thu hồi linh thú.', color: '#8be9ff' });
+  },
+
+  // Chọn linh thú sẽ gọi ra (mỗi lần chỉ 1 con); đang gọi thì đổi con ngay
+  summon_pick(p, a, ev) {
+    if (p.school !== 'trieu_hoi_su' && p.school !== 'tu_linh_thuat_su' && p.school !== 'toan_nang') fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
+    if (!G.SUMMONS[a.id]) fail('Không có linh thú này.');
+    p.summons = p.summons || { enabled: false, states: {} };
+    p.summons.choice = a.id;
+    ev.push({ t: 'msg', text: p.summons.enabled ? `Đã đổi linh thú: ${G.SUMMONS[a.id].name} theo bạn.` : `Đã chọn ${G.SUMMONS[a.id].name}. Dùng kỹ năng Triệu Hồi Linh Thú để gọi.`, color: '#8be9ff' });
   },
 
   shadow_toggle(p, a, ev) {
@@ -137,7 +145,7 @@ const actions = {
     p.shadows = p.shadows || { roster: [], active: [], enabled: false, nextId: 1 };
     if (!p.shadows.enabled) {
       p.shadows.enabled = true;
-      if (!p.shadows.active.length) p.shadows.active = p.shadows.roster.slice(0, 3).map(x => x.uid);
+      if (!p.shadows.active.length) p.shadows.active = p.shadows.roster.slice(0, G.SHADOW_PARTY).map(x => x.uid);
       ev.push({ t: 'msg', text: p.shadows.active.length ? `Đã gọi ${p.shadows.active.length} bóng ma.` : 'Chưa có bóng ma trong đội hình.', color: '#c6a7ff' });
     } else {
       p.shadows.enabled = false;
@@ -153,7 +161,7 @@ const actions = {
     const i = p.shadows.active.indexOf(uid);
     if (i >= 0) p.shadows.active.splice(i, 1);
     else {
-      if (p.shadows.active.length >= 3) fail('Đội đã đủ 3 bóng. Hãy bỏ chọn một bóng trước.');
+      if (p.shadows.active.length >= G.SHADOW_PARTY) fail(`Đội đã đủ ${G.SHADOW_PARTY} bóng. Hãy bỏ chọn một bóng trước.`);
       p.shadows.active.push(uid);
     }
     ev.push({ t: 'msg', text: i >= 0 ? 'Đã đưa bóng ma về bộ sưu tập.' : 'Đã thêm bóng ma vào đội hình.', color: '#c6a7ff' });

@@ -51,11 +51,12 @@ function killOne(p, a, ev, lk, now) {
     // Necromancer thu phục quái do chính người chơi kết liễu; không thay bóng cũ khi đủ chỗ.
     if ((p.school === 'tu_linh_thuat_su' || (p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formActive && p.formChoice === 'evolution')) && a.source === 'player' && !mon.boss && !mon.leader && !mon.passive && !mon.finalBoss) {
       p.shadows = p.shadows || { roster: [], active: [], enabled: false, nextId: 1 };
-      if (p.shadows.roster.length < 12) {
-        const soul = { uid: p.shadows.nextId++, monster: a.monster };
+      if (p.shadows.roster.length < G.SHADOW_ROSTER) {
+        // Lưu luôn thông số quái lúc bị hạ để xem lại trong bảng Bóng Ma
+        const soul = { uid: p.shadows.nextId++, monster: a.monster, stats: G.monSnapshot(a.monster, p.map) };
         p.shadows.roster.push(soul);
-        if (p.shadows.enabled && p.shadows.active.length < 3) p.shadows.active.push(soul.uid);
-        ev.push({ t: 'msg', text: `${mon.name} đã được lưu thành bóng ma (${p.shadows.roster.length}/12).`, color: '#c6a7ff' });
+        if (p.shadows.enabled && p.shadows.active.length < G.SHADOW_PARTY) p.shadows.active.push(soul.uid);
+        ev.push({ t: 'msg', text: `${mon.name} đã được lưu thành bóng ma (${p.shadows.roster.length}/${G.SHADOW_ROSTER}).`, color: '#c6a7ff' });
       } else if (!p.shadows.fullNotice) {
         p.shadows.fullNotice = true;
         ev.push({ t: 'msg', text: 'Bộ sưu tập bóng ma đã đầy. Hãy giải phóng chỗ trong bảng Bóng Ma để thu thêm.', color: '#ffb74d' });

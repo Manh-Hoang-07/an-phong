@@ -14,6 +14,11 @@
     return (t >= 1 && t <= AWAKENS.length) ? AWAKENS[t - 1] : null;
   }
 
+  // Ấn thức tỉnh chồng lên chức nghiệp 2: hiện chỉ Tử Linh Thuật Sư (nhánh tiến hóa của Triệu Hồi Sư)
+  function canCareerAwaken(player) {
+    return player.school === 'trieu_hoi_su' && !!player.advancement?.unlocked?.tu_linh_thuat_su && (player.awakenTier || 0) >= 1;
+  }
+
   function passivesOf(player) {
     if (!player.school) return [];
     if (player.school === 'toan_nang') return Object.keys(PASSIVES);
@@ -78,7 +83,10 @@
     const scSpeed = sc && sc.bonus && sc.bonus.speed ? sc.bonus.speed : 1;
     hp *= perkMul.hp; mp *= perkMul.mp; atk *= perkMul.atk; def *= perkMul.def;
     // Thức tỉnh: chỉ nhân thêm khi ĐANG BIẾN HÌNH (opts.form, do client bật/tắt). Server tính không có opts → chỉ số thường.
-    const aw = opts.form && player.formChoice !== 'evolution' ? (player.formChoice === 'awaken1' ? AWAKENS[0] : player.formChoice === 'awaken2' ? AWAKENS[1] : awakenOf(player)) : null;
+    // Tử Linh Thuật Sư: ấn thức tỉnh chồng lên chức nghiệp 2 (careerAwaken = bậc ấn đang bật, 0 = tắt)
+    const aw = !opts.form ? null : player.formChoice !== 'evolution'
+      ? (player.formChoice === 'awaken1' ? AWAKENS[0] : player.formChoice === 'awaken2' ? AWAKENS[1] : awakenOf(player))
+      : (player.careerAwaken ? AWAKENS[player.careerAwaken - 1] || null : null);
     if (aw && aw.mul) {
       const m = aw.mul;
       if (m.hp) hp *= m.hp;
@@ -117,7 +125,7 @@
       name,
       level: 1, exp: 0, gold: 50,
       school: null,
-      awakenTier: 0, formChoice: 'awaken1', formActive: false, hiddenNpcActive: false,
+      awakenTier: 0, formChoice: 'awaken1', formActive: false, careerAwaken: 0, hiddenNpcActive: false,
       advancement: { quest: null, done: {}, unlocked: {} },
       points: { str: 5, vit: 5, agi: 5, spi: 5 }, freePoints: 0,
       hp: null, mp: null,
@@ -145,5 +153,5 @@
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, newPlayer, bagSize, BOOST_MAX_MS, boostLeft, expBoostMul });
+  Object.assign(G, { nextAwaken, awakenOf, canCareerAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, newPlayer, bagSize, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

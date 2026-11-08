@@ -6,8 +6,14 @@ WorldScene.mix(class WorldPlayer {
     const school = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : App.player.school;
     return `hunter_${school || 'none'}_${frame}`;
   }
+  // Đang biến hình THỨC TỈNH (ấn 1 / ấn 2). Hình thái chức nghiệp (tiến hóa) cũng bật App.form nhưng là hình thái ổn định:
+  // không tốn năng lượng / thể lực mỗi giây, vẫn hồi bình thường và không có hiệu ứng của ấn thức tỉnh.
+  // Tử Linh Thuật Sư có thể bật thêm ấn thức tỉnh chồng lên chức nghiệp (App.player.careerAwaken = bậc ấn) → tính như đang thức tỉnh.
+  inAwakenForm() { return !!App.form && (App.player?.formChoice !== 'evolution' || !!App.player?.careerAwaken); }
+  inCareerForm() { return !!App.form && App.player?.formChoice === 'evolution'; }
   activeAwaken() {
     const choice = App.player?.formChoice;
+    if (choice === 'evolution') return App.player?.careerAwaken ? GameData.AWAKENS[App.player.careerAwaken - 1] || null : null;
     if (choice === 'awaken1') return GameData.AWAKENS[0] || null;
     if (choice === 'awaken2') return GameData.AWAKENS[1] || null;
     return null;
@@ -81,7 +87,7 @@ WorldScene.mix(class WorldPlayer {
     if (!this.sheetId || !this.player) return;
     this.fitFacing = this.facing || 1;
     Sprites.fitPlayer(this.player, this.sheetId, this.fitFacing < 0, this.formGrow(), 0);
-    if (App.form && !ready) this.player.setTint(aw?.aura || GameData.SCHOOLS[App.player.school]?.color || 0xb46bff);
+    if (aw && App.form && !ready) this.player.setTint(aw.aura || GameData.SCHOOLS[App.player.school]?.color || 0xb46bff);
     this.player.setFlipX(this.fitFacing < 0);
     this.attackUntil = 0;
     this.player.play(this.charAnim('idle'));
@@ -258,7 +264,7 @@ WorldScene.mix(class WorldPlayer {
     // Buff "Ân Sủng" (Trị Liệu Sư): hồi 3% máu mỗi 2 giây (1.5% mỗi giây), 5% khi skill cấp 10 — có cả khi đang đánh
     const grace = this.buffOn('grace');
     if (grace) App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * (grace.regen || 0.03) / 2);
-    if (App.form) return;
+    if (this.inAwakenForm()) return;
     const fighting = now - (this.staUsedAt || -1e9) < R.calmMs || now - (this.lastHurt || -1e9) < R.calmMs;
     if (fighting) return;
     App.hp = Math.min(App.stats.maxHp, App.hp + R.hp);
@@ -341,12 +347,11 @@ WorldScene.mix(class WorldPlayer {
     });
     UI.tickPets(ps, pets, ids);
   }
-  // Linh thú mặc định của Triệu Hồi Sư (kỹ năng th5): gọi theo số lượng của cấp kỹ năng
+  // Linh thú mặc định của Triệu Hồi Sư (kỹ năng th5): mỗi lần chỉ 1 con, con do người chơi chọn
   summonedSummonIds() {
     const s = App.player.summons;
-    if (!s || !s.enabled) return [];
-    const n = GameData.summonCount(App.player);
-    return Object.keys(GameData.SUMMONS).slice(0, n);
+    if (!s || !s.enabled || !GameData.summonCount(App.player)) return [];
+    return [GameData.summonChoice(App.player)];
   }
   buildSummons() {
     if (!this.summonSprites) this.summonSprites = {};
@@ -444,7 +449,7 @@ WorldScene.mix(class WorldPlayer {
   buildShadows() {
     if (!this.shadowSprites) this.shadowSprites = {};
     const data = App.player.shadows || { roster: [], active: [], enabled: false };
-    const ids = data.enabled ? data.active.slice(0, data.roster.length ? 3 : 0) : [];
+    const ids = data.enabled ? data.active.slice(0, data.roster.length ? GameData.SHADOW_PARTY : 0) : [];
     const wanted = new Set(ids.map(uid => String(uid)));
     for (const [uid, c] of Object.entries(this.shadowSprites)) {
       if (wanted.has(uid) && c.sprite.scene) continue;   // sprite đã bị hủy (đổi bản đồ) thì dựng lại
@@ -490,7 +495,7 @@ WorldScene.mix(class WorldPlayer {
   }
   shadowUpdate(time, delta) {
     this.buildShadows();
-    const data = App.player.shadows || {}, ids = data.enabled ? (data.active || []).slice(0, 3) : [];
+    const data = App.player.shadows || {}, ids = data.enabled ? (data.active || []).slice(0, GameData.SHADOW_PARTY) : [];
     if (!ids.length) return;
     const pl = this.player;
     if (time >= (this.nextShadowScan || 0)) {
@@ -597,6 +602,28 @@ WorldScene.mix(class WorldPlayer {
   // Bật/tắt bằng phím T hoặc nút ⚡. Đang biến hình: chỉ số nhân theo ấn, hào quang lửa, mỗi giây tốn `drain` năng lượng
   // và thể lực (ấn 1: 1, ấn 2: 2); MP và thể lực không tự hồi. Cạn một trong hai thì tự trở lại dạng thường.
   toggleForm(time) {
+    // Nút biến hình (⚡ / T) chỉ dành cho ấn thức tỉnh; hình thái chức nghiệp bật/tắt bằng nút riêng (V)
+    if (this.inCareerForm()) {
+      // Tử Linh Thuật Sư: bật / tắt ấn thức tỉnh chồng lên chức nghiệp
+      if (!GameData.canCareerAwaken(App.player)) { UI.log('Đang ở hình thái chức nghiệp. Tắt chức nghiệp (nút ✦ / phím V) trước khi biến hình.', '#c6a7ff'); return; }
+      if (!App.player.careerAwaken) {
+        if (time < (this.formReadyAt || 0)) return;
+        const drain = GameData.AWAKENS[(App.player.awakenTier >= 2 ? 2 : 1) - 1]?.drain || 3, need = drain * 3;
+        if (App.mp < need || App.sta < need || App.staLocked) { UI.log(`Không đủ năng lượng / thể lực để thức tỉnh (cần ${need}).`, '#ffca28'); return; }
+        this.formReadyAt = time + 1500;
+      }
+      Net.action('career_awaken');
+      return;
+    }
+    if (App.player.formChoice === 'evolution') {
+      const choice = App.player.awakenTier >= 2 ? 'awaken2' : App.player.awakenTier >= 1 ? 'awaken1' : null;
+      if (!choice) { UI.log('Chưa có ấn thức tỉnh để biến hình.', '#bdbdbd'); return; }
+      if (this.formSwitching) return;
+      this.formSwitching = true;
+      Net.action('form_select', { choice }).then(() => { this.formSwitching = false; if (App.player.formChoice === choice) this.toggleForm(this.time.now); })
+        .catch(() => { this.formSwitching = false; });
+      return;
+    }
     const aw = this.activeAwaken();
     const unlocked = App.player.formChoice === 'evolution' ? !!App.player.advancement?.unlocked?.[GameData.EVOLUTIONS[App.player.school]] : App.player.formChoice === 'awaken2' ? App.player.awakenTier >= 2 : App.player.awakenTier >= 1;
     if (!unlocked) { UI.log('Hình thái chưa được mở khóa. Hãy hoàn thành nhiệm vụ NPC ẩn và dùng sách tương ứng.', '#bdbdbd'); return; }
@@ -637,6 +664,7 @@ WorldScene.mix(class WorldPlayer {
     if (!App.form) return;
     const aw = this.activeAwaken();
     if ((!aw && App.player.formChoice !== 'evolution') || this.dead) { this.endForm(); return; }
+    if (this.inCareerForm() && !App.player.careerAwaken) return;   // hình thái chức nghiệp: không trừ năng lượng / thể lực
     // Trừ theo từng giây tròn (hiện số trên thanh đổi đều 1, 2 mỗi giây)
     this.formDrainAcc = (this.formDrainAcc || 0) + delta;
     while (this.formDrainAcc >= 1000) {
@@ -645,15 +673,20 @@ WorldScene.mix(class WorldPlayer {
       App.mp = Math.max(0, App.mp - drain);
       App.sta = Math.max(0, App.sta - drain);
     }
-    if (App.mp <= 0) this.endForm('Hết năng lượng, biến hình kết thúc.');
-    else if (App.sta <= 0) { App.staLocked = true; this.endForm('Hết thể lực, biến hình kết thúc.'); }
+    // Ấn thức tỉnh chồng lên chức nghiệp (Tử Linh): cạn thì chỉ tắt ấn, vẫn giữ chức nghiệp
+    const endIt = (msg) => {
+      if (this.inCareerForm()) { if (!this.overlayEnding) { this.overlayEnding = true; UI.log(msg.replace('biến hình', 'ấn thức tỉnh'), '#ffca28'); Net.action('career_awaken').finally(() => { this.overlayEnding = false; }); } }
+      else this.endForm(msg);
+    };
+    if (App.mp <= 0) endIt('Hết năng lượng, biến hình kết thúc.');
+    else if (App.sta <= 0) { App.staLocked = true; endIt('Hết thể lực, biến hình kết thúc.'); }
   }
 
   // Hồi thể lực từ từ (gọi mỗi khung hình)
   staminaTick(time, delta) {
     const S = GameData.STAMINA, max = App.stats.maxSta;
     if (App.sta == null) App.sta = max;
-    if (App.sta < max && !this.dead && !App.form) {
+    if (App.sta < max && !this.dead && !this.inAwakenForm()) {
       const rate = time - (this.staUsedAt || 0) > S.delay ? 1 : S.activeMul;
       App.sta = Math.min(max, App.sta + S.regen * rate * delta / 1000);
     }
@@ -666,6 +699,8 @@ WorldScene.mix(class WorldPlayer {
     if ((!aw && App.player.formChoice !== 'evolution') || !this.player) return;
     this.formStop();
     this.formOn = true;
+    // Hình thái chức nghiệp: chỉ đổi sang hình nhân vật tiến hóa, không hào quang / hạt lửa của ấn thức tỉnh
+    if (this.inCareerForm() && !App.player.careerAwaken) { this.refreshPlayerLook(); this.applyFormLook(); return; }   // bỏ màu ấn nếu vừa tắt ấn
     const t2 = (aw?.tier || 1) >= 2;
     // Đổi hình dạng: bộ hình tô màu ấn + to hơn (tạo luôn lớp màng hào quang cùng khung hình)
     this.applyFormLook();
