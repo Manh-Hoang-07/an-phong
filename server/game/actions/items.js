@@ -43,7 +43,11 @@ const actions = {
     const def = G.ITEMS[e.id];
     if (!def.slot) fail('Không trang bị được.');
     if ((def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level}.`);
-    if (!G.canUseItem(p, def)) fail(`Chỉ class ${G.SCHOOLS[def.school].name} (hoặc Toàn Năng) dùng được.`);
+    if (!G.canUseItem(p, def)) {
+      if (def.slot === 'weapon' && !p.school) fail('Chưa chọn class: chỉ dùng được vũ khí luyện tập.');
+      if (def.slot === 'weapon') fail(`${G.WEAPON_TYPES[def.wtype]?.name || 'Vũ khí này'} chỉ dành cho ${G.weaponOwners(def.wtype).map(s => G.SCHOOLS[s].name).join(', ') || 'class khác'}. Class ${G.SCHOOLS[p.school].name} dùng ${G.WEAPON_TYPES[G.classWeapon(p.school)].name}.`);
+      fail('Không trang bị được.');
+    }
     const old = p.equip[def.slot];
     p.bag.splice(p.bag.indexOf(e), 1);
     p.equip[def.slot] = { ...e, qty: 1 };

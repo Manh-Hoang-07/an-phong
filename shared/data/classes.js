@@ -23,33 +23,33 @@
       bonus: { hp: 1.12, mp: 1.25 },
     },
     toan_nang: {
-      name: 'Toàn Năng', weapon: 'all', color: 0xffc94a, icon: '✴️', special: true,
-      desc: 'Class đặc biệt, chỉ thức tỉnh được bằng mật mã. Dùng mọi vũ khí, học mọi kỹ năng của các class, ' +
+      name: 'Toàn Năng', weapon: 'than_binh', color: 0xffc94a, icon: '✴️', special: true,
+      desc: 'Class đặc biệt, chỉ thức tỉnh được bằng mật mã. Dùng Thần Binh, học mọi kỹ năng của các class, ' +
         'có cả 3 nội tại, thêm 1 ô kỹ năng và tuyệt kỹ riêng. Kỹ năng gây 80% sức mạnh và tốn thêm 20% năng lượng.',
       skillPower: 0.8, skillCost: 1.2, bonus: {},
     },
     sat_thu: {
-      name: 'Sát Thủ', weapon: 'kiem', color: 0xe040fb, icon: '🗡️',
+      name: 'Sát Thủ', weapon: 'song_dao', color: 0xe040fb, icon: '🗡️',
       desc: 'Tốc độ cao, chí mạng cực mạnh, máu thấp. Tấn công +20%, chí mạng +10%, tốc chạy +15%, máu -15%.',
       bonus: { atk: 1.20, critAdd: 10, speed: 1.15, hp: 0.85 },
     },
     tanker: {
-      name: 'Tanker', weapon: 'kiem', color: 0x90caf9, icon: '🛡️',
+      name: 'Tanker', weapon: 'chuy', color: 0x90caf9, icon: '🛡️',
       desc: 'Hấp thụ đòn, chịu đựng cực tốt, sát thương ổn định. Máu +40%, phòng thủ +35%, hút máu +3%, tấn công -5%.',
       bonus: { hp: 1.40, def: 1.35, lifestealAdd: 3, atk: 0.95 },
     },
     tri_lieu_su: {
-      name: 'Trị Liệu Sư', weapon: 'truong', color: 0x69f0ae, icon: '💚',
+      name: 'Trị Liệu Sư', weapon: 'thanh_truong', color: 0x69f0ae, icon: '💚',
       desc: 'Hồi máu, bảo vệ đồng đội, năng lượng dồi dào. Máu +15%, năng lượng +50%, hồi chiêu kỹ năng -10%.',
       bonus: { hp: 1.15, mp: 1.50, cdrAdd: 10 },
     },
     trieu_hoi_su: {
-      name: 'Triệu Hồi Sư', weapon: 'truong', color: 0x8d78d6, icon: '🔮',
+      name: 'Triệu Hồi Sư', weapon: 'linh_chau', color: 0x8d78d6, icon: '🔮',
       desc: 'Dùng linh lực gọi thực thể hỗ trợ chiến đấu. Năng lượng +20%, sức mạnh kỹ năng +8%.',
       bonus: { mp: 1.2, skillPower: 1.08 },
     },
     tu_linh_thuat_su: {
-      name: 'Tử Linh Thuật Sư', weapon: 'truong', color: 0xb46bff, icon: '☠️', special: true,
+      name: 'Tử Linh Thuật Sư', weapon: 'linh_chau', color: 0xb46bff, icon: '☠️', special: true,
       desc: 'Nhánh tiến hóa của Triệu Hồi Sư. Thu phục quái làm bóng ma, lưu tối đa 12 và gọi tối đa 3 cùng lúc.',
       bonus: { mp: 1.3, skillPower: 1.12 },
     },
@@ -89,12 +89,28 @@
   ];
 
   // ---------------------------------------------------------------- Vũ khí đánh thường
+  // Mỗi class chỉ dùng đúng một loại vũ khí (SCHOOLS[...].weapon). look: dáng vũ khí rời (kiem/cung/truong) dùng cho
+  // hình vẽ dự phòng, cách vung và đạn của trùm sao chép. proj/speed: đạn riêng của kiểu 'projectile'.
   const WEAPON_TYPES = {
-    tay: { name: 'Tay không', range: 46, cooldown: 400, mult: 0.8, style: 'melee' },
-    kiem: { name: 'Kiếm', range: 74, cooldown: 360, mult: 1.0, style: 'melee' },
-    cung: { name: 'Cung', range: 400, cooldown: 430, mult: 0.9, style: 'projectile' },
-    truong: { name: 'Trượng', range: 170, cooldown: 480, mult: 0.85, style: 'wave' },
+    tay: { name: 'Tay không', range: 46, cooldown: 400, mult: 0.8, style: 'melee', look: 'kiem', icon: '👊' },
+    kiem: { name: 'Kiếm', range: 74, cooldown: 360, mult: 1.0, style: 'melee', look: 'kiem', icon: '🗡️' },
+    cung: { name: 'Cung', range: 400, cooldown: 430, mult: 0.9, style: 'projectile', look: 'cung', icon: '🏹' },
+    truong: { name: 'Trượng', range: 170, cooldown: 480, mult: 0.85, style: 'wave', look: 'truong', icon: '🪄' },
+    // Sát Thủ: hai dao ngắn, đánh rất nhanh, tầm ngắn
+    song_dao: { name: 'Song Đao', range: 58, cooldown: 270, mult: 0.78, style: 'melee', look: 'kiem', icon: '🔪' },
+    // Tanker: chùy nặng + khiên, chậm nhưng đòn mạnh
+    chuy: { name: 'Chùy', range: 70, cooldown: 470, mult: 1.25, style: 'melee', look: 'kiem', icon: '🔨' },
+    // Trị Liệu Sư: sóng phép ngắn hơn trượng, ra đòn nhanh hơn chút
+    thanh_truong: { name: 'Thánh Trượng', range: 150, cooldown: 450, mult: 0.8, style: 'wave', look: 'truong', icon: '⚕️' },
+    // Triệu Hồi Sư (cả nhánh Tử Linh): bắn cầu linh lực
+    linh_chau: { name: 'Linh Châu', range: 320, cooldown: 440, mult: 0.85, style: 'projectile', look: 'truong', proj: 'proj_orb', speed: 520, icon: '🔮' },
+    // Toàn Năng: thần binh riêng
+    than_binh: { name: 'Thần Binh', range: 80, cooldown: 380, mult: 1.05, style: 'melee', look: 'kiem', icon: '⚜️' },
   };
+  // Loại vũ khí của class (Tử Linh Thuật Sư là nhánh của Triệu Hồi Sư, dùng chung Linh Châu)
+  function classWeapon(school) { return school && SCHOOLS[school] ? SCHOOLS[school].weapon : null; }
+  // Class sở hữu một loại vũ khí (để hiện "Dùng cho: ...")
+  function weaponOwners(wtype) { return Object.keys(SCHOOLS).filter(s => SCHOOLS[s].weapon === wtype && !(s === 'tu_linh_thuat_su')); }
 
   // Thể lực: tách riêng với năng lượng (MP). Đánh thường và dùng kỹ năng đều tốn; hết thì kiệt sức,
   // phải chờ hồi tới `unlock` (tỉ lệ so với tối đa) mới đánh tiếp được.
@@ -124,5 +140,5 @@
   };
   const EVOLUTION_NAMES = { kiem_thanh:'Kiếm Thánh', than_xa:'Thần Xạ', dai_phap_su:'Đại Pháp Sư', anh_vuong:'Ảnh Vương',
     ho_ve_bat_khuat:'Hộ Vệ Bất Khuất', thanh_linh:'Thánh Linh', tu_linh_thuat_su:'Tử Linh Thuật Sư', toan_nang_tinh_thong:'Toàn Năng Tinh Thông' };
-  Object.assign(G, { SCHOOLS, AWAKENS, EVOLUTIONS, EVOLUTION_NAMES, WEAPON_TYPES, PASSIVES, STAMINA, REGEN });
+  Object.assign(G, { SCHOOLS, AWAKENS, EVOLUTIONS, EVOLUTION_NAMES, WEAPON_TYPES, classWeapon, weaponOwners, PASSIVES, STAMINA, REGEN });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

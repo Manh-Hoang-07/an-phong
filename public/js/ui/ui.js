@@ -11,7 +11,7 @@ const UI = (() => {
   const visibleTabs = () => MENU_TABS.filter(([k]) => k !== 'shadows' || App.player?.school === 'tu_linh_thuat_su' || (App.player?.school === 'trieu_hoi_su' && App.player?.advancement?.unlocked?.tu_linh_thuat_su));
   let lastMenuTab = 'bag';
   const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿' };
-  const WEAPON_ICONS = { kiem: '🗡️', cung: '🏹', truong: '🪄' };
+  const WEAPON_ICONS = Object.fromEntries(Object.entries(G.WEAPON_TYPES).map(([k, w]) => [k, w.icon]));
   const statText = (k, v) => `${G.statLabel(k)} +${v}${G.statUnit(k)}`;
   const qOf = (e) => (G.ITEMS[e.id] && G.ITEMS[e.id].slot ? (e.q || 1) : 1);
   const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙' };
@@ -402,7 +402,8 @@ const UI = (() => {
     if (d.level) tags.push(`<span class="${d.level > p.level ? 'bad' : ''}">Cấp ${d.level}</span>`);
     const set = G.setOfItem(d);
     if (set) tags.push(`<span class="muted">Bộ ${set.name} (cấp ${set.min}–${set.max})</span>`);
-    if (d.school) tags.push(`<span class="${G.canUseItem({ ...p, level: 99 }, d) ? '' : 'bad'}">${G.SCHOOLS[d.school].name}</span>`);
+    if (d.slot === 'weapon' && d.wtype) tags.push(`<span class="${G.canUseItem({ ...p, level: 99 }, d) ? '' : 'bad'}">${esc(G.WEAPON_TYPES[d.wtype].name)} · ${d.school ? G.SCHOOLS[d.school].name : 'chưa chọn class'}</span>`);
+    else if (d.school) tags.push(`<span class="${G.canUseItem({ ...p, level: 99 }, d) ? '' : 'bad'}">${G.SCHOOLS[d.school].name}</span>`);
     if (tags.length) h += `<div class="muted">${tags.join(' · ')}</div>`;
     if (d.slot) {
       const s = G.instStats(entry);

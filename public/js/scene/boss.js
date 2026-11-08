@@ -156,7 +156,7 @@ WorldScene.mix(class WorldBoss {
 
   // Người Gác Lưu Trữ: sao chép đòn đánh thường của người chơi
   bossCopy(m) {
-    const wt = App.stats.wtype;
+    const wt = GameData.WEAPON_TYPES[App.stats.wtype]?.look;
     Sound.play('warn');
     UI.banner('Người Gác sao chép chiêu thức!', 1100);
     const key = wt === 'cung' ? 'proj_arrow' : wt === 'truong' ? 'proj_orb' : 'proj_fire';

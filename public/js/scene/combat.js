@@ -34,7 +34,7 @@ WorldScene.mix(class WorldCombat {
       this.slashFx(pl.x + this.facing * 28, pl.y);
       this.hitBox(pl.x + this.facing * w.range / 2, pl.y, w.range, 60, w.mult, { basic: true });
     } else if (w.style === 'projectile') {
-      this.shoot({ key: 'proj_arrow', speed: 720, range: w.range, mult: w.mult, basic: true });
+      this.shoot({ key: w.proj || 'proj_arrow', speed: w.speed || 720, range: w.range, mult: w.mult, basic: true });
     } else {
       this.shoot({ key: 'proj_orb', speed: 460, range: w.range, mult: w.mult, pierce: true, knock: 160, basic: true });
     }
@@ -42,7 +42,7 @@ WorldScene.mix(class WorldCombat {
 
   swing() {
     this.swinging = true;
-    const wt = App.stats.wtype, f = this.facing, done = () => { this.swinging = false; };
+    const wt = GameData.WEAPON_TYPES[App.stats.wtype]?.look, f = this.facing, done = () => { this.swinging = false; };
     if (wt === 'cung') {
       this.weapon.setScale(0.8, 1);
       this.tweens.add({ targets: this.weapon, scaleX: 1, duration: 140, onComplete: done });

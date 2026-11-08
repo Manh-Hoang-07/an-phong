@@ -27,7 +27,7 @@
     const add = (ids) => { for (const id of ids) if (ITEMS[id] && !list.includes(id)) list.push(id); };
     if (npcId === 'ba_thuoc' && sideDone(player, 'p5-2')) add(['thuoc_nhiem_do']);
     if (npcId === 'tap_hoa' && sideDone(player, 'p2-1')) add(['binh_mau_vua', 'binh_nl_vua']);
-    if (npcId === 'tap_hoa' && sideDone(player, 'p2-2')) add(['kiem_thep', 'cung_hop_kim', 'truong_pha_le',
+    if (npcId === 'tap_hoa' && sideDone(player, 'p2-2')) add([...Object.values(G.TIER_WEAPONS.hop_kim),   // vũ khí bậc hợp kim của mọi class
       'mu_thep', 'ao_thep', 'quan_thep', 'giay_thep', 'da_cuong_hoa_cao']);
     return list;
   }

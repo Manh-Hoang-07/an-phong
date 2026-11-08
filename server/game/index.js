@@ -10,7 +10,7 @@ const G = require('../../shared');
 const { GameError, fail } = require('./util');
 const { pruneLoot, reforgeCost, salvageStones } = require('./inventory');
 const { questComplete, currentQuest } = require('./quests');
-const { resetCost } = require('./progress');
+const { resetCost, unequipWrongWeapon } = require('./progress');
 const { ensureDaily } = require('./periodic');
 
 // Mọi hành động: tên → hàm (p, a, ev, userId)
@@ -60,6 +60,7 @@ function migrate(p) {
   if (Array.isArray(p.loot)) p.loot = p.loot.filter(l => G.ITEMS[l.inst.id]);
   for (const s of G.SLOTS) if (p.equip[s] === undefined) p.equip[s] = null;
   for (const s of G.SLOTS) G.normalizeInst(p.equip[s]);
+  unequipWrongWeapon(p, null);   // mỗi class chỉ cầm vũ khí của mình: vũ khí sai loại cất vào túi
   p.bag.forEach(G.normalizeInst);
   p.storage.forEach(G.normalizeInst);
   if (!G.MAPS[p.map]) { p.map = G.START_MAP; p.x = null; p.y = null; }

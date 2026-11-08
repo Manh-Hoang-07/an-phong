@@ -26,24 +26,14 @@
   function canUseItem(player, def) {
     if (!def || !def.slot) return false;
     if ((def.level || 1) > player.level) return false;
-    if (def.slot === 'weapon' && def.school) {
-      // Kiếm: kiem_si, sat_thu, tanker đều dùng được
-      // Trượng: phap_su, tri_lieu_su đều dùng được
-      // Cung: chỉ cung_thu
-      // Toàn Năng: dùng tất cả
-      if (player.school === 'toan_nang') return true;
-      const compat = {
-        kiem_si:    ['kiem_si', 'sat_thu', 'tanker'],
-        sat_thu:    ['kiem_si', 'sat_thu', 'tanker'],
-        tanker:     ['kiem_si', 'sat_thu', 'tanker'],
-        phap_su:    ['phap_su', 'tri_lieu_su'],
-        tri_lieu_su:['phap_su', 'tri_lieu_su'],
-        cung_thu:   ['cung_thu'],
-      };
-      const allowed = compat[player.school] || [player.school];
-      if (!allowed.includes(def.school)) return false;
-    }
+    if (def.slot === 'weapon') return canUseWeapon(player, def);
     return true;
+  }
+  // Mỗi class chỉ dùng đúng loại vũ khí của mình (SCHOOLS[...].weapon), kể cả Toàn Năng (Thần Binh).
+  // Chưa chọn class: chỉ dùng vũ khí luyện tập (không thuộc class nào).
+  function canUseWeapon(player, def) {
+    if (!player.school) return !def.school;
+    return def.wtype === G.classWeapon(player.school);
   }
 
   // Tính chỉ số cuối cùng của nhân vật từ cấp, điểm tiềm năng, trang bị và class
@@ -153,5 +143,5 @@
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, passivesOf, perksOf, canUseItem, calcStats, newPlayer, bagSize, BOOST_MAX_MS, boostLeft, expBoostMul });
+  Object.assign(G, { nextAwaken, awakenOf, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, newPlayer, bagSize, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

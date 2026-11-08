@@ -51,14 +51,13 @@ const actions = {
     const r = q.reward;
     let items = r.items.slice();
     if (r.schoolWeapon) {
-      const map = { kiem_si: ['kiem_sat'], cung_thu: ['cung_go'], phap_su: ['truong_go'],
-        toan_nang: ['kiem_sat', 'cung_go', 'truong_go'] };
-      items = items.concat((map[p.school] || []).map(id => [id, 1]));
+      // Vũ khí bậc đầu đúng loại của class
+      const id = G.classTierWeapon(p.school, 'sat');
+      if (id) items = items.concat([[id, 1]]);
     }
     if (r.craftWeapon) {
-      const map = { kiem_si: ['kiem_bang_long'], cung_thu: ['cung_bang_long'], phap_su: ['truong_bang_long'],
-        toan_nang: ['kiem_bang_long', 'cung_bang_long', 'truong_bang_long'] };
-      items = items.concat((map[p.school] || []).map(id => [id, 1]));
+      const id = G.classTierWeapon(p.school, 'bang_long');
+      if (id) items = items.concat([[id, 1]]);
     }
     const need = items.reduce((s, [id, n]) => s + slotsNeeded(p, id, n), 0);
     if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô để nhận thưởng.`);

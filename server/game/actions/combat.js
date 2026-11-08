@@ -94,7 +94,10 @@ function killOne(p, a, ev, lk, now) {
       const table = mon.boss ? 'boss' : 'normal';
       const drops = (Math.random() < chance ? 1 : 0) + (extra && Math.random() < extra ? 1 : 0);
       for (let i = 0; i < drops; i++) {
-        const id = list[Math.floor(Math.random() * list.length)];
+        let id = list[Math.floor(Math.random() * list.length)];
+        // Vũ khí rơi: chọn ngẫu nhiên trong vũ khí cùng bậc của mọi class (giữ nguyên tỉ lệ rơi vũ khí / giáp)
+        const tier = G.WEAPON_TIER_OF[id];
+        if (tier) { const row = Object.values(G.TIER_WEAPONS[tier]); id = row[Math.floor(Math.random() * row.length)]; }
         dropLoot(p, G.makeInst(id, { table }), spot(), y, ev);
       }
     }

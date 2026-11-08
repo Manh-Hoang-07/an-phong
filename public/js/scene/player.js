@@ -53,7 +53,7 @@ WorldScene.mix(class WorldPlayer {
 
   // Vị trí vũ khí trên tay theo từng loại: kiếm chĩa xuống, cung dựng đứng, trượng cầm thẳng
   placeWeapon() {
-    const pl = this.player, f = this.facing, w = this.weapon, wt = App.stats.wtype;
+    const pl = this.player, f = this.facing, w = this.weapon, wt = GameData.WEAPON_TYPES[App.stats.wtype]?.look;
     w.setFlipX(f < 0);
     if (wt === 'cung') {
       w.setPosition(pl.x + f * 12, pl.y + 4).setOrigin(f < 0 ? 0.7 : 0.3, 0.5);
@@ -122,10 +122,7 @@ WorldScene.mix(class WorldPlayer {
 
   // Dùng hình vẽ sẵn (có hoạt ảnh) nếu có, không thì dùng hình vẽ bằng code
   refreshPlayerLook() {
-    let id = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : (App.player.school || 'none');
-    // Toàn Năng biến thân theo vũ khí đang cầm (kiếm → Kiếm Sĩ, cung → Cung Thủ, trượng → Pháp Sư); hình chưa tải thì giữ hình Toàn Năng
-    const byWeapon = id === 'toan_nang' && Sprites.WEAPON_LOOK[App.stats?.wtype];
-    if (byWeapon && Sprites.hasChar(this, byWeapon)) id = byWeapon;
+    const id = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : (App.player.school || 'none');
     const look = Sprites.lookOf(id);
     const sheet = Sprites.hasChar(this, look.sheet) ? look.sheet : null;
     this.evoTint = sheet ? look.tint : null;   // dạng tiến hóa mượn hình class gốc: tô màu riêng
@@ -187,13 +184,13 @@ WorldScene.mix(class WorldPlayer {
   }
 
   updateWeaponLook() {
-    const w = App.stats.wtype;
+    const w = App.stats.wtype, look = GameData.WEAPON_TYPES[w]?.look || 'kiem';
     this.refreshPlayerLook();
-    // Hình vẽ sẵn đã cầm vũ khí trên tay nên ẩn vũ khí rời đi
+    // Hình vẽ sẵn đã cầm vũ khí trên tay nên ẩn vũ khí rời đi (vũ khí rời chỉ còn cho hình vẽ dự phòng)
     this.weapon.setVisible(w !== 'tay' && !this.sheetId);
-    if (w !== 'tay') this.weapon.setTexture('w_' + w);
+    if (w !== 'tay') this.weapon.setTexture('w_' + look);
     if (!this.sheetId) this.player.setTexture(this.playerTexKey('idle'));
-    const ico = { tay: '👊', kiem: '🗡️', cung: '🏹', truong: '🪄' }[w];
+    const ico = GameData.WEAPON_TYPES[w]?.icon || '👊';
     UI.setAttackIcon(ico);
   }
 

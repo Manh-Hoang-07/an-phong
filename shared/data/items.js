@@ -285,13 +285,58 @@
     manh_he_thong: { name: 'Mảnh Hệ Thống cuối cùng', kind: 'quest', stack: true, desc: 'Mảnh vỡ cuối cùng của Hệ thống, chứa toàn bộ dữ liệu cốt lõi.' },
 
     // ===== Vật phẩm đặc biệt / hiếm từ GDD
-    song_dao_lam_suong: { name: 'Song Đao Lam Sương', kind: 'weapon', slot: 'weapon', wtype: 'kiem', school: 'kiem_si', level: 15, minQ: 3, stats: { atk: 28, crit: 8, speed: 20 }, price: 5000, desc: 'Song đao của Lam Sương, tốc độ đánh +20%.' },
+    song_dao_lam_suong: { name: 'Song Đao Lam Sương', kind: 'weapon', slot: 'weapon', wtype: 'song_dao', school: 'sat_thu', level: 15, minQ: 3, stats: { atk: 28, crit: 8, speed: 20 }, price: 5000, desc: 'Song đao của Lam Sương, tốc độ đánh +20%.' },
     huy_hieu_binh_minh: { name: 'Huy Hiệu Bình Minh', kind: 'armor', slot: 'ngoc_boi', level: 12, minQ: 3, stats: { atk: 10, hp: 80, mp: 40 }, price: 3000, desc: 'Huy hiệu đội Bình Minh, tăng 10% tấn công khi đi cùng Vy.' },
     thuong_bang_suong: { name: 'Thượng Băng Sương', kind: 'weapon', slot: 'weapon', wtype: 'kiem', school: 'kiem_si', level: 27, minQ: 4, stats: { atk: 65, hp: 150, def: 10 }, price: 25000, desc: 'Kiếm băng tạo vùng làm chậm 40% xung quanh nhân vật.' },
     vuong_mien_tri_thuc: { name: 'Vương Miện Tri Thức', kind: 'armor', slot: 'mu', level: 36, minQ: 4, stats: { def: 25, hp: 300, mp: 150, cdr: 15 }, price: 80000, desc: 'Giảm 15% hồi chiêu toàn bộ kỹ năng.' },
     sach_ky_nang_vo_dinh: { name: 'Sách kỹ năng Vô Định', kind: 'book', stack: true, price: 0, desc: 'Cho phép cộng tối đa 1 kỹ năng vượt cấp giới hạn.' },
     than_kiem_vinh_hang: { name: 'Thần Kiếm Vĩnh Hằng', kind: 'weapon', slot: 'weapon', wtype: 'kiem', school: 'kiem_si', level: 45, minQ: 4, stats: { atk: 130, def: 15, hp: 250, boss: 30 }, price: 0, desc: 'Gây sát thương chuẩn xuyên giáp quái Hư Không.' },
   };
+
+  // ---------------------------------------------------------------- Vũ khí riêng từng class
+  // Kiếm (Kiếm Sĩ), Cung (Cung Thủ), Trượng (Pháp Sư) viết tay ở trên. 5 loại còn lại tạo tự động cho đủ 11 bậc,
+  // cùng cấp / giá / phẩm chất tối thiểu với kiếm hoặc trượng cùng bậc, chỉ số chỉnh theo lối chơi của class.
+  // WEAPON_TIERS: [hậu tố id, kiếm cùng bậc, cung cùng bậc, trượng cùng bậc, tên bậc]
+  const WEAPON_TIERS = [
+    ['sat', 'kiem_sat', 'cung_go', 'truong_go', 'thép'],
+    ['hop_kim', 'kiem_thep', 'cung_hop_kim', 'truong_pha_le', 'hợp kim'],
+    ['thach_vuong', 'kiem_thach_quy', 'cung_thach_vuong', 'truong_thach_vuong', 'Thạch Vương'],
+    ['bang_long', 'kiem_bang_long', 'cung_bang_long', 'truong_bang_long', 'Băng Long'],
+    ['luu_tru', 'kiem_luu_tru', 'cung_luu_tru', 'truong_luu_tru', 'Lưu Trữ'],
+    ['vinh_hang', 'kiem_vinh_hang', 'cung_vinh_hang', 'truong_vinh_hang', 'Vĩnh Hằng'],
+    ['thien_khoi', 'kiem_thien_khoi', 'cung_thien_khoi', 'truong_thien_khoi', 'Thiên Khôi'],
+    ['long_mach', 'kiem_long_mach', 'cung_long_mach', 'truong_long_mach', 'Long Mạch'],
+    ['tinh_van', 'kiem_tinh_van', 'cung_tinh_van', 'truong_tinh_van', 'Tinh Vân'],
+    ['than_mong', 'kiem_than_mong', 'cung_than_mong', 'truong_than_mong', 'Thần Mộng'],
+    ['sang_the', 'kiem_sang_the', 'cung_sang_the', 'truong_sang_the', 'Sáng Thế'],
+  ];
+  const r0 = (v) => Math.max(1, Math.round(v));
+  // [loại, class, tên, gốc ('kiem' | 'truong'), cách đổi chỉ số]
+  const GEN_WEAPONS = [
+    ['song_dao', 'sat_thu', 'Song Đao', 'kiem', (s, lv) => ({ atk: r0(s.atk * 0.92), crit: r0(3 + lv * 0.12), ...(s.hp ? { hp: r0(s.hp * 0.8) } : {}) })],
+    ['chuy', 'tanker', 'Chùy', 'kiem', (s) => ({ atk: r0(s.atk * 0.95), def: r0((s.def || 1) * 1.6 + 2), ...(s.hp ? { hp: r0(s.hp * 1.3) } : {}) })],
+    ['than_binh', 'toan_nang', 'Thần Binh', 'kiem', (s, lv) => ({ atk: r0(s.atk), crit: r0(1 + lv * 0.06), ...(s.hp ? { hp: r0(s.hp) } : {}) })],
+    ['thanh_truong', 'tri_lieu_su', 'Thánh Trượng', 'truong', (s) => ({ atk: r0(s.atk * 0.9), mp: r0((s.mp || 10) * 1.3), ...(s.hp ? { hp: r0(s.hp * 1.1) } : {}) })],
+    ['linh_chau', 'trieu_hoi_su', 'Linh Châu', 'truong', (s) => ({ atk: r0(s.atk * 0.95), mp: r0((s.mp || 10) * 1.15), ...(s.hp ? { hp: r0(s.hp) } : {}) })],
+  ];
+  // Vũ khí cùng bậc của từng loại: WEAPON_TIER_OF[id] = hậu tố bậc; TIER_WEAPONS[hậu tố][loại] = id
+  const TIER_WEAPONS = {}, WEAPON_TIER_OF = {};
+  for (const [suf, kiemId, cungId, truongId, tierName] of WEAPON_TIERS) {
+    const row = TIER_WEAPONS[suf] = { kiem: kiemId, cung: cungId, truong: truongId };
+    for (const [wtype, school, name, base, stat] of GEN_WEAPONS) {
+      const b = ITEMS[base === 'kiem' ? kiemId : truongId];
+      const id = `${wtype}_${suf}`;
+      ITEMS[id] = { name: `${name} ${tierName}`, kind: 'weapon', slot: 'weapon', wtype, school, level: b.level,
+        ...(b.minQ ? { minQ: b.minQ } : {}), stats: stat(b.stats, b.level), price: b.price };
+      row[wtype] = id;
+    }
+    for (const id of Object.values(row)) WEAPON_TIER_OF[id] = suf;
+  }
+  // Vũ khí bậc đầu của class (thưởng khi chọn class) và vũ khí Băng Long (thưởng chế tạo cốt truyện)
+  function classTierWeapon(school, suf) {
+    const wt = G.classWeapon ? G.classWeapon(school) : null;
+    return wt && TIER_WEAPONS[suf] ? TIER_WEAPONS[suf][wt] || null : null;
+  }
 
   const SLOTS = ['weapon', 'mu', 'ao', 'gang_tay', 'dai_lung', 'quan', 'giay', 'nhan', 'day_chuyen', 'ngoc_boi'];
   const SLOT_NAMES = {
@@ -321,5 +366,5 @@
     { id: 10, name: 'Sáng Thế', min: 91, max: 100, desc: 'Trang bị thợ săn cấp 91–100.' },
   ];
 
-  Object.assign(G, { ITEMS, SLOTS, SLOT_NAMES, SET_LEVELS, SETS });
+  Object.assign(G, { ITEMS, SLOTS, SLOT_NAMES, SET_LEVELS, SETS, WEAPON_TIERS, TIER_WEAPONS, WEAPON_TIER_OF, classTierWeapon });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

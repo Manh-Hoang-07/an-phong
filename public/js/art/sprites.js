@@ -55,14 +55,11 @@ const Sprites = (() => {
   const EVO_ALIAS = { than_xa: ['cung_thu', 0x9dffd4], anh_vuong: ['sat_thu', 0xd7a6ff], thanh_linh: ['tri_lieu_su', 0xfff1b8] };
   // Bộ hình + màu riêng cho một class / dạng tiến hóa
   const lookOf = (id) => EVO_ALIAS[id] ? { sheet: EVO_ALIAS[id][0], tint: EVO_ALIAS[id][1] } : { sheet: id, tint: null };
-  // Toàn Năng đổi hình theo loại vũ khí đang cầm (tay không: hình Toàn Năng)
-  const WEAPON_LOOK = { kiem: 'kiem_si', cung: 'cung_thu', truong: 'phap_su' };
-  // Các bộ hình nhân vật cần cho class: hình class + hình dạng tiến hóa (+ hình theo vũ khí của Toàn Năng)
+  // Các bộ hình nhân vật cần cho class: hình class + hình dạng tiến hóa
   const charsFor = (school) => {
     const out = [CHARS[school] ? school : 'none'];
     const evo = GameData.EVOLUTIONS && GameData.EVOLUTIONS[school];
     if (evo && CHARS[lookOf(evo).sheet]) out.push(lookOf(evo).sheet);
-    if (school === 'toan_nang') out.push(...Object.values(WEAPON_LOOK));
     return out;
   };
   // bw, bh: khung va chạm trong game (px); fly: quái bay (cy = tâm thân theo chiều dọc)
@@ -335,5 +332,5 @@ const Sprites = (() => {
     if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
   }
 
-  return { CHARS, MOBS, LOOK, lookOf, WEAPON_LOOK, LOOK_TINT, codeTex, tintOf, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
+  return { CHARS, MOBS, LOOK, lookOf, LOOK_TINT, codeTex, tintOf, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
 })();

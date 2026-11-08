@@ -31,6 +31,20 @@ function gainGold(p, amount, ev) {
   ev.push({ t: 'float', text: `+${fmt(amount)} xu`, color: '#ffd54f' });
 }
 
+// Vũ khí đang cầm không đúng loại của class (đổi class, hoặc dữ liệu từ trước khi tách vũ khí theo class):
+// tháo ra cất vào túi; túi đầy thì cất vào kho; cả hai đầy vẫn cất vào túi (vượt giới hạn) để không mất đồ.
+function unequipWrongWeapon(p, ev) {
+  const w = p.equip && p.equip.weapon;
+  if (!w || !G.ITEMS[w.id] || G.canUseWeapon(p, G.ITEMS[w.id])) return false;
+  p.equip.weapon = null;
+  const item = { ...w, qty: 1 };
+  const toStorage = G.bagSize(p) - p.bag.length < 1 && Array.isArray(p.storage) && p.storage.length < G.STORAGE_SIZE;
+  (toStorage ? p.storage : p.bag).push(item);
+  const wt = G.classWeapon(p.school), wName = wt ? G.WEAPON_TYPES[wt].name : 'vũ khí luyện tập';
+  if (ev) ev.push({ t: 'msg', text: `Đã tháo ${G.ITEMS[w.id].name} cất vào ${toStorage ? 'kho' : 'túi'}: class ${p.school ? G.SCHOOLS[p.school].name : 'hiện tại'} chỉ dùng ${wName}.`, color: '#ffb74d' });
+  return true;
+}
+
 // Đặt class: trả lại toàn bộ điểm kỹ năng đã cộng, xóa ô kỹ năng
 function setSchool(p, school, ev) {
   const evolve = p.school === 'trieu_hoi_su' && school === 'tu_linh_thuat_su';
@@ -41,6 +55,7 @@ function setSchool(p, school, ev) {
     p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
   }
   p.school = school;
+  unequipWrongWeapon(p, ev);
   if (school !== 'tu_linh_thuat_su' && p.shadows) p.shadows.enabled = false;
   p.formActive = false;
   const st = G.calcStats(p, { form: false });
@@ -57,4 +72,4 @@ function clampHpMp(p) {
   if (p.mp != null) p.mp = Math.min(p.mp, st.maxMp);
 }
 
-module.exports = { gainExp, gainGold, setSchool, resetCost, clampHpMp };
+module.exports = { gainExp, gainGold, setSchool, resetCost, clampHpMp, unequipWrongWeapon };
