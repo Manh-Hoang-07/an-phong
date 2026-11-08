@@ -793,3 +793,22 @@ html.compact body.touch #quest-track { width: min(190px, calc(var(--gw, 100vw) *
   .sk { width: 46px; height: 48px; border-radius: 10px; }
   .panel-box { border-radius: 13px; }
 }
+
+/* Túi đồ trên điện thoại nằm ngang (khung thấp): cả bảng không cuộn nữa; 3 cột trang bị / túi / chi tiết cao bằng
+   phần còn lại của bảng và mỗi cột tự cuộn riêng → cột chi tiết dùng hết chiều cao, vuốt không bị lẫn với cuộn cả bảng. */
+html.compact body.touch .panel-box.fixed {
+  width: min(calc(var(--gw, 100vw) * .92), calc(var(--gw, 100vw) - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  height: calc(var(--gh, 100dvh) - 12px - env(safe-area-inset-bottom, 0px)); max-height: calc(var(--gh, 100dvh) - 12px - env(safe-area-inset-bottom, 0px));
+}
+html.compact #panel-body.inv-mode { display: flex; flex-direction: column; overflow: hidden; }
+html.compact #panel-body.inv-mode > .tabs, html.compact #panel-body.inv-mode > .inv-wallet { flex: 0 0 auto; }
+html.compact #panel-body.inv-mode > .inv-wallet { margin: 0 0 6px; padding: 5px 10px; }
+html.compact #panel-body.inv-mode > .inv {
+  flex: 1 1 auto; min-height: 0;
+  grid-template-columns: 108px minmax(0, 1fr) minmax(230px, 38%); grid-template-rows: minmax(0, 1fr);
+}
+html.compact #panel-body.inv-mode > .inv > div {
+  min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch;
+}
+html.compact #panel-body.inv-mode .inv-detail,
+html.compact body.touch #panel-body.inv-mode .inv-detail { max-height: none; }

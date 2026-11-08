@@ -357,6 +357,9 @@ const UI = (() => {
     const detailKey = S.selected ? `${S.selected.where}:${S.selected.key}` : '';
     const detailScroll = same && panel.lastDetailKey === detailKey ? (body.querySelector('.inv-detail')?.scrollTop || 0) : 0;
     const scroll = same ? body.scrollTop : 0;
+    // Túi đồ trên điện thoại nằm ngang: mỗi cột (trang bị / túi) tự cuộn → giữ vị trí cuộn khi bảng vẽ lại
+    const colScroll = same ? [...body.querySelectorAll('.inv > div:not(.inv-detail)')].map(el => el.scrollTop) : [];
+    body.classList.toggle('inv-mode', panel.name === 'bag');
     panel.lastName = panel.name;
     panel.lastDetailKey = detailKey;
     // Bảng được vẽ lại mỗi khi server trả lời (kể cả lần tự lưu 10 giây một lần). Giữ nguyên chữ đang gõ và con trỏ
@@ -377,6 +380,7 @@ const UI = (() => {
     body.scrollTop = scroll;
     const detail = body.querySelector('.inv-detail');
     if (detail) detail.scrollTop = detailScroll;
+    body.querySelectorAll('.inv > div:not(.inv-detail)').forEach((el, i) => { if (colScroll[i]) el.scrollTop = colScroll[i]; });
   }
 
   function act(type, params) { return Net.action(type, params); }
