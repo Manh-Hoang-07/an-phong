@@ -24,7 +24,7 @@
     },
     toan_nang: {
       name: 'Toàn Năng', weapon: 'than_binh', color: 0xffc94a, icon: '✴️', special: true,
-      desc: 'Class đặc biệt, chỉ thức tỉnh được bằng mật mã. Dùng Thần Binh, học mọi kỹ năng của các class, ' +
+      desc: 'Class đặc biệt, chỉ thức tỉnh được bằng mật mã. Dùng Thần Binh và mọi vũ khí của các class khác (cầm vũ khí class nào thì hóa thân thành class đó), học mọi kỹ năng của các class, ' +
         'có cả 3 nội tại, thêm 1 ô kỹ năng và tuyệt kỹ riêng. Kỹ năng gây 80% sức mạnh và tốn thêm 20% năng lượng.',
       skillPower: 0.8, skillCost: 1.2, bonus: {},
     },

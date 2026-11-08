@@ -29,10 +29,12 @@
     if (def.slot === 'weapon') return canUseWeapon(player, def);
     return true;
   }
-  // Mỗi class chỉ dùng đúng loại vũ khí của mình (SCHOOLS[...].weapon), kể cả Toàn Năng (Thần Binh).
+  // Mỗi class chỉ dùng đúng loại vũ khí của mình (SCHOOLS[...].weapon).
+  // Ngoại lệ: Toàn Năng dùng Thần Binh và mọi vũ khí của class khác (cầm vũ khí class nào thì hiện hình class đó).
   // Chưa chọn class: chỉ dùng vũ khí luyện tập (không thuộc class nào).
   function canUseWeapon(player, def) {
     if (!player.school) return !def.school;
+    if (player.school === 'toan_nang') return true;
     return def.wtype === G.classWeapon(player.school);
   }
 

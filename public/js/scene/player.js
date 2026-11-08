@@ -121,8 +121,29 @@ WorldScene.mix(class WorldPlayer {
   }
 
   // Dùng hình vẽ sẵn (có hoạt ảnh) nếu có, không thì dùng hình vẽ bằng code
+  // Tải ngay bộ hình một class (Toàn Năng vừa đổi vũ khí) rồi vẽ lại nhân vật; bộ tải đang bận thì chờ rồi thử lại
+  loadCharNow(id) {
+    if (!this.sys.isActive() || this.charLoading === id || (this.charFailed && this.charFailed[id])) return;
+    if (this.load.isLoading()) { this.time.delayedCall(300, () => { if (!Sprites.hasChar(this, id)) this.loadCharNow(id); }); return; }
+    if (!Sprites.preload(this, { chars: new Set([id]), mobs: new Set() })) return;
+    this.charLoading = id;
+    this.load.once('complete', () => {
+      this.charLoading = null;
+      if (!this.sys.isActive()) return;
+      if (!Sprites.hasChar(this, id)) { (this.charFailed = this.charFailed || {})[id] = true; return; }   // tải lỗi: không thử lại mãi
+      Sprites.createAnims(this);
+      Sprites.applyFilters(this, View.k);
+      if (this.player) this.refreshPlayerLook();
+    });
+    this.load.start();
+  }
+
   refreshPlayerLook() {
-    const id = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : (App.player.school || 'none');
+    let id = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : (App.player.school || 'none');
+    // Toàn Năng cầm vũ khí của class khác → hóa thân thành class đó (hình chưa tải xong thì tạm giữ hình Toàn Năng)
+    const byWeapon = id === 'toan_nang' && Sprites.weaponClass(App.stats?.wtype);
+    if (byWeapon && Sprites.hasChar(this, byWeapon)) id = byWeapon;
+    else if (byWeapon) this.loadCharNow(byWeapon);
     const look = Sprites.lookOf(id);
     const sheet = Sprites.hasChar(this, look.sheet) ? look.sheet : null;
     this.evoTint = sheet ? look.tint : null;   // dạng tiến hóa mượn hình class gốc: tô màu riêng

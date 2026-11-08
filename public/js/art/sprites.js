@@ -55,11 +55,19 @@ const Sprites = (() => {
   const EVO_ALIAS = { than_xa: ['cung_thu', 0x9dffd4], anh_vuong: ['sat_thu', 0xd7a6ff], thanh_linh: ['tri_lieu_su', 0xfff1b8] };
   // Bộ hình + màu riêng cho một class / dạng tiến hóa
   const lookOf = (id) => EVO_ALIAS[id] ? { sheet: EVO_ALIAS[id][0], tint: EVO_ALIAS[id][1] } : { sheet: id, tint: null };
-  // Các bộ hình nhân vật cần cho class: hình class + hình dạng tiến hóa
+  // Toàn Năng cầm vũ khí của class khác thì hóa thân thành class đó: class sở hữu loại vũ khí (Thần Binh / tay không: null)
+  const weaponClass = (wtype) => {
+    const owner = wtype && GameData.weaponOwners ? GameData.weaponOwners(wtype).find(s => s !== 'toan_nang') : null;
+    return owner && CHARS[owner] ? owner : null;
+  };
+  // Các bộ hình nhân vật cần cho class: hình class + hình dạng tiến hóa (+ hình class theo vũ khí đang cầm của Toàn Năng)
   const charsFor = (school) => {
     const out = [CHARS[school] ? school : 'none'];
     const evo = GameData.EVOLUTIONS && GameData.EVOLUTIONS[school];
     if (evo && CHARS[lookOf(evo).sheet]) out.push(lookOf(evo).sheet);
+    const w = school === 'toan_nang' && typeof App !== 'undefined' && App.player?.equip?.weapon;
+    const byWeapon = w && GameData.ITEMS[w.id] ? weaponClass(GameData.ITEMS[w.id].wtype) : null;
+    if (byWeapon) out.push(byWeapon);
     return out;
   };
   // bw, bh: khung va chạm trong game (px); fly: quái bay (cy = tâm thân theo chiều dọc)
@@ -332,5 +340,5 @@ const Sprites = (() => {
     if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
   }
 
-  return { CHARS, MOBS, LOOK, lookOf, LOOK_TINT, codeTex, tintOf, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
+  return { CHARS, MOBS, LOOK, lookOf, weaponClass, LOOK_TINT, codeTex, tintOf, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
 })();
