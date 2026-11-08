@@ -230,7 +230,7 @@ class WorldScene extends Phaser.Scene {
     // khi không có gì thì dùng tint cố định của class (ví dụ tri_lieu_su xanh lá)
     const formAw = App.form ? GameData.awakenOf(App.player) : null;
     const classSheet = Sprites.CHARS[this.sheetId];
-    const classTint = classSheet && classSheet.tint;
+    const classTint = this.evoTint || (classSheet && classSheet.tint);
     if (formAw && this.formTier) pl.clearTint();   // đã có bộ hình biến hình tô sẵn màu, không phủ thêm
     else if (formAw) pl.setTint(formAw.tint);      // nhân vật vẽ bằng code (chưa có bộ hình): chỉ đổi màu
     else if (bt.atk || bt.crit || bt.speed) pl.setTint(0xfff3b0);

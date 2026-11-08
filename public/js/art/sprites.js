@@ -9,33 +9,61 @@
  */
 const Sprites = (() => {
   const CHARS = {
-    none: { fw: 324, fh: 324, cx: 171, fy: 202, s: 0.625, combo: ['attack1', 'attack2', 'attack3'],
+    // Các bộ pixel art cũ đã đưa về đúng điểm ảnh gốc (trước đây phóng to sẵn 2 lần → bị thu nhỏ mượt, nhòe)
+    none: { fw: 162, fh: 162, cx: 85.5, fy: 101, s: 1.25, combo: ['attack1', 'attack2', 'attack3'],
       anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 18], attack2: [7, 18], attack3: [8, 18], hit: [3, 12], death: [7, 10] } },
-    kiem_si: { fw: 252, fh: 252, cx: 135, fy: 164, s: 0.675, combo: ['attack1', 'attack2', 'attack3'],
-      anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 20], attack2: [6, 20], attack3: [9, 20], hit: [3, 12], death: [11, 12] } },
-    cung_thu: { fw: 200, fh: 200, cx: 101, fy: 134, s: 0.775, combo: ['attack1'],
+    // Kiếm Sĩ: Knight Man (hiệp sĩ giáp trắng, vẽ tay HD, 3 đường chém)
+    kiem_si: { fw: 238, fh: 194, cx: 73, fy: 189, s: 0.45, hd: true, combo: ['attack1', 'attack2', 'attack3'],
+      anims: { idle: [10, 10], run: [10, 16], jump: [3, 10], fall: [3, 10], attack1: [8, 20], attack2: [8, 20], attack3: [9, 20], hit: [4, 12], death: [11, 12] } },
+    cung_thu: { fw: 200, fh: 200, cx: 101, fy: 134, s: 0.775, hd: true, combo: ['attack1'],
       anims: { idle: [10, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [6, 16], hit: [3, 12], death: [10, 12] } },
-    phap_su: { fw: 462, fh: 380, cx: 220, fy: 282, s: 0.34, combo: ['attack1', 'attack2'],
+    phap_su: { fw: 231, fh: 190, cx: 110, fy: 141, s: 0.68, combo: ['attack1', 'attack2'],
       anims: { idle: [6, 8], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [4, 12], death: [7, 10] } },
-    toan_nang: { fw: 500, fh: 500, cx: 272, fy: 334, s: 0.45, combo: ['attack1', 'attack2'],
-      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [3, 12], death: [7, 10] } },
+    // Toàn Năng: Fire Knight (kiếm lớn, chiêu lửa)
+    toan_nang: { fw: 171, fh: 108, cx: 51, fy: 107, s: 1.3, combo: ['attack1', 'attack2', 'attack3'],
+      anims: { idle: [8, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [11, 18], attack2: [12, 18], attack3: [14, 18], hit: [4, 12], death: [13, 10] } },
     // ---- 3 class mới
-    // Sát Thủ: Martial Hero 3 (fw=252, tay không/dao nhanh, 3 combo)
-    sat_thu: { fw: 252, fh: 252, cx: 135, fy: 164, s: 0.675, combo: ['attack1', 'attack2', 'attack3'],
-      anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 22], attack2: [6, 22], attack3: [9, 22], hit: [3, 12], death: [11, 12] } },
-    // Tanker: Fantasy Warrior (fw=324, kiếm to + khiên, 3 combo)
-    tanker: { fw: 324, fh: 324, cx: 171, fy: 202, s: 0.625, combo: ['attack1', 'attack2', 'attack3'],
-      anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 16], attack2: [7, 16], attack3: [8, 16], hit: [3, 12], death: [7, 10] } },
-    // Trị Liệu Sư: Evil Wizard 2 tái dụng với tint xanh lá (fw=500, staff heal)
-    tri_lieu_su: { fw: 500, fh: 500, cx: 272, fy: 334, s: 0.45, combo: ['attack1', 'attack2'],
-      tint: 0x80ffb0,  // tint xanh lá nhạt để phân biệt với toan_nang
-      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [3, 12], death: [7, 10] } },
-    // Triệu Hồi Sư: Evil Wizard 3 (fw=280, pháp trượng đầu lâu, áo đỏ)
-    trieu_hoi_su: { fw: 280, fh: 280, cx: 144, fy: 198, s: 0.675, combo: ['attack1'],
+    // Sát Thủ: Thief (song đao, vẽ tay HD, 3 combo nhanh)
+    sat_thu: { fw: 221, fh: 198, cx: 89, fy: 155, s: 0.45, hd: true, combo: ['attack1', 'attack2', 'attack3'],
+      anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [8, 22], attack2: [7, 22], attack3: [9, 22], hit: [4, 12], death: [10, 12] } },
+    // Tanker: Knight Girl (kiếm + khiên, vẽ tay HD, 3 combo)
+    tanker: { fw: 199, fh: 175, cx: 101, fy: 170, s: 0.45, hd: true, combo: ['attack1', 'attack2', 'attack3'],
+      anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 16], attack2: [7, 16], attack3: [8, 16], hit: [4, 12], death: [10, 10] } },
+    // Trị Liệu Sư: Evil Wizard (pháp sư áo choàng) đổi tông xanh lục, phép lửa thành ánh sáng hồi phục; đã làm mịn
+    tri_lieu_su: { fw: 196, fh: 146, cx: 60, fy: 138, s: 0.55, hd: true, combo: ['attack1'],
+      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 16], hit: [4, 12], death: [5, 8] } },
+    // Triệu Hồi Sư: Evil Wizard 3 (pháp trượng đầu lâu, áo đỏ); đã làm mịn
+    trieu_hoi_su: { fw: 280, fh: 280, cx: 144, fy: 198, s: 0.675, hd: true, combo: ['attack1'],
       anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [13, 18], hit: [3, 12], death: [18, 10] } },
-    // Tử Linh Thuật Sư: Evil Wizard 2 (fw=500, pháp trượng lửa tím)
-    tu_linh_thuat_su: { fw: 500, fh: 500, cx: 272, fy: 332, s: 0.45, combo: ['attack1', 'attack2'],
-      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [3, 12], death: [7, 10] } },
+    // Tử Linh Thuật Sư: Necromancer (áo choàng đen, đầu lâu, trượng đỏ)
+    tu_linh_thuat_su: { fw: 92, fh: 111, cx: 36, fy: 105, s: 1.1, combo: ['attack1', 'attack2'],
+      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [13, 18], attack2: [17, 18], hit: [5, 12], death: [9, 10] } },
+    // ---- Dạng tiến hóa (GameData.EVOLUTIONS). Dạng không có bộ hình riêng mượn hình class gốc (EVO_ALIAS).
+    // Kiếm Thánh: Female Hero (nữ hiệp sĩ, vệt kiếm sáng)
+    kiem_thanh: { fw: 260, fh: 245, cx: 130, fy: 237, s: 0.27, hd: true, combo: ['attack1'],
+      anims: { idle: [8, 10], run: [8, 14], jump: [4, 10], fall: [3, 10], attack1: [9, 18], hit: [5, 12], death: [8, 10] } },
+    // Đại Pháp Sư: Evil Wizard (pháp sư lửa)
+    dai_phap_su: { fw: 98, fh: 73, cx: 30, fy: 69, s: 1.1, combo: ['attack1'],
+      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 16], hit: [4, 12], death: [5, 8] } },
+    // Toàn Năng Tinh Thông: Medieval King
+    toan_nang_tinh_thong: { fw: 146, fh: 107, cx: 64, fy: 105, s: 1.1, combo: ['attack1', 'attack2', 'attack3'],
+      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [4, 12], attack2: [4, 12], attack3: [4, 12], hit: [4, 12], death: [6, 8] } },
+    // Hộ Vệ Bất Khuất: Hero Knight
+    ho_ve_bat_khuat: { fw: 135, fh: 85, cx: 50, fy: 82, s: 1.15, combo: ['attack1', 'attack2'],
+      anims: { idle: [11, 12], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 16], attack2: [7, 16], hit: [4, 12], death: [11, 12] } },
+  };
+  const EVO_ALIAS = { than_xa: ['cung_thu', 0x9dffd4], anh_vuong: ['sat_thu', 0xd7a6ff], thanh_linh: ['tri_lieu_su', 0xfff1b8] };
+  // Bộ hình + màu riêng cho một class / dạng tiến hóa
+  const lookOf = (id) => EVO_ALIAS[id] ? { sheet: EVO_ALIAS[id][0], tint: EVO_ALIAS[id][1] } : { sheet: id, tint: null };
+  // Toàn Năng đổi hình theo loại vũ khí đang cầm (tay không: hình Toàn Năng)
+  const WEAPON_LOOK = { kiem: 'kiem_si', cung: 'cung_thu', truong: 'phap_su' };
+  // Các bộ hình nhân vật cần cho class: hình class + hình dạng tiến hóa (+ hình theo vũ khí của Toàn Năng)
+  const charsFor = (school) => {
+    const out = [CHARS[school] ? school : 'none'];
+    const evo = GameData.EVOLUTIONS && GameData.EVOLUTIONS[school];
+    if (evo && CHARS[lookOf(evo).sheet]) out.push(lookOf(evo).sheet);
+    if (school === 'toan_nang') out.push(...Object.values(WEAPON_LOOK));
+    return out;
   };
   // bw, bh: khung va chạm trong game (px); fly: quái bay (cy = tâm thân theo chiều dọc)
   const MOBS = {
@@ -51,14 +79,38 @@ const Sprites = (() => {
       anims: { idle: [8, 14], run: [8, 14], attack: [8, 18], hit: [4, 14], death: [4, 8] } },
     bat: { fw: 87, fh: 87, cx: 48, cy: 43, fly: true, s: 0.95, bw: 40, bh: 32,
       anims: { idle: [11, 16], run: [11, 16], attack: [11, 22], hit: [3, 14], death: [4, 8] } },
+    // ---- Thay hình vẽ bằng code (golem, hình nhân). Nguồn: xem public/assets/CREDITS.txt
+    dummy: { fw: 79, fh: 96, cx: 46, fy: 95, hd: true, s: 0.5, bw: 24, bh: 44,
+      anims: { idle: [4, 5], run: [4, 5], attack: [2, 8], hit: [3, 12], death: [4, 8] } },
+    troll: { fw: 251, fh: 199, cx: 91, fy: 195, hd: true, s: 0.5, bw: 36, bh: 66,
+      anims: { idle: [4, 5], run: [3, 8], attack: [4, 10], hit: [3, 10], death: [4, 6] } },
+    werewolf: { fw: 252, fh: 157, cx: 120, fy: 150, hd: true, s: 0.63, bw: 40, bh: 56,
+      anims: { idle: [4, 5], run: [3, 9], attack: [4, 10], hit: [3, 10], death: [4, 6] } },
+    hydra: { fw: 224, fh: 117, cx: 86, fy: 101, hd: true, s: 0.68, bw: 60, bh: 40,
+      anims: { idle: [8, 9], run: [8, 12], attack: [10, 14], hit: [6, 12], death: [10, 10] } },
+    beast: { fw: 252, fh: 197, cx: 113, fy: 190, hd: true, s: 0.47, bw: 50, bh: 70,
+      anims: { idle: [10, 10], run: [10, 12], attack: [10, 14], hit: [6, 12], death: [10, 10] } },
+    dragon: { fw: 454, fh: 249, cx: 207, fy: 229, hd: true, s: 0.5, bw: 70, bh: 85,
+      anims: { idle: [8, 8], run: [8, 10], attack: [8, 12], hit: [6, 12], death: [8, 8] } },
+    reaper: { fw: 82, fh: 75, cx: 24, fy: 72, s: 1.13, bw: 30, bh: 64,
+      anims: { idle: [4, 6], run: [4, 8], attack: [13, 18], hit: [3, 12], death: [18, 14] } },
+    nightborne: { fw: 80, fh: 73, cx: 37, fy: 57, s: 1.7, bw: 30, bh: 46,
+      anims: { idle: [9, 10], run: [6, 12], attack: [12, 18], hit: [5, 12], death: [23, 18] } },
   };
   // Kiểu dáng quái trong shared/data/monsters.js → bộ hình
-  const LOOK = { mushroom: 'mushroom', wolf: 'goblin', frog: 'slime', bat: 'bat', spider: 'skeleton', shade: 'eye' };
+  const LOOK = { mushroom: 'mushroom', wolf: 'goblin', frog: 'slime', bat: 'bat', spider: 'skeleton', shade: 'eye',
+    dummy: 'dummy', golem: 'troll', troll: 'troll', werewolf: 'werewolf', hydra: 'hydra', beast: 'beast', dragon: 'dragon',
+    reaper: 'reaper', nightborne: 'nightborne' };
   const LOOK_TINT = { shade: 0xff7080 };
+  // Hình vẽ bằng code dùng tạm khi bộ hình chưa tải xong (look mới không có hình code riêng → mượn golem)
+  const CODE_LOOK = { mushroom: 1, wolf: 1, frog: 1, bat: 1, spider: 1, dummy: 1, golem: 1 };
+  const codeTex = (look, f = 0) => `m_${CODE_LOOK[look] ? look : 'golem'}_${f}`;
+  // Màu riêng của từng quái (def.tint) ưu tiên hơn màu hạng quái
+  const tintOf = (def) => def.tint || GameData.monGrade(def).tint || LOOK_TINT[def.look] || null;
 
   // Bộ hình cần ngay khi vào một bản đồ: class đang chơi + các loại quái xuất hiện ở bản đồ đó
   function needed(mapId, school) {
-    const chars = new Set([CHARS[school] ? school : 'none']);
+    const chars = new Set(charsFor(school));
     const mobs = new Set();
     const meta = GameData.MAPS[mapId];
     for (const ch in (meta && meta.spawns) || {}) {
@@ -101,7 +153,7 @@ const Sprites = (() => {
   // Thứ tự tải ngầm sau khi đã vào game: class đang chơi (vừa đổi class) → quái ở các bản đồ kề cổng → còn lại
   function background(scene, mapId, school) {
     const meta = GameData.MAPS[mapId] || {};
-    const near = { chars: new Set([CHARS[school] ? school : 'none']), mobs: new Set() };
+    const near = { chars: new Set(charsFor(school)), mobs: new Set() };
     for (const ch in meta.portals || {}) for (const m of needed(meta.portals[ch].to, school).mobs) near.mobs.add(m);
     const first = missing(scene, near);
     const keys = new Set(first.map(f => f.key));
@@ -125,7 +177,8 @@ const Sprites = (() => {
   function applyFilters(scene, k) {
     const { NEAREST, LINEAR } = Phaser.Textures.FilterMode;
     const set = (prefix, id, def) => {
-      const mode = def.s * k >= 1 ? NEAREST : LINEAR;
+      // hd: hình vẽ tay / đã làm mịn → luôn lọc mượt; pixel art thì giữ cạnh rõ khi được phóng to
+      const mode = !def.hd && def.s * k >= 1 ? NEAREST : LINEAR;
       for (const a of Object.keys(def.anims)) {
         const key = `${prefix}_${id}_${a}`;
         if (scene.textures.exists(key)) scene.textures.get(key).setFilter(mode);
@@ -150,7 +203,7 @@ const Sprites = (() => {
     sprite.setOrigin(cx / c.fw, (c.fy - (30 - lift) / s) / c.fh);
     sprite.body.setSize(18 / s, 46 / s, false);
     sprite.body.setOffset(cx - 9 / s, c.fy - (46 - lift) / s);
-    // Tint cố định theo class (ví dụ tri_lieu_su tái dụng sheet toan_nang với màu xanh lá)
+    // Tint cố định theo class (nếu bộ hình có khai báo tint)
     if (c.tint && grow === 1) sprite.setTint(c.tint); else sprite.clearTint();
   }
 
@@ -245,7 +298,7 @@ const Sprites = (() => {
         if (!scene.textures.exists(key)) {
           const { NEAREST, LINEAR } = Phaser.Textures.FilterMode;
           scene.textures.addSpriteSheet(key, bodyCv, { frameWidth: c.fw, frameHeight: c.fh });
-          scene.textures.get(key).setFilter(c.s * View.k >= 1 ? NEAREST : LINEAR);
+          scene.textures.get(key).setFilter(!c.hd && c.s * View.k >= 1 ? NEAREST : LINEAR);
           scene.textures.addSpriteSheet(skey, shellCv, { frameWidth: c.fw, frameHeight: c.fh });
           scene.textures.get(skey).setFilter(LINEAR);
         }
@@ -282,5 +335,5 @@ const Sprites = (() => {
     if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
   }
 
-  return { CHARS, MOBS, LOOK, LOOK_TINT, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
+  return { CHARS, MOBS, LOOK, lookOf, WEAPON_LOOK, LOOK_TINT, codeTex, tintOf, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
 })();

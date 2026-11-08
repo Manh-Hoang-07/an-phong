@@ -18,7 +18,7 @@ WorldScene.mix(class WorldMonsters {
     const fly = !!def.fly;
     const y = fly ? r * T + T / 2 : this.groundY(r, c);
     const sheet = Sprites.hasMob(this, def.look) ? Sprites.mobOf(def.look) : null;
-    const s = this.physics.add.sprite(x, y, sheet ? `mb_${sheet}_idle` : `m_${def.look}_0`).setOrigin(0.5, 1).setDepth(3);
+    const s = this.physics.add.sprite(x, y, sheet ? `mb_${sheet}_idle` : Sprites.codeTex(def.look)).setOrigin(0.5, 1).setDepth(3);
     this.mGroup.add(s);
     s.body.setAllowGravity(!fly);
     if (sheet) {
@@ -39,7 +39,7 @@ WorldScene.mix(class WorldMonsters {
     }
     if (span[0] > span[1]) span[0] = span[1] = x;
     const m = {
-      id, def, sprite: s, sheet, baseTint: grade.tint || Sprites.LOOK_TINT[def.look] || null, baseScale: s.scaleX, hp: GameData.monHp(def), maxHp: GameData.monHp(def), homeX: x, homeY: y, span,
+      id, def, sprite: s, sheet, baseTint: Sprites.tintOf(def), baseScale: s.scaleX, hp: GameData.monHp(def), maxHp: GameData.monHp(def), homeX: x, homeY: y, span,
       dir: Math.random() < 0.5 ? -1 : 1, aggro: false, nextAttack: 0, nextTurn: 0, slowUntil: 0, freezeUntil: 0,
       nextJump: 0, nextSlam: 0, nextSpecial: 0, alive: true, frameT: 0, hitBy: new Set(), state: 'move', stateUntil: 0, enraged: false,
     };
@@ -115,7 +115,7 @@ WorldScene.mix(class WorldMonsters {
     const s = m.sprite;
     m.hp = m.maxHp; m.alive = true; m.aggro = false; m.slowUntil = 0; m.freezeUntil = 0; m.state = 'move'; m.enraged = false;
     m.fled = false; m.nextSpecial = 0; m.moonStage = 1;
-    m.baseTint = GameData.monGrade(m.def).tint || Sprites.LOOK_TINT[m.def.look] || null;
+    m.baseTint = Sprites.tintOf(m.def);
     s.setPosition(m.homeX, m.homeY).setAlpha(0).setScale(m.baseScale);
     if (m.sheet) s.play(`mb_${m.sheet}_idle`);
     s.body.enable = true; s.body.setVelocity(0, 0);
@@ -130,7 +130,7 @@ WorldScene.mix(class WorldMonsters {
     const s = m.sprite, d = m.def, pl = this.player;
     m.frameT += 1;
     const animRate = d.fly ? 8 : 14;
-    if (!m.sheet) s.setTexture(`m_${d.look}_${Math.floor(m.frameT / animRate) % 2}`);
+    if (!m.sheet) s.setTexture(Sprites.codeTex(d.look, Math.floor(m.frameT / animRate) % 2));
     const frozen = time < m.freezeUntil;
     const winding = m.state === 'windup';
     if (time < (m.flashUntil || 0)) s.setTintFill(0xffffff);

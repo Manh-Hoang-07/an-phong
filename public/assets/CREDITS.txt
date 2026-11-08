@@ -6,3 +6,16 @@ https://opengameart.org/content/animated-wild-animals
 Ngựa: alizard, "pixel horse", giấy phép CC0: https://opengameart.org/content/pixel-horse
 Hạc: rmazanek, "Bird" (sprite sheet 8 hoạt ảnh), giấy phép CC0: https://opengameart.org/content/bird-2
 Thằn lằn: Karmabub, "Lizard Sprite", giấy phép CC0: https://opengameart.org/content/lizard-sprite
+
+Bổ sung (thay hình vẽ bằng code và thú đồng hành độ phân giải thấp), lấy từ các gói hình trong thư mục Charactor:
+- mobs/dummy, mobs/troll, mobs/werewolf, pets/wolf-*: gói "Free Sprites" (battler: training dummy, troll, werewolf, wolf).
+- mobs/hydra, pets/lizard-*: gói 256x256 (thằn lằn lửa hai đầu, góc nhìn 90°).
+- mobs/beast: gói "Separated_frames_not_optimized" (quái thú gai đen, bản 512x384).
+- mobs/dragon: "Shadow Demon Dragon Asset Pack".
+- mobs/reaper: "Undead executioner puppet".
+- mobs/nightborne: "NightBorne".
+Các gói này không kèm file giấy phép riêng: cần kiểm tra lại điều khoản ở trang tải gốc trước khi phát hành thương mại.
+- chars/kiem_si: "Knight Man"; chars/tanker: "Knight Girl"; chars/sat_thu: "Thief" (nhân vật vẽ tay HD).
+- Dạng tiến hóa: chars/kiem_thanh "Female Hero Pixel Art v1.1"; chars/dai_phap_su "Evil Wizard" (CC0);
+  chars/ho_ve_bat_khuat "Hero Knight" (CC0); chars/toan_nang_tinh_thong "Medieval King Pack 2" (CC0).
+- chars/toan_nang: "Elementals fire knight FREE v1.1"; chars/tu_linh_thuat_su: Necromancer (creativekind).

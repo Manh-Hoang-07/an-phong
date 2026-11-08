@@ -75,7 +75,8 @@ WorldScene.mix(class WorldPlayer {
   applyFormLook() {
     const aw = App.form ? this.activeAwaken() : null;
     const ready = !!(aw && this.sheetId && Sprites.formSheetsReady(this, this.sheetId, aw.tier));
-    this.formTier = ready ? aw.tier : (App.form ? 1 : 0);
+    // Chưa có bộ hình biến hình (hoặc đang ở dạng tiến hóa): dùng bộ hình thường ch_..., chỉ đổi màu
+    this.formTier = ready ? aw.tier : 0;
     if (aw && this.sheetId && !ready) this.prewarmForm();
     if (!this.sheetId || !this.player) return;
     this.fitFacing = this.facing || 1;
@@ -121,8 +122,13 @@ WorldScene.mix(class WorldPlayer {
 
   // Dùng hình vẽ sẵn (có hoạt ảnh) nếu có, không thì dùng hình vẽ bằng code
   refreshPlayerLook() {
-    const id = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : (App.player.school || 'none');
-    const sheet = Sprites.hasChar(this, id) ? id : null;
+    let id = App.form && App.player.formChoice === 'evolution' ? GameData.EVOLUTIONS[App.player.school] : (App.player.school || 'none');
+    // Toàn Năng biến thân theo vũ khí đang cầm (kiếm → Kiếm Sĩ, cung → Cung Thủ, trượng → Pháp Sư); hình chưa tải thì giữ hình Toàn Năng
+    const byWeapon = id === 'toan_nang' && Sprites.WEAPON_LOOK[App.stats?.wtype];
+    if (byWeapon && Sprites.hasChar(this, byWeapon)) id = byWeapon;
+    const look = Sprites.lookOf(id);
+    const sheet = Sprites.hasChar(this, look.sheet) ? look.sheet : null;
+    this.evoTint = sheet ? look.tint : null;   // dạng tiến hóa mượn hình class gốc: tô màu riêng
     if (sheet === this.sheetId && this.lookSchool === id && this.sheetId !== undefined && this.fitDone) return;
     this.sheetId = sheet;
     this.lookSchool = id;
@@ -293,8 +299,8 @@ WorldScene.mix(class WorldPlayer {
       if (!this.textures.exists(tex)) return;
       const state = pets[id] || (pets[id] = { hp: ps.maxHp, mp: ps.maxMp, sta: ps.maxSta });
       for (const [k, max] of [['hp', ps.maxHp], ['mp', ps.maxMp], ['sta', ps.maxSta]]) state[k] = Math.max(0, Math.min(max, Number.isFinite(state[k]) ? state[k] : max));
-      const scale = { wolf: 1.3, horse: 0.82, bird: 1.6, lizard: 0.52 }[def.look] || 1.2;
-      const x = this.player.x - this.facing * (42 + index * 24);
+      const scale = PetSprites.def(def.look)?.scale || 1.2;
+      const x = this.player.x - this.facing * PetSprites.gap(def.look, index);
       const sprite = this.add.sprite(x, this.player.body.bottom, tex, 0).setOrigin(0.5, 1).setDepth(3.6 + index * 0.001).setScale(scale).setTint(def.tint || 0xffffff);
       if (!PetSprites.def(def.look).static) sprite.play(`pet_${def.look}_walk_anim`);
       this.companionSprites[id] = { sprite, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
@@ -339,8 +345,8 @@ WorldScene.mix(class WorldPlayer {
       if (!this.textures.exists(tex)) return;
       const state = states[id] || (states[id] = { hp: ss.maxHp, mp: ss.maxMp, sta: ss.maxSta });
       for (const [k, max] of [['hp', ss.maxHp], ['mp', ss.maxMp], ['sta', ss.maxSta]]) state[k] = Math.max(0, Math.min(max, Number.isFinite(state[k]) ? state[k] : max));
-      const scale = { wolf: 1.3, horse: 0.82, bird: 1.6, lizard: 0.52 }[def.look] || 1.2;
-      const x = this.player.x + this.facing * (42 + index * 24);
+      const scale = PetSprites.def(def.look)?.scale || 1.2;
+      const x = this.player.x + this.facing * PetSprites.gap(def.look, index);
       const sprite = this.add.sprite(x, this.player.body.bottom, tex, 0).setOrigin(0.5, 1).setDepth(3.65 + index * 0.001).setScale(scale).setTint(def.tint || 0xffffff);
       if (!PetSprites.def(def.look).static) sprite.play(`pet_${def.look}_walk_anim`);
       this.summonSprites[id] = { sprite, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
@@ -378,7 +384,7 @@ WorldScene.mix(class WorldPlayer {
     }
     const pl = this.player;
     const target = this.petTarget && this.petTarget.alive && this.petTarget.sprite?.body?.enable ? this.petTarget : null;
-    let tx = pl.x + this.facing * (42 + index * 24), ty = pl.body.bottom;
+    let tx = pl.x + this.facing * PetSprites.gap(def.look, index), ty = pl.body.bottom;
     let attacking = false;
     if (target && !this.dead && !App.panelOpen && !this.changing) {
       const dx = target.sprite.x - sprite.x;
@@ -427,7 +433,7 @@ WorldScene.mix(class WorldPlayer {
       const soul = data.roster.find(x => x.uid === uid), def = soul && GameData.MONSTERS[soul.monster];
       if (!def) return;
       const sheet = Sprites.hasMob(this, def.look) ? Sprites.mobOf(def.look) : null;
-      const texture = sheet ? `mb_${sheet}_idle` : `m_${def.look}_0`;
+      const texture = sheet ? `mb_${sheet}_idle` : Sprites.codeTex(def.look);
       if (this.shadowSprites[uid]) {
         if (!this.shadowSprites[uid].label || !this.textures.exists(texture)) return;
         this.shadowSprites[uid].sprite.destroy();
@@ -512,7 +518,7 @@ WorldScene.mix(class WorldPlayer {
     }
     const pl = this.player;
     const target = this.petTarget && this.petTarget.alive && this.petTarget.sprite?.body?.enable ? this.petTarget : null;
-    let tx = pl.x - this.facing * (42 + index * 24), ty = pl.body.bottom;
+    let tx = pl.x - this.facing * PetSprites.gap(def.look, index), ty = pl.body.bottom;
     let attacking = false;
     if (target && !this.dead && !App.panelOpen && !this.changing) {
       const dx = target.sprite.x - sprite.x;
