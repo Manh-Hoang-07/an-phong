@@ -236,6 +236,9 @@ Nếu dùng hết bảng trên: từ 12 bộ hình bị trùng còn khoảng 4 c
 - Kết quả cuối: 53 quái · 46 bộ hình · 41 quái không trùng.
 - Còn trùng (mỗi bộ ×2): goblin (Yêu Tinh / Thằn Lằn Đầm), slime (Slime Sương / Bọ Cánh Cứng), bat (Dơi Hang / Linh Hồn Ký Ức),
   troll (Thạch Vương / Người Tuyết), hydra (Thủy Xà Vương / Trùm Long Mạch), beast (Trùm Thiên Khôi / Trùm Sáng Thế).
+- Cập nhật (09/11/2026): Hộ Vệ Mây Đá đổi từ `bear` sang `stone_golem` (không tint; Hộ Vệ Tinh Vân dùng chung nhưng tint xanh), bộ `bear`
+  không còn quái nào dùng nên đã gỡ. Bọ Cánh Cứng đổi từ slime sang `spider` tint xanh ngọc (vẫn là hình tạm, chờ gói hình bọ cánh cứng thật).
+  Kết quả `npm run check:mobs`: 53 quái · 45 bộ hình · 39 quái không trùng.
 
 **Còn lại (cần hình mới):** lính/kỵ sĩ/Lam Sương vẫn dùng mắt bay vì chưa có bộ hình người nào còn trống;
 Sói Tuyết và Sói Đầu Đàn tạm dùng chung `wolf`. Danh sách đầy đủ: chạy `npm run check:mobs`.

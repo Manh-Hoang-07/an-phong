@@ -114,11 +114,11 @@
 
     // ===== CHƯƠNG 4: TẦNG TRỜI THỨ BẢY (cấp 31–40)
     ho_ve_may: { name: 'Hộ Vệ Mây Đá', level: 31, hp: 1200, atk: 115, def: 35, exp: 800, gold: [30, 70],
-      speed: 55, respawn: 8, look: 'troll', sprite: 'bear', tint: 0xc7cde0,
+      speed: 55, respawn: 8, look: 'troll', sprite: 'stone_golem',
       drops: [['binh_mau_dac', 0.12], ['da_cuong_hoa_cao', 0.05], ['manh_luu_tru', 0.35, 'c4q4']],
       gear: [0.05, ['mu_luu_tru', 'gang_luu_tru', 'dai_luu_tru', 'ao_luu_tru', 'nhan_luu_tru', 'day_chuyen_luu_tru', 'ngoc_boi_luu_tru']] },
     bo_canh_cung: { name: 'Bọ Cánh Cứng', level: 33, hp: 1400, atk: 130, def: 32, exp: 1000, gold: [35, 75],
-      speed: 80, respawn: 8, look: 'frog', jumper: true,
+      speed: 80, respawn: 8, look: 'spider', sprite: 'spider', tint: 0x5fd6c2, jumper: true,
       drops: [['binh_mau_dac', 0.12], ['da_cuong_hoa_cao', 0.06], ['nhat_ky_nguoi_choi', 0.08]],
       gear: [0.05, ['ao_luu_tru', 'quan_luu_tru', 'giay_luu_tru', 'mu_luu_tru', 'gang_luu_tru', 'dai_luu_tru', 'nhan_luu_tru', 'day_chuyen_luu_tru', 'ngoc_boi_luu_tru']] },
     tri_thuc_ma: { name: 'Tri Thức Ma Thần', level: 35, hp: 1600, atk: 145, def: 38, exp: 1300, gold: [40, 90],

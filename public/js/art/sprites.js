@@ -107,8 +107,6 @@ const Sprites = (() => {
     // Gói thú hoang chỉ có đứng/đi/chạy: attack mượn chạy (sói: tru), hit mượn khung đứng.
     wolf: { fw: 62, fh: 36, rw: 64, cx: 34, fy: 36, s: 1.6, bw: 44, bh: 36, faceLeft: true, fakeDeath: true,
       anims: { idle: [1, 1], run: [6, 12], attack: [10, 16], hit: [1, 1], death: [1, 1] } },
-    bear: { fw: 64, fh: 33, cx: 32, fy: 32, s: 2, bw: 56, bh: 50, faceLeft: true, fakeDeath: true,
-      anims: { idle: [12, 8], run: [8, 10], attack: [5, 14], hit: [1, 1], death: [1, 1] } },
     boar: { fw: 56, fh: 30, rw: 64, cx: 27, fy: 30, s: 1.6, bw: 46, bh: 36, faceLeft: true, fakeDeath: true,
       anims: { idle: [8, 8], run: [8, 12], attack: [6, 16], hit: [1, 1], death: [1, 1] } },
     rat: { fw: 66, fh: 24, rw: 70, cx: 33, fy: 23, s: 1.8, bw: 40, bh: 28,
