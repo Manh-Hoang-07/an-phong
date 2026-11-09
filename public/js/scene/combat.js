@@ -118,7 +118,7 @@ WorldScene.mix(class WorldCombat {
     if (!m.alive) return;
     m.lastHitSource = extra.pet ? 'pet' : extra.shadow ? 'shadow' : 'player';
     let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : extra.shadow
-      ? { dmg: Math.max(1, Math.round(GameData.calcStats(App.player).atk * mult - m.def.def * 0.35)), crit: false }
+      ? { dmg: Math.max(1, Math.round((extra.shadowAtk || GameData.calcStats(App.player).atk * 0.32) * mult - m.def.def * 0.35)), crit: false }
       : extra.pet
       ? { dmg: Math.max(1, Math.round(GameData.petStats(App.player).atk * mult - m.def.def * 0.35)), crit: false }
       : this.calcDamage(mult, m);

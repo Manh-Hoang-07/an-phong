@@ -84,6 +84,12 @@ function migrate(p) {
   p.shadows.active = [...new Set(p.shadows.active.filter(uid => p.shadows.roster.some(x => x.uid === uid)))].slice(0, G.SHADOW_PARTY);
   // Bóng ma thu từ trước khi có lưu thông số: bổ sung theo dữ liệu quái hiện tại
   for (const soul of p.shadows.roster) if (!soul.stats && G.MONSTERS[soul.monster]) soul.stats = { ...G.monSnapshot(soul.monster, null), at: null };
+  // Bóng ma cũ chưa có cấp riêng: lấy cấp quái lúc bị hạ (lưu trong snapshot); kinh nghiệm bắt đầu từ 0
+  const ownerLv = Math.max(1, p.level || 1);
+  for (const soul of p.shadows.roster) {
+    if (!Number.isFinite(soul.lv) || soul.lv < 1) soul.lv = Math.max(1, (soul.stats && soul.stats.level) || 1);
+    if (!Number.isFinite(soul.exp) || soul.exp < 0) soul.exp = 0;
+  }
   p.shadows.enabled = !!p.shadows.enabled;
   if (!Number.isInteger(p.shadows.nextId) || p.shadows.nextId < 1) p.shadows.nextId = Math.max(0, ...p.shadows.roster.map(x => x.uid)) + 1;
   const legacyPetId = p.mounts.active || p.mounts.owned[0];
@@ -96,6 +102,17 @@ function migrate(p) {
     }
   }
   p.pet = p.pets[p.mounts.active] || { hp: petStats.maxHp, mp: petStats.maxMp, sta: petStats.maxSta };
+  // Linh thú của Triệu Hồi Sư: bổ sung cấp/kinh nghiệm riêng cho từng con.
+  // Bản cũ chỉ theo cấp nhân vật → migrate cho cấp bằng cấp nhân vật hiện tại để không yếu đi đột ngột.
+  if (!p.summons || typeof p.summons !== 'object' || Array.isArray(p.summons)) p.summons = { enabled: false, states: {} };
+  if (!p.summons.states || typeof p.summons.states !== 'object' || Array.isArray(p.summons.states)) p.summons.states = {};
+  if (!p.summons.units || typeof p.summons.units !== 'object' || Array.isArray(p.summons.units)) p.summons.units = {};
+  for (const id of Object.keys(G.SUMMONS)) {
+    const u = p.summons.units[id] && typeof p.summons.units[id] === 'object' ? p.summons.units[id] : (p.summons.units[id] = {});
+    if (!Number.isFinite(u.lv) || u.lv < 1) u.lv = ownerLv;
+    if (!Number.isFinite(u.exp) || u.exp < 0) u.exp = 0;
+    if (!p.summons.states[id] || typeof p.summons.states[id] !== 'object') p.summons.states[id] = {};
+  }
   if (!p.unlocks || typeof p.unlocks !== 'object') p.unlocks = {};
   if (!Array.isArray(p.perks)) p.perks = [];
   p.perks = p.perks.filter(id => G.PERKS[id]);

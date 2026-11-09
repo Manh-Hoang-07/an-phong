@@ -17,12 +17,12 @@ WorldScene.mix(class WorldMonsters {
     const x = c * T + T / 2;
     const fly = !!def.fly;
     const y = fly ? r * T + T / 2 : this.groundY(r, c);
-    const sheet = Sprites.hasMob(this, def.look) ? Sprites.mobOf(def.look) : null;
+    const sheet = Sprites.hasMob(this, def) ? Sprites.mobOf(def) : null;
     const s = this.physics.add.sprite(x, y, sheet ? `mb_${sheet}_idle` : Sprites.codeTex(def.look)).setOrigin(0.5, 1).setDepth(3);
     this.mGroup.add(s);
     s.body.setAllowGravity(!fly);
     if (sheet) {
-      Sprites.fitMob(s, def.look, !fly);
+      Sprites.fitMob(s, def, !fly);
       s.play(`mb_${sheet}_idle`);
     } else if (!fly) {
       s.body.setSize(s.width * 0.7, s.height * 0.9).setOffset(s.width * 0.15, s.height * 0.1);
@@ -88,7 +88,13 @@ WorldScene.mix(class WorldMonsters {
       const sp = this.add.image(s.x, s.body.center.y, 'spark').setDepth(7).setTint(sparkColor);
       this.tweens.add({ targets: sp, x: sp.x + Phaser.Math.Between(-40, 40), y: sp.y + Phaser.Math.Between(-40, 20), alpha: 0, scale: 0.3, duration: 450, onComplete: () => sp.destroy() });
     }
-    if (m.sheet) { s.play(`mb_${m.sheet}_death`); this.tweens.add({ targets: s, alpha: 0, duration: 300, delay: 450 }); }
+    if (m.sheet && Sprites.MOBS[m.sheet].fakeDeath) {
+      // Bộ hình không có hoạt ảnh chết: đứng khựng rồi ngã nghiêng sang một bên, mờ dần
+      s.play(`mb_${m.sheet}_death`);
+      const side = s.flipX === !!s._faceLeft ? -1 : 1;
+      this.tweens.add({ targets: s, angle: 80 * side, y: s.y + 4, duration: 380, ease: 'Quad.easeIn' });
+      this.tweens.add({ targets: s, alpha: 0, duration: 300, delay: 450 });
+    } else if (m.sheet) { s.play(`mb_${m.sheet}_death`); this.tweens.add({ targets: s, alpha: 0, duration: 300, delay: 450 }); }
     else this.tweens.add({ targets: s, alpha: 0, duration: 300 });
     if (m.def.boss) { this.cameras.main.shake(400, 0.012); this.slowMo(0.3, 900); }
     if (m.def.leader) { this.cameras.main.shake(250, 0.008); this.slowMo(0.4, 600); }
@@ -116,7 +122,7 @@ WorldScene.mix(class WorldMonsters {
     m.hp = m.maxHp; m.alive = true; m.aggro = false; m.slowUntil = 0; m.freezeUntil = 0; m.state = 'move'; m.enraged = false;
     m.fled = false; m.nextSpecial = 0; m.moonStage = 1;
     m.baseTint = Sprites.tintOf(m.def);
-    s.setPosition(m.homeX, m.homeY).setAlpha(0).setScale(m.baseScale);
+    s.setPosition(m.homeX, m.homeY).setAlpha(0).setScale(m.baseScale).setAngle(0);
     if (m.sheet) s.play(`mb_${m.sheet}_idle`);
     s.body.enable = true; s.body.setVelocity(0, 0);
     m.label.setVisible(true);

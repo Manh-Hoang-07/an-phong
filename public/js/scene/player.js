@@ -362,12 +362,13 @@ WorldScene.mix(class WorldPlayer {
       c.sprite.destroy();
       delete this.summonSprites[id];
     }
-    const ss = GameData.summonStats(App.player), states = App.player.summons.states || (App.player.summons.states = {});
+    const states = App.player.summons.states || (App.player.summons.states = {});
     ids.forEach((id, index) => {
       if (this.summonSprites[id]) return;
       const def = GameData.SUMMONS[id], tex = PetSprites.textureKey(def.look);
       PetSprites.createAnims(this, def.look);
       if (!this.textures.exists(tex)) return;
+      const ss = GameData.summonUnitStats(App.player, id);   // chỉ số theo cấp riêng từng linh thú
       const state = states[id] || (states[id] = { hp: ss.maxHp, mp: ss.maxMp, sta: ss.maxSta });
       for (const [k, max] of [['hp', ss.maxHp], ['mp', ss.maxMp], ['sta', ss.maxSta]]) state[k] = Math.max(0, Math.min(max, Number.isFinite(state[k]) ? state[k] : max));
       const scale = PetSprites.def(def.look)?.scale || 1.2;
@@ -381,10 +382,11 @@ WorldScene.mix(class WorldPlayer {
   summonUpdate(time, delta) {
     const ids = this.summonedSummonIds();
     this.buildSummons();
-    const ss = GameData.summonStats(App.player), states = App.player.summons?.states || {};
+    const states = App.player.summons?.states || {};
     ids.forEach((id, index) => {
       const c = this.summonSprites[id];
       if (!c) return;
+      const ss = GameData.summonUnitStats(App.player, id);   // chỉ số theo cấp riêng từng linh thú
       const state = states[id] || (states[id] = { hp: ss.maxHp, mp: ss.maxMp, sta: ss.maxSta });
       this.updateSummon(id, c, index, time, delta, ss, state);
     });
@@ -460,7 +462,7 @@ WorldScene.mix(class WorldPlayer {
     ids.forEach((uid, index) => {
       const soul = data.roster.find(x => x.uid === uid), def = soul && GameData.MONSTERS[soul.monster];
       if (!def) return;
-      const sheet = Sprites.hasMob(this, def.look) ? Sprites.mobOf(def.look) : null;
+      const sheet = Sprites.hasMob(this, def) ? Sprites.mobOf(def) : null;
       const texture = sheet ? `mb_${sheet}_idle` : Sprites.codeTex(def.look);
       if (this.shadowSprites[uid]) {
         if (!this.shadowSprites[uid].label || !this.textures.exists(texture)) return;
@@ -471,7 +473,7 @@ WorldScene.mix(class WorldPlayer {
       let sprite, label = null;
       if (this.textures.exists(texture)) {
         sprite = this.physics.add.sprite(this.player.x + this.facing * this.shadowOffset(index, ids.length), this.player.body.bottom, texture).setDepth(3.7 + index * 0.001);
-        if (sheet) { Sprites.fitMob(sprite, def.look, !def.fly); sprite.play(`mb_${sheet}_idle`); }
+        if (sheet) { Sprites.fitMob(sprite, def, !def.fly); sprite.play(`mb_${sheet}_idle`); }
         else sprite.body.setSize(sprite.width * 0.7, sprite.height * 0.8).setOffset(sprite.width * 0.15, sprite.height * 0.1);
         sprite.body.setAllowGravity(false); sprite.body.setVelocity(0, 0);
         sprite.setTint(0xb58cff);
@@ -506,6 +508,8 @@ WorldScene.mix(class WorldPlayer {
     ids.forEach((uid, index) => {
       const c = this.shadowSprites[String(uid)];
       if (!c) return;
+      const soul = data.roster.find(x => x.uid === uid);
+      const sst = soul ? GameData.shadowStats(soul, App.player) : null;   // chỉ số theo cấp riêng từng bóng
       const sprite = c.sprite, target = this.shadowTarget?.alive && this.shadowTarget.sprite?.body?.enable ? this.shadowTarget : null;
       const focused = time < (this.shadowFocusUntil || 0) && this.shadowFocusTarget?.alive && this.shadowFocusTarget.sprite?.body?.enable
         ? this.shadowFocusTarget : null;
@@ -514,12 +518,13 @@ WorldScene.mix(class WorldPlayer {
       if (attackTarget && !this.dead && !App.panelOpen && !this.changing) {
         const dx = attackTarget.sprite.x - sprite.x;
         if (Math.abs(dx) > 58) { tx = attackTarget.sprite.x - Math.sign(dx) * 48; ty = attackTarget.sprite.body.bottom; }
-        else if (time >= c.nextAttack) {
+        else if (time >= c.nextAttack && sst) {
           const boost = this.buffOn('frenzy', time) || this.buffOn('rage', time);
           c.nextAttack = time + 1250 / (1 + (boost?.speed || 0));
           c.attackUntil = time + 300;
           const ultBoost = time < (this.shadowPowerUntil || 0) ? 0.5 : 0;
-          this.damageMonster(attackTarget, 0.32 * (1 + (boost?.atk || 0) + ultBoost), { shadow: true, dir: Math.sign(dx) || 1 });
+          // Sát thương theo atk của chính bóng (tăng theo cấp bóng) thay cho hệ số cố định
+          this.damageMonster(attackTarget, 0.82 * (1 + (boost?.atk || 0) + ultBoost), { shadow: true, shadowAtk: sst.atk, dir: Math.sign(dx) || 1 });
         }
       }
       sprite.x = Phaser.Math.Linear(sprite.x, tx, Math.min(1, delta / 130));
@@ -528,7 +533,7 @@ WorldScene.mix(class WorldPlayer {
       if (c.label) c.label.setPosition(sprite.x, sprite.y - 8);
       else {
         const def = GameData.MONSTERS[data.roster.find(x => x.uid === uid)?.monster];
-        const sheet = def && Sprites.hasMob(this, def.look) ? Sprites.mobOf(def.look) : null;
+        const sheet = def && Sprites.hasMob(this, def) ? Sprites.mobOf(def) : null;
         if (sheet) {
           const anim = time < c.attackUntil ? `mb_${sheet}_attack` : (Math.abs(sprite.x - tx) > 5 ? `mb_${sheet}_run` : `mb_${sheet}_idle`);
           if (sprite.anims.currentAnim?.key !== anim && this.anims.exists(anim)) sprite.play(anim, true);

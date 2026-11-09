@@ -9,6 +9,44 @@ const { ensureWeekly, ensureDaily } = require('../periodic');
 
 const lastKill = new Map(); // userId -> {t, boss:{monster:time}}
 
+// Kinh nghiệm cho linh thú / bóng ma theo người kết liễu: tự hạ 100%, chủ hạ 50%.
+// Cấp tối đa của thú/bóng bằng cấp chủ (lên cấp thì hồi đầy).
+function grantCompanionExp(p, a, base, ev) {
+  if (!(base > 0)) return;
+  const ownerLv = Math.max(1, p.level || 1);
+  const src = a.source === 'pet' || a.source === 'shadow' ? a.source : 'player';
+  // Linh thú của Triệu Hồi Sư (mỗi lần 1 con đang được gọi)
+  if (p.summons?.enabled && G.summonCount(p) && (src === 'pet' || src === 'player')) {
+    const id = G.summonChoice(p);
+    const u = p.summons.units?.[id];
+    if (u && u.lv < ownerLv) {
+      u.exp += Math.max(1, Math.round(base * (src === 'pet' ? 1 : 0.5)));
+      let leveled = false;
+      while (u.lv < ownerLv && u.exp >= G.summonExpToNext(u.lv)) { u.exp -= G.summonExpToNext(u.lv); u.lv++; leveled = true; }
+      if (u.lv >= ownerLv) u.exp = 0;
+      if (leveled) {
+        const st = G.summonUnitStats(p, id), state = p.summons.states[id] || (p.summons.states[id] = {});
+        state.hp = st.maxHp; state.mp = st.maxMp; state.sta = st.maxSta;
+        ev.push({ t: 'msg', text: `${G.SUMMONS[id].name} lên cấp ${u.lv}! Hồi đầy sức mạnh.`, color: '#8be9ff' });
+      }
+    }
+  }
+  // Bóng ma trong đội hình: chia đều kinh nghiệm cho các bóng đang hoạt động
+  if (p.shadows?.enabled && Array.isArray(p.shadows.active) && p.shadows.active.length && (src === 'shadow' || src === 'player')) {
+    const per = base * (src === 'shadow' ? 1 : 0.5) / p.shadows.active.length;
+    for (const uid of p.shadows.active) {
+      const soul = p.shadows.roster?.find(x => x.uid === uid);
+      if (!soul || (Number.isFinite(soul.lv) ? soul.lv : G.shadowTrueLv(soul)) >= ownerLv) continue;
+      soul.exp = (Number.isFinite(soul.exp) ? soul.exp : 0) + Math.max(1, Math.round(per));
+      soul.lv = G.shadowTrueLv(soul);
+      let leveled = false;
+      while (soul.lv < ownerLv && soul.exp >= G.shadowExpToNext(soul.lv)) { soul.exp -= G.shadowExpToNext(soul.lv); soul.lv++; leveled = true; }
+      if (soul.lv >= ownerLv) soul.exp = 0;
+      if (leveled) ev.push({ t: 'msg', text: `${soul.stats?.name || G.MONSTERS[soul.monster]?.name || 'Bóng ma'} lên cấp ${soul.lv}!`, color: '#c6a7ff' });
+    }
+  }
+}
+
 function killOne(p, a, ev, lk, now) {
   {
     const m = G.MAPS[p.map];
@@ -47,6 +85,8 @@ function killOne(p, a, ev, lk, now) {
     // Bùa nhân đôi kinh nghiệm (p.boosts.exp) nhân thêm x2
     gainExp(p, Math.max(1, Math.round(G.monExp(mon) * expMul * (1 + st.expfind / 100) * G.expBoostMul(p, now))), ev);
     gainGold(p, Math.round(rand(mon.gold[0], mon.gold[1]) * (1 + st.goldfind / 100)), ev);
+    // Thú/bóng đồng hành cũng ăn kinh nghiệm theo người kết liễu (chênh lệch cấp quái như người chơi)
+    grantCompanionExp(p, a, Math.max(1, Math.round(G.monExp(mon) * expMul)), ev);
 
     // Necromancer thu phục quái do chính người chơi kết liễu; không thay bóng cũ khi đủ chỗ.
     if ((p.school === 'tu_linh_thuat_su' || (p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formActive && p.formChoice === 'evolution')) && a.source === 'player' && !mon.boss && !mon.leader && !mon.passive && !mon.finalBoss) {

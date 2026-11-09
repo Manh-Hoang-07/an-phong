@@ -7,14 +7,18 @@
     const ps = G.petStats(p), pets = p.pets || {};
     let html = `<p class="muted" style="margin-top:0">Thú nhận qua mã quà tặng ở Lữ khách bí ẩn. Bạn có thể triệu hồi nhiều thú cùng lúc. Chúng đi theo, tự đánh quái gần đó và nhận một phần sát thương khi bạn bị đánh; HP, MP và thể lực tự hồi khi yên chiến.</p>`;
     if (p.school === 'trieu_hoi_su' || p.school === 'tu_linh_thuat_su' || p.school === 'toan_nang') {
-      const ss = G.summonStats(p), states = p.summons?.states || {}, choice = G.summonChoice(p);
-      html += `<p class="muted">🐾 <b>Linh thú mặc định</b> (kỹ năng Triệu Hồi Linh Thú): mỗi lần gọi <b>1 con</b> do bạn chọn${p.summons?.enabled ? ` · đang gọi ${esc(G.SUMMONS[choice].name)}` : ' · chưa gọi'}. Sức mạnh theo cấp nhân vật và cấp kỹ năng.</p><div class="list">`;
+      const states = p.summons?.states || {}, choice = G.summonChoice(p);
+      html += `<p class="muted">🐾 <b>Linh thú mặc định</b> (kỹ năng Triệu Hồi Linh Thú): mỗi lần gọi <b>1 con</b> do bạn chọn${p.summons?.enabled ? ` · đang gọi ${esc(G.SUMMONS[choice].name)}` : ' · chưa gọi'}. Mỗi con có cấp riêng, bắt đầu từ cấp 1 và lên cấp khi đánh quái (tối đa bằng cấp của bạn).</p><div class="list">`;
       for (const [id, m] of Object.entries(G.SUMMONS)) {
         const picked = id === choice, on = !!p.summons?.enabled && picked;
         const pickBtn = picked ? '<span class="okc" style="font-size:12px">✔ Đã chọn</span>' : `<button class="btn small" data-act="summon_pick" data-id="${id}">${p.summons?.enabled ? 'Đổi sang' : 'Chọn'}</button>`;
+        const ss = G.summonUnitStats(p, id), lv = G.summonUnitLv(p, id);
+        const u = p.summons?.units?.[id] || {};
+        const capped = lv >= (p.level || 1);
+        const expLine = capped ? 'đã chạm cấp chủ' : `Kinh nghiệm ${Math.round(u.exp || 0)}/${G.summonExpToNext(lv)}`;
         const st = states[id] || {};
         html += `<div class="li mount-li${on ? ' on' : ''}"><div class="ic">${m.icon}</div>
-          <div class="main"><b>${esc(m.name)}${on ? ' <span class="okc">· đang theo chủ</span>' : ''}</b><small>${esc(m.desc)}</small>${on ? `<small>HP ${Math.round(st.hp ?? ss.maxHp)}/${ss.maxHp} · MP ${Math.round(st.mp ?? ss.maxMp)}/${ss.maxMp} · Thể lực ${Math.round(st.sta ?? ss.maxSta)}/${ss.maxSta}</small>` : (picked ? '<small class="muted">Bật kỹ năng Triệu Hồi Linh Thú để gọi</small>' : '<small class="muted">Chọn để gọi con này thay cho con hiện tại</small>')}</div><div class="row">${pickBtn}</div></div>`;
+          <div class="main"><b>${esc(m.name)} <small>Cấp ${lv}</small>${on ? ' <span class="okc">· đang theo chủ</span>' : ''}</b><small>${esc(m.desc)}</small><small class="muted">${expLine}</small>${on ? `<small>HP ${Math.round(st.hp ?? ss.maxHp)}/${ss.maxHp} · MP ${Math.round(st.mp ?? ss.maxMp)}/${ss.maxMp} · Thể lực ${Math.round(st.sta ?? ss.maxSta)}/${ss.maxSta}</small>` : (picked ? '<small class="muted">Bật kỹ năng Triệu Hồi Linh Thú để gọi</small>' : '<small class="muted">Chọn để gọi con này thay cho con hiện tại</small>')}</div><div class="row">${pickBtn}</div></div>`;
       }
       html += '</div>';
     }

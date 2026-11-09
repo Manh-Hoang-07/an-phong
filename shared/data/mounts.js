@@ -25,13 +25,25 @@
     const lv = Math.max(1, player.level || 1);
     return { maxHp: 70 + 16 * (lv - 1), maxMp: 28 + 5 * (lv - 1), maxSta: 80 + 2 * (lv - 1), atk: 7 + 2.1 * (lv - 1), def: 1 + Math.floor((lv - 1) * 0.8) };
   }
-  // Linh thú mặc định: sức mạnh theo cấp nhân vật và cấp kỹ năng th5
-  function summonStats(player) {
-    const lv = Math.max(1, player.level || 1);
-    const skLv = (player.skills && player.skills.th5) || 1;
-    const mul = 1 + 0.12 * (skLv - 1);
+  // Linh thú mặc định: sức mạnh theo CẤP RIÊNG của từng linh thú (không còn theo cấp nhân vật)
+  function summonLevelStats(lv, skLv) {
+    const mul = 1 + 0.12 * ((skLv || 1) - 1);
     return { maxHp: Math.round((60 + 14 * (lv - 1)) * mul), maxMp: Math.round((24 + 4 * (lv - 1)) * mul), maxSta: Math.round((70 + 2 * (lv - 1)) * mul), atk: (6 + 1.9 * (lv - 1)) * mul, def: 1 + Math.floor((lv - 1) * 0.7) };
   }
+  // Cấp hiệu lực của linh thú: cấp thật bị kẹp tối đa bằng cấp chủ
+  function summonUnitLv(player, id) {
+    const cap = Math.max(1, player.level || 1);
+    const u = player.summons && player.summons.units && player.summons.units[id];
+    return Math.max(1, Math.min(cap, (u && Number.isFinite(u.lv) ? Math.floor(u.lv) : 1)));
+  }
+  function summonUnitStats(player, id) {
+    return summonLevelStats(summonUnitLv(player, id), (player.skills && player.skills.th5) || 1);
+  }
+  // Giữ tên cũ cho nơi gọi chưa đổi: chỉ số của linh thú đang chọn
+  function summonStats(player) { return summonUnitStats(player, summonChoice(player)); }
+  // Kinh nghiệm lên cấp của linh thú / bóng ma (người chơi dùng expToNext trong core)
+  function summonExpToNext(lv) { return Math.floor(60 * Math.pow(lv, 1.5)); }
+  function shadowExpToNext(lv) { return Math.floor(55 * Math.pow(lv, 1.5)); }
   // Mỗi lần chỉ gọi 1 linh thú (người chơi chọn con nào); cấp kỹ năng th5 chỉ tăng sức mạnh linh thú
   function summonCount(player) { return ((player.skills && player.skills.th5) || 0) >= 1 ? 1 : 0; }
   // Linh thú đang được chọn (mặc định con đầu tiên)
@@ -41,5 +53,28 @@
   }
   // Bóng ma của Tử Linh Thuật Sư: tối đa 12 bóng lưu giữ, gọi ra cùng lúc tối đa 5 bóng
   const SHADOW_ROSTER = 12, SHADOW_PARTY = 5;
-  Object.assign(G, { MOUNTS, PET_SKILLS, SUMMONS, petStats, summonStats, summonCount, summonChoice, SHADOW_ROSTER, SHADOW_PARTY });
+  // Cấp thật của bóng ma (lưu lúc thu phục = cấp quái lúc chết, sau đó lên cấp bằng kinh nghiệm)
+  function shadowTrueLv(soul) {
+    return Math.max(1, Number.isFinite(soul.lv) ? Math.floor(soul.lv) : ((soul.stats && soul.stats.level) || 1));
+  }
+  // Cấp hiệu lực: kẹp tối đa bằng cấp chủ, bóng cấp cao hơn chủ sẽ "mở khóa" dần khi chủ lên cấp
+  function shadowLevelOf(soul, player) {
+    return Math.min(shadowTrueLv(soul), Math.max(1, player.level || 1));
+  }
+  // Chỉ số bóng ma theo cấp hiện tại: nhân 8%/cấp so với thông số lúc thu phục (snapshot chỉ giữ tên/dáng/nguồn gốc)
+  function shadowStats(soul, player) {
+    const mon = G.MONSTERS[soul.monster];
+    if (!mon) return null;
+    const s = soul.stats || {};
+    const lv = shadowLevelOf(soul, player);
+    const k = Math.pow(1.08, lv - ((s.level || mon.level)));
+    return {
+      name: s.name || mon.name, level: lv, gradeLabel: s.gradeLabel || null,
+      hp: Math.max(1, Math.round((s.hp ?? mon.hp) * k)), atk: (s.atk ?? mon.atk) * k,
+      def: Math.round((s.def ?? (mon.def || 0)) * k), speed: s.speed ?? (mon.speed ?? 0),
+      look: mon.look, map: s.map ?? null, at: s.at ?? null,
+    };
+  }
+  Object.assign(G, { MOUNTS, PET_SKILLS, SUMMONS, petStats, summonLevelStats, summonUnitLv, summonUnitStats, summonStats,
+    summonExpToNext, shadowExpToNext, shadowTrueLv, shadowLevelOf, shadowStats, summonCount, summonChoice, SHADOW_ROSTER, SHADOW_PARTY });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

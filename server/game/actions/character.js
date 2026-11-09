@@ -127,8 +127,10 @@ const actions = {
     if (p.school !== 'trieu_hoi_su' && p.school !== 'tu_linh_thuat_su' && p.school !== 'toan_nang') fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
     if (!G.skillLevel(p, 'th5')) fail('Hãy học kỹ năng "Triệu Hồi Linh Thú" trước.');
     p.summons = p.summons || { enabled: false, states: {} };
+    p.summons.units = p.summons.units || {};
     p.summons.enabled = !p.summons.enabled;
-    ev.push({ t: 'msg', text: p.summons.enabled ? `Đã gọi ${G.SUMMONS[G.summonChoice(p)].name}.` : 'Đã thu hồi linh thú.', color: '#8be9ff' });
+    const cid = G.summonChoice(p), clv = G.summonUnitLv(p, cid);
+    ev.push({ t: 'msg', text: p.summons.enabled ? `Đã gọi ${G.SUMMONS[cid].name} (cấp ${clv}).` : 'Đã thu hồi linh thú.', color: '#8be9ff' });
   },
 
   // Chọn linh thú sẽ gọi ra (mỗi lần chỉ 1 con); đang gọi thì đổi con ngay
@@ -136,8 +138,10 @@ const actions = {
     if (p.school !== 'trieu_hoi_su' && p.school !== 'tu_linh_thuat_su' && p.school !== 'toan_nang') fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
     if (!G.SUMMONS[a.id]) fail('Không có linh thú này.');
     p.summons = p.summons || { enabled: false, states: {} };
+    p.summons.units = p.summons.units || {};
     p.summons.choice = a.id;
-    ev.push({ t: 'msg', text: p.summons.enabled ? `Đã đổi linh thú: ${G.SUMMONS[a.id].name} theo bạn.` : `Đã chọn ${G.SUMMONS[a.id].name}. Dùng kỹ năng Triệu Hồi Linh Thú để gọi.`, color: '#8be9ff' });
+    const lv = G.summonUnitLv(p, a.id);
+    ev.push({ t: 'msg', text: p.summons.enabled ? `Đã đổi linh thú: ${G.SUMMONS[a.id].name} (cấp ${lv}) theo bạn.` : `Đã chọn ${G.SUMMONS[a.id].name} (cấp ${lv}). Dùng kỹ năng Triệu Hồi Linh Thú để gọi.`, color: '#8be9ff' });
   },
 
   shadow_toggle(p, a, ev) {

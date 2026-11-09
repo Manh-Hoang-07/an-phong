@@ -24,11 +24,12 @@ const actions = {
       if (p.mounts.active) p.pet = p.pets[p.mounts.active];
     }
     if (p.summons && p.summons.enabled && a.summons && typeof a.summons === 'object') {
-      const ss = G.summonStats(p);
       for (const id of Object.keys(G.SUMMONS)) {
         const incoming = a.summons[id];
         if (!incoming || typeof incoming !== 'object') continue;
         if (!p.summons.states[id]) p.summons.states[id] = {};
+        // Max HP/MP/thể lực theo cấp riêng của từng linh thú
+        const ss = G.summonUnitStats(p, id);
         for (const [key, max] of [['hp', ss.maxHp], ['mp', ss.maxMp], ['sta', ss.maxSta]])
           if (Number.isFinite(incoming[key])) p.summons.states[id][key] = Math.max(0, Math.min(max, Math.round(incoming[key])));
       }

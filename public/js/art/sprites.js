@@ -101,17 +101,90 @@ const Sprites = (() => {
       anims: { idle: [4, 6], run: [4, 8], attack: [13, 18], hit: [3, 12], death: [18, 14] } },
     nightborne: { fw: 80, fh: 73, cx: 37, fy: 57, s: 1.7, bw: 30, bh: 46,
       anims: { idle: [9, 10], run: [6, 12], attack: [12, 18], hit: [5, 12], death: [23, 18] } },
+    // ---- Bộ hình riêng từng quái (def.sprite). Nguồn: xem public/assets/CREDITS.txt
+    // faceLeft: hình gốc quay mặt sang trái (các bộ khác quay phải) → đảo chiều lật.
+    // fakeDeath: bộ hình không có hoạt ảnh chết thật (death.png chỉ là khung đứng) → game tự cho ngã xuống.
+    // Gói thú hoang chỉ có đứng/đi/chạy: attack mượn chạy (sói: tru), hit mượn khung đứng.
+    wolf: { fw: 64, fh: 40, cx: 35, fy: 40, s: 1.6, bw: 44, bh: 36, faceLeft: true, fakeDeath: true,
+      anims: { idle: [1, 1], run: [6, 12], attack: [10, 16], hit: [1, 1], death: [1, 1] } },
+    bear: { fw: 64, fh: 33, cx: 32, fy: 32, s: 2, bw: 56, bh: 50, faceLeft: true, fakeDeath: true,
+      anims: { idle: [12, 8], run: [8, 10], attack: [5, 14], hit: [1, 1], death: [1, 1] } },
+    boar: { fw: 64, fh: 40, cx: 31, fy: 40, s: 1.6, bw: 46, bh: 36, faceLeft: true, fakeDeath: true,
+      anims: { idle: [8, 8], run: [8, 12], attack: [6, 16], hit: [1, 1], death: [1, 1] } },
+    rat: { fw: 70, fh: 70, cx: 35, fy: 45, s: 1.8, bw: 40, bh: 28,
+      anims: { idle: [10, 10], run: [8, 14], attack: [12, 22], hit: [3, 12], death: [6, 10] } },
+    mimic: { fw: 146, fh: 146, cx: 77, fy: 83, s: 1.5, bw: 40, bh: 42,
+      anims: { idle: [9, 10], run: [6, 10], attack: [14, 22], hit: [3, 12], death: [6, 10] } },
+    evil_wizard: { fw: 250, fh: 250, cx: 136, fy: 167, s: 0.55, bw: 30, bh: 54,
+      anims: { idle: [8, 10], run: [8, 14], attack: [8, 16], hit: [3, 12], death: [7, 10] } },
+    ronin: { fw: 126, fh: 126, cx: 66, fy: 82, s: 1.35, bw: 28, bh: 50,
+      anims: { idle: [10, 10], run: [8, 14], attack: [7, 18], hit: [3, 12], death: [11, 12] } },
+    // ---- Gói itch.io (sinh bằng server/tools/mob-sheets.js; nguồn: public/assets/CREDITS.txt)
+    warrior: { fw: 194, fh: 137, cx: 97, fy: 125, s: 0.691, bw: 30, bh: 52,
+      anims: { idle: [6, 10], run: [8, 12], attack: [4, 16], hit: [3, 12], death: [9, 10] } },
+    spearman: { fw: 154, fh: 150, cx: 77, fy: 95, s: 1.366, bw: 30, bh: 52,
+      anims: { idle: [8, 10], run: [8, 12], attack: [4, 16], hit: [4, 12], death: [6, 10] } },
+    knight_silver: { fw: 139, fh: 135, cx: 69.5, fy: 86, s: 1.421, bw: 30, bh: 50,
+      anims: { idle: [10, 10], run: [6, 12], attack: [4, 16], hit: [3, 12], death: [9, 10] } },
+    hero_knight: { fw: 160, fh: 140, cx: 80, fy: 83, s: 1.487, bw: 30, bh: 53,
+      anims: { idle: [11, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [9, 10] } },
+    samurai: { fw: 210, fh: 200, cx: 105, fy: 122, s: 1.077, bw: 30, bh: 52,
+      anims: { idle: [8, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [6, 10] } },
+    swordsman: { fw: 212, fh: 200, cx: 106, fy: 129, s: 0.982, bw: 30, bh: 52,
+      anims: { idle: [4, 10], run: [8, 12], attack: [4, 16], hit: [3, 12], death: [7, 10] } },
+    witch: { fw: 148, fh: 140, cx: 74, fy: 97, s: 1.094, bw: 30, bh: 53,
+      anims: { idle: [10, 10], run: [8, 12], attack: [13, 16], hit: [3, 12], death: [18, 10] } },
+    fire_worm: { fw: 94, fh: 90, cx: 47, fy: 58, s: 0.978, bw: 41, bh: 40,
+      anims: { idle: [9, 10], run: [9, 12], attack: [16, 16], hit: [3, 12], death: [8, 10] } },
+    huntress: { fw: 158, fh: 150, cx: 79, fy: 97, s: 1.333, bw: 30, bh: 52,
+      anims: { idle: [8, 10], run: [8, 12], attack: [5, 16], hit: [3, 12], death: [8, 10] } },
+    king: { fw: 193, fh: 155, cx: 96.5, fy: 116, s: 0.732, bw: 30, bh: 55,
+      anims: { idle: [6, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [11, 10] } },
+    spider: { fw: 32, fh: 32, cx: 16, fy: 32, s: 3.333, bw: 40, bh: 28,
+      anims: { idle: [5, 10], run: [6, 12], attack: [4, 16], hit: [3, 12], death: [9, 10] } },
+    worm: { fw: 34, fh: 32, cx: 17, fy: 28, s: 2.857, bw: 26, bh: 37,
+      anims: { idle: [8, 10], run: [8, 12], attack: [8, 16], hit: [4, 12], death: [6, 10] } },
+    ice_sprite: { fw: 34, fh: 32, cx: 17, fy: 31, s: 2.727, bw: 30, bh: 28,
+      anims: { idle: [6, 10], run: [4, 12], attack: [5, 16], hit: [3, 12], death: [8, 10] } },
+    ghoul: { fw: 34, fh: 32, cx: 17, fy: 32, s: 2.16, bw: 30, bh: 50,
+      anims: { idle: [4, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [6, 10] } },
+    cyclops: { fw: 66, fh: 64, cx: 33, fy: 64, s: 2, bw: 40, bh: 74,
+      anims: { idle: [15, 10], run: [12, 12], attack: [13, 16], hit: [3, 12], death: [9, 10] } },
+    tooth_walker: { fw: 72, fh: 64, cx: 36, fy: 58, s: 1.45, bw: 22, bh: 53,
+      anims: { idle: [6, 10], run: [6, 12], attack: [6, 16], hit: [2, 12], death: [7, 10] } },
+    reaper_boss: { fw: 206, fh: 93, cx: 103, fy: 92, s: 1.429, bw: 36, bh: 74,
+      anims: { idle: [8, 10], run: [8, 12], attack: [10, 16], hit: [3, 12], death: [10, 10] } },
+    rock_golem: { fw: 66, fh: 64, cx: 33, fy: 47, s: 2.071, bw: 40, bh: 53,
+      anims: { idle: [4, 10], run: [4, 12], attack: [12, 16], hit: [5, 12], death: [5, 10] } },
+    skull_wolf: { fw: 66, fh: 64, cx: 33, fy: 64, s: 1.073, bw: 48, bh: 40,
+      anims: { idle: [6, 10], run: [5, 12], attack: [5, 16], hit: [4, 12], death: [7, 10] } },
+    frog_boss: { fw: 384, fh: 128, cx: 192, fy: 128, s: 0.877, bw: 60, bh: 59, fakeDeath: true,
+      anims: { idle: [5, 10], run: [8, 12], attack: [8, 16], hit: [4, 12], death: [1, 10] } },
+    stone_golem: { fw: 102, fh: 100, cx: 51, fy: 70, s: 1.404, bw: 40, bh: 61,
+      anims: { idle: [4, 10], run: [4, 12], attack: [7, 16], hit: [3, 12], death: [14, 10] } },
+    void_beast: { fw: 290, fh: 192, hd: true, cx: 145, fy: 181, s: 0.716, bw: 60, bh: 88,
+      anims: { idle: [14, 10], run: [10, 12], attack: [12, 16], hit: [8, 12], death: [14, 10] } },
+    imp: { fw: 52, fh: 48, cx: 26, fy: 42, s: 1.125, bw: 26, bh: 33,
+      anims: { idle: [6, 10], run: [6, 12], attack: [6, 16], hit: [3, 12], death: [5, 10] } },
+    axe_demon: { fw: 110, fh: 80, cx: 55, fy: 74, s: 1.561, bw: 34, bh: 59,
+      anims: { idle: [6, 10], run: [6, 12], attack: [6, 16], hit: [3, 12], death: [4, 10] } },
+    cultist: { fw: 202, fh: 200, cx: 101, fy: 182, s: 0.38, bw: 30, bh: 55,
+      anims: { idle: [5, 10], run: [6, 12], attack: [5, 16], hit: [4, 12], death: [6, 10] } },
   };
-  // Kiểu dáng quái trong shared/data/monsters.js → bộ hình
+  // Kiểu dáng quái trong shared/data/monsters.js → bộ hình dùng chung (khi quái chưa có def.sprite riêng)
   const LOOK = { mushroom: 'mushroom', wolf: 'goblin', frog: 'slime', bat: 'bat', spider: 'skeleton', shade: 'eye',
     dummy: 'dummy', golem: 'troll', troll: 'troll', werewolf: 'werewolf', hydra: 'hydra', beast: 'beast', dragon: 'dragon',
     reaper: 'reaper', nightborne: 'nightborne' };
   const LOOK_TINT = { shade: 0xff7080 };
+  // Bộ hình của một quái: def.sprite (hình riêng) → không có thì mượn theo kiểu dáng def.look
+  const sheetOf = (def) => (def && def.sprite && MOBS[def.sprite] ? def.sprite : def && LOOK[def.look]) || null;
+  // Màu mặc định theo kiểu dáng chỉ áp cho quái còn mượn hình chung (để đỡ giống nhau); quái có hình riêng giữ màu gốc
+  const lookTint = (def) => (def.sprite && MOBS[def.sprite] ? null : LOOK_TINT[def.look]) || null;
   // Hình vẽ bằng code dùng tạm khi bộ hình chưa tải xong (look mới không có hình code riêng → mượn golem)
   const CODE_LOOK = { mushroom: 1, wolf: 1, frog: 1, bat: 1, spider: 1, dummy: 1, golem: 1 };
   const codeTex = (look, f = 0) => `m_${CODE_LOOK[look] ? look : 'golem'}_${f}`;
   // Màu riêng của từng quái (def.tint) ưu tiên hơn màu hạng quái
-  const tintOf = (def) => def.tint || GameData.monGrade(def).tint || LOOK_TINT[def.look] || null;
+  const tintOf = (def) => def.tint || GameData.monGrade(def).tint || lookTint(def);
 
   // Bộ hình cần ngay khi vào một bản đồ: class đang chơi + các loại quái xuất hiện ở bản đồ đó
   function needed(mapId, school) {
@@ -119,16 +192,16 @@ const Sprites = (() => {
     const mobs = new Set();
     const meta = GameData.MAPS[mapId];
     for (const ch in (meta && meta.spawns) || {}) {
-      const def = GameData.MONSTERS[meta.spawns[ch]];
-      if (def && LOOK[def.look]) mobs.add(LOOK[def.look]);
+      const sheet = sheetOf(GameData.MONSTERS[meta.spawns[ch]]);
+      if (sheet) mobs.add(sheet);
     }
     const shadowData = App.player?.shadows || {};
     const activeSouls = shadowData.active?.length
       ? (shadowData.active || []).map(uid => shadowData.roster?.find(x => x.uid === uid)).filter(Boolean)
       : (shadowData.roster || []).slice(0, GameData.SHADOW_PARTY || 5);
     for (const soul of activeSouls) {
-      const def = GameData.MONSTERS[soul.monster];
-      if (def && LOOK[def.look]) mobs.add(LOOK[def.look]);
+      const sheet = sheetOf(GameData.MONSTERS[soul.monster]);
+      if (sheet) mobs.add(sheet);
     }
     return { chars, mobs };
   }
@@ -194,8 +267,9 @@ const Sprites = (() => {
   }
 
   const hasChar = (scene, id) => !!CHARS[id] && scene.textures.exists(`ch_${id}_idle`);
-  const mobOf = (look) => LOOK[look];
-  const hasMob = (scene, look) => !!LOOK[look] && scene.textures.exists(`mb_${LOOK[look]}_idle`);
+  // def: dữ liệu quái trong GameData.MONSTERS
+  const mobOf = (def) => sheetOf(def);
+  const hasMob = (scene, def) => { const sh = sheetOf(def); return !!sh && scene.textures.exists(`mb_${sh}_idle`); };
 
   // Đặt gốc tọa độ và khung va chạm sao cho: x là tâm thân, chân ở y+30, khung va chạm 18x46 như cũ.
   // grow: phóng to thêm khi biến hình (khung va chạm trong thế giới game giữ nguyên, chân vẫn chạm đất)
@@ -324,8 +398,8 @@ const Sprites = (() => {
 
   // walking: quái này đi bộ (def.fly = false). Một số quái đi bộ mượn bộ hình bay (shade → eye): khi đó gốc tọa độ
   // phải là ĐÁY khung va chạm (chân), không phải tâm. Trước đây đặt theo tâm → nửa thân lọt vào đất, quái chìm 1 ô.
-  function fitMob(sprite, look, walking = true) {
-    const m = MOBS[LOOK[look]];
+  function fitMob(sprite, def, walking = true) {
+    const m = MOBS[sheetOf(def)];
     sprite.setScale(m.s);
     if (m.fly) {
       const oy = walking ? m.cy + m.bh / 2 / m.s : m.cy;
@@ -337,8 +411,16 @@ const Sprites = (() => {
       sprite.body.setSize(m.bw / m.s, m.bh / m.s, false);
       sprite.body.setOffset(m.cx - m.bw / 2 / m.s, m.fy - m.bh / m.s);
     }
-    if (LOOK_TINT[look]) sprite.setTint(LOOK_TINT[look]);
+    const t = lookTint(def);
+    if (t) sprite.setTint(t);
+    // Hình gốc quay trái: mọi chỗ gọi setFlipX(trái?) vẫn viết như hình quay phải, ở đây đảo lại một lần
+    if (m.faceLeft && !sprite._faceLeft) {
+      const flip = sprite.setFlipX;
+      sprite.setFlipX = function (v) { return flip.call(this, !v); };
+      sprite._faceLeft = true;
+      sprite.setFlipX(false);
+    }
   }
 
-  return { CHARS, MOBS, LOOK, lookOf, weaponClass, LOOK_TINT, codeTex, tintOf, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
+  return { CHARS, MOBS, LOOK, lookOf, weaponClass, LOOK_TINT, sheetOf, codeTex, tintOf, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
 })();
