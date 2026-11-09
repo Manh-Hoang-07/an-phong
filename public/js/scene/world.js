@@ -32,6 +32,7 @@ class WorldScene extends Phaser.Scene {
     this.theme = this.meta.theme;
     Art.makeAll(this, this.theme);
     Fx.makeAll(this, this.theme);
+    Sprites.unloadFar(this, this.mapId, App.player.school || 'none');   // bỏ ảnh class/quái không còn dùng (cảnh cũ đã hủy hết sprite)
     Sprites.createAnims(this);
     for (const look of new Set([...Object.values(GameData.MOUNTS), ...Object.values(GameData.SUMMONS)].map(def => def.look))) PetSprites.createAnims(this, look);
     this.parseMap();

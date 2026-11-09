@@ -99,7 +99,7 @@ WorldScene.mix(class WorldCombat {
       if (p.dist > p.o.range || this.isSolid(r, c)) { this.fadeProjectile(p); continue; }
       const b = p.getBounds();
       for (const m of this.monsters) {
-        if (!m.alive || p.hitSet.has(m)) continue;
+        if (!m.alive || p.hitSet.has(m) || Math.abs(m.sprite.x - p.x) > 350) continue;   // quái xa: không cần tính khung va chạm
         if (Phaser.Geom.Intersects.RectangleToRectangle(b, this.mBounds(m))) {
           p.hitSet.add(m);
           this.damageMonster(m, p.o.mult, { slow: p.o.slow, freeze: p.o.freeze, knock: p.o.knock, dir: Math.sign(p.vx), basic: p.o.basic });

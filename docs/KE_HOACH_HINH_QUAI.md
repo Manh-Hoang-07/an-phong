@@ -226,6 +226,10 @@ Nếu dùng hết bảng trên: từ 12 bộ hình bị trùng còn khoảng 4 c
 
 - 19 gói tải về `assets_raw/itch/`, chuyển thành 22 bộ hình bằng `node server/tools/mob-sheets.js` (cắt khung, lật hình quay trái,
   canh thân vào giữa khung, giữ dải ảnh ≤ 4096 px, tự tính `cx / fy / s`).
+- Sau `mob-sheets.js` luôn chạy `node server/tools/trim-mob-sheets.js` (thêm `--dry` để chỉ xem): cắt viền trong suốt thừa của từng bộ
+  (giảm khoảng một nửa bộ nhớ ảnh quái), tự sửa `fw, fh, cx, cy/fy` trong `Sprites.MOBS` và ghi `rw` = bề rộng khung gốc
+  (AI quái dùng `rw` để tính tầm đánh, nên không đổi lối chơi). Hình hiển thị giữ nguyên từng điểm ảnh; cắt ngang đối xứng vì Phaser
+  lật ngang quanh tâm khung. Chạy lại tool là an toàn (bộ đã cắt thì bỏ qua). `--reencode` chỉ nén lại ảnh nhỏ hơn.
 - 23 quái có hình riêng mới (Lam Sương ×2 dùng chung `samurai`). Kết quả `npm run check:mobs`: 53 quái · 43 bộ hình · 36 quái không trùng.
 - Bổ sung sau: Bringer of Death → Trùm Thần Mộng (`reaper_boss`), Admurin Golem → Đại Thạch Nhân Băng (`rock_golem`),
   Skull Wolf → Sói Đầu Đàn (`skull_wolf`). Bỏ: Penusbmic Eyeball (quá nhỏ), Warrior Boss (chưa rõ giấy phép).

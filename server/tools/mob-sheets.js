@@ -11,6 +11,7 @@
  *   { files: [...] }                     mỗi file một khung
  * Mọi hoạt ảnh của một bộ phải cùng cỡ khung (fw×fh) để Sprites đọc chung số đo.
  * Tham số bộ: h = chiều cao mong muốn trong game (px), faceLeft, fakeDeath, fly.
+ * Xong thì dán dòng cấu hình vào Sprites.MOBS rồi chạy `node server/tools/trim-mob-sheets.js` để cắt viền trong suốt thừa.
  */
 'use strict';
 const fs = require('fs');

@@ -63,14 +63,23 @@ WorldScene.mix(class WorldMonsters {
 
   drawMonsterBar(m) {
     const s = m.sprite;
-    const g = GameData.monGrade(m.def);
+    const g = m.grade || (m.grade = GameData.monGrade(m.def));
     const w = g.barW;
     const top = this.monsterTop(m);
     m.label.setPosition(s.x, top - 16);
-    m.bar.clear();
-    if (!m.alive || (m.hp >= m.maxHp && !m.def.boss && !m.def.leader)) return;
-    m.bar.fillStyle(0x000000, 0.6).fillRect(s.x - w / 2 - 1, top - 8, w + 2, 6);
-    m.bar.fillStyle(g.bar).fillRect(s.x - w / 2, top - 7, w * Math.max(0, m.hp / m.maxHp), 4);
+    // Thanh vẽ theo toạ độ riêng của nó (gốc ở giữa, mép trên thanh) → chỉ dời vị trí mỗi khung hình,
+    // chỉ vẽ lại khi tỉ lệ máu đổi (trước đây xóa và vẽ lại mỗi khung hình cho từng quái).
+    const show = m.alive && (m.hp < m.maxHp || m.def.boss || m.def.leader);
+    const frac = show ? Math.max(0, m.hp / m.maxHp) : -1;
+    if (frac !== m._barFrac) {
+      m._barFrac = frac;
+      m.bar.clear();
+      if (show) {
+        m.bar.fillStyle(0x000000, 0.6).fillRect(-w / 2 - 1, -8, w + 2, 6);
+        m.bar.fillStyle(g.bar).fillRect(-w / 2, -7, w * frac, 4);
+      }
+    }
+    if (show) m.bar.setPosition(s.x, top);
   }
 
   killMonster(m) {
@@ -80,6 +89,7 @@ WorldScene.mix(class WorldMonsters {
     const s = m.sprite;
     s.body.enable = false;
     m.bar.clear();
+    m._barFrac = -2;   // buộc vẽ lại khi hồi sinh
     m.label.setVisible(false);
     const grade = GameData.gradeOf(m.def);
     const sparkColor = grade === 'boss' || grade === 'leader' ? 0xffab40 : grade === 'elite' ? 0xff8a8a : 0xffffff;
@@ -169,7 +179,8 @@ WorldScene.mix(class WorldMonsters {
       s.body.setVelocity(0, d.fly ? 0 : s.body.velocity.y); this.drawMonsterBar(m); return;
     }
 
-    const reach = (d.boss || d.leader ? 70 : 34) + s.width * 0.3;
+    // Tầm đánh tính theo bề rộng khung hình GỐC (rw): ảnh đã cắt viền (tools/trim-mob-sheets.js) có khung hẹp hơn
+    const reach = (d.boss || d.leader ? 70 : 34) + ((m.sheet && Sprites.MOBS[m.sheet].rw) || s.width) * 0.3;
     // ---- Gồng đòn: đứng yên, nháy đỏ
     if (m.state === 'windup') {
       s.body.setVelocityX(0);

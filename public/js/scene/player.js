@@ -307,9 +307,20 @@ WorldScene.mix(class WorldPlayer {
     const ids = Array.isArray(m.summoned) ? m.summoned : (m.active ? [m.active] : []);
     return [...new Set(ids)].filter(id => m.owned.includes(id) && GameData.MOUNTS[id]);
   }
+  // Kết quả tính chỉ số (đắt, gọi mỗi khung hình) giữ lại tối đa 0,5 giây và đổi ngay khi App.player được thay mới
+  cachedCalc(name, fn) {
+    const now = this.time.now, store = this._calc || (this._calc = {}), e = store[name];
+    if (e && e.p === App.player && now - e.t < 500) return e.v;
+    const v = fn();
+    store[name] = { p: App.player, t: now, v };
+    return v;
+  }
   buildCompanions() {
     if (!this.companionSprites) this.companionSprites = {};
     const ids = this.summonedPetIds(), wanted = new Set(ids);
+    // Đường nhanh: đúng những con đang có, sprite còn sống → không cần dựng lại
+    const have = Object.keys(this.companionSprites);
+    if (have.length === ids.length && ids.every(id => this.companionSprites[id]?.sprite.scene)) return;
     this.petLooks = ids.map(i => this.companionDef(i).look);   // xếp hàng thú theo bề ngang từng con
     for (const [id, c] of Object.entries(this.companionSprites)) {
       if (wanted.has(id) && c.sprite.scene) continue;   // sprite đã bị hủy (đổi bản đồ) thì dựng lại
@@ -334,7 +345,7 @@ WorldScene.mix(class WorldPlayer {
   companionUpdate(time, delta) {
     const ids = this.summonedPetIds();
     this.buildCompanions();
-    const ps = GameData.petStats(App.player), pets = App.player.pets || {};
+    const ps = this.cachedCalc('petStats', () => GameData.petStats(App.player)), pets = App.player.pets || {};
     if (time >= (this.nextPetTargetScan || 0)) {
       const pl = this.player;
       this.petTarget = this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive && Math.abs(m.sprite.y - pl.y) < 180 && Math.abs(m.sprite.x - pl.x) < 260)
@@ -356,6 +367,8 @@ WorldScene.mix(class WorldPlayer {
   buildSummons() {
     if (!this.summonSprites) this.summonSprites = {};
     const ids = this.summonedSummonIds(), wanted = new Set(ids);
+    const have = Object.keys(this.summonSprites);
+    if (have.length === ids.length && ids.every(id => this.summonSprites[id]?.sprite.scene)) return;
     this.summonLooks = ids.map(i => GameData.SUMMONS[i].look);
     for (const [id, c] of Object.entries(this.summonSprites)) {
       if (wanted.has(id) && c.sprite.scene) continue;   // sprite đã bị hủy (đổi bản đồ) thì dựng lại
@@ -386,7 +399,7 @@ WorldScene.mix(class WorldPlayer {
     ids.forEach((id, index) => {
       const c = this.summonSprites[id];
       if (!c) return;
-      const ss = GameData.summonUnitStats(App.player, id);   // chỉ số theo cấp riêng từng linh thú
+      const ss = this.cachedCalc('su_' + id, () => GameData.summonUnitStats(App.player, id));   // chỉ số theo cấp riêng từng linh thú
       const state = states[id] || (states[id] = { hp: ss.maxHp, mp: ss.maxMp, sta: ss.maxSta });
       this.updateSummon(id, c, index, time, delta, ss, state);
     });
@@ -453,6 +466,9 @@ WorldScene.mix(class WorldPlayer {
     const data = App.player.shadows || { roster: [], active: [], enabled: false };
     const ids = data.enabled ? data.active.slice(0, data.roster.length ? GameData.SHADOW_PARTY : 0) : [];
     const wanted = new Set(ids.map(uid => String(uid)));
+    // Đường nhanh: đúng những bóng đang có, đều là sprite thật (không còn hình tạm) và còn sống
+    const haveKeys = Object.keys(this.shadowSprites);
+    if (haveKeys.length === wanted.size && haveKeys.every(k => wanted.has(k) && !this.shadowSprites[k].label && this.shadowSprites[k].sprite.scene)) return;
     for (const [uid, c] of Object.entries(this.shadowSprites)) {
       if (wanted.has(uid) && c.sprite.scene) continue;   // sprite đã bị hủy (đổi bản đồ) thì dựng lại
       c.sprite.destroy();
@@ -509,7 +525,7 @@ WorldScene.mix(class WorldPlayer {
       const c = this.shadowSprites[String(uid)];
       if (!c) return;
       const soul = data.roster.find(x => x.uid === uid);
-      const sst = soul ? GameData.shadowStats(soul, App.player) : null;   // chỉ số theo cấp riêng từng bóng
+      const sst = soul ? this.cachedCalc('sh_' + uid, () => GameData.shadowStats(soul, App.player)) : null;   // chỉ số theo cấp riêng từng bóng
       const sprite = c.sprite, target = this.shadowTarget?.alive && this.shadowTarget.sprite?.body?.enable ? this.shadowTarget : null;
       const focused = time < (this.shadowFocusUntil || 0) && this.shadowFocusTarget?.alive && this.shadowFocusTarget.sprite?.body?.enable
         ? this.shadowFocusTarget : null;

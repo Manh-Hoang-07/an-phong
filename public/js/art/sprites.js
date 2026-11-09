@@ -72,17 +72,17 @@ const Sprites = (() => {
   };
   // bw, bh: khung va chạm trong game (px); fly: quái bay (cy = tâm thân theo chiều dọc)
   const MOBS = {
-    mushroom: { fw: 150, fh: 150, cx: 75, fy: 101, s: 1.1, bw: 28, bh: 36,
+    mushroom: { fw: 82, fh: 47, rw: 150, cx: 41, fy: 46, s: 1.1, bw: 28, bh: 36,
       anims: { idle: [4, 8], run: [8, 12], attack: [8, 16], hit: [4, 14], death: [4, 8] } },
-    goblin: { fw: 150, fh: 150, cx: 74, fy: 101, s: 1.3, bw: 28, bh: 44,
+    goblin: { fw: 90, fh: 48, rw: 150, cx: 44, fy: 47, s: 1.3, bw: 28, bh: 44,
       anims: { idle: [4, 8], run: [8, 14], attack: [8, 16], hit: [4, 14], death: [4, 8] } },
-    skeleton: { fw: 150, fh: 150, cx: 80, fy: 101, s: 1.1, bw: 30, bh: 54,
+    skeleton: { fw: 148, fh: 61, rw: 150, cx: 79, fy: 58, s: 1.1, bw: 30, bh: 54,
       anims: { idle: [4, 8], run: [4, 8], attack: [8, 14], hit: [4, 14], death: [4, 8] } },
-    slime: { fw: 156, fh: 156, cx: 77, fy: 87, s: 1.35, bw: 40, bh: 28,
+    slime: { fw: 156, fh: 37, rw: 156, cx: 77, fy: 36, s: 1.35, bw: 40, bh: 28,
       anims: { idle: [14, 14], run: [6, 10], attack: [19, 30], hit: [3, 14], death: [11, 16] } },
-    eye: { fw: 150, fh: 150, cx: 76, cy: 76, fly: true, s: 1.2, bw: 34, bh: 30,
+    eye: { fw: 64, fh: 43, rw: 150, cx: 33, cy: 17, fly: true, s: 1.2, bw: 34, bh: 30,
       anims: { idle: [8, 14], run: [8, 14], attack: [8, 18], hit: [4, 14], death: [4, 8] } },
-    bat: { fw: 87, fh: 87, cx: 48, cy: 43, fly: true, s: 0.95, bw: 40, bh: 32,
+    bat: { fw: 87, fh: 57, rw: 87, cx: 48, cy: 28, fly: true, s: 0.95, bw: 40, bh: 32,
       anims: { idle: [11, 16], run: [11, 16], attack: [11, 22], hit: [3, 14], death: [4, 8] } },
     // ---- Thay hình vẽ bằng code (golem, hình nhân). Nguồn: xem public/assets/CREDITS.txt
     dummy: { fw: 79, fh: 96, cx: 46, fy: 95, hd: true, s: 0.5, bw: 24, bh: 44,
@@ -91,13 +91,13 @@ const Sprites = (() => {
       anims: { idle: [4, 5], run: [3, 8], attack: [4, 10], hit: [3, 10], death: [4, 6] } },
     werewolf: { fw: 252, fh: 157, cx: 120, fy: 150, hd: true, s: 0.63, bw: 40, bh: 56,
       anims: { idle: [4, 5], run: [3, 9], attack: [4, 10], hit: [3, 10], death: [4, 6] } },
-    hydra: { fw: 224, fh: 117, cx: 86, fy: 101, hd: true, s: 0.68, bw: 60, bh: 40,
+    hydra: { fw: 220, fh: 111, rw: 224, cx: 84, fy: 98, hd: true, s: 0.68, bw: 60, bh: 40,
       anims: { idle: [8, 9], run: [8, 12], attack: [10, 14], hit: [6, 12], death: [10, 10] } },
     beast: { fw: 252, fh: 197, cx: 113, fy: 190, hd: true, s: 0.47, bw: 50, bh: 70,
       anims: { idle: [10, 10], run: [10, 12], attack: [10, 14], hit: [6, 12], death: [10, 10] } },
     dragon: { fw: 454, fh: 249, cx: 207, fy: 229, hd: true, s: 0.5, bw: 70, bh: 85,
       anims: { idle: [8, 8], run: [8, 10], attack: [8, 12], hit: [6, 12], death: [8, 8] } },
-    reaper: { fw: 82, fh: 75, cx: 24, fy: 72, s: 1.13, bw: 30, bh: 64,
+    reaper: { fw: 80, fh: 73, rw: 82, cx: 23, fy: 71, s: 1.13, bw: 30, bh: 64,
       anims: { idle: [4, 6], run: [4, 8], attack: [13, 18], hit: [3, 12], death: [18, 14] } },
     nightborne: { fw: 80, fh: 73, cx: 37, fy: 57, s: 1.7, bw: 30, bh: 46,
       anims: { idle: [9, 10], run: [6, 12], attack: [12, 18], hit: [5, 12], death: [23, 18] } },
@@ -105,70 +105,70 @@ const Sprites = (() => {
     // faceLeft: hình gốc quay mặt sang trái (các bộ khác quay phải) → đảo chiều lật.
     // fakeDeath: bộ hình không có hoạt ảnh chết thật (death.png chỉ là khung đứng) → game tự cho ngã xuống.
     // Gói thú hoang chỉ có đứng/đi/chạy: attack mượn chạy (sói: tru), hit mượn khung đứng.
-    wolf: { fw: 64, fh: 40, cx: 35, fy: 40, s: 1.6, bw: 44, bh: 36, faceLeft: true, fakeDeath: true,
+    wolf: { fw: 62, fh: 36, rw: 64, cx: 34, fy: 36, s: 1.6, bw: 44, bh: 36, faceLeft: true, fakeDeath: true,
       anims: { idle: [1, 1], run: [6, 12], attack: [10, 16], hit: [1, 1], death: [1, 1] } },
     bear: { fw: 64, fh: 33, cx: 32, fy: 32, s: 2, bw: 56, bh: 50, faceLeft: true, fakeDeath: true,
       anims: { idle: [12, 8], run: [8, 10], attack: [5, 14], hit: [1, 1], death: [1, 1] } },
-    boar: { fw: 64, fh: 40, cx: 31, fy: 40, s: 1.6, bw: 46, bh: 36, faceLeft: true, fakeDeath: true,
+    boar: { fw: 56, fh: 30, rw: 64, cx: 27, fy: 30, s: 1.6, bw: 46, bh: 36, faceLeft: true, fakeDeath: true,
       anims: { idle: [8, 8], run: [8, 12], attack: [6, 16], hit: [1, 1], death: [1, 1] } },
-    rat: { fw: 70, fh: 70, cx: 35, fy: 45, s: 1.8, bw: 40, bh: 28,
+    rat: { fw: 66, fh: 24, rw: 70, cx: 33, fy: 23, s: 1.8, bw: 40, bh: 28,
       anims: { idle: [10, 10], run: [8, 14], attack: [12, 22], hit: [3, 12], death: [6, 10] } },
-    mimic: { fw: 146, fh: 146, cx: 77, fy: 83, s: 1.5, bw: 40, bh: 42,
+    mimic: { fw: 88, fh: 46, rw: 146, cx: 48, fy: 45, s: 1.5, bw: 40, bh: 42,
       anims: { idle: [9, 10], run: [6, 10], attack: [14, 22], hit: [3, 12], death: [6, 10] } },
-    evil_wizard: { fw: 250, fh: 250, cx: 136, fy: 167, s: 0.55, bw: 30, bh: 54,
+    evil_wizard: { fw: 224, fh: 143, rw: 250, cx: 123, fy: 142, s: 0.55, bw: 30, bh: 54,
       anims: { idle: [8, 10], run: [8, 14], attack: [8, 16], hit: [3, 12], death: [7, 10] } },
-    ronin: { fw: 126, fh: 126, cx: 66, fy: 82, s: 1.35, bw: 28, bh: 50,
+    ronin: { fw: 126, fh: 82, rw: 126, cx: 66, fy: 81, s: 1.35, bw: 28, bh: 50,
       anims: { idle: [10, 10], run: [8, 14], attack: [7, 18], hit: [3, 12], death: [11, 12] } },
     // ---- Gói itch.io (sinh bằng server/tools/mob-sheets.js; nguồn: public/assets/CREDITS.txt)
-    warrior: { fw: 194, fh: 137, cx: 97, fy: 125, s: 0.691, bw: 30, bh: 52,
+    warrior: { fw: 174, fh: 126, rw: 194, cx: 87, fy: 125, s: 0.691, bw: 30, bh: 52,
       anims: { idle: [6, 10], run: [8, 12], attack: [4, 16], hit: [3, 12], death: [9, 10] } },
-    spearman: { fw: 154, fh: 150, cx: 77, fy: 95, s: 1.366, bw: 30, bh: 52,
+    spearman: { fw: 138, fh: 43, rw: 154, cx: 69, fy: 42, s: 1.366, bw: 30, bh: 52,
       anims: { idle: [8, 10], run: [8, 12], attack: [4, 16], hit: [4, 12], death: [6, 10] } },
-    knight_silver: { fw: 139, fh: 135, cx: 69.5, fy: 86, s: 1.421, bw: 30, bh: 50,
+    knight_silver: { fw: 109, fh: 51, rw: 139, cx: 54.5, fy: 50, s: 1.421, bw: 30, bh: 50,
       anims: { idle: [10, 10], run: [6, 12], attack: [4, 16], hit: [3, 12], death: [9, 10] } },
-    hero_knight: { fw: 160, fh: 140, cx: 80, fy: 83, s: 1.487, bw: 30, bh: 53,
+    hero_knight: { fw: 96, fh: 63, rw: 160, cx: 48, fy: 62, s: 1.487, bw: 30, bh: 53,
       anims: { idle: [11, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [9, 10] } },
-    samurai: { fw: 210, fh: 200, cx: 105, fy: 122, s: 1.077, bw: 30, bh: 52,
+    samurai: { fw: 190, fh: 71, rw: 210, cx: 95, fy: 70, s: 1.077, bw: 30, bh: 52,
       anims: { idle: [8, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [6, 10] } },
-    swordsman: { fw: 212, fh: 200, cx: 106, fy: 129, s: 0.982, bw: 30, bh: 52,
+    swordsman: { fw: 180, fh: 68, rw: 212, cx: 90, fy: 67, s: 0.982, bw: 30, bh: 52,
       anims: { idle: [4, 10], run: [8, 12], attack: [4, 16], hit: [3, 12], death: [7, 10] } },
-    witch: { fw: 148, fh: 140, cx: 74, fy: 97, s: 1.094, bw: 30, bh: 53,
+    witch: { fw: 128, fh: 68, rw: 148, cx: 64, fy: 67, s: 1.094, bw: 30, bh: 53,
       anims: { idle: [10, 10], run: [8, 12], attack: [13, 16], hit: [3, 12], death: [18, 10] } },
-    fire_worm: { fw: 94, fh: 90, cx: 47, fy: 58, s: 0.978, bw: 41, bh: 40,
+    fire_worm: { fw: 94, fh: 56, rw: 94, cx: 47, fy: 55, s: 0.978, bw: 41, bh: 40,
       anims: { idle: [9, 10], run: [9, 12], attack: [16, 16], hit: [3, 12], death: [8, 10] } },
-    huntress: { fw: 158, fh: 150, cx: 79, fy: 97, s: 1.333, bw: 30, bh: 52,
+    huntress: { fw: 96, fh: 67, rw: 158, cx: 48, fy: 66, s: 1.333, bw: 30, bh: 52,
       anims: { idle: [8, 10], run: [8, 12], attack: [5, 16], hit: [3, 12], death: [8, 10] } },
-    king: { fw: 193, fh: 155, cx: 96.5, fy: 116, s: 0.732, bw: 30, bh: 55,
+    king: { fw: 179, fh: 84, rw: 193, cx: 89.5, fy: 83, s: 0.732, bw: 30, bh: 55,
       anims: { idle: [6, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [11, 10] } },
-    spider: { fw: 32, fh: 32, cx: 16, fy: 32, s: 3.333, bw: 40, bh: 28,
+    spider: { fw: 18, fh: 10, rw: 32, cx: 9, fy: 10, s: 3.333, bw: 40, bh: 28,
       anims: { idle: [5, 10], run: [6, 12], attack: [4, 16], hit: [3, 12], death: [9, 10] } },
-    worm: { fw: 34, fh: 32, cx: 17, fy: 28, s: 2.857, bw: 26, bh: 37,
+    worm: { fw: 32, fh: 23, rw: 34, cx: 16, fy: 20, s: 2.857, bw: 26, bh: 37,
       anims: { idle: [8, 10], run: [8, 12], attack: [8, 16], hit: [4, 12], death: [6, 10] } },
-    ice_sprite: { fw: 34, fh: 32, cx: 17, fy: 31, s: 2.727, bw: 30, bh: 28,
+    ice_sprite: { fw: 34, fh: 13, rw: 34, cx: 17, fy: 12, s: 2.727, bw: 30, bh: 28,
       anims: { idle: [6, 10], run: [4, 12], attack: [5, 16], hit: [3, 12], death: [8, 10] } },
-    ghoul: { fw: 34, fh: 32, cx: 17, fy: 32, s: 2.16, bw: 30, bh: 50,
+    ghoul: { fw: 34, fh: 27, rw: 34, cx: 17, fy: 27, s: 2.16, bw: 30, bh: 50,
       anims: { idle: [4, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [6, 10] } },
-    cyclops: { fw: 66, fh: 64, cx: 33, fy: 64, s: 2, bw: 40, bh: 74,
+    cyclops: { fw: 48, fh: 45, rw: 66, cx: 24, fy: 45, s: 2, bw: 40, bh: 74,
       anims: { idle: [15, 10], run: [12, 12], attack: [13, 16], hit: [3, 12], death: [9, 10] } },
-    tooth_walker: { fw: 72, fh: 64, cx: 36, fy: 58, s: 1.45, bw: 22, bh: 53,
+    tooth_walker: { fw: 58, fh: 51, rw: 72, cx: 29, fy: 50, s: 1.45, bw: 22, bh: 53,
       anims: { idle: [6, 10], run: [6, 12], attack: [6, 16], hit: [2, 12], death: [7, 10] } },
-    reaper_boss: { fw: 206, fh: 93, cx: 103, fy: 92, s: 1.429, bw: 36, bh: 74,
+    reaper_boss: { fw: 206, fh: 87, rw: 206, cx: 103, fy: 86, s: 1.429, bw: 36, bh: 74,
       anims: { idle: [8, 10], run: [8, 12], attack: [10, 16], hit: [3, 12], death: [10, 10] } },
-    rock_golem: { fw: 66, fh: 64, cx: 33, fy: 47, s: 2.071, bw: 40, bh: 53,
+    rock_golem: { fw: 34, fh: 34, rw: 66, cx: 17, fy: 32, s: 2.071, bw: 40, bh: 53,
       anims: { idle: [4, 10], run: [4, 12], attack: [12, 16], hit: [5, 12], death: [5, 10] } },
-    skull_wolf: { fw: 66, fh: 64, cx: 33, fy: 64, s: 1.073, bw: 48, bh: 40,
+    skull_wolf: { fw: 64, fh: 50, rw: 66, cx: 32, fy: 50, s: 1.073, bw: 48, bh: 40,
       anims: { idle: [6, 10], run: [5, 12], attack: [5, 16], hit: [4, 12], death: [7, 10] } },
-    frog_boss: { fw: 384, fh: 128, cx: 192, fy: 128, s: 0.877, bw: 60, bh: 59, fakeDeath: true,
+    frog_boss: { fw: 314, fh: 74, rw: 384, cx: 157, fy: 74, s: 0.877, bw: 60, bh: 59, fakeDeath: true,
       anims: { idle: [5, 10], run: [8, 12], attack: [8, 16], hit: [4, 12], death: [1, 10] } },
-    stone_golem: { fw: 102, fh: 100, cx: 51, fy: 70, s: 1.404, bw: 40, bh: 61,
+    stone_golem: { fw: 76, fh: 73, rw: 102, cx: 38, fy: 48, s: 1.404, bw: 40, bh: 61,
       anims: { idle: [4, 10], run: [4, 12], attack: [7, 16], hit: [3, 12], death: [14, 10] } },
-    void_beast: { fw: 290, fh: 192, hd: true, cx: 145, fy: 181, s: 0.716, bw: 60, bh: 88,
+    void_beast: { fw: 204, fh: 144, rw: 290, hd: true, cx: 102, fy: 138, s: 0.716, bw: 60, bh: 88,
       anims: { idle: [14, 10], run: [10, 12], attack: [12, 16], hit: [8, 12], death: [14, 10] } },
-    imp: { fw: 52, fh: 48, cx: 26, fy: 42, s: 1.125, bw: 26, bh: 33,
+    imp: { fw: 46, fh: 35, rw: 52, cx: 23, fy: 33, s: 1.125, bw: 26, bh: 33,
       anims: { idle: [6, 10], run: [6, 12], attack: [6, 16], hit: [3, 12], death: [5, 10] } },
-    axe_demon: { fw: 110, fh: 80, cx: 55, fy: 74, s: 1.561, bw: 34, bh: 59,
+    axe_demon: { fw: 104, fh: 56, rw: 110, cx: 52, fy: 54, s: 1.561, bw: 34, bh: 59,
       anims: { idle: [6, 10], run: [6, 12], attack: [6, 16], hit: [3, 12], death: [4, 10] } },
-    cultist: { fw: 202, fh: 200, cx: 101, fy: 182, s: 0.38, bw: 30, bh: 55,
+    cultist: { fw: 156, fh: 178, rw: 202, cx: 78, fy: 177, s: 0.38, bw: 30, bh: 55,
       anims: { idle: [5, 10], run: [6, 12], attack: [5, 16], hit: [4, 12], death: [6, 10] } },
   };
   // Kiểu dáng quái trong shared/data/monsters.js → bộ hình dùng chung (khi quái chưa có def.sprite riêng)
@@ -228,14 +228,30 @@ const Sprites = (() => {
     return list.length;
   }
 
-  // Thứ tự tải ngầm sau khi đã vào game: class đang chơi (vừa đổi class) → quái ở các bản đồ kề cổng → còn lại
+  // Bộ hình cần giữ trong máy: class đang chơi, quái bản đồ này + bóng ma Tử Linh đang sở hữu.
+  // Class khác và quái bản đồ khác không tải trước: sang bản đồ mới thì mới tải (preload của cảnh) → nhẹ băng thông
+  // và bộ nhớ ảnh, hình ảnh trong game không đổi.
+  function keepSet(mapId, school) {
+    const set = needed(mapId, school);
+    for (const soul of (App.player?.shadows?.roster || [])) {
+      const sheet = sheetOf(GameData.MONSTERS[soul.monster]);
+      if (sheet) set.mobs.add(sheet);
+    }
+    return set;
+  }
+  // Thứ tự tải ngầm sau khi đã vào game (chỉ phần cần giữ, xem keepSet)
   function background(scene, mapId, school) {
-    const meta = GameData.MAPS[mapId] || {};
-    const near = { chars: new Set(charsFor(school)), mobs: new Set() };
-    for (const ch in meta.portals || {}) for (const m of needed(meta.portals[ch].to, school).mobs) near.mobs.add(m);
-    const first = missing(scene, near);
-    const keys = new Set(first.map(f => f.key));
-    return first.concat(missing(scene, null).filter(f => !keys.has(f.key))).filter(f => !skipped.has(f.key));
+    return missing(scene, keepSet(mapId, school)).filter(f => !skipped.has(f.key));
+  }
+  // Gỡ khỏi bộ nhớ (và GPU) các bộ hình không còn cần: gọi lúc vừa vào bản đồ, khi sprite cũ đã bị hủy theo cảnh cũ
+  function unloadFar(scene, mapId, school) {
+    const keep = keepSet(mapId, school);
+    const drop = (keys) => { for (const k of keys) { if (scene.anims.exists(k)) scene.anims.remove(k); if (scene.textures.exists(k)) scene.textures.remove(k); } };
+    for (const [id, m] of Object.entries(MOBS)) if (!keep.mobs.has(id)) drop(Object.keys(m.anims).map(a => `mb_${id}_${a}`));
+    for (const [id, c] of Object.entries(CHARS)) {
+      if (keep.chars.has(id)) continue;
+      for (const a of Object.keys(c.anims)) drop([`ch_${id}_${a}`, ...[1, 2].flatMap(t => [formKey(id, t, a), shellKey(id, t, a)])]);
+    }
   }
   const skipped = new Set();
   const skip = (key) => skipped.add(key);
@@ -422,5 +438,5 @@ const Sprites = (() => {
     }
   }
 
-  return { CHARS, MOBS, LOOK, lookOf, weaponClass, LOOK_TINT, sheetOf, codeTex, tintOf, needed, preload, background, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
+  return { CHARS, MOBS, LOOK, lookOf, weaponClass, LOOK_TINT, sheetOf, codeTex, tintOf, needed, preload, background, unloadFar, skip, createAnims, applyFilters, hasChar, hasMob, mobOf, fitPlayer, fitMob, formSheetsReady, formJob };
 })();
