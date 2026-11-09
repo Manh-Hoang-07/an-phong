@@ -9,9 +9,6 @@
  */
 const Sprites = (() => {
   const CHARS = {
-    // Các bộ pixel art cũ đã đưa về đúng điểm ảnh gốc (trước đây phóng to sẵn 2 lần → bị thu nhỏ mượt, nhòe)
-    none: { fw: 162, fh: 162, cx: 85.5, fy: 101, s: 1.25, combo: ['attack1', 'attack2', 'attack3'],
-      anims: { idle: [10, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 18], attack2: [7, 18], attack3: [8, 18], hit: [3, 12], death: [7, 10] } },
     // Kiếm Sĩ: Knight Man (hiệp sĩ giáp trắng, vẽ tay HD, 3 đường chém)
     kiem_si: { fw: 238, fh: 194, cx: 73, fy: 189, s: 0.45, hd: true, combo: ['attack1', 'attack2', 'attack3'],
       anims: { idle: [10, 10], run: [10, 16], jump: [3, 10], fall: [3, 10], attack1: [8, 20], attack2: [8, 20], attack3: [9, 20], hit: [4, 12], death: [11, 12] } },
@@ -19,9 +16,9 @@ const Sprites = (() => {
       anims: { idle: [10, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [6, 16], hit: [3, 12], death: [10, 12] } },
     phap_su: { fw: 231, fh: 190, cx: 110, fy: 141, s: 0.68, combo: ['attack1', 'attack2'],
       anims: { idle: [6, 8], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [4, 12], death: [7, 10] } },
-    // Toàn Năng: Fire Knight (kiếm lớn, chiêu lửa)
-    toan_nang: { fw: 171, fh: 108, cx: 51, fy: 107, s: 1.3, combo: ['attack1', 'attack2', 'attack3'],
-      anims: { idle: [8, 10], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [11, 18], attack2: [12, 18], attack3: [14, 18], hit: [4, 12], death: [13, 10] } },
+    // Toàn Năng: Halberd Warrior (Engvee, vẽ tay HD, cầm kích; ba đường: đâm quét thấp / bổ từ trên xuống / đâm thẳng). Tool: server/tools/engvee-halberd.js
+    toan_nang: { fw: 311, fh: 199, cx: 156, fy: 195, s: 0.452, hd: true, combo: ['attack1', 'attack2', 'attack3'],
+      anims: { idle: [6, 10], run: [12, 16], jump: [3, 10], fall: [3, 10], attack1: [8, 20], attack2: [8, 20], attack3: [8, 20], hit: [6, 12], death: [8, 10] } },
     // ---- 3 class mới
     // Sát Thủ: Thief (song đao, vẽ tay HD, 3 combo nhanh)
     sat_thu: { fw: 221, fh: 198, cx: 89, fy: 155, s: 0.45, hd: true, combo: ['attack1', 'attack2', 'attack3'],
@@ -42,17 +39,13 @@ const Sprites = (() => {
     // Kiếm Thánh: Female Hero (nữ hiệp sĩ, vệt kiếm sáng)
     kiem_thanh: { fw: 260, fh: 245, cx: 130, fy: 237, s: 0.27, hd: true, combo: ['attack1'],
       anims: { idle: [8, 10], run: [8, 14], jump: [4, 10], fall: [3, 10], attack1: [9, 18], hit: [5, 12], death: [8, 10] } },
-    // Đại Pháp Sư: Evil Wizard (pháp sư lửa)
-    dai_phap_su: { fw: 98, fh: 73, cx: 30, fy: 69, s: 1.1, combo: ['attack1'],
-      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 16], hit: [4, 12], death: [5, 8] } },
-    // Toàn Năng Tinh Thông: Medieval King
-    toan_nang_tinh_thong: { fw: 146, fh: 107, cx: 64, fy: 105, s: 1.1, combo: ['attack1', 'attack2', 'attack3'],
-      anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [4, 12], attack2: [4, 12], attack3: [4, 12], hit: [4, 12], death: [6, 8] } },
-    // Hộ Vệ Bất Khuất: Hero Knight
-    ho_ve_bat_khuat: { fw: 135, fh: 85, cx: 50, fy: 82, s: 1.15, combo: ['attack1', 'attack2'],
-      anims: { idle: [11, 12], run: [8, 14], jump: [3, 10], fall: [3, 10], attack1: [7, 16], attack2: [7, 16], hit: [4, 12], death: [11, 12] } },
   };
-  const EVO_ALIAS = { than_xa: ['cung_thu', 0x9dffd4], anh_vuong: ['sat_thu', 0xd7a6ff], thanh_linh: ['tri_lieu_su', 0xfff1b8] };
+  // Dạng không có bộ hình riêng: [bộ hình mượn, màu phủ]. 'none' = chưa chọn class (thợ săn tập sự, mượn hình Kiếm Sĩ màu nhạt)
+  const EVO_ALIAS = {
+    than_xa: ['cung_thu', 0x9dffd4], anh_vuong: ['sat_thu', 0xd7a6ff], thanh_linh: ['tri_lieu_su', 0xfff1b8],
+    toan_nang_tinh_thong: ['toan_nang', 0xffd36a], ho_ve_bat_khuat: ['tanker', 0xb4ccff], dai_phap_su: ['phap_su', 0xa8dcff],
+    none: ['kiem_si', 0xcfc3ae],
+  };
   // Bộ hình + màu riêng cho một class / dạng tiến hóa
   const lookOf = (id) => EVO_ALIAS[id] ? { sheet: EVO_ALIAS[id][0], tint: EVO_ALIAS[id][1] } : { sheet: id, tint: null };
   // Toàn Năng cầm vũ khí của class khác thì hóa thân thành class đó: class sở hữu loại vũ khí (Thần Binh / tay không: null)
@@ -62,7 +55,7 @@ const Sprites = (() => {
   };
   // Các bộ hình nhân vật cần cho class: hình class + hình dạng tiến hóa (+ hình class theo vũ khí đang cầm của Toàn Năng)
   const charsFor = (school) => {
-    const out = [CHARS[school] ? school : 'none'];
+    const out = [lookOf(CHARS[school] ? school : 'none').sheet];
     const evo = GameData.EVOLUTIONS && GameData.EVOLUTIONS[school];
     if (evo && CHARS[lookOf(evo).sheet]) out.push(lookOf(evo).sheet);
     const w = school === 'toan_nang' && typeof App !== 'undefined' && App.player?.equip?.weapon;
@@ -142,6 +135,13 @@ const Sprites = (() => {
       anims: { idle: [6, 10], run: [5, 12], attack: [5, 16], hit: [4, 12], death: [7, 10] } },
     frog_boss: { fw: 314, fh: 74, rw: 384, cx: 157, fy: 74, s: 0.877, bw: 60, bh: 59, fakeDeath: true,
       anims: { idle: [5, 10], run: [8, 12], attack: [8, 16], hit: [4, 12], death: [1, 10] } },
+    // Admurin Golem (Thạch Vương) · Elthen Ice Elemental (Người Tuyết) · LuizMelo Fantasy Warrior (Hộ Vệ Tinh Vân)
+    rock_golem: { fw: 34, fh: 34, rw: 66, cx: 17, fy: 32, s: 2.071, bw: 40, bh: 53,
+      anims: { idle: [4, 10], run: [4, 12], attack: [12, 16], hit: [5, 12], death: [5, 10] } },
+    ice_sprite: { fw: 34, fh: 13, rw: 34, cx: 17, fy: 12, s: 4.727, bw: 34, bh: 48,
+      anims: { idle: [6, 10], run: [4, 12], attack: [5, 16], hit: [3, 12], death: [8, 10] } },
+    fantasy_warrior: { fw: 122, fh: 61, rw: 166, cx: 61, fy: 60, s: 1.289, bw: 30, bh: 53,
+      anims: { idle: [10, 10], run: [8, 12], attack: [7, 16], hit: [3, 12], death: [7, 10] } },
     stone_golem: { fw: 76, fh: 73, rw: 102, cx: 38, fy: 48, s: 1.404, bw: 40, bh: 61,
       anims: { idle: [4, 10], run: [4, 12], attack: [7, 16], hit: [3, 12], death: [14, 10] } },
     void_beast: { fw: 204, fh: 144, rw: 290, hd: true, cx: 102, fy: 138, s: 0.716, bw: 60, bh: 88,
@@ -153,6 +153,8 @@ const Sprites = (() => {
     cultist: { fw: 156, fh: 178, rw: 202, cx: 78, fy: 177, s: 0.38, bw: 30, bh: 55,
       anims: { idle: [5, 10], run: [6, 12], attack: [5, 16], hit: [4, 12], death: [6, 10] } },
     // ---- Free Foes (Robert Pinero; tool: server/tools/free-foes.js; xem public/assets/CREDITS.txt)
+    ff_bat: { fw: 150, fh: 147, rw: 87, cx: 75, cy: 58, fly: true, hd: true, s: 0.379, bw: 40, bh: 32, faceLeft: true,
+      anims: { idle: [4, 7], run: [4, 12], attack: [3, 16], hit: [3, 12], death: [6, 9] } },
     ff_crab: { fw: 144, fh: 74, rw: 32, cx: 72, fy: 72, hd: true, s: 0.493, bw: 40, bh: 28, faceLeft: true,
       anims: { idle: [4, 7], run: [4, 12], attack: [3, 16], hit: [3, 12], death: [6, 9] } },
     ff_gnoll: { fw: 284, fh: 162, rw: 64, cx: 142, fy: 154, hd: true, s: 0.523, bw: 32, bh: 52, faceLeft: true,

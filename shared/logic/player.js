@@ -133,6 +133,7 @@
       equip: Object.fromEntries(SLOTS.map(sl => [sl, null])),
       bag: [], storage: [], bagPlus: 0,
       skillSlots: Array(SKILL_SLOTS).fill(null),
+      careerSlots: Array(SKILL_SLOTS).fill(null),   // thanh kỹ năng khi bật chức nghiệp 2
       skills: {}, skillPoints: 0,
       unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
       mounts: { owned: [], active: null, summoned: [], skill: 'bite', skills: {} },   // giữ active / skill để đọc dữ liệu client cũ

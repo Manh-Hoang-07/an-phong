@@ -246,8 +246,16 @@ Nếu dùng hết bảng trên: từ 12 bộ hình bị trùng còn khoảng 4 c
   Đổi tên theo hình: **Bọ Cánh Cứng → Cua Giáp** (ff_crab), **Đại Thạch Nhân Băng → Quỷ Búa Băng** (ff_troll, tông băng).
   Hộp va chạm (`bw`, `bh`) và tầm đánh (`rw`) giữ theo bộ cũ để lối chơi không đổi. Bắt buộc ghi công "Robert Pinero" (CREDITS.txt + màn hình đăng nhập).
   Đã gỡ 8 bộ cũ không còn dùng: skeleton, slime, wolf, boar, rat, ice_sprite, ghoul, rock_golem. `npm run check:mobs`: 53 quái · 47 bộ hình · 43 quái không trùng.
+  Nhân vật (10/11/2026): Toàn Năng đổi sang Engvee "Halberd Warrior" (HD, `node server/tools/engvee-halberd.js`; gói gốc giải nén vào
+  `assets_raw/engvee/halberd/`, ô nguồn 320×240, thân 126 px). Các dạng còn lại mượn hình lớp gốc + màu phủ qua `EVO_ALIAS`: Toàn Năng Tinh Thông ← Toàn Năng (vàng),
+  Hộ Vệ Bất Khuất ← Tanker, Đại Pháp Sư ← Pháp Sư, chưa chọn lớp ← Kiếm Sĩ. Gói Engvee "Animated Knight" đã thử nhưng thân chỉ cao 78 px (không nét hơn) nên không dùng.
   Vẫn là hình độ phân giải thấp, cần gói mới: Nhện Cống Ngầm (spider), Ký Sinh Hư Không (worm), Trùm Tinh Vân (cyclops), Hộ Vệ Thiên Khôi (nightborne),
   Hộ Vệ Long Mạch (axe_demon), Thủ Thư Vô Diện (mimic), Kỵ Sĩ Hư Không (hero_knight).
 
 **Còn lại (cần hình mới):** lính/kỵ sĩ/Lam Sương vẫn dùng mắt bay vì chưa có bộ hình người nào còn trống;
 Sói Tuyết và Sói Đầu Đàn tạm dùng chung `wolf`. Danh sách đầy đủ: chạy `npm run check:mobs`.
+
+- Cập nhật (10/11/2026): gỡ 4 chỗ trùng bằng gói có sẵn trong `assets_raw/`: Dơi Hang → `ff_bat` (Free Foes, quái bay; `free-foes.js` hỗ trợ `fly`),
+  Thạch Vương → `rock_golem` (Admurin Golem), Người Tuyết → `ice_sprite` (Elthen Ice Elemental, phóng to), Hộ Vệ Tinh Vân → `fantasy_warrior` (LuizMelo).
+  Lưu ý: `troll` và `ff_troll` là CÙNG một hình troll (chỉ đổi màu) nên `check:mobs` không bắt được; nay `troll` không còn quái nào dùng.
+  `npm run check:mobs`: 53 quái · 50 bộ hình · còn trùng: hydra (Thủy Xà Vương / Trùm Long Mạch), beast (Trùm Thiên Khôi / Trùm Sáng Thế) — cần tải gói mới.

@@ -49,5 +49,19 @@
     return null;
   }
 
-  Object.assign(G, { skillAt, availableSkills, skillLevel, isCareerSkill, skillFormBlock });
+  // Thanh kỹ năng theo hình thái: chức nghiệp 2 có thanh riêng (careerSlots), trống nếu chưa học kỹ năng nhánh.
+  // Toàn Năng giữ một thanh chung (Tinh Thông không có bộ kỹ năng riêng).
+  const usesCareerBar = (player, careerOn) => !!careerOn && player.school !== 'toan_nang';
+  const EMPTY_BAR = Object.freeze(Array(G.SKILL_SLOTS).fill(null));
+  function slotsOf(player, careerOn) {
+    return usesCareerBar(player, careerOn) ? (Array.isArray(player.careerSlots) ? player.careerSlots : EMPTY_BAR) : player.skillSlots;
+  }
+  // Tên thanh chứa một kỹ năng: kỹ năng nhánh → careerSlots, còn lại → skillSlots
+  function slotKeyOf(player, id) {
+    return player.school !== 'toan_nang' && isCareerSkill(SKILLS[id]) ? 'careerSlots' : 'skillSlots';
+  }
+  // Đang bật chức nghiệp 2 (theo dữ liệu nhân vật phía server)
+  const careerActive = (player) => !!player.formActive && player.formChoice === 'evolution';
+
+  Object.assign(G, { skillAt, availableSkills, skillLevel, isCareerSkill, skillFormBlock, usesCareerBar, slotsOf, slotKeyOf, careerActive });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

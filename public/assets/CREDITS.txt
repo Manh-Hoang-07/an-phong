@@ -14,7 +14,7 @@ Bổ sung (thay hình vẽ bằng code và thú đồng hành độ phân giải
 - mobs/dragon: "Shadow Demon Dragon Asset Pack".
 - mobs/reaper: "Undead executioner puppet".
 - mobs/mimic: LuizMelo "Monsters Creatures Fantasy 2" (CC0). mobs/evil_wizard: LuizMelo "EVil Wizard 2" (CC0).
-  mobs/ronin: LuizMelo "Martial Hero 3" (CC0).
+  mobs/ronin: LuizMelo "Martial Hero 3" (CC0). mobs/fantasy_warrior: LuizMelo "Fantasy Warrior" (CC0).
 
 Quái bổ sung từ itch.io (tải 09/11/2026, gói gốc trong assets_raw/itch/, chuyển bằng server/tools/mob-sheets.js):
 - LuizMelo (CC0, https://luizmelo.itch.io): mobs/warrior "Medieval Warrior Pack", mobs/spearman "Medieval Warrior Pack 2",
@@ -22,25 +22,28 @@ Quái bổ sung từ itch.io (tải 09/11/2026, gói gốc trong assets_raw/itch
   mobs/swordsman "Martial Hero 2", mobs/witch "Evil Wizard 3", mobs/fire_worm "Fire Worm", mobs/huntress "Huntress",
   mobs/king "Medieval King Pack".
 - Elthen's Pixel Art Shop (https://elthen.itch.io, dùng thương mại được, điều khoản đầy đủ trên Patreon của tác giả):
-  mobs/spider, mobs/worm, mobs/cyclops.
+  mobs/spider, mobs/worm, mobs/cyclops, mobs/ice_sprite (Ice Elemental).
 - Penusbmic (https://penusbmic.itch.io, "Monster Pack I", dùng thương mại được, tác giả xin ghi công "Penusbmic"): mobs/tooth_walker.
-- Admurin (https://admurin.itch.io, "Bosses - Frogger", dùng thương mại được, không bán lại, không dùng huấn luyện AI): mobs/frog_boss.
+- Admurin (https://admurin.itch.io, "Bosses - Frogger" và "FREE Enemy: Golem", dùng thương mại được, không bán lại, không dùng huấn luyện AI): mobs/frog_boss, mobs/rock_golem.
 - Kronovi (https://darkpixel-kronovi.itch.io, "Boss: Mecha-Stone Golem [FREE]", dùng thương mại được): mobs/stone_golem.
 - Engvee (https://engvee.itch.io, "FREE 2D Sideview Boss Creature", dùng thương mại được): mobs/void_beast.
 - sanctumpixel (https://sanctumpixel.itch.io, "Imp & Axe Demon", dùng thương mại được, không bán lại): mobs/imp, mobs/axe_demon.
 - RiLi_XL (https://rili-xl.itch.io, "Cultist Priest Sprite Pack", dùng thương mại được, không phân phối lại gói): mobs/cultist.
 - Clembod (https://clembod.itch.io, "Bringer Of Death (Free)", dùng thương mại và chỉnh sửa được, không bán lại / phân phối lại): mobs/reaper_boss.
 - Robert Pinero / Low (https://robertpinero.itch.io/free-animated-enemy-sprites, "Free Foes"; dùng trong game miễn phí hoặc thương mại,
-  BẮT BUỘC ghi công "Robert Pinero" trong game, không phân phối lại hình ngoài game): mobs/ff_crab, ff_wolf, ff_rat, ff_sahuagin, ff_kobold,
+  BẮT BUỘC ghi công "Robert Pinero" trong game, không phân phối lại hình ngoài game): mobs/ff_bat, ff_crab, ff_wolf, ff_rat, ff_sahuagin, ff_kobold,
   ff_zombie, ff_skeleton, ff_troll, ff_gnoll, ff_slime (tải 09/11/2026, chuyển bằng server/tools/free-foes.js; sói / kobold / troll đã đổi tông
   màu thành bản tuyết / băng, cua và các bộ còn lại giữ màu gốc). Ghi công cũng hiện ở màn hình đăng nhập.
 - Atari Boy (https://atari-boy.itch.io, "Skull Wolf Pixel Art", CC0): mobs/skull_wolf.
 - mobs/nightborne: "NightBorne".
 Các gói này không kèm file giấy phép riêng: cần kiểm tra lại điều khoản ở trang tải gốc trước khi phát hành thương mại.
-- chars/kiem_si: "Knight Man"; chars/tanker: "Knight Girl"; chars/sat_thu: "Thief" (nhân vật vẽ tay HD).
-- Dạng tiến hóa: chars/kiem_thanh "Female Hero Pixel Art v1.1"; chars/dai_phap_su "Evil Wizard" (CC0);
-  chars/ho_ve_bat_khuat "Hero Knight" (CC0); chars/toan_nang_tinh_thong "Medieval King Pack 2" (CC0).
-- chars/toan_nang: "Elementals fire knight FREE v1.1"; chars/tu_linh_thuat_su: Necromancer (creativekind).
+- chars/kiem_si: "Knight Man"; chars/tanker: "Knight Girl"; chars/sat_thu: "Thief" (nhân vật vẽ tay HD) — Engvee (https://engvee.itch.io,
+  "Free sideview sprites collection", dùng thương mại và chỉnh sửa được, không bán lại / cho người dùng tải lại hình, ghi công không bắt buộc).
+- chars/toan_nang: Engvee, "FREE 2D Sideview Halberd Warrior" (https://engvee.itch.io/free-sideview, x320p_Spritesheets; cùng điều khoản như trên;
+  chuyển bằng server/tools/engvee-halberd.js).
+- Dạng tiến hóa mượn hình lớp gốc, đổi màu phủ (EVO_ALIAS trong public/js/art/sprites.js): toan_nang_tinh_thong ← toan_nang, ho_ve_bat_khuat ← tanker,
+  dai_phap_su ← phap_su, than_xa ← cung_thu, anh_vuong ← sat_thu, thanh_linh ← tri_lieu_su; nhân vật chưa chọn lớp (none) ← kiem_si.
+- chars/kiem_thanh "Female Hero Pixel Art v1.1"; chars/tu_linh_thuat_su: Necromancer (creativekind).
 - Linh thú Triệu Hồi Sư: pets/fox-* (gói "Fox", cáo chín đuôi), pets/insect-* (gói "Insect").
 
 - chars/trieu_hoi_su: "Wanderer Magican" trong "Free Pixel Wizard 2D Art" (Free Game Assets / craftpix.net, https://free-game-assets.itch.io/free-wizard-sprite-sheets-pixel-art),

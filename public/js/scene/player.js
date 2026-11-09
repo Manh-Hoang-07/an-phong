@@ -440,7 +440,8 @@ WorldScene.mix(class WorldPlayer {
         const classMul = this.hasPassive('trieu_hoi_su') ? 1.1 : 1;
         if (time >= c.nextAttack && state.sta >= 4) {
           state.sta -= 4; c.nextAttack = time + 1150 / (1 + (command?.speed || 0));
-          this.damageMonster(target, 0.82 * def.atk * ss.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
+          // Công lấy từ chỉ số riêng của linh thú (petAtk), không nhân chồng với công pet theo cấp nhân vật
+          this.damageMonster(target, 0.82 * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petAtk: ss.atk, petName: def.name, dir: Math.sign(dx) || 1 });
           c.lastCombat = time; c.attackUntil = time + 320;
         }
       }

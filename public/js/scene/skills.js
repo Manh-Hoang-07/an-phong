@@ -24,8 +24,10 @@ WorldScene.mix(class WorldSkills {
 
   useSkill(slot, time) {
     const p = App.player;
-    const id = p.skillSlots[slot];
+    const careerOn = !!App.form && p.formChoice === 'evolution';
+    const id = GameData.slotsOf(p, careerOn)[slot];
     if (!id) {
+      if (GameData.usesCareerBar(p, careerOn)) { UI.log('Ô kỹ năng chức nghiệp 2 trống. Mở bảng Kỹ năng (phím K) để học và gắn kỹ năng nhánh.', '#bdbdbd'); return; }
       UI.log(p.school ? 'Ô kỹ năng trống. Mở bảng Kỹ năng (phím K) để học và gắn kỹ năng.' : 'Chưa có kỹ năng. Đạt cấp 5 và thức tỉnh class ở Hội trưởng Khải.', '#bdbdbd');
       return;
     }

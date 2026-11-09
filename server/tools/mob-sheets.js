@@ -133,6 +133,8 @@ const I = 'itch/';
 const LM = (pack, sub = 'Sprites/') => (f) => `${I}${pack}/${pack}/${sub}${f}`;
 const JOBS = {
   // --- LuizMelo (CC0)
+  fantasy_warrior: { h: 58, bw: 30, src: (f) => `extracted/fantasy-warrior/Fantasy Warrior/Sprites/${f}`, fw: 162,
+    anims: { idle: 'Idle.png', run: 'Run.png', attack: 'Attack1.png', hit: 'Take hit.png', death: 'Death.png' } },
   warrior: { h: 56, src: LM('Medieval Warrior Pack', ''), fw: 184,
     anims: { idle: 'Idle.png', run: 'Run.png', attack: 'Attack1.png', hit: 'Hit.png', death: 'Death.png' } },
   spearman: { h: 56, src: LM('Medieval Warrior Pack 2'),
@@ -159,7 +161,7 @@ const JOBS = {
     return { idle: g(0, 5), run: g(1, 6), attack: g(4, 4), hit: g(5, 3), death: g(6, 9) }; })() },
   worm: { h: 40, bw: 26, anims: (() => { const f = I + 'elthen/Worm Sprite Sheet.png', g = (row, n) => ({ file: f, fw: 32, fh: 32, row, n });
     return { idle: g(0, 8), run: g(0, 8), attack: g(1, 8), hit: g(2, 4), death: g(3, 6) }; })() },
-  ice_sprite: { h: 30, bw: 30, anims: (() => { const f = I + 'elthen/Ice Elemental Sprite Sheet.png', g = (row, n) => ({ file: f, fw: 32, fh: 32, row, n });
+  ice_sprite: { h: 52, bw: 34, anims: (() => { const f = I + 'elthen/Ice Elemental Sprite Sheet.png', g = (row, n) => ({ file: f, fw: 32, fh: 32, row, n });
     return { idle: g(0, 6), run: g(1, 4), attack: g(4, 5), hit: g(5, 3), death: g(6, 9) }; })() },
   ghoul: { h: 54, flip: true, bw: 30, anims: (() => { const f = I + 'elthen/Ghoul Sprite Sheet.png', g = (row, n) => ({ file: f, fw: 32, fh: 32, row, n });
     return { idle: g(0, 4), run: g(1, 8), attack: g(2, 6), hit: g(3, 4), death: g(4, 6) }; })() },

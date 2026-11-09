@@ -160,6 +160,15 @@ function migrate(p) {
   if (!Number.isFinite(p.skillPoints)) p.skillPoints = 0;
   while (p.skillSlots.length < G.SKILL_SLOTS) p.skillSlots.push(null);
   p.skillSlots = p.skillSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] ? id : null));
+  // Thanh kỹ năng chức nghiệp 2: chuyển kỹ năng nhánh đang nằm ở thanh chức nghiệp 1 (dữ liệu cũ) sang thanh riêng
+  if (!Array.isArray(p.careerSlots)) p.careerSlots = [];
+  while (p.careerSlots.length < G.SKILL_SLOTS) p.careerSlots.push(null);
+  p.careerSlots = p.careerSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] && G.slotKeyOf(p, id) === 'careerSlots' ? id : null));
+  p.skillSlots.forEach((id, i) => {
+    if (!id || G.slotKeyOf(p, id) !== 'careerSlots') return;
+    p.skillSlots[i] = null;
+    if (!p.careerSlots.includes(id) && !p.careerSlots[i]) p.careerSlots[i] = id;
+  });
   pruneLoot(p);
   return p;
 }

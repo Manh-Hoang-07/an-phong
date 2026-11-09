@@ -46,7 +46,7 @@
         break;
       }
       case 'learn_skill': await act('learn_skill', { skill: ds.skill }); break;
-      case 'clear_slot': await act('set_skill', { slot: Number(ds.slot), skill: null }); break;
+      case 'clear_slot': await act('set_skill', { slot: Number(ds.slot), skill: null, bar: ds.bar }); break;
       case 'reset_skills': await act('reset_skills'); renderPanel(); break;
       case 'redeem': {
         const inp = $('code-input');

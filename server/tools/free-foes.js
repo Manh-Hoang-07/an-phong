@@ -36,6 +36,7 @@ const ANIMS = {
 // h: chiều cao thân khi đứng trong game (px logic); rw, bw, bh: giữ số của bộ hình cũ để lối chơi không đổi
 // recolor: đổi tông màu ('snow' trắng bạc, 'ice' xanh băng)
 const JOBS = {
+  ff_bat: { file: 'Bat_0000_dark.png', h: 44, rw: 87, bw: 40, bh: 32, fly: true },     // quái bay: ghi cy (tâm thân) thay cho fy
   ff_crab: { file: 'crab sheet.png', h: 34, rw: 32, bw: 40, bh: 28 },
   ff_wolf: { file: 'wolf_0001_brown.png', h: 44, rw: 64, bw: 44, bh: 36, recolor: 'snow' },
   ff_rat: { file: 'Rat_0004_dark.png', h: 30, rw: 70, bw: 40, bh: 28 },
@@ -84,7 +85,7 @@ function convert(id, job) {
   const half = Math.min(mid, Math.max(mid - full.x0, full.x1 + 1 - mid) + 1);     // nửa bề rộng khung cắt (chừa 1 điểm ảnh)
   const top = Math.max(0, full.y0 - 1), bottom = Math.min(ch, full.y1 + 2);
   const fw = half * 2, fh = bottom - top;
-  const cx = half, fy = idle.y1 + 1 - top;                                         // tâm thân; mép chân (đường mặt đất)
+  const cx = half, fy = idle.y1 + 1 - top, cy = Math.round((idle.y0 + idle.y1 + 1) / 2) - top;                                         // tâm thân; mép chân (đường mặt đất)
   const bodyW = idle.x1 - idle.x0 + 1, bodyH = idle.y1 - idle.y0 + 1;
   const s = Math.round(job.h / bodyH * 1000) / 1000;
   const sheets = {}, anims = {};
@@ -100,7 +101,7 @@ function convert(id, job) {
     });
     sheets[name] = { W, H: fh, px }; anims[name] = [a.frames.length, a.rate]; pixels += W * fh;
   }
-  return { id, fw, fh, cx, fy, s, bodyW, bodyH, sheets, anims, pixels, job };
+  return { id, fw, fh, cx, fy, cy, s, bodyW, bodyH, sheets, anims, pixels, job };
 }
 
 const ids = Object.keys(JOBS).filter(id => !only.length || only.includes(id));
@@ -120,7 +121,7 @@ for (const r of results) {
 
 // Ghi khối cấu hình vào sprites.js (thay khối cũ nếu đã có; đặt cuối bảng MOBS)
 const bw = (r) => r.job.bw, bh = (r) => r.job.bh;
-const entry = (r) => `    ${r.id}: { fw: ${r.fw}, fh: ${r.fh}, rw: ${r.job.rw}, cx: ${r.cx}, fy: ${r.fy}, hd: true, s: ${r.s}, bw: ${bw(r)}, bh: ${bh(r)}, faceLeft: true,\n`
+const entry = (r) => `    ${r.id}: { fw: ${r.fw}, fh: ${r.fh}, rw: ${r.job.rw}, cx: ${r.cx}, ${r.job.fly ? `cy: ${r.cy}, fly: true` : `fy: ${r.fy}`}, hd: true, s: ${r.s}, bw: ${bw(r)}, bh: ${bh(r)}, faceLeft: true,\n`
   + `      anims: { ${Object.entries(r.anims).map(([k, v]) => `${k}: [${v[0]}, ${v[1]}]`).join(', ')} } },`;
 const lines = fs.readFileSync(SPRITES, 'utf8').split('\n');
 const start = lines.indexOf(BEGIN);

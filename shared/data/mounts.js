@@ -53,6 +53,8 @@
   }
   // Bóng ma của Tử Linh Thuật Sư: tối đa 12 bóng lưu giữ, gọi ra cùng lúc tối đa 5 bóng
   const SHADOW_ROSTER = 12, SHADOW_PARTY = 5;
+  // Hệ số công của bóng ma so với quái gốc
+  const SHADOW_ATK_MUL = 1.4;
   // Cấp thật của bóng ma (lưu lúc thu phục = cấp quái lúc chết, sau đó lên cấp bằng kinh nghiệm)
   function shadowTrueLv(soul) {
     return Math.max(1, Number.isFinite(soul.lv) ? Math.floor(soul.lv) : ((soul.stats && soul.stats.level) || 1));
@@ -70,7 +72,7 @@
     const k = Math.pow(1.08, lv - ((s.level || mon.level)));
     return {
       name: s.name || mon.name, level: lv, gradeLabel: s.gradeLabel || null,
-      hp: Math.max(1, Math.round((s.hp ?? mon.hp) * k)), atk: (s.atk ?? mon.atk) * k,
+      hp: Math.max(1, Math.round((s.hp ?? mon.hp) * k)), atk: (s.atk ?? mon.atk) * k * SHADOW_ATK_MUL,
       def: Math.round((s.def ?? (mon.def || 0)) * k), speed: s.speed ?? (mon.speed ?? 0),
       look: mon.look, map: s.map ?? null, at: s.at ?? null,
     };

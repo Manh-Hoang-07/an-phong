@@ -53,6 +53,7 @@ function setSchool(p, school, ev) {
     p.skillPoints += spent;
     p.skills = {};
     p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+    p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
   }
   p.school = school;
   unequipWrongWeapon(p, ev);

@@ -114,11 +114,12 @@ const UI = (() => {
       if (ico) setHtml(ico, `${p.school === 'trieu_hoi_su' ? '☠' : '✦'}<small>${esc(careerShort)}</small>`);
     });
 
-    // thanh kỹ năng
+    // thanh kỹ năng (chức nghiệp 2 đang bật → thay bằng thanh chức nghiệp 2, ô chưa có để trống)
+    const bar = G.slotsOf(p, !!App.form && p.formChoice === 'evolution');
     document.querySelectorAll('#skillbar .sk').forEach(el => {
       const k = el.dataset.k;
       if (!/^\d$/.test(k)) return;
-      const id = p.skillSlots[Number(k)];
+      const id = bar[Number(k)];
       const ico = el.querySelector('.ico');
       if (id) {
         const sk = G.skillAt(id, G.skillLevel(p, id));
@@ -130,7 +131,7 @@ const UI = (() => {
     // nút kỹ năng cảm ứng
     for (const [cls, i] of [['tb-s0', 0], ['tb-s1', 1], ['tb-s2', 2], ['tb-s3', 3], ['tb-s4', 4], ['tb-ult', G.ULT_SLOT]]) {
       const el = document.querySelector(`#touch .${cls}`);
-      const id = p.skillSlots[i];
+      const id = bar[i];
       const ico = el.querySelector('.ico');
       if (id) {
         setHtml(ico, `${skIcon(id)}<small>${esc(G.SKILLS[id].name.split(' ').pop())}</small>`);
@@ -163,8 +164,9 @@ const UI = (() => {
     // Nút đánh thường mờ đi khi không đủ thể lực
     const noAtk = !!App.staLocked || (scene.attackStaminaCost && sta < scene.attackStaminaCost());
     for (const el of [document.querySelector('#skillbar .sk[data-k="atk"]'), document.querySelector('#touch .tb-attack')]) if (el) el.classList.toggle('nosta', noAtk);
+    const bar = G.slotsOf(p, !!App.form && p.formChoice === 'evolution');
     for (let i = 0; i < G.SKILL_SLOTS; i++) {
-      const id = p.skillSlots[i];
+      const id = bar[i];
       const left = id ? (scene.cooldowns[id] || 0) - time : 0;
       const h = left > 0 ? (left / (len[id] || 1) * 100) + '%' : '0';
       const skNow = id && G.skillLevel(p, id) ? G.skillAt(id, G.skillLevel(p, id)) : null;

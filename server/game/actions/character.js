@@ -32,15 +32,18 @@ const actions = {
     const slot = Number(a.slot);
     if (!Number.isInteger(slot) || slot < 0 || slot >= G.SKILL_SLOTS) fail('Ô kỹ năng không hợp lệ.');
     if (slot === G.EXTRA_SLOT && p.school !== 'toan_nang') fail('Ô này chỉ dành cho Toàn Năng.');
-    if (!a.skill) { p.skillSlots[slot] = null; return; }
+    // Mỗi hình thái có thanh riêng: a.bar = 'career' sửa thanh chức nghiệp 2, còn lại sửa thanh chức nghiệp 1
+    if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
+    if (!a.skill) { (a.bar === 'career' ? p.careerSlots : p.skillSlots)[slot] = null; return; }
     const sk = G.SKILLS[a.skill];
     if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
     if (!G.skillLevel(p, a.skill)) fail('Hãy học kỹ năng này trước.');
     if (sk.ult && slot !== G.ULT_SLOT) fail('Tuyệt kỹ chỉ đặt được ở ô tuyệt kỹ.');
     if (!sk.ult && slot === G.ULT_SLOT) fail('Ô tuyệt kỹ chỉ dành cho tuyệt kỹ.');
-    const other = p.skillSlots.indexOf(a.skill);
-    if (other >= 0) p.skillSlots[other] = null;
-    p.skillSlots[slot] = a.skill;
+    const bar = p[G.slotKeyOf(p, a.skill)];
+    const other = bar.indexOf(a.skill);
+    if (other >= 0) bar[other] = null;
+    bar[slot] = a.skill;
   },
 
   // Học hoặc nâng cấp kỹ năng bằng điểm kỹ năng
@@ -57,8 +60,10 @@ const actions = {
     if (lv === 0) {
       // Học lần đầu thì tự đặt vào ô trống
       const slots = sk.ult ? [G.ULT_SLOT] : [0, 1, 2, 3].concat(p.school === 'toan_nang' ? [G.EXTRA_SLOT] : []);
-      const free = slots.find(i => !p.skillSlots[i]);
-      if (free !== undefined) p.skillSlots[free] = a.skill;
+      if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
+      const bar = p[G.slotKeyOf(p, a.skill)];
+      const free = slots.find(i => !bar[i]);
+      if (free !== undefined) bar[free] = a.skill;
       ev.push({ t: 'msg', text: `Đã học ${sk.name}.`, color: '#4fc3f7' });
     } else {
       const milestone = (lv + 1 === 5 && sk.t5) || (lv + 1 === 10 && sk.t10);
@@ -79,7 +84,8 @@ const actions = {
     p.skillPoints += spent;
     p.skills = ultId ? { [ultId]: 1 } : {};
     p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
-    if (ultId) p.skillSlots[G.ULT_SLOT] = ultId;
+    p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
+    if (ultId) p[G.slotKeyOf(p, ultId)][G.ULT_SLOT] = ultId;
     ev.push({ t: 'msg', text: `Đã tẩy điểm kỹ năng, nhận lại ${spent} điểm (-${fmt(cost)} xu).`, color: '#ffd54f' });
   },
 
@@ -128,6 +134,7 @@ const actions = {
     if (!G.skillLevel(p, 'th5')) fail('Hãy học kỹ năng "Triệu Hồi Linh Thú" trước.');
     p.summons = p.summons || { enabled: false, states: {} };
     p.summons.units = p.summons.units || {};
+    if (!p.summons.enabled && G.usesCareerBar(p, G.careerActive(p))) fail('Đang ở chức nghiệp 2: không gọi được linh thú.');
     p.summons.enabled = !p.summons.enabled;
     const cid = G.summonChoice(p), clv = G.summonUnitLv(p, cid);
     ev.push({ t: 'msg', text: p.summons.enabled ? `Đã gọi ${G.SUMMONS[cid].name} (cấp ${clv}).` : 'Đã thu hồi linh thú.', color: '#8be9ff' });

@@ -153,7 +153,10 @@ App.onEvent = function (ev) {
       UI.refresh();
       break;
     }
-    case 'form': App.form = !!ev.active; if (sc?.refreshPlayerLook) sc.refreshPlayerLook(); if (sc?.formStart && ev.active) sc.formStart(); else if (sc?.formStop && !ev.active) sc.formStop(); App.recalcStats(); UI.refresh(); break;
+    case 'form': App.form = !!ev.active;
+      // Ra/vào chức nghiệp 2: hiệu ứng tăng cường của bộ kỹ năng cũ mất theo (trừ Toàn Năng dùng chung một bộ)
+      if (ev.choice === 'evolution' && sc?.buffs && App.player?.school !== 'toan_nang') sc.buffs = {};
+      if (sc?.refreshPlayerLook) sc.refreshPlayerLook(); if (sc?.formStart && ev.active) sc.formStart(); else if (sc?.formStop && !ev.active) sc.formStop(); App.recalcStats(); UI.refresh(); break;
     case 'msg': UI.log(ev.text, ev.color); break;
     case 'float': if (sc && sc.player) sc.floatText(sc.player.x, sc.player.y - 40, ev.text, ev.color); if (/xu$/.test(ev.text)) Sound.play('coin'); break;
     case 'levelup':

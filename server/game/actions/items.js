@@ -92,7 +92,8 @@ const actions = {
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
       p.skills[id] = 1;
-      p.skillSlots[G.ULT_SLOT] = id;
+      if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
+      p[G.slotKeyOf(p, id)][G.ULT_SLOT] = id;
       ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách Tuyệt Kỹ: đã học ${sk.name}.`, color: '#ffd54f' });
       return;
     }
