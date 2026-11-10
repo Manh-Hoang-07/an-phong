@@ -105,6 +105,11 @@ const UI = (() => {
       el.classList.toggle('active', !!App.form && (p.formChoice !== 'evolution' || !!p.careerAwaken));   // nút biến hình chỉ sáng khi đang thức tỉnh
       if (hasForm) el.style.setProperty('--form', '#' + (awk?.aura || G.SCHOOLS[p.school]?.color || 0xb46bff).toString(16).padStart(6, '0'));
     });
+    // Có cả Ấn I và Ấn II: hiện nút đổi ấn và ghi rõ ấn đang chọn trên nút biến hình
+    const both = (p.awakenTier || 0) >= 2;
+    const pick = App.awakenPick === 'awaken1' ? 1 : 2;
+    document.querySelectorAll('.sk-aws, .tb-aws').forEach(el => el.classList.toggle('hidden', !both));
+    document.querySelectorAll('.sk-form .ico small, .tb-form .ico small').forEach(el => { el.textContent = both ? (pick === 1 ? 'Ấn I' : 'Ấn II') : (el.closest('.tb-form') ? 'Biến' : 'Biến hình'); });
     const careerName = G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]] || 'Tiến hóa';
     const careerShort = careerName.split(' ')[0];
     document.querySelectorAll('.sk-career, .tb-career').forEach(el => {
@@ -494,6 +499,7 @@ const UI = (() => {
       else if (k === 'hp' || k === 'mp') sc.usePotion(k);
       else if (k === 'form') sc.toggleForm(sc.time.now);
       else if (k === 'career') Net.action('career_toggle');
+      else if (k === 'aws') sc.switchAwaken();
       else if (k === 'mount') openPanel('mount');
       else if (k === 'pets') openPanel('mount');
       else sc.useSkill(Number(k), sc.time.now);

@@ -54,10 +54,14 @@
       const s = instStats(normalizeInst(it)).all;
       for (const k in s) eq[k] = (eq[k] || 0) + s[k];
     }
-    let hp = 80 + 18 * (lv - 1) + p.vit * 10 + eq.hp;
-    let mp = 30 + 6 * (lv - 1) + p.spi * 6 + eq.mp;
-    let atk = 5 + 2 * (lv - 1) + p.str * 2 + eq.atk;
-    let def = 1 + (lv - 1) + Math.floor(p.vit * 0.8) + eq.def;
+    // Chỉ số gốc theo đường cong RIÊNG của từng class: [cơ bản, mỗi cấp] (chưa chọn class dùng NOVICE_CURVE)
+    const sc = player.school && SCHOOLS[player.school];
+    const cv = (sc && sc.curve) || G.NOVICE_CURVE;
+    const lvl = (a) => a[0] + a[1] * (lv - 1);
+    let hp = lvl(cv.hp) + p.vit * 10 + eq.hp;
+    let mp = lvl(cv.mp) + p.spi * 6 + eq.mp;
+    let atk = lvl(cv.atk) + p.str * 2 + eq.atk;
+    let def = lvl(cv.def) + Math.floor(p.vit * 0.8) + eq.def;
     let crit = 3 + p.agi * 0.4 + eq.crit;
     const perkMul = { hp: 1, mp: 1, atk: 1, def: 1 };
     const perkAdd = { crit: 0, boss: 0, cdr: 0, goldfind: 0, expfind: 0 };
@@ -68,13 +72,8 @@
     }
     let skillMul = 1 + p.spi * 0.015;
     let costMul = 1;
-    const sc = player.school && SCHOOLS[player.school];
     if (sc) {
       const b = sc.bonus;
-      if (b.hp) hp *= b.hp;
-      if (b.mp) mp *= b.mp;
-      if (b.atk) atk *= b.atk;
-      if (b.def) def *= b.def;
       if (b.critAdd) crit += b.critAdd;
       if (b.skillPower || sc.skillPower) skillMul *= b.skillPower || sc.skillPower;
       if (sc.skillCost) costMul = sc.skillCost;
@@ -87,16 +86,19 @@
     const aw = !opts.form ? null : player.formChoice !== 'evolution'
       ? (player.formChoice === 'awaken1' ? AWAKENS[0] : player.formChoice === 'awaken2' ? AWAKENS[1] : awakenOf(player))
       : (player.careerAwaken ? AWAKENS[player.careerAwaken - 1] || null : null);
-    if (aw && aw.mul) {
-      const m = aw.mul;
+    let formSta = 1;   // hệ số thể lực của hình thái đang bật (theo hệ số năng lượng của ấn / hình thái)
+    const applyMul = (m) => {
+      if (!m) return;
+      formSta *= m.mp || 1;
       if (m.hp) hp *= m.hp;
       if (m.mp) mp *= m.mp;
       if (m.atk) atk *= m.atk;
       if (m.def) def *= m.def;
-    }
-    if (opts.form && player.school === 'toan_nang' && player.formChoice === 'evolution') {
-      hp *= 3; mp *= 3; atk *= 3;
-    }
+    };
+    // Hình thái chức nghiệp 2 (nhánh tiến hóa): chỉ số riêng từng nhánh, xem EVOLUTION_FORMS
+    const evoForm = opts.form && player.formChoice === 'evolution' ? G.EVOLUTION_FORMS[G.EVOLUTIONS[player.school]] : null;
+    if (evoForm) { applyMul(evoForm.mul); crit += evoForm.critAdd || 0; }
+    if (aw) applyMul(aw.mul);
     crit += perkAdd.crit;
     const w = player.equip.weapon;
     const wtype = w ? ITEMS[w.id].wtype : 'tay';
@@ -105,9 +107,11 @@
     const scCdr = sc && sc.bonus && sc.bonus.cdrAdd ? sc.bonus.cdrAdd : 0;
     // speed: tính trước clamp, nhân thêm hệ số class (sat_thu)
     const speedFinal = Math.round(Math.min(290, Math.min(260, 190 + p.agi * 2) * scSpeed + eq.speed));
+    // Thể lực tối đa: dạng thường x1.3 (STAMINA.maxMul). Đang biến hình thì KHÔNG có hệ số này, thay bằng hệ số của ấn / hình thái
+    const staMul = (aw || evoForm) ? formSta : G.STAMINA.maxMul;
     return {
       maxHp: Math.round(hp), maxMp: Math.round(mp), atk: Math.round(atk), def: Math.round(def),
-      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1) * (opts.form && player.school === 'toan_nang' && player.formChoice === 'evolution' ? 3 : 1)),
+      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * staMul * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)),
       crit: Math.min(60, r1(crit)), speed: speedFinal, skillMul, costMul, wtype,
       lifesteal: Math.min(15, r1(eq.lifesteal + scLifesteal)),
       cdr: Math.min(30, r1(eq.cdr + perkAdd.cdr + scCdr)),

@@ -36,7 +36,31 @@
 
   const r1 = (v) => Math.round(v * 10) / 10;
 
-  Object.assign(G, { MAX_LEVEL, BAG_SIZE, STORAGE_SIZE, STAT_POINTS_PER_LEVEL, RANKS, rankOf, RANK_ORDER, playerRank, nextRank, START_MAP, TILE, expToNext, r1 });
+  // Nội suy tuyến tính theo bảng mốc [[cấp, giá trị], ...] (dùng cho đường cong chỉ số quái / thú)
+  function interp(points, x) {
+    if (x <= points[0][0]) return points[0][1];
+    for (let i = 1; i < points.length; i++) {
+      if (x <= points[i][0]) {
+        const [x0, y0] = points[i - 1], [x1, y1] = points[i];
+        return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+      }
+    }
+    return points[points.length - 1][1];
+  }
+
+  // Giảm sát thương theo giáp: tỉ lệ sát thương bị chặn = DEF / (DEF + 60 + 12 × cấp), tối đa 75%.
+  // `level` là cấp của bên NHẬN đòn (người bị quái đánh dùng cấp người; quái bị đánh dùng cấp quái).
+  const DEF_REDUCE_MAX = 0.75;
+  function defReduce(def, level) {
+    const d = Math.max(0, def || 0);
+    return Math.min(DEF_REDUCE_MAX, d / (d + 60 + 12 * Math.max(1, level || 1)));
+  }
+  // Sát thương sau giáp (tối thiểu 1)
+  function mitigate(atk, def, level) {
+    return Math.max(1, atk * (1 - defReduce(def, level)));
+  }
+
+  Object.assign(G, { MAX_LEVEL, BAG_SIZE, STORAGE_SIZE, STAT_POINTS_PER_LEVEL, RANKS, rankOf, RANK_ORDER, playerRank, nextRank, START_MAP, TILE, expToNext, r1, interp, defReduce, mitigate, DEF_REDUCE_MAX });
   if (typeof module === 'object' && module.exports) module.exports = G;
   else root.GameData = G;
 })(typeof self !== 'undefined' ? self : this);

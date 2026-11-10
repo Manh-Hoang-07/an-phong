@@ -6,7 +6,8 @@ WorldScene.mix(class WorldCombat {
     const st = App.stats;
     const bt = this.buffTotals();
     const bossMul = (mon.def.boss || mon.def.leader) ? 1 + (st.boss || 0) / 100 : 1;
-    let dmg = st.atk * mult * (1 + bt.atk) * bossMul - mon.def.def * 0.5;
+    // Giảm giáp theo tỉ lệ: DEF / (DEF + 60 + 12 x cấp quái), tối đa 75% (xem GameData.defReduce)
+    let dmg = st.atk * mult * (1 + bt.atk) * bossMul * (1 - GameData.defReduce(mon.def.def, mon.def.level));
     dmg = Math.max(1, dmg) * Phaser.Math.FloatBetween(0.9, 1.1);
     const crit = Math.random() * 100 < Math.min(90, st.crit + bt.crit);
     if (crit) {
@@ -118,9 +119,9 @@ WorldScene.mix(class WorldCombat {
     if (!m.alive) return;
     m.lastHitSource = extra.pet ? 'pet' : extra.shadow ? 'shadow' : 'player';
     let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : extra.shadow
-      ? { dmg: Math.max(1, Math.round((extra.shadowAtk || GameData.calcStats(App.player).atk * 0.32) * mult - m.def.def * 0.35)), crit: false }
+      ? { dmg: Math.max(1, Math.round((extra.shadowAtk || GameData.calcStats(App.player).atk * 0.13) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
       : extra.pet
-      ? { dmg: Math.max(1, Math.round((extra.petAtk || GameData.petStats(App.player).atk) * mult - m.def.def * 0.35)), crit: false }
+      ? { dmg: Math.max(1, Math.round((extra.petAtk || GameData.petStats(App.player).atk) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
       : this.calcDamage(mult, m);
     if (extra.basic && m.def.resist) dmg = Math.max(1, Math.round(dmg * (1 - m.def.resist)));
     m.hp -= dmg;
@@ -161,7 +162,7 @@ WorldScene.mix(class WorldCombat {
   hurtPlayer(atk, dir, push = 260, mon = null) {
     const now = this.time.now;
     if (now < this.invulnUntil || this.dashing) return;
-    let dmg = Math.max(1, Math.round(atk * Phaser.Math.FloatBetween(0.9, 1.1) - App.stats.def * 0.5));
+    let dmg = Math.max(1, Math.round(atk * Phaser.Math.FloatBetween(0.9, 1.1) * (1 - GameData.defReduce(App.stats.def, App.player.level))));
     // Nội tại Tanker "Thành Đồng": máu dưới 50% giảm thêm 10% sát thương
     if (App.hp < App.stats.maxHp * 0.5 && this.hasPassive('tanker')) dmg = Math.max(1, Math.round(dmg * 0.9));
     const guard = this.buffOn('guard', now);
@@ -183,7 +184,7 @@ WorldScene.mix(class WorldCombat {
       for (const id of companions) {
         const petState = App.player.pets[id];
         if (!petState || petState.hp <= 0) continue;
-        const petDamage = Math.max(1, Math.round(share - petDef.def * 0.25));
+        const petDamage = Math.max(1, Math.round(share * (1 - GameData.defReduce(petDef.def, App.player.level))));
         petState.hp = Math.max(0, petState.hp - petDamage);
         const companion = this.companionSprites[id];
         this.floatText(companion ? companion.sprite.x : this.player.x - 35, this.player.y - 36, `-${petDamage}`, '#ff9b9b', 12);

@@ -439,7 +439,7 @@ WorldScene.mix(class WorldPlayer {
         const command = this.buffOn('rage', time);
         const classMul = this.hasPassive('trieu_hoi_su') ? 1.1 : 1;
         if (time >= c.nextAttack && state.sta >= 4) {
-          state.sta -= 4; c.nextAttack = time + 1150 / (1 + (command?.speed || 0));
+          state.sta -= 4; c.nextAttack = time + 1150 / ((def.aspd || 1) * (1 + (command?.speed || 0)));
           // Công lấy từ chỉ số riêng của linh thú (petAtk), không nhân chồng với công pet theo cấp nhân vật
           this.damageMonster(target, 0.82 * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petAtk: ss.atk, petName: def.name, dir: Math.sign(dx) || 1 });
           c.lastCombat = time; c.attackUntil = time + 320;
@@ -638,7 +638,7 @@ WorldScene.mix(class WorldPlayer {
       return;
     }
     if (App.player.formChoice === 'evolution') {
-      const choice = App.player.awakenTier >= 2 ? 'awaken2' : App.player.awakenTier >= 1 ? 'awaken1' : null;
+      const choice = App.player.awakenTier < 1 ? null : (App.awakenPick === 'awaken1' || App.player.awakenTier < 2) ? 'awaken1' : 'awaken2';
       if (!choice) { UI.log('Chưa có ấn thức tỉnh để biến hình.', '#bdbdbd'); return; }
       if (this.formSwitching) return;
       this.formSwitching = true;
@@ -667,6 +667,21 @@ WorldScene.mix(class WorldPlayer {
     Net.action('form_toggle');
     UI.banner(App.player.formChoice === 'evolution' ? (GameData.EVOLUTION_NAMES[GameData.EVOLUTIONS[App.player.school]] || 'TIẾN HÓA') : aw?.tier >= 2 ? 'BIẾN HÌNH · ẤN THỨ HAI' : 'BIẾN HÌNH · ẤN THỨ NHẤT', 1400);
     UI.refresh();
+  }
+  // Đổi giữa Ấn I và Ấn II (khi đã học cả hai). Chỉ đổi được lúc đang ở dạng thường.
+  switchAwaken() {
+    const p = App.player;
+    if ((p.awakenTier || 0) < 2) return;
+    if (App.form) { UI.log('Hãy trở lại dạng thường trước khi đổi ấn.', '#ffca28'); return; }
+    if (this.formSwitching) return;
+    const choice = App.awakenPick === 'awaken1' ? 'awaken2' : 'awaken1';
+    this.formSwitching = true;
+    Net.action('form_select', { choice }).then(() => {
+      this.formSwitching = false;
+      App.awakenPick = choice;
+      UI.log(choice === 'awaken1' ? 'Đã chọn Biến hình · Ấn I.' : 'Đã chọn Biến hình · Ấn II.', '#ffe082');
+      UI.refresh();
+    }).catch(() => { this.formSwitching = false; });
   }
   endForm(reason) {
     if (!App.form) return;

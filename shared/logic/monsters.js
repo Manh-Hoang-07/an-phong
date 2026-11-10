@@ -20,8 +20,17 @@
       speed: d.speed || 0, look: d.look, map: mapId || null, at: Date.now() };
   }
   function monGrade(def) { return MON_GRADE[gradeOf(def)] || MON_GRADE.normal; }
-  function monHp(def) { return Math.max(1, Math.round(def.hp * monGrade(def).hp)); }
-  function monExp(def) { return def.exp * monGrade(def).exp; }
+  function monHp(def) { return Math.max(1, Math.round(def.hp * monGrade(def).hp * (def.finalBoss ? G.FINAL_BOSS.hp : 1))); }
+  function monExp(def) { return def.exp * monGrade(def).exp * (def.finalBoss ? G.FINAL_BOSS.exp : 1); }
 
-  Object.assign(G, { gradeOf, monGrade, monHp, monExp, monSnapshot });
+  // Chỉ số quái THƯỜNG theo cấp (đường cong chuẩn): dùng để bóng ma lớn lên theo cấp và để cân bằng
+  function monCurve(level) {
+    const C = G.MON_CURVE, L = Math.max(1, level || 1);
+    return {
+      hp: G.interp(C.hp, L), atk: G.interp(C.atk, L), def: C.defBase + C.defPerLevel * L,
+      exp: G.expToNext(L) / (C.expKills[0] + C.expKills[1] * L),
+    };
+  }
+
+  Object.assign(G, { gradeOf, monGrade, monHp, monExp, monSnapshot, monCurve });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

@@ -9,18 +9,24 @@
   const SCHOOLS = {
     kiem_si: {
       name: 'Kiếm Sĩ', weapon: 'kiem', color: 0xff5a4e, icon: '⚔️',
-      desc: 'Cận chiến bằng kiếm, lướt và chém liên hoàn, chịu đòn tốt. Tấn công +10%, phòng thủ +10%.',
-      bonus: { atk: 1.10, def: 1.10 },
+      desc: 'Cận chiến bằng kiếm, lướt và chém liên hoàn. Cân bằng công thủ, chỉ số tăng đều theo cấp.',
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [120,60], mp: [40,5], atk: [10,6], def: [4,3.25] },
+      bonus: {},
     },
     cung_thu: {
       name: 'Cung Thủ', weapon: 'cung', color: 0x4fd18b, icon: '🏹',
-      desc: 'Bắn cung từ xa, chí mạng cao nhưng máu mỏng. Tấn công +15%, chí mạng +5%, máu -8%.',
-      bonus: { atk: 1.15, critAdd: 5, hp: 0.92 },
+      desc: 'Bắn cung từ xa. Tấn công tăng nhanh theo cấp, chí mạng +5%, nhưng máu và phòng thủ thấp.',
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [95,45], mp: [45,6], atk: [11,6.75], def: [2,2] },
+      bonus: { critAdd: 5 },
     },
     phap_su: {
       name: 'Pháp Sư', weapon: 'truong', color: 0x6c8cff, icon: '🔮',
-      desc: 'Dùng trượng phép khống chế quái, tự hồi máu và đỡ đòn bằng năng lượng. Máu +12%, năng lượng +25%.',
-      bonus: { hp: 1.12, mp: 1.25 },
+      desc: 'Dùng trượng phép khống chế quái, tự hồi máu và đỡ đòn bằng năng lượng. Năng lượng rất dồi dào, máu và phòng thủ thấp.',
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [100,47.5], mp: [70,11], atk: [10,6.25], def: [2,2.25] },
+      bonus: {},
     },
     toan_nang: {
       name: 'Toàn Năng', weapon: 'than_binh', color: 0xffc94a, icon: '✴️', special: true,
@@ -30,29 +36,58 @@
     },
     sat_thu: {
       name: 'Sát Thủ', weapon: 'song_dao', color: 0xe040fb, icon: '🗡️',
-      desc: 'Tốc độ cao, chí mạng cực mạnh, máu thấp. Tấn công +20%, chí mạng +10%, tốc chạy +15%, máu -15%.',
-      bonus: { atk: 1.20, critAdd: 10, speed: 1.15, hp: 0.85 },
+      desc: 'Tốc độ cao, chí mạng cực mạnh. Tấn công tăng nhanh nhất, chí mạng +10%, tốc chạy +15%, máu và phòng thủ thấp.',
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [110,52.5], mp: [60,8], atk: [10,6], def: [3,2.75] },
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [90,42.5], mp: [40,5], atk: [12,7.25], def: [2,1.75] },
+      bonus: { critAdd: 10, speed: 1.15 },
     },
     tanker: {
       name: 'Tanker', weapon: 'chuy', color: 0x90caf9, icon: '🛡️',
-      desc: 'Hấp thụ đòn, chịu đựng cực tốt, sát thương ổn định. Máu +40%, phòng thủ +35%, hút máu +3%, tấn công -5%.',
-      bonus: { hp: 1.40, def: 1.35, lifestealAdd: 3, atk: 0.95 },
+      desc: 'Hấp thụ đòn, chịu đựng cực tốt. Máu và phòng thủ tăng mạnh theo cấp, hút máu +3%, tấn công thấp.',
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [150,80], mp: [40,5], atk: [8,4.5], def: [6,4.75] },
+      bonus: { lifestealAdd: 3 },
     },
     tri_lieu_su: {
       name: 'Trị Liệu Sư', weapon: 'thanh_truong', color: 0x69f0ae, icon: '💚',
-      desc: 'Hồi máu, bảo vệ đồng đội, năng lượng dồi dào. Máu +15%, năng lượng +50%, hồi chiêu kỹ năng -10%.',
-      bonus: { hp: 1.15, mp: 1.50, cdrAdd: 10 },
+      desc: 'Hồi máu, bảo vệ đồng đội, năng lượng dồi dào. Hồi chiêu kỹ năng -10%, tấn công thấp.',
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [110,52.5], mp: [80,13], atk: [7,4.75], def: [3,2.75] },
+      bonus: { cdrAdd: 10 },
     },
     trieu_hoi_su: {
       name: 'Triệu Hồi Sư', weapon: 'linh_chau', color: 0x8d78d6, icon: '🔮',
-      desc: 'Dùng linh lực gọi thực thể hỗ trợ chiến đấu. Năng lượng +20%, sức mạnh kỹ năng +8%.',
-      bonus: { mp: 1.2, skillPower: 1.08 },
+      desc: 'Dùng linh lực gọi thực thể hỗ trợ chiến đấu. Năng lượng dồi dào, sức mạnh kỹ năng +8%.',
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [100,47.5], mp: [70,11], atk: [8,5], def: [2,2.25] },
+      bonus: { skillPower: 1.08 },
     },
     tu_linh_thuat_su: {
       name: 'Tử Linh Thuật Sư', weapon: 'linh_chau', color: 0xb46bff, icon: '☠️', special: true,
-      desc: 'Nhánh tiến hóa của Triệu Hồi Sư. Thu phục quái làm bóng ma, lưu tối đa 12 và gọi tối đa 3 cùng lúc.',
-      bonus: { mp: 1.3, skillPower: 1.12 },
+      desc: 'Nhánh tiến hóa của Triệu Hồi Sư. Thu phục quái làm bóng ma, lưu tối đa 20 và gọi tối đa 7 cùng lúc.',
+      // chỉ số gốc = [cơ bản, mỗi cấp]
+      curve: { hp: [105,50], mp: [80,12], atk: [8,5.25], def: [3,2.5] },
+      bonus: { skillPower: 1.12 },
     },
+  };
+
+  // Chưa chọn class (cấp 1–4): đường cong chung
+  const NOVICE_CURVE = { hp: [100, 50], mp: [40, 6], atk: [8, 5], def: [2, 2.5] };
+
+  // Hình thái chức nghiệp 2 (nhánh tiến hóa, cấp 25): nhân chỉ số khi ĐANG ở hình thái này.
+  // Chỉ một hình thái bật cùng lúc, nên mức nhân nằm giữa Ấn 1 (x1.3) và Ấn 2 (x1.6) nhưng nghiêng theo vai trò.
+  // critAdd: cộng thêm % chí mạng. Tử Linh Thuật Sư còn chồng ấn thức tỉnh (careerAwaken) lên trên.
+  const EVOLUTION_FORMS = {
+    kiem_thanh:          { mul: { hp: 1.35, mp: 1.15, atk: 1.45, def: 1.25 }, critAdd: 3 },
+    than_xa:             { mul: { hp: 1.2,  mp: 1.2,  atk: 1.55, def: 1.1 },  critAdd: 8 },
+    dai_phap_su:         { mul: { hp: 1.25, mp: 1.6,  atk: 1.5,  def: 1.15 }, critAdd: 3 },
+    anh_vuong:           { mul: { hp: 1.2,  mp: 1.2,  atk: 1.55, def: 1.1 },  critAdd: 10 },
+    ho_ve_bat_khuat:     { mul: { hp: 1.6,  mp: 1.2,  atk: 1.2,  def: 1.5 },  critAdd: 0 },
+    thanh_linh:          { mul: { hp: 1.4,  mp: 1.6,  atk: 1.2,  def: 1.2 },  critAdd: 0 },
+    tu_linh_thuat_su:    { mul: { hp: 1.3,  mp: 1.5,  atk: 1.3,  def: 1.2 },  critAdd: 0 },
+    toan_nang_tinh_thong:{ mul: { hp: 2,    mp: 2,    atk: 2,    def: 1.3 },  critAdd: 0 },
   };
 
   // ---------------------------------------------------------------- Thức tỉnh (biến hình)
@@ -62,9 +97,9 @@
   const AWAKENS = [
     // Thức tỉnh = kỹ năng BIẾN HÌNH bật/tắt (phím T / nút ⚡). Chỉ số `mul` chỉ có tác dụng khi đang biến hình.
     // drain: mỗi giây biến hình tốn bấy nhiêu năng lượng (MP) và thể lực; cạn một trong hai thì tự trở lại dạng thường.
-    { tier: 1, level: 20, npc: 'lao_su', name: 'Biến hình · Ấn thứ nhất', drain: 2,
+    { tier: 1, level: 20, npc: 'lao_su', name: 'Biến hình · Ấn thứ nhất', drain: 1,
       mul: { hp: 1.3, mp: 1.2, atk: 1.3, def: 1.15 }, tint: 0xffe082, aura: 0xffd54f, aura2: 0xfff3b0,
-      desc: 'Mở khóa BIẾN HÌNH (phím T / nút ⚡): máu +30%, năng lượng +20%, tấn công +30%, phòng thủ +15%, hào quang vàng rực. Tốn 2 năng lượng và 2 thể lực mỗi giây.',
+      desc: 'Mở khóa BIẾN HÌNH (phím T / nút ⚡): máu +30%, năng lượng +20%, tấn công +30%, phòng thủ +15%, hào quang vàng rực. Tốn 1 năng lượng và 1 thể lực mỗi giây.',
       start: [
         'Hội trưởng Khải: Cậu đã đi được xa rồi. Nhưng sức mạnh class chỉ là khởi đầu.',
         'Hội trưởng Khải: Trong Cổng Vĩnh Hằng có năng lượng gốc. Để dấu ấn đầu tiên in lên cậu, cậu cần đạt cấp 25.',
@@ -74,9 +109,9 @@
         '[Hệ thống] Dấu ấn thức tỉnh thứ nhất đã kích hoạt. Cơ thể vượt qua giới hạn cũ.',
         'Hội trưởng Khải: Nhìn cậu đi... Đúng là người được Hệ thống chọn.',
       ] },
-    { tier: 2, level: 45, npc: 'lu_khach', name: 'Biến hình · Ấn thứ hai', drain: 5,
+    { tier: 2, level: 45, npc: 'lu_khach', name: 'Biến hình · Ấn thứ hai', drain: 2,
       mul: { hp: 1.6, mp: 1.5, atk: 1.6, def: 1.3 }, tint: 0xff80ab, aura: 0xff6ec7, aura2: 0xffd6f0,
-      desc: 'Nâng BIẾN HÌNH lên dạng dị giới: máu +60%, năng lượng +50%, tấn công +60%, phòng thủ +30%, hào quang hồng tím kèm tia điện. Tốn 5 năng lượng và 5 thể lực mỗi giây.',
+      desc: 'Nâng BIẾN HÌNH lên dạng dị giới: máu +60%, năng lượng +50%, tấn công +60%, phòng thủ +30%, hào quang hồng tím kèm tia điện. Tốn 2 năng lượng và 2 thể lực mỗi giây.',
       start: [
         'Lữ khách: Cậu đã thấy bản chất của Hệ thống rồi. Nó không cho đi sức mạnh — nó mượn.',
         'Lữ khách: Dấu ấn thứ hai không lấy từ Hệ thống, mà từ chính ký ức của những người chơi đã mất tích.',
@@ -117,7 +152,7 @@
   //   max = base + perLevel × (cấp − 1) + perAgi × điểm Nhanh nhẹn
   //   attack: tốn mỗi đòn thường (nhân theo tốc độ đánh của vũ khí: cooldown / 400ms)
   //   regen: hồi mỗi giây khi đã ngừng đánh `delay` ms; đang đánh thì chỉ hồi `activeMul` phần
-  const STAMINA = { base: 100, perLevel: 2, perAgi: 1, attack: 6, skill: 14, ult: 30, regen: 12, delay: 800, activeMul: 0.3, unlock: 0.3 };
+  const STAMINA = { base: 100, perLevel: 2, perAgi: 1, maxMul: 1.3, attack: 6, skill: 14, ult: 30, regen: 12, delay: 800, activeMul: 0.3, unlock: 0.3 };
   // Máu / năng lượng tự hồi mỗi giây khi không giao chiến (không đánh, không dùng kỹ năng, không bị đánh trong calmMs).
   // Đang biến hình thì không hồi. Thể lực hồi riêng theo STAMINA ở trên.
   const REGEN = { hp: 1, mp: 1, calmMs: 2000 };
@@ -131,7 +166,7 @@
     tanker: { icon: '⚔️', name: 'Thành Đồng', desc: 'Giảm thêm 10% sát thương nhận vào khi máu dưới 50%.' },
     tri_lieu_su: { icon: '🌿', name: 'Sinh Lực', desc: 'Kỹ năng hồi máu hồi thêm 20% theo máu tối đa.' },
     trieu_hoi_su: { icon: '🔮', name: 'Liên Kết Linh Thể', desc: 'Thực thể được triệu hồi gây thêm 10% sát thương.' },
-    tu_linh_thuat_su: { icon: '☠️', name: 'Thu Hồn', desc: 'Quái thường và tinh anh do bạn kết liễu được lưu thành bóng ma. Bộ sưu tập tối đa 12 bóng.' },
+    tu_linh_thuat_su: { icon: '☠️', name: 'Thu Hồn', desc: 'Quái thường và tinh anh do bạn kết liễu được lưu thành bóng ma. Bộ sưu tập tối đa 20 bóng.' },
   };
 
   const EVOLUTIONS = {
@@ -140,5 +175,5 @@
   };
   const EVOLUTION_NAMES = { kiem_thanh:'Kiếm Thánh', than_xa:'Thần Xạ', dai_phap_su:'Đại Pháp Sư', anh_vuong:'Ảnh Vương',
     ho_ve_bat_khuat:'Hộ Vệ Bất Khuất', thanh_linh:'Thánh Linh', tu_linh_thuat_su:'Tử Linh Thuật Sư', toan_nang_tinh_thong:'Toàn Năng Tinh Thông' };
-  Object.assign(G, { SCHOOLS, AWAKENS, EVOLUTIONS, EVOLUTION_NAMES, WEAPON_TYPES, classWeapon, weaponOwners, PASSIVES, STAMINA, REGEN });
+  Object.assign(G, { SCHOOLS, NOVICE_CURVE, EVOLUTION_FORMS, AWAKENS, EVOLUTIONS, EVOLUTION_NAMES, WEAPON_TYPES, classWeapon, weaponOwners, PASSIVES, STAMINA, REGEN });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

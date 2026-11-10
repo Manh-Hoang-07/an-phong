@@ -233,6 +233,7 @@ class WorldScene extends Phaser.Scene {
       if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOT, time);
       if (this.pressed('KeyT') || this.tpressed('form')) this.toggleForm(time);
       if (this.pressed('KeyV') || this.tpressed('career')) Net.action('career_toggle');
+      if (this.pressed('KeyG') || this.tpressed('aws')) this.switchAwaken();
       if (this.pressed('KeyQ') || this.tpressed('hp')) this.usePotion('hp');
       if (this.pressed('KeyE') || this.tpressed('mp')) this.usePotion('mp');
       if (this.pressed('KeyF') || this.pressed('Enter') || this.tpressed('interact')) this.interact();

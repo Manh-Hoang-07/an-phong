@@ -537,6 +537,8 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
 @keyframes formpulse { to { box-shadow: 0 0 6px var(--form, #ffd54f); } }
 .tb-form { right: 175px; bottom: 150px; width: 56px; height: 56px; }
 .tb-career { right: 175px; bottom: 216px; width: 56px; height: 56px; border-color: #c7a2ff !important; color: #e4ceff; }
+.tb-aws { right: 175px; bottom: 282px; width: 56px; height: 56px; border-color: #ffd54f !important; color: #fff3b0; }
+.sk-aws { border-color: #ffd54f !important; color: #fff3b0; }
 .sk-career { border-color: #c7a2ff !important; color: #e4ceff; }
 .sk-career.active, .tb-career.active { box-shadow: 0 0 16px rgba(188, 140, 255, .75); background: linear-gradient(180deg, #7c4db5, #38244e); }
 
@@ -816,6 +818,7 @@ html.compact body.touch #panel-body.inv-mode .inv-detail { max-height: none; }
 /* Nút chức nghiệp (tiến hóa) trên màn hình cảm ứng: trước đây dùng vị trí mặc định (right 175, bottom 216) nên đè lên
    nút biến hình (right 137, bottom 177) và nút thú. Đặt vào ô trống cùng hàng, bên trái nút thú. */
 body.touch #tbtns .tb-career { right: 256px; bottom: 180px; width: 50px; height: 50px; }
+body.touch #tbtns .tb-aws { right: 137px; bottom: 235px; width: 50px; height: 50px; }
 
 /* Kỹ năng bị khóa theo hình thái (đang ở chức nghiệp 2 thì kỹ năng chức nghiệp 1 khóa, và ngược lại) */
 .sk.formlock, .tb.formlock { filter: grayscale(1) brightness(.55); }

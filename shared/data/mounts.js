@@ -16,19 +16,31 @@
   // Linh thú mặc định của Triệu Hồi Sư: gọi bằng kỹ năng, không cần mã quà tặng.
   // Nâng cấp kỹ năng tăng số lượng gọi ra và sức mạnh (xem skill th5).
   const SUMMONS = {
-    linh_soi: { name: 'Linh Sói', icon: '🐺', look: 'wolf', tint: 0x9fd8ff, atk: 1, desc: 'Linh thú mặc định, nhanh nhẹn.' },
-    linh_hac: { name: 'Linh Phong', icon: '🐝', look: 'insect', tint: 0xffe9a8, atk: 1.05, desc: 'Linh thú mặc định, linh hoạt.' },
-    linh_than: { name: 'Linh Thằn', icon: '🦎', look: 'lizard', tint: 0xa8ffb0, atk: 1.1, desc: 'Linh thú mặc định, khỏe.' },
-    linh_ky: { name: 'Linh Hồ', icon: '🦊', look: 'fox', tint: 0xffe6f5, atk: 1.2, desc: 'Linh thú mặc định, mạnh nhất.' },
+    // hp / atk / def: hệ số loài nhân lên đường cong cấp; aspd: tốc đánh (>1 là nhanh hơn)
+    linh_soi: { name: 'Linh Sói', icon: '🐺', look: 'wolf', tint: 0x9fd8ff, hp: 1, atk: 1, def: 1, aspd: 1, desc: 'Cân bằng, nhanh nhẹn.' },
+    linh_hac: { name: 'Linh Phong', icon: '🐝', look: 'insect', tint: 0xffe9a8, hp: 0.85, atk: 1.05, def: 0.8, aspd: 1.15, desc: 'Đánh nhanh nhưng mỏng máu.' },
+    linh_than: { name: 'Linh Thằn', icon: '🦎', look: 'lizard', tint: 0xa8ffb0, hp: 1.25, atk: 0.95, def: 1.25, aspd: 1, desc: 'Khỏe, chuyên đỡ đòn.' },
+    linh_ky: { name: 'Linh Hồ', icon: '🦊', look: 'fox', tint: 0xffe6f5, hp: 0.9, atk: 1.2, def: 0.9, aspd: 1, desc: 'Sát thương cao nhất.' },
   };
+  // Đường cong chỉ số thú / linh thú theo CẤP CỦA THÚ (nội suy tuyến tính theo mốc cấp).
+  // Thú ĐỘC LẬP với chủ: chỉ số chỉ phụ thuộc cấp của thú (cấp thú vẫn bị kẹp tối đa bằng cấp chủ), không cộng gì từ chỉ số chủ.
+  // Mốc đặt khoảng 50% máu / 35% công / 45% giáp của người chơi tham chiếu cùng cấp.
+  const PET_CURVE = {
+    hp: [[1, 100], [10, 650], [20, 1150], [30, 1900], [40, 2600], [50, 4000], [60, 4800], [70, 5700], [80, 6600], [90, 7500], [100, 8500]],
+    atk: [[1, 9], [10, 48], [20, 95], [30, 150], [40, 200], [50, 290], [60, 330], [70, 390], [80, 435], [90, 480], [100, 530]],
+    def: [[1, 5], [10, 40], [20, 76], [30, 122], [40, 185], [50, 270], [60, 390], [70, 460], [80, 530], [90, 615], [100, 700]],
+  };
+  // Thú đồng hành (mã quà tặng): chưa có cấp riêng nên theo cấp chủ, nhưng chỉ số lấy từ đường cong thú (không từ chỉ số chủ)
   function petStats(player) {
     const lv = Math.max(1, player.level || 1);
-    return { maxHp: 70 + 16 * (lv - 1), maxMp: 28 + 5 * (lv - 1), maxSta: 80 + 2 * (lv - 1), atk: 7 + 2.1 * (lv - 1), def: 1 + Math.floor((lv - 1) * 0.8) };
+    return { maxHp: Math.round(G.interp(PET_CURVE.hp, lv)), maxMp: 28 + 5 * (lv - 1), maxSta: 80 + 2 * (lv - 1), atk: G.interp(PET_CURVE.atk, lv), def: Math.round(G.interp(PET_CURVE.def, lv)) };
   }
   // Linh thú mặc định: sức mạnh theo CẤP RIÊNG của từng linh thú (không còn theo cấp nhân vật)
-  function summonLevelStats(lv, skLv) {
-    const mul = 1 + 0.12 * ((skLv || 1) - 1);
-    return { maxHp: Math.round((60 + 14 * (lv - 1)) * mul), maxMp: Math.round((24 + 4 * (lv - 1)) * mul), maxSta: Math.round((70 + 2 * (lv - 1)) * mul), atk: (6 + 1.9 * (lv - 1)) * mul, def: 1 + Math.floor((lv - 1) * 0.7) };
+  // sp: hệ số loài { hp, def } (mặc định 1). atk của loài được client nhân riêng lúc đánh.
+  function summonLevelStats(lv, skLv, sp) {
+    const mul = 1 + 0.12 * ((skLv || 1) - 1), s = sp || {};
+    return { maxHp: Math.round(G.interp(PET_CURVE.hp, lv) * (s.hp || 1) * mul), maxMp: Math.round((24 + 4 * (lv - 1)) * mul), maxSta: Math.round((70 + 2 * (lv - 1)) * mul),
+      atk: G.interp(PET_CURVE.atk, lv) * mul, def: Math.round(G.interp(PET_CURVE.def, lv) * (s.def || 1)) };
   }
   // Cấp hiệu lực của linh thú: cấp thật bị kẹp tối đa bằng cấp chủ
   function summonUnitLv(player, id) {
@@ -37,7 +49,7 @@
     return Math.max(1, Math.min(cap, (u && Number.isFinite(u.lv) ? Math.floor(u.lv) : 1)));
   }
   function summonUnitStats(player, id) {
-    return summonLevelStats(summonUnitLv(player, id), (player.skills && player.skills.th5) || 1);
+    return summonLevelStats(summonUnitLv(player, id), (player.skills && player.skills.th5) || 1, SUMMONS[id]);
   }
   // Giữ tên cũ cho nơi gọi chưa đổi: chỉ số của linh thú đang chọn
   function summonStats(player) { return summonUnitStats(player, summonChoice(player)); }
@@ -51,10 +63,16 @@
     const c = player.summons && player.summons.choice;
     return SUMMONS[c] ? c : Object.keys(SUMMONS)[0];
   }
-  // Bóng ma của Tử Linh Thuật Sư: tối đa 12 bóng lưu giữ, gọi ra cùng lúc tối đa 5 bóng
-  const SHADOW_ROSTER = 12, SHADOW_PARTY = 5;
-  // Hệ số công của bóng ma so với quái gốc
-  const SHADOW_ATK_MUL = 1.4;
+  // Bóng ma của Tử Linh Thuật Sư: tối đa 20 bóng lưu giữ, gọi ra cùng lúc tối đa 7 bóng
+  const SHADOW_ROSTER = 20, SHADOW_PARTY = 7;
+  // Hệ số chỉ số bóng ma so với quái gốc cùng cấp, theo hạng quái (đã gồm hệ số hạng của quái).
+  // ATK thấp vì đi 7 bóng cùng lúc: 7 bóng thường ~ 1 người chơi cùng cấp.
+  const SHADOW_MUL = {
+    normal: { hp: 0.8, atk: 0.13, def: 1 },
+    elite: { hp: 0.6, atk: 0.15, def: 1 },
+    leader: { hp: 0.5, atk: 0.17, def: 1 },
+    boss: { hp: 0.3, atk: 0.19, def: 1 },
+  };
   // Cấp thật của bóng ma (lưu lúc thu phục = cấp quái lúc chết, sau đó lên cấp bằng kinh nghiệm)
   function shadowTrueLv(soul) {
     return Math.max(1, Number.isFinite(soul.lv) ? Math.floor(soul.lv) : ((soul.stats && soul.stats.level) || 1));
@@ -63,20 +81,23 @@
   function shadowLevelOf(soul, player) {
     return Math.min(shadowTrueLv(soul), Math.max(1, player.level || 1));
   }
-  // Chỉ số bóng ma theo cấp hiện tại: nhân 8%/cấp so với thông số lúc thu phục (snapshot chỉ giữ tên/dáng/nguồn gốc)
+  // Chỉ số bóng ma: lấy chỉ số HIỆN TẠI của loài quái gốc (đã gồm hạng), rồi lớn lên theo ĐƯỜNG CONG QUÁI
+  // (bóng cấp x mạnh bằng quái đó nếu nó ở cấp x), nhân hệ số bóng theo hạng. Snapshot chỉ giữ tên/dáng/nguồn gốc.
   function shadowStats(soul, player) {
     const mon = G.MONSTERS[soul.monster];
     if (!mon) return null;
     const s = soul.stats || {};
     const lv = shadowLevelOf(soul, player);
-    const k = Math.pow(1.08, lv - ((s.level || mon.level)));
+    const base = G.monCurve(mon.level), now = G.monCurve(lv);
+    const grade = G.gradeOf(mon), m = SHADOW_MUL[grade] || SHADOW_MUL.normal;
     return {
-      name: s.name || mon.name, level: lv, gradeLabel: s.gradeLabel || null,
-      hp: Math.max(1, Math.round((s.hp ?? mon.hp) * k)), atk: (s.atk ?? mon.atk) * k * SHADOW_ATK_MUL,
-      def: Math.round((s.def ?? (mon.def || 0)) * k), speed: s.speed ?? (mon.speed ?? 0),
+      name: s.name || mon.name, level: lv, gradeLabel: s.gradeLabel || G.monGrade(mon).label,
+      hp: Math.max(1, Math.round(G.monHp(mon) * (now.hp / base.hp) * m.hp)),
+      atk: mon.atk * (now.atk / base.atk) * m.atk,
+      def: Math.round((mon.def || 0) * (now.def / base.def) * m.def), speed: mon.speed ?? 0,
       look: mon.look, map: s.map ?? null, at: s.at ?? null,
     };
   }
-  Object.assign(G, { MOUNTS, PET_SKILLS, SUMMONS, petStats, summonLevelStats, summonUnitLv, summonUnitStats, summonStats,
+  Object.assign(G, { MOUNTS, PET_SKILLS, SUMMONS, PET_CURVE, SHADOW_MUL, petStats, summonLevelStats, summonUnitLv, summonUnitStats, summonStats,
     summonExpToNext, shadowExpToNext, shadowTrueLv, shadowLevelOf, shadowStats, summonCount, summonChoice, SHADOW_ROSTER, SHADOW_PARTY });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);
