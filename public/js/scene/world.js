@@ -23,6 +23,17 @@ class WorldScene extends Phaser.Scene {
     // Chỉ tải hình cần ngay: class của mình + quái trên bản đồ này. Phần còn lại tải ngầm sau khi vào game.
     Sprites.preload(this, Sprites.needed(this.mapId, App.player.school || 'none'));
     for (const look of new Set([...Object.values(GameData.MOUNTS), ...Object.values(GameData.SUMMONS)].map(def => def.look))) PetSprites.preload(this, look);
+    // Nền ảnh của map (nếu map khai báo pack): thiếu file thì loaderror ở trên nuốt lỗi → nền vẽ code
+    const look = MapLooks.get(this.mapId, GameData.MAPS[this.mapId].theme);
+    for (const d of MapLooks.needs(look)) {
+      const key = `bgimg_${d.pack}_${d.layer}`;
+      if (!this.textures.exists(key)) this.load.image(key, `/assets/bg/${d.pack}/${d.layer}.${MapLooks.PACKS[d.pack].ext}`);
+    }
+    // Cảnh trí ảnh của map (MapDecor): nạp các bộ tree / ceil / floor / bits được khai báo
+    for (const set of MapLooks.propSets(look)) for (let i = 1; i <= MapProps.SETS[set].n; i++) {
+      const key = `prop_${set}_${i}`;
+      if (!this.textures.exists(key)) this.load.image(key, `/assets/props/${set}/${i}.png`);
+    }
     this.load.on('progress', (v) => Loading.set(0.2 + v * 0.7));
   }
 
@@ -30,6 +41,14 @@ class WorldScene extends Phaser.Scene {
     App.scene = this;
     this.meta = GameData.MAPS[this.mapId];
     this.theme = this.meta.theme;
+    // Gỡ nền ảnh của pack khác (map cũ) để giải phóng bộ nhớ GPU
+    const keep = new Set(MapLooks.needs(MapLooks.get(this.mapId, this.theme)).map(d => `bgimg_${d.pack}_${d.layer}`));
+    for (const k of this.textures.getTextureKeys()) {
+      if (k.startsWith('bgimg_') && !keep.has(k)) this.textures.remove(k);
+      else if (k.startsWith('bgg_') && !k.startsWith(`bgg_${this.mapId}_`)) this.textures.remove(k);   // bản đã chỉnh màu của map khác
+    }
+    const keepSets = new Set(MapLooks.propSets(MapLooks.get(this.mapId, this.theme)));
+    for (const k of this.textures.getTextureKeys()) if (k.startsWith('prop_') && !keepSets.has(k.split('_')[1])) this.textures.remove(k);   // cảnh trí của map khác
     Art.makeAll(this, this.theme);
     Fx.makeAll(this, this.theme);
     Sprites.unloadFar(this, this.mapId, App.player.school || 'none');   // bỏ ảnh class/quái không còn dùng (cảnh cũ đã hủy hết sprite)

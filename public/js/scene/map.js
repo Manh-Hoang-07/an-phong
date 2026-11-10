@@ -84,11 +84,49 @@ WorldScene.mix(class WorldMap {
     // Chữ mới tạo ra cũng vẽ theo độ nét màn hình
     this.events.off('addedtoscene', this.onAddedText, this);
     this.events.on('addedtoscene', this.onAddedText, this);
+    this.look = MapLooks.get(this.mapId, this.theme);   // diện mạo riêng của map (thiếu thì theo theme)
     View.calc();
     this.applyView();
     const w = this.viewW, h = this.viewH;
-    const bgTile = (layer, depth) => this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_${layer}`)
-      .setOrigin(0).setScrollFactor(0).setDepth(depth).setTileScale(Art.hdScale(`bg_${this.theme}_${layer}`));
+    // Nền ảnh (giai đoạn A2): chỉ dùng khi cờ bật VÀ texture của pack đã nạp xong; nếu không → nền vẽ code như cũ
+    // Công thức nền của map (ghép lớp từ nhiều bộ + chỉnh màu): xem MapLooks.layerDefs. Lớp nào không có ảnh → hình vẽ code.
+    const defs = MapLooks.layerDefs(this.look);
+    // Trả về khóa texture dùng cho lớp (đã nạp và chỉnh màu nếu cần), hoặc null
+    const layerKey = (layer) => {
+      const d = defs[layer];
+      if (!d) return null;
+      const src = `bgimg_${d.pack}_${d.layer}`;
+      if (!this.textures.exists(src)) return null;
+      const P = MapLooks.PACKS[d.pack];
+      if (!MapLooks.needsGrade(d)) {
+        this.textures.get(src).setFilter(P.filter === 'nearest' ? Phaser.Textures.FilterMode.NEAREST : Phaser.Textures.FilterMode.LINEAR);
+        return src;
+      }
+      const key = `bgg_${this.mapId}_${layer}`;
+      if (!this.textures.exists(key)) {
+        try {
+          this.textures.addCanvas(key, MapLooks.gradeCanvas(this.textures.get(src).getSourceImage(), d));
+          this.textures.get(key).setFilter(P.filter === 'nearest' ? Phaser.Textures.FilterMode.NEAREST : Phaser.Textures.FilterMode.LINEAR);
+        } catch (e) { return null; }   // lỗi canvas (hiếm) → hình vẽ code
+      }
+      return key;
+    };
+    const bgTile = (layer, depth) => {
+      const key = layerKey(layer);
+      if (key) {
+        const src = this.textures.get(key).getSourceImage(), d = defs[layer], P = d && MapLooks.PACKS[d.pack];
+        let sc = h / src.height, ty = 0;   // vừa khít chiều cao khung, lặp ngang
+        if (P && P.cover) {   // cảnh tĩnh: phóng cho phủ kín bề ngang (cắt bớt trên/dưới, giữ giữa) thay vì lộ bản gương ngay từ đầu
+          sc = Math.max(sc, w / (src.width / (d.mirror ? 2 : 1)));
+          ty = Math.max(0, (src.height - h / sc) / 2);
+        }
+        const ts = this.add.tileSprite(0, 0, w, h, key).setOrigin(0).setScrollFactor(0).setDepth(depth).setTileScale(sc);
+        ts.tilePositionY = ty;
+        return ts;
+      }
+      return this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_${layer}`)
+        .setOrigin(0).setScrollFactor(0).setDepth(depth).setTileScale(Art.hdScale(`bg_${this.theme}_${layer}`));
+    };
     const sky = bgTile('sky', -30);
     this.bgFar = bgTile('far', -20);
     this.bgNear = bgTile('near', -10);
@@ -97,22 +135,21 @@ WorldScene.mix(class WorldMap {
     this.bgMid = null;
     if (!Quality.low) {
       this.bgMid = bgTile('mid', -15);
-      const hazeTint = { city: 0xd3a37c, forest: 0xc8c4a0, cave: 0x91b7b2, redgate: 0xd89178 }[this.theme] || 0xb8aaa0;
+      const hazeTint = this.look.haze ?? 0xb8aaa0;
       const hz = this.add.tileSprite(0, 0, w, h, 'bg_haze').setOrigin(0).setScrollFactor(0).setDepth(-7)
         .setTileScale(Art.hdScale('bg_haze')).setTint(hazeTint);
       // Ánh sáng chung của bản đồ: phủ rất nhẹ (nhân màu) lên cảnh, nhân vật, quái, NPC
       // để mọi thứ cùng một tông, không bị "dán" lên nền. Chữ và hiệu ứng nằm trên lớp này nên không bị ảnh hưởng.
-      const gradeTint = { city: 0xffeedc, forest: 0xffead1, cave: 0xd7ece4, redgate: 0xffd9c2 }[this.theme] || 0xffffff;
+      const gradeTint = this.look.grade ?? 0xffffff;
       const grade = this.add.tileSprite(0, 0, w, h, 'fx_grade').setOrigin(0).setScrollFactor(0).setDepth(5.5)
         .setTint(gradeTint).setBlendMode(Phaser.BlendModes.MULTIPLY);
       this.screenLayers.push(this.bgMid, hz, grade);
     }
-    if (this.theme === 'cave') this.cameras.main.setBackgroundColor(0x182735);
-    if (this.theme === 'redgate') this.cameras.main.setBackgroundColor(0x21182c);
+    if (this.look.bg != null) this.cameras.main.setBackgroundColor(this.look.bg);
     // Hạt sáng bay lơ lửng
-    const moteColor = { city: 0xf0c37f, forest: 0xe7b773, cave: 0xb7d9c7, redgate: 0xf1ae83 }[this.theme];
+    const moteColor = this.look.mote;
     this.motes = [];
-    const moteCount = Quality.low ? 0 : 14;
+    const moteCount = Quality.low ? 0 : (this.look.moteN ?? 14);
     for (let i = 0; i < moteCount; i++) {
       const m = this.add.image(Phaser.Math.Between(0, this.worldW), Phaser.Math.Between(40, this.worldH - 120), 'mote')
         .setTint(moteColor).setAlpha(0.15 + Math.random() * 0.35).setScale(0.3 + Math.random() * 0.6)
@@ -161,10 +198,31 @@ WorldScene.mix(class WorldMap {
     });
   }
 
+  // Khóa ô đất của map: biến thể màu riêng (look.decor.tile, xem MapLooks.TILE_VARIANTS) hoặc theo theme.
+  // Biến thể tạo MỘT lần từ ô đất gốc bằng chỉnh màu (canvas); thiếu gì thì rơi về ô đất của theme.
+  tileKeys() {
+    const th = { top: `tile_${this.theme}_top`, fill: `tile_${this.theme}_fill`, plank: `plank_${this.theme}` };
+    const v = this.look.decor && this.look.decor.tile, def = v && MapLooks.TILE_VARIANTS[v];
+    if (!def) return th;
+    const out = {};
+    for (const slot of ['top', 'fill', 'plank']) {
+      const base = slot === 'plank' ? `plank_${def.from}` : `tile_${def.from}_${slot}`, key = `tilev_${v}_${slot}`;
+      if (!this.textures.exists(key) && this.textures.exists(base)) {
+        try {
+          this.textures.addCanvas(key, MapLooks.gradeCanvas(this.textures.get(base).getSourceImage(), def));
+          this.textures.get(key).setFilter(this.textures.get(base).source[0].scaleMode);
+        } catch (e) { /* lỗi canvas → ô đất theme */ }
+      }
+      out[slot] = this.textures.exists(key) ? key : th[slot];
+    }
+    return out;
+  }
+
   buildTiles() {
     this.tileLayer = this.chunkLayer(-2);
     this.solids = this.physics.add.staticGroup();
     this.platforms = this.physics.add.staticGroup();
+    const tk = this.tileKeys();
     const addBody = (group, x, y, w, h, oneWay) => {
       const z = this.add.zone(x + w / 2, y + h / 2, w, h);
       this.physics.add.existing(z, true);
@@ -183,9 +241,9 @@ WorldScene.mix(class WorldMap {
         for (let k = c; k <= e; k++) {
           if (ch === '#') {
             const top = !this.isSolid(r - 1, k);
-            this.stampTile(`tile_${this.theme}_${top ? 'top' : 'fill'}`, k * T, r * T);
+            this.stampTile(top ? tk.top : tk.fill, k * T, r * T);
           } else {
-            this.stampTile(`plank_${this.theme}`, k * T, r * T);
+            this.stampTile(tk.plank, k * T, r * T);
           }
         }
         c = e + 1;
@@ -194,33 +252,94 @@ WorldScene.mix(class WorldMap {
     this.flushLayer(this.tileLayer);
   }
 
+  // Cảnh trí ảnh (bộ cắt sẵn trong public/assets/props, xem MapProps): trả về sprite hoặc null nếu bộ/ảnh chưa nạp
+  addProp(set, c, x, y, originY, depth, tint) {
+    const def = MapProps.SETS[set];
+    if (!def) return null;
+    const key = `prop_${set}_${1 + ((c * 7 + originY * 3) % def.n)}`;
+    if (!this.textures.exists(key)) return null;
+    const img = this.add.image(x, y, key).setOrigin(0.5, originY).setDepth(depth).setScale(0.5 * (0.85 + ((c * 13) % 30) / 100));
+    if (tint != null) img.setTint(tint);
+    return img;
+  }
+  // Lay nhẹ quanh gốc (đồ họa Thấp bỏ qua)
+  swayProp(img, c, amp = 1.2) {
+    if (!img || Quality.low) return;
+    const a = amp + (c % 3) * 0.3;
+    img.setAngle(-a);
+    this.tweens.add({ targets: img, angle: a, duration: 2600 + (c % 5) * 380, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (c % 7) * 260 });
+  }
+
   buildDecorations() {
+    // Cấu hình cảnh trí riêng của map (MapDecor trong map_scenes.js): tree / ceil / floor = tên bộ ảnh hoặc 'none'; tint; bits; sway
+    const D = this.look.decor || {}, has = (n) => !!(n && MapProps.SETS[n]);
+    const tint = D.tint;
     this.forEachCell((ch, r, c) => {
       const x = c * T + T / 2;
       if (ch === '$') this.artImage(x, this.groundY(r, c), 'd_shop_' + (c % 3)).setOrigin(0.5, 1).setDepth(-5);
       else if (ch === '!') {
         const l = this.artImage(x, this.groundY(r, c), { city: 'd_lamp', redgate: 'd_redcrystal' }[this.theme] || 'd_crystal').setOrigin(0.5, 1).setDepth(-4);
+        if (tint != null) l.setTint(tint);
         this.tweens.add({ targets: l, alpha: 0.85, duration: 900 + Math.random() * 400, yoyo: true, repeat: -1 });
       } else if (ch === '&') {
+        const gy = this.groundY(r, c);
+        if (D.tree === 'none') return;
+        const img = has(D.tree) ? this.addProp(D.tree, c, x, gy, 1, -6, tint) : null;
+        if (img) { if (D.sway !== false) this.swayProp(img, c); return; }
         const v = (c * 7) % 3;
         const key = { city: 'd_tree', forest: v === 1 ? 'd_dtree' : 'd_shroom', cave: 'd_crystal', redgate: 'd_redcrystal' }[this.theme];
-        this.artImage(x, this.groundY(r, c), key).setOrigin(0.5, 1).setDepth(-6);
+        const tree = this.artImage(x, gy, key).setOrigin(0.5, 1).setDepth(-6);
+        if (tint != null) tree.setTint(tint);
+        // Cây đung đưa rất nhẹ (chỉ map khai báo sway; đồ họa Thấp bỏ qua)
+        if (this.look.sway && !Quality.low && (this.theme === 'forest' || this.theme === 'city')) {
+          const a = 0.7 + (c % 3) * 0.35;
+          tree.setAngle(-a);
+          this.tweens.add({ targets: tree, angle: a, duration: 2600 + (c % 5) * 380, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (c % 7) * 260 });
+        }
       } else if (ch === '^') {
-        if (this.isSolid(r - 1, c)) { const st = this.artImage(x, r * T, 'd_stalactite').setOrigin(0.5, 0).setDepth(-4); if (this.theme === 'redgate') st.setTint(0xff8a96); }
-        else this.artImage(x, this.groundY(r, c), this.theme === 'redgate' ? 'd_redcrystal' : 'd_crystal').setOrigin(0.5, 1).setDepth(-4);
+        if (this.isSolid(r - 1, c)) {   // nhũ đá treo trần
+          if (D.ceil === 'none') return;
+          if (has(D.ceil) && this.addProp(D.ceil, c, x, r * T, 0, -4, tint)) return;
+          const st = this.artImage(x, r * T, 'd_stalactite').setOrigin(0.5, 0).setDepth(-4);
+          if (this.theme === 'redgate') st.setTint(0xff8a96); else if (tint != null) st.setTint(tint);
+        } else {   // vật mọc trên nền
+          if (D.floor === 'none') return;
+          const gy = this.groundY(r, c);
+          const img = has(D.floor) ? this.addProp(D.floor, c, x, gy, 1, -4, tint) : null;
+          if (img) { if (D.sway !== false) this.swayProp(img, c, 1.8); return; }
+          const cr = this.artImage(x, gy, this.theme === 'redgate' ? 'd_redcrystal' : 'd_crystal').setOrigin(0.5, 1).setDepth(-4);
+          if (tint != null) cr.setTint(tint);
+        }
       }
     });
 
-    // Cỏ, hoa, sỏi mọc rải rác trên mặt đất cho đỡ trơ
+    // Cỏ, hoa, sỏi mọc rải rác trên mặt đất cho đỡ trơ (bộ ảnh 'bits' của map thay cho hình vẽ code nếu có)
     const bits = { city: ['d_rubble', 'd_pebble', 'd_pebble'], forest: ['d_grass', 'd_flower', 'd_grass'], cave: ['d_pebble', 'd_rubble'], redgate: ['d_pebble', 'd_rubble'] };
     const list = bits[this.theme] || bits.forest;
+    const bitSet = has(D.bits) ? D.bits : null;
     const bitLayer = this.chunkLayer(-1);
+    // Map có grassSway: cỏ/hoa là sprite riêng (lay khi nhân vật đi ngang); còn lại vẽ gộp như cũ cho nhẹ
+    const swayGrass = !!this.look.grassSway && !Quality.low && this.theme === 'forest' && !bitSet;
+    this.grassSprites = [];
     for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
       if (!this.isSolid(r, c) || this.isSolid(r - 1, c)) continue;
       const h = (r * 71 + c * 137) % 100;
       if (h > 44) continue;
+      const gx = c * T + 4 + (h * 13) % 21, gy = r * T + 2;
+      if (bitSet) {
+        const key = `prop_${bitSet}_${1 + (h % MapProps.SETS[bitSet].n)}`;
+        if (this.textures.exists(key)) {
+          const s2 = this.add.image(gx, gy, key).setOrigin(0.5, 1).setDepth(-1).setScale(0.5 * (0.8 + (h % 5) / 10));
+          if (tint != null) s2.setTint(tint);
+        }
+        continue;
+      }
       const key = list[h % list.length];
-      this.stampTile(key, c * T + 4 + (h * 13) % 21, r * T + 2, bitLayer, 0.5, 1);
+      if (swayGrass && (key === 'd_grass' || key === 'd_flower')) {
+        const s = this.add.image(gx, gy, key).setOrigin(0.5, 1).setDepth(-1);
+        this.grassSprites.push(s);
+        this.tweens.add({ targets: s, angle: { from: -2.5, to: 2.5 }, duration: 1800 + (h % 9) * 140, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (h % 11) * 150 });
+      } else this.stampTile(key, gx, gy, bitLayer, 0.5, 1);
     }
     this.flushLayer(bitLayer);
   }

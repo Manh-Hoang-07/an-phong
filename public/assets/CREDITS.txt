@@ -48,3 +48,24 @@ Các gói này không kèm file giấy phép riêng: cần kiểm tra lại đi�
 
 - chars/trieu_hoi_su: "Wanderer Magican" trong "Free Pixel Wizard 2D Art" (Free Game Assets / craftpix.net, https://free-game-assets.itch.io/free-wizard-sprite-sheets-pixel-art),
   giấy phép craftpix: https://craftpix.net/file-licenses/ ; làm mịn 2× bằng Scale2x.
+
+- bg/misty (nền parallax map Rừng Sương): Digital Moons (https://digitalmoons.itch.io/parallax-forest-background, "Free Parallax Forest Background (Seamless)", tranh vẽ tay 1920×1080, dùng cá nhân và thương mại được, tác giả xin ghi công "Digital Moons"; tải 10/11/2026, ghép lớp + thu 0,75× bằng server/tools/bg-normalize.js).
+- bg/space1..space4 (nền trời map dị giới: Sảnh Chờ, Đỉnh Cổng Vĩnh Hằng, Tâm Điểm, Cổng SS, Long Mạch, Tinh Vân, Thần Mộng, Sáng Thế): Digital Moons (https://digitalmoons.itch.io/free-space-background, "Free Space Background (1920x1080)", dùng thương mại được, BẮT BUỘC ghi công và dẫn link https://digitalmoons.itch.io/ ; tải 10/11/2026, thu 1440×810 + nén JPEG bằng server/tools/bg-sky-jpg.ps1). Ghi công cũng hiện ở màn hình đăng nhập.
+- bg/night (nền map Hẻm Núi Gió Hú, Đỉnh Núi Sương Giá, Vách Đá Gió Thần, Chân Núi Tuyết Lặng, Đỉnh Tháp Lưu Trữ): Digital Moons (https://digitalmoons.itch.io/free-parallax-desert-background-seamless, "Free Parallax Desert Background (Seamless)", tranh vẽ tay 1920×1080, dùng được thương mại, tác giả xin ghi công; tải 10/11/2026, ghép lớp + thu 0,75× bằng server/tools/bg-normalize.js).
+- bg/uw1..uw4 (Thành Phố Chìm ×2, Hang Pha Lê), bg/hal1..hal4 (Cổng Đỏ, Căn Cứ Hắc Nguyệt, Phòng Lưu Trữ Cấm), bg/fai1..fai4 (Đầm Lầy Mục, Long Mạch, Thần Mộng), bg/bch1..bch4 (Làng Chài, Bến Phà):
+  nền vector 1920×1080 miễn phí của Craftpix / Free Game Assets (https://free-game-assets.itch.io: "Free Underwater World Parallax Backgrounds", "Parallax Halloween 2D Game Backgrounds",
+  "Free Fairy-Tale 2D Backgrounds", "Free Beach 2D Backgrounds"), giấy phép craftpix: https://craftpix.net/file-licenses/ (dùng thương mại được, không phân phối lại gói);
+  tải 10/11/2026, ghép lớp + thu 0,75× bằng server/tools/bg-normalize.js, đổi màu lúc chạy bằng công thức trong public/js/scene/map_scenes.js.
+- bg/win1..win4 (Chân Núi Tuyết Lặng, Đỉnh Núi Sương Giá, Lò Rèn Cổ Dưới Băng), bg/cfr1..cfr4 (Kho Bạc Ngầm), bg/des1..des4 (Hẻm Núi Gió Hú, Thiên Khôi), bg/elv2..elv4 (Cổng Khải Hoàn, Thư Viện, Đỉnh Tháp, Sảnh Chờ), bg/hor1,hor3,hor4 (Vách Đá Gió Thần):
+  nền vector miễn phí của Craftpix / Free Game Assets (https://free-game-assets.itch.io: "Free Winter Holiday 2D Backgrounds", "Free Cartoon Forest 2D Backgrounds", "Free Scrolling Desert Backgrounds",
+  "Free Elven Land 2D Battle Backgrounds", "Free Horizontal Game Backgrounds"), giấy phép craftpix: https://craftpix.net/file-licenses/ (dùng thương mại được, không phân phối lại gói);
+  tải 10/11/2026, ghép lớp (+ lật gương khi cần) bằng server/tools/bg-normalize.js, đổi màu lúc chạy bằng công thức trong public/js/scene/map_scenes.js.
+- bg/vamp1..vamp4 (Cổng Khải Hoàn Thành Cổ, Thư Viện Hệ Thống, Cầu Dẫn): "Free Vampire Battle Backgrounds for RPG Game" — Craftpix / Free Game Assets (https://free-game-assets.itch.io/free-vampires-locations-battle-background-pack),
+  giấy phép craftpix: https://craftpix.net/file-licenses/ (dùng thương mại được, không phân phối lại gói); tải 10/11/2026, dùng ảnh tổng hợp 4K thu 0,375×, ghép gương, bằng server/tools/bg-normalize.js.
+- bg/bcn, bg/brl (Tân Đô, Tân Đô Bầu Trời Rách, Làng Chài): Bongseng (https://bongseng.itch.io/parallax-country-side-city-night-city-destroyed, "Parallax (Country side, city night, city destroyed)", pixel art;
+  dùng và chỉnh sửa được trong dự án thương mại, CẤM bán lại / phân phối lại gói; tác giả ghi "No generative AI was used"); tải 10/11/2026, ghép lớp + thu 0,5× bằng server/tools/bg-normalize.js.
+- bg/lr_* (Hang Pha Lê, Kho Bạc Ngầm, Lò Rèn Cổ, Hẻm Núi, Đỉnh Núi, Hắc Nguyệt, Thành Phố Chìm ×2, Thư Viện, Phòng Lưu Trữ Cấm, Đỉnh Tháp, Sảnh Chờ, Đỉnh Cổng Vĩnh Hằng, Tâm Điểm, Cổng SS, Sáng Thế, Vách Đá, Bến Phà):
+  18 cảnh trong "Backgrounds: Dungeons, Ruins, & Caves" của Lornn (https://lornn.itch.io/backgrounds-dungeons-ruins-caves). Tranh TẠO BẰNG AI (Midjourney) rồi tác giả vẽ lại; tác giả cho dùng trong dự án cá nhân và thương mại
+  miễn nội dung không mang tính kỳ thị hay thù ghét. Tải 10/11/2026 (gói 265 MB, chỉ giữ 18 ảnh, thu 1215×810, JPEG) bằng server/tools/bg-sky-jpg.ps1 -Layer far.
+- assets_raw/bg/outlander_ruins: "Free Ruins Backgrounds" của The Outlander (https://the-outlander.itch.io/free-ruins-backgrounds), CC0, tranh AI; mới tải, CHƯA dùng trong game.
+- assets_raw/bg/gleolite_crystalmoon: "Crystal Moon" của gleolite (https://gleolite.itch.io/crystal-moon-simple-sci-fi-parallax-background), dùng thương mại được, cấm bán lại gói; mới tải, CHƯA dùng trong game.

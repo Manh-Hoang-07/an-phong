@@ -41,7 +41,15 @@ const View = {
     const high = Quality.mode === 'high';
     const cap = Quality.low ? 1.5 : high ? 3.5 : 2.5;
     const boost = high ? 1.5 : 1;
-    this.k = Math.max(0.75, Math.min(cap, cssH * dpr / this.H * boost));
+    let k = Math.max(0.75, Math.min(cap, cssH * dpr / this.H * boost));
+    // Điện thoại (nhất là iPhone, màn 3×): khung WebGL quá lớn (vd. iPhone 12 Pro Max ra ~4100×1900 ≈ 7,7 triệu điểm)
+    // làm Safari hết bộ nhớ → tab bị tải lại / trắng màn hình, trong khi máy tính (dpr thấp) vẫn bình thường.
+    // Giới hạn tổng số điểm ảnh của khung vẽ; nhìn vẫn nét vì màn hình nhỏ.
+    if (window.matchMedia && matchMedia('(pointer: coarse)').matches) {
+      const budget = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 2.6e6 : 4e6;
+      k = Math.max(0.75, Math.min(k, Math.sqrt(budget / (this.w * this.H))));
+    }
+    this.k = k;
     return this;
   },
   get pw() { return Math.round(this.w * this.k); },
@@ -103,6 +111,8 @@ const Juice = {
         g.fillTriangle(8 - 5 * k, 30 - 14 * k, 8 + 5 * k, 30 - 14 * k, 8, 2 + (1 - k) * 8);
       }
     });
+    mk('fx_snow', 6, 6, (g) => { g.fillStyle(0xffffff, 0.35); g.fillCircle(3, 3, 3); g.fillStyle(0xffffff, 1); g.fillCircle(3, 3, 1.8); });
+    mk('fx_leaf', 10, 6, (g) => { g.fillStyle(0xffffff, 1); g.fillEllipse(5, 3, 9, 5); g.fillStyle(0x000000, 0.18); g.fillRect(1, 3, 8, 1); });
     mk('fx_ember', 6, 6, (g) => { g.fillStyle(0xff7a6e, 0.4); g.fillCircle(3, 3, 3); g.fillStyle(0xffd0c4, 1); g.fillCircle(3, 3, 1.4); });
   },
 
@@ -110,26 +120,43 @@ const Juice = {
   setupWeather() {
     const H = this.viewH;
     const o = this.screenOff;
-    if (this.theme === 'city') {
+    const look = this.look || MapLooks.get(this.mapId, this.theme);
+    const kind = look.weather;
+    if (kind === 'rain') {
       this.weather.push(this.add.particles(o.x, o.y - 20, 'fx_rain', {
         x: { min: -100, max: 1400 }, speedY: { min: 680, max: 820 }, speedX: -90, lifespan: 900,
         quantity: 1, frequency: 28, alpha: { start: 0.35, end: 0.15 }, rotate: 7, maxParticles: 50,
       }).setScrollFactor(0).setDepth(20));
-    } else if (this.theme === 'forest' || this.theme === 'cave') {
+    } else if (kind === 'snow') {
+      // Tuyết rơi nhẹ, trôi chéo (số hạt giới hạn để điện thoại không nặng)
+      this.weather.push(this.add.particles(o.x, o.y - 10, 'fx_snow', {
+        x: { min: -50, max: 1350 }, speedY: { min: 50, max: 110 }, speedX: { min: -35, max: 5 },
+        lifespan: 6500, quantity: 1, frequency: 90, scale: { min: 0.5, max: 1.1 },
+        alpha: { start: 0.85, end: 0.3 }, maxParticles: 90,
+      }).setScrollFactor(0).setDepth(20));
+    } else if (kind === 'fog') {
       // 3 lớp sương mỏng (ít lớp để điện thoại không phải vẽ chồng quá nhiều)
-      const tint = this.theme === 'forest' ? 0xcff7ee : 0xb9a8ff;
+      const tint = look.fog ?? 0xcff7ee;
       for (let i = 0; i < 3; i++) {
         const f = this.add.image(o.x + Math.random() * 1000, o.y + H * (0.5 + i * 0.12), 'fx_fog')
-          .setScrollFactor(0.4 + i * 0.15).setDepth(i < 2 ? -3 : 7).setAlpha(this.theme === 'forest' ? 0.42 : 0.3)
+          .setScrollFactor(0.4 + i * 0.15).setDepth(i < 2 ? -3 : 7).setAlpha(this.theme === 'cave' ? 0.3 : 0.42)
           .setTint(tint).setScale(2.2, 1.1);
         this.tweens.add({ targets: f, x: f.x + 320, duration: 16000 + i * 3000, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
         this.weather.push(f);
       }
-    } else if (this.theme === 'redgate') {
+    } else if (kind === 'ember') {
       this.weather.push(this.add.particles(o.x, o.y, 'fx_ember', {
         x: { min: 0, max: 1300 }, y: { min: 380, max: 620 }, speedY: { min: -60, max: -20 }, speedX: { min: -15, max: 15 },
         lifespan: { min: 2500, max: 4000 }, alpha: { start: 0.9, end: 0 }, frequency: 160, blendMode: 'ADD', maxParticles: 30,
       }).setScrollFactor(0).setDepth(6));
+    }
+    // Lá bay (cộng thêm vào thời tiết chính; map khai báo look.leaves = [màu…])
+    if (look.leaves) {
+      this.weather.push(this.add.particles(o.x, o.y - 10, 'fx_leaf', {
+        x: { min: -50, max: 1350 }, speedY: { min: 35, max: 75 }, speedX: { min: -45, max: 10 },
+        lifespan: 9000, quantity: 1, frequency: 450, scale: { min: 0.6, max: 1.1 },
+        rotate: { start: 0, end: 360 }, tint: look.leaves, alpha: { start: 0.9, end: 0.5 }, maxParticles: 24,
+      }).setScrollFactor(0).setDepth(20));
     }
   },
 
@@ -147,6 +174,15 @@ const Juice = {
   // Gọi mỗi khung hình sau khi cập nhật người chơi
   juiceUpdate(time, onGround, move) {
     const pl = this.player, body = pl.body;
+    // Cỏ lay mạnh hơn khi nhân vật đi ngang (chỉ khi map có grassSway; vài chục sprite nên rẻ)
+    if (this.grassSprites && this.grassSprites.length && Math.abs(body.velocity.x) > 40) {
+      for (const g of this.grassSprites) {
+        if (Math.abs(g.x - pl.x) < 20 && Math.abs(g.y - body.bottom) < 26 && time > (g.kickAt || 0)) {
+          g.kickAt = time + 600;
+          this.tweens.add({ targets: g, scaleX: 0.85, angle: g.angle + this.facing * 14, duration: 110, yoyo: true, ease: 'Sine.out' });
+        }
+      }
+    }
     // Bước chân: bụi + tiếng bước
     if (onGround && move && Math.abs(body.velocity.x) > 40 && time > this.stepAt) {
       this.stepAt = time + 250;

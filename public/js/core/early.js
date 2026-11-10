@@ -18,6 +18,21 @@ try {
   }
 } catch { /* trình duyệt cũ thì thôi */ }
 
+// Lỗi nào làm game không chạy được (vd. trình duyệt cũ thiếu tính năng) thì hiện ngay trên màn hình chờ,
+// thay vì treo mãi ở "Đang tải..." mà không biết tại sao (iPhone không có công cụ xem lỗi).
+window.__showFatal = (msg) => {
+  try {
+    const t = document.getElementById('load-text');
+    const l = document.getElementById('loading');
+    if (t && l && !l.classList.contains('hidden')) {
+      t.textContent = 'Không vào được game: ' + String(msg).slice(0, 300);
+      const sp = l.querySelector('.spinner'); if (sp) sp.style.display = 'none';
+    }
+  } catch { /* bỏ qua */ }
+};
+window.addEventListener('error', (e) => window.__showFatal((e && e.message) || 'lỗi không rõ'));
+window.addEventListener('unhandledrejection', (e) => window.__showFatal((e && e.reason && (e.reason.message || e.reason)) || 'lỗi không rõ'));
+
 window.Loading = {
   set(p, text) {
     const f = document.getElementById('load-fill');
