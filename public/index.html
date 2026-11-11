@@ -68,6 +68,7 @@
         <div id="h-map"></div>
         <div class="menu">
           <button id="btn-map" title="Bản đồ (M)">🗺️</button>
+          <button id="tb-hidden-chat" title="Chat lệnh với NPC ẩn" class="hidden">💬</button>
           <button id="btn-menu" title="Menu (I / C / K / L)">☰<b id="h-points" class="badge hidden"></b></button>
         </div>
         <div id="quest-track"></div>
@@ -81,6 +82,8 @@
         <div class="sk" data-k="3"><span class="key">4</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-extra hidden" data-k="4"><span class="key">5</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-ult" data-k="5"><span class="key">R</span><span class="ico"></span><div class="cd"></div></div>
+        <div class="sk sk-ult" data-k="6"><span class="key">X</span><span class="ico"></span><div class="cd"></div></div>
+        <div class="sk sk-ult sk-extra hidden" data-k="7"><span class="key">Z</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-form hidden" data-k="form" title="Biến hình (thức tỉnh): bấm lần nữa để trở lại dạng thường"><span class="key">T</span><span class="ico">⚡<small>Biến hình</small></span></div>
         <div class="sk sk-career hidden" data-k="career" title="Bật/tắt hình thái chức nghiệp tiến hóa"><span class="key">V</span><span class="ico">✦<small>Tiến hóa</small></span></div>
         <div class="sk sk-aws hidden" data-k="aws" title="Đổi giữa Biến hình Ấn I và Ấn II (chỉ đổi được khi đang ở dạng thường)"><span class="key">G</span><span class="ico">⇄<small>Đổi ấn</small></span></div>
@@ -107,6 +110,8 @@
         <button data-t="s3" class="tb tb-skill tb-s3"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="s4" class="tb tb-skill tb-s4 hidden"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="ult" class="tb tb-skill tb-ult"><span class="ico"></span><div class="cd"></div></button>
+        <button data-t="ult2" class="tb tb-skill tb-ult2"><span class="ico"></span><div class="cd"></div></button>
+        <button data-t="ult3" class="tb tb-skill tb-ult3 hidden"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="form" class="tb tb-skill tb-form hidden"><span class="ico">⚡<small>Biến</small></span></button>
         <button data-t="career" class="tb tb-skill tb-career hidden" title="Bật/tắt hình thái chức nghiệp"><span class="ico">✦<small>Tiến hóa</small></span></button>
         <button data-t="aws" class="tb tb-skill tb-aws hidden" title="Đổi giữa Ấn I và Ấn II"><span class="ico">⇄<small>Đổi ấn</small></span></button>
@@ -115,7 +120,6 @@
         <button data-t="pets" class="tb tb-pets" aria-label="Thú triệu hồi">🐾</button>
       </div>
       <button id="tb-talk" data-t="interact" class="tb tb-talk hidden">💬 <span></span></button>
-      <button id="tb-hidden-chat" class="tb tb-talk" title="Chat lệnh với NPC ẩn">⌨️ <span>Chat</span></button>
     </div>
 
     <div id="panel" class="hidden">
@@ -140,6 +144,7 @@
   <script src="/shared/data/maps.js"></script>
   <script src="/shared/data/mounts.js"></script>
   <script src="/shared/data/quests/chapter1.js"></script>
+  <script src="/shared/data/quests/chapter6.js"></script>
   <script src="/shared/data/quests/side.js"></script>
   <script src="/shared/data/quests/legacy.js"></script>
   <script src="/shared/data/quests/periodic.js"></script>
@@ -158,6 +163,7 @@
   <script src="/js/art/weapons.js"></script>
   <script src="/js/art/monsters.js"></script>
   <script src="/js/art/terrain.js"></script>
+  <script src="/js/art/itemicons.js"></script>
   <script src="/js/art/scenery.js"></script>
   <script src="/js/art/backgrounds.js"></script>
   <script src="/js/art/fx.js"></script>
@@ -177,6 +183,7 @@
   <script src="/js/ui/panels/code.js"></script>
   <script src="/js/ui/panels/school.js"></script>
   <script src="/js/ui/panels/gate.js"></script>
+  <script src="/js/ui/panels/teleport.js"></script>
   <script src="/js/ui/panels/map.js"></script>
   <script src="/js/ui/panels/mount.js"></script>
   <script src="/js/ui/panels/shadows.js"></script>

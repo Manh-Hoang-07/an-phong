@@ -332,6 +332,8 @@ html.rot #game-wrap { inset: auto; left: 0; top: 0; transform-origin: 0 0; }
   position: absolute; left: calc(14px + var(--sal)); bottom: calc(12px + var(--sab)); width: 188px; height: 148px;
   pointer-events: auto; touch-action: none;
 }
+/* Vùng chạm rộng hơn nút nhìn thấy: lệch ngón một chút vẫn ăn */
+#arrows::before { content: ''; position: absolute; inset: -34px -30px -14px -24px; }
 .tb-arrow { width: 76px; height: 76px; bottom: 2px; }
 .tb-arrow[data-arrow="left"] { left: 0; }
 .tb-arrow-up { left: 56px; bottom: 70px; }   /* ▲ nhảy: nằm giữa, phía trên ◀ ▶ (kiểu chữ T ngược) */
@@ -467,6 +469,8 @@ html.narrow .inv, html.narrow .cols { grid-template-columns: 1fr; }   /* khung g
 .tb-s3 { right: 194px; bottom: 52px; }
 .tb-s4 { right: 113px; bottom: 179px; width: 54px; height: 54px; }
 .tb-ult { right: 47px; bottom: 191px; width: 62px; height: 62px; border-color: rgba(255, 204, 61, 0.85); box-shadow: 0 0 14px rgba(255, 204, 61, 0.45); }
+.tb-ult2 { right: 20px; bottom: 262px; width: 54px; height: 54px; border-color: rgba(255, 204, 61, 0.85); box-shadow: 0 0 12px rgba(255, 204, 61, 0.4); }
+.tb-ult3 { right: 84px; bottom: 262px; width: 54px; height: 54px; border-color: rgba(255, 204, 61, 0.85); box-shadow: 0 0 12px rgba(255, 204, 61, 0.4); }
 .tb-hp { right: 132px; bottom: 10px; }   /* lấp chỗ nút nhảy cũ (nhảy giờ là ▲ bên trái) */
 .tb-mp { right: 186px; bottom: 4px; }
 .tb-talk { bottom: 268px; }
@@ -780,6 +784,8 @@ body.touch #tbtns .tb-s1 { right: 76px; bottom: 96px; }
 body.touch #tbtns .tb-s2 { right: 136px; bottom: 96px; }
 body.touch #tbtns .tb-s3 { right: 196px; bottom: 96px; }
 body.touch #tbtns .tb-ult { right: 14px; bottom: 174px; }
+body.touch #tbtns .tb-ult2 { right: 18px; bottom: 244px; }
+body.touch #tbtns .tb-ult3 { right: 82px; bottom: 244px; }
 body.touch #tbtns .tb-s4 { right: 78px; bottom: 178px; }
 body.touch #tbtns .tb-form { right: 137px; bottom: 177px; }
 body.touch #tbtns .tb-pets { right: 202px; bottom: 182px; }
@@ -823,3 +829,22 @@ body.touch #tbtns .tb-aws { right: 137px; bottom: 235px; width: 50px; height: 50
 /* Kỹ năng bị khóa theo hình thái (đang ở chức nghiệp 2 thì kỹ năng chức nghiệp 1 khóa, và ngược lại) */
 .sk.formlock, .tb.formlock { filter: grayscale(1) brightness(.55); }
 .sk.formlock .ico, .tb.formlock .ico { opacity: .45; }
+
+/* Bản đồ thế giới (chỉ xem) */
+.wm-svg { width: 100%; height: auto; display: block; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.wm-node { cursor: pointer; }
+.wm-node:hover circle:first-of-type { filter: brightness(1.15); }
+.wm-lbl { fill: #3b2610; font-weight: 700; paint-order: stroke; stroke: #f3e2b8; stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.wm-node.locked .wm-lbl { fill: #6c6454; }
+.wm-card { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,.28); border: 1px solid rgba(231,182,107,.35); }
+.wm-title { font-size: 15px; margin-bottom: 6px; }
+.wm-st { margin-left: 8px; font-size: 12px; opacity: .85; }
+.wm-row { font-size: 13px; line-height: 1.5; } .wm-row span { display: inline-block; min-width: 56px; color: var(--muted); }
+.wm-legend { margin-top: 8px; font-size: 12px; color: var(--muted); } .wm-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 8px; vertical-align: -1px; }
+.wm { width: min(840px, calc(var(--gw, 100vw) - 60px)); }
+
+/* Icon vật phẩm vẽ bằng code */
+img.ico { width: 1.3em; height: 1.3em; vertical-align: -0.3em; pointer-events: none; user-select: none; }
+.cell img.ico { width: 78%; height: 78%; vertical-align: middle; }
+.li .ic img.ico { width: 30px; height: 30px; }
+h3 img.ico { width: 1.5em; height: 1.5em; vertical-align: -0.4em; }

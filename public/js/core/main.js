@@ -273,40 +273,62 @@
       b.addEventListener('lostpointercapture', up);
     });
 
-    // 3 nút mũi tên trái / xuống / phải. Mỗi ngón tay nhấn một nút; trượt ngón sang nút bên cạnh thì đổi hướng luôn
-    // (không cần nhấc tay). elementFromPoint dùng tọa độ màn hình nên vẫn đúng khi khung game bị xoay.
+    // Cụm mũi tên ◀ ▲ ▶. Mỗi ngón tay điều khiển độc lập (đi + nhảy cùng lúc bằng hai ngón):
+    //  - Hướng chọn theo nút GẦN ngón tay nhất (không còn vùng chết giữa các nút, lệch ngón một chút vẫn ăn).
+    //  - Trượt ngón sang nút khác thì đổi hướng ngay; trượt chéo lên trên ◀ / ▶ thì vừa đi vừa nhảy.
+    //  - Ngón trượt ra xa cụm nút thì thả hướng. Tọa độ lấy từ getBoundingClientRect nên đúng cả khi khung game bị xoay.
     const pad = $('arrows');
-    const held = new Map();   // pointerId → 'left' | 'up' | 'right' | null
+    const btn = {};
+    for (const dir of ['left', 'up', 'right']) btn[dir] = pad.querySelector(`[data-arrow="${dir}"]`);
+    const held = new Map();   // pointerId → Set các hướng
     const syncArrows = () => {
-      const on = new Set(held.values());
-      // ▲ = nhảy: mỗi lần ngón tay chạm vào / trượt vào nút là một cú nhảy
+      const on = new Set();
+      for (const set of held.values()) for (const d of set) on.add(d);
+      // ▲ = nhảy: mỗi lần có ngón mới chạm / trượt vào là một cú nhảy
       if (on.has('up') && !App.touch.up) App.touch._p_jump = true;
       for (const dir of ['left', 'up', 'right']) {
         App.touch[dir] = on.has(dir);
-        pad.querySelector(`[data-arrow="${dir}"]`).classList.toggle('on', on.has(dir));
+        btn[dir].classList.toggle('on', on.has(dir));
       }
     };
-    const arrowAt = (e) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      const b = el && el.closest && el.closest('[data-arrow]');
-      return b && pad.contains(b) ? b.dataset.arrow : null;
+    const dirsAt = (e) => {
+      const c = {};
+      for (const dir in btn) { const r = btn[dir].getBoundingClientRect(); c[dir] = { x: r.left + r.width / 2, y: r.top + r.height / 2, s: Math.max(r.width, r.height) }; }
+      const size = c.left.s;
+      let best = null, bd = Infinity;
+      for (const dir in c) { const d = Math.hypot(e.clientX - c[dir].x, e.clientY - c[dir].y); if (d < bd) { bd = d; best = dir; } }
+      if (bd > size * 1.7) return new Set();   // ngón đã ra xa cụm nút
+      const out = new Set([best]);
+      if (best === 'up') {
+        // trục ngang của cụm nút (từ ◀ sang ▶) → biết ngón lệch trái hay phải so với ▲
+        const ax = c.right.x - c.left.x, ay = c.right.y - c.left.y, len = Math.hypot(ax, ay) || 1;
+        const t = ((e.clientX - c.up.x) * ax + (e.clientY - c.up.y) * ay) / len;
+        if (t < -size * 0.22) out.add('left'); else if (t > size * 0.22) out.add('right');
+      }
+      return out;
     };
+    const sameSet = (a, b) => a.size === b.size && [...a].every(x => b.has(x));
     pad.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       firstTouch();
       try { pad.setPointerCapture(e.pointerId); } catch { /* bỏ qua */ }
-      held.set(e.pointerId, arrowAt(e));
+      held.set(e.pointerId, dirsAt(e));
       syncArrows();
     });
     pad.addEventListener('pointermove', (e) => {
       if (!held.has(e.pointerId)) return;
-      const dir = arrowAt(e);
-      if (dir !== held.get(e.pointerId)) { held.set(e.pointerId, dir); syncArrows(); }
+      const dirs = dirsAt(e);
+      if (!sameSet(dirs, held.get(e.pointerId))) { held.set(e.pointerId, dirs); syncArrows(); }
     });
     const release = (e) => { if (held.delete(e.pointerId)) syncArrows(); };
     pad.addEventListener('pointerup', release);
     pad.addEventListener('pointercancel', release);
     pad.addEventListener('lostpointercapture', release);
+    // Mở bảng / đổi tab / ẩn trang: nhả hết hướng để nhân vật không tự chạy tiếp
+    const clearArrows = () => { if (held.size) { held.clear(); syncArrows(); } };
+    new MutationObserver(() => { if (document.body.classList.contains('panel-open')) clearArrows(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('visibilitychange', clearArrows);
+    window.addEventListener('blur', clearArrows);
 
     // Chặn zoom và menu khi giữ ngón tay
     document.addEventListener('gesturestart', (e) => e.preventDefault());

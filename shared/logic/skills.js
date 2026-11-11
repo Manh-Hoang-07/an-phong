@@ -14,7 +14,7 @@
     if (lv >= 5 && base.m5) Object.assign(s, base.m5);
     if (lv >= 10 && base.m10) Object.assign(s, base.m10);
     const mul = 1 + 0.1 * (lv - 1);
-    if (s.power) s.power = base.power * mul;
+    if (s.power) s.power = s.power * mul;
     if (s.after) s.after *= mul;
     if (s.finisher) s.finisher *= mul;
     if (s.heal) s.heal = Math.min(0.9, s.heal * (1 + 0.05 * (lv - 1)));
@@ -25,10 +25,25 @@
     return s;
   }
   // Kỹ năng class được học
+  // Các class mà người chơi được tính là (Triệu Hồi Sư đã tiến hóa vẫn có kỹ năng Tử Linh và ngược lại)
+  function schoolsOf(player) {
+    if (!player.school) return [];
+    if (player.school === 'tu_linh_thuat_su') return ['tu_linh_thuat_su', 'trieu_hoi_su'];
+    if (player.school === 'trieu_hoi_su' && player.advancement?.unlocked?.tu_linh_thuat_su) return ['trieu_hoi_su', 'tu_linh_thuat_su'];
+    return [player.school];
+  }
+  // Tuyệt kỹ này có hợp với class của người chơi không (Toàn Năng: mọi tuyệt kỹ)
+  function ultFits(player, s) {
+    if (!s || !s.ult || !player.school) return false;
+    if (player.school === 'toan_nang' || s.ultAny) return true;
+    const list = s.ultSchools || [s.school];
+    return schoolsOf(player).some(x => list.includes(x));
+  }
   function availableSkills(player) {
     if (!player.school) return [];
     return Object.keys(SKILLS).filter(id => {
       const s = SKILLS[id];
+      if (s.ult) return ultFits(player, s);
       if (s.evolutionKey && !player.advancement?.unlocked?.[s.evolutionKey]) return false;
       if (s.type === 'shadow_toggle' && player.school !== 'trieu_hoi_su' && player.school !== 'tu_linh_thuat_su') return false;
       if (player.school === 'toan_nang') return true;
@@ -36,6 +51,16 @@
       if (player.school === 'trieu_hoi_su' && player.advancement?.unlocked?.tu_linh_thuat_su) return s.school === 'trieu_hoi_su' || s.school === 'tu_linh_thuat_su';
       return s.school === player.school;
     });
+  }
+  // Ô tuyệt kỹ của người chơi (Toàn Năng có thêm 1 ô) và ô kỹ năng thường
+  const ultSlotsOf = (player) => G.ULT_SLOTS.filter(i => i !== G.ULT_EXTRA_SLOT || player.school === 'toan_nang');
+  const normalSlotsOf = (player) => [0, 1, 2, 3].concat(player.school === 'toan_nang' ? [G.EXTRA_SLOT] : []);
+  const isUltSlot = (i) => G.ULT_SLOTS.includes(i);
+  const ultKeyLabel = (i) => ['R', 'X', 'Z'][G.ULT_SLOTS.indexOf(i)] || '?';
+  // Tuyệt kỹ đặc trưng của class (sách Tuyệt Kỹ Chức Nghiệp dạy tuyệt kỹ này)
+  function signatureUlt(player) {
+    const home = player.school === 'trieu_hoi_su' && player.advancement?.unlocked?.tu_linh_thuat_su ? 'tu_linh_thuat_su' : player.school;
+    return Object.keys(SKILLS).find(id => SKILLS[id].ult && !id.startsWith('ul') && (SKILLS[id].ultSchools || [SKILLS[id].school]).includes(home)) || null;
   }
   function skillLevel(player, id) { return (player.skills && player.skills[id]) || 0; }
   // Kỹ năng nhánh chức nghiệp 2 (tiến hóa): có evolutionKey, hoặc kỹ năng Tử Linh Thuật Sư
@@ -63,5 +88,5 @@
   // Đang bật chức nghiệp 2 (theo dữ liệu nhân vật phía server)
   const careerActive = (player) => !!player.formActive && player.formChoice === 'evolution';
 
-  Object.assign(G, { skillAt, availableSkills, skillLevel, isCareerSkill, skillFormBlock, usesCareerBar, slotsOf, slotKeyOf, careerActive });
+  Object.assign(G, { skillAt, schoolsOf, ultFits, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, availableSkills, skillLevel, isCareerSkill, skillFormBlock, usesCareerBar, slotsOf, slotKeyOf, careerActive });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

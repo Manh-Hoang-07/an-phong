@@ -125,6 +125,9 @@ WorldScene.mix(class WorldSkills {
         break;
       }
       case 'buff': {
+        // Không để buff yếu ghi đè buff cùng loại đang mạnh hơn (vd. tuyệt kỹ dùng chung đè Thức Tỉnh Tối Thượng)
+        const prev = this.buffs[sk.buff], nextAtk = (sk.atkBuff || 0) * App.stats.skillMul;
+        if (!(prev && time < prev.until && (prev.atk || 0) > nextAtk))
         this.buffs[sk.buff] = { until: time + sk.duration * 1000, atk: (sk.atkBuff || 0) * App.stats.skillMul, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0 };
         for (let k = 0; k < (sk.ult ? 10 : 6); k++) {
           const ghost = this.add.image(pl.x, pl.y, pl.texture.key).setTint(this.accent()).setAlpha(0.6).setDepth(3);

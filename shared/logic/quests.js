@@ -14,7 +14,9 @@
     const ranges = ap[mapId];
     if (!ranges) return false;
     const step = player.quest.step;
-    return ranges.some(([a, b]) => step >= a && step <= b);
+    // Khoảng [từ, đến] viết bằng mã nhiệm vụ ('c2q6') hoặc chỉ số; chèn thêm nhiệm vụ không làm lệch
+    const at = (v, edge) => { if (typeof v !== 'string') return v; const i = QUESTS.findIndex(x => x.id === v); return i < 0 ? (edge ? Infinity : -1) : i; };
+    return ranges.some(([a, b]) => step >= at(a, false) && step <= at(b, true));
   }
 
   // Ngày theo giờ Việt Nam (UTC+7), dạng 2026-11-04

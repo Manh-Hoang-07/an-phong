@@ -7,7 +7,7 @@
   // ---------------------------------------------------------------- Phụ tuyến
   // req: danh sách nhiệm vụ chính / phụ tuyến phải hoàn thành trước.
   // obj dùng cùng định dạng với nhiệm vụ chính: kill / collect / visit / level.
-  // Thưởng thêm: bagPlus (+10 ô túi), shopDiscount (giảm giá), perk, unlockShop.
+  // Thưởng thêm: bagPlus (+10 ô túi), shopDiscount (giảm giá), perk, unlockShop, title (danh hiệu).
   const SIDE_QUESTS = [
     // ---- Đội Bình Minh (Vy), mở sau c2q6
     { id: 'p1-1', name: 'Kỷ vật thứ nhất', npc: 'vy', req: ['c2q6'],
@@ -117,6 +117,90 @@
       obj: { collect: { doc_to_dac: 3 } },
       reward: { exp: 1600, gold: 900, items: [['thuoc_nhiem_do', 5]], unlockShop: 'thuoc_nhiem_do' } },
   ];
+
+  // ---------------------------------------------------------------- Phụ tuyến mới (theo kế hoạch Tân Đô)
+  // Phần thưởng kinh nghiệm theo cấp; title = danh hiệu hiện ở bảng Nhân vật
+  const sx = (level, k) => Math.round(G.expToNext(level) * k);
+  SIDE_QUESTS.push(
+    // ---- Rèn đồ cổ (Thiết), mở sau c3q10: ở mọi Tân Đô có Thợ rèn
+    { id: 'p6-1', name: 'Lưỡi rèn thử lửa', npc: 'tho_ren', req: ['c3q10'],
+      start: ['Thợ chế tác Thiết: Lò Rèn Cổ nung được rồi, nhưng tôi chưa biết thép nó rèn ra bền cỡ nào.', 'Thợ chế tác Thiết: Hạ 15 Người Tuyết quanh lò, để tôi thử độ bền của đồ rèn qua vết cắt của cậu.'],
+      end: ['Thợ chế tác Thiết: Hay lắm. Thép này vừa dai vừa sắc. Cầm lấy ít đá cường hóa.'],
+      obj: { kill: { nguoi_tuyet: 15 } }, reward: { exp: sx(25, 0.12), gold: 1500, items: [['da_cuong_hoa_cao', 3]] } },
+    { id: 'p6-2', name: 'Than cho lò', npc: 'tho_ren', req: ['p6-1'],
+      start: ['Thợ chế tác Thiết: Lò muốn nóng đều thì cần than trộn tinh thể băng, thứ Yêu Tinh Băng hay giấu.', 'Thợ chế tác Thiết: Hạ 20 con Yêu Tinh Băng rồi quay lại.'],
+      end: ['Thợ chế tác Thiết: Than này cháy xanh. Lần đầu tôi thấy lửa mát.'],
+      obj: { kill: { yeu_tinh_bang: 20 } }, reward: { exp: sx(26, 0.14), gold: 2000, items: [['da_cuong_hoa_cao', 4]] } },
+    { id: 'p6-3', name: 'Khuôn rèn cổ', npc: 'tho_ren', req: ['p6-2'],
+      start: ['Thợ chế tác Thiết: Khuôn rèn cổ của tổ tiên tôi bị Quỷ Búa Băng chiếm làm ổ trên đỉnh núi.', 'Thợ chế tác Thiết: Hạ 6 con để lấy lại. Nó cứng, cậu đừng đánh liều.'],
+      end: ['Thợ chế tác Thiết: Khuôn đây rồi! Cậu giúp dòng họ tôi nhiều lắm. Từ nay ai hỏi, tôi nói cậu là học trò của ta.'],
+      obj: { kill: { dai_thach_nhan: 6 } }, reward: { exp: sx(28, 0.2), gold: 3000, title: 'Học Trò Thợ Rèn', items: [['sach_ky_nang', 1]] } },
+
+    // ---- Bảng truy nã (Hội trưởng Khải)
+    { id: 'p7-1', name: 'Truy nã: kẻ trốn', npc: 'lao_su', req: ['c2q12'],
+      start: ['Hội trưởng Khải: Bảng truy nã có tên mấy tên lính Hắc Nguyệt trốn khỏi Làng Chài. Hiệp Hội treo thưởng.', 'Hội trưởng Khải: Hạ 10 Lính Giáo Hắc Nguyệt. Mang chứng cứ về cho tôi, tôi thanh toán.'],
+      end: ['Hội trưởng Khải: Đúng danh sách rồi. Tiền thưởng đây. Cậu làm việc gọn.'],
+      obj: { kill: { linh_giao_hn: 10 } }, reward: { exp: sx(18, 0.15), gold: 1800, items: [['binh_mau_lon', 5]] } },
+    { id: 'p7-2', name: 'Truy nã: kẻ cầm đầu', npc: 'lao_su', req: ['p7-1', 'c3q7'],
+      start: ['Hội trưởng Khải: Sau chuyện kho bạc, tôi muốn dọn nốt tàn dư của Hắc Nguyệt quanh Tân Đô.', 'Hội trưởng Khải: Hạ 12 Sát Thủ Bóng Tối. Chúng giỏi lẩn, nên cậu để ý bóng đổ.'],
+      end: ['Hội trưởng Khải: Bảng truy nã sạch rồi. Cậu xứng đáng với danh hiệu này.'],
+      obj: { kill: { sat_thu_bong_toi: 12 } }, reward: { exp: sx(26, 0.16), gold: 3500, title: 'Thợ Săn Truy Nã', items: [['binh_mau_dac', 5]] } },
+
+    // ---- Nhật ký người Số 3 (Lữ khách)
+    { id: 'p8-1', name: 'Nhật ký người Số 3 (1)', npc: 'lu_khach', req: ['c4q5'],
+      start: ['Lữ khách: Ta từng viết nhật ký khi còn trong Hệ thống. Nhiều trang rơi trong Thư Viện, hóa thành Linh Hồn Ký Ức.', 'Lữ khách: Hạ 15 con để ta lấy lại những gì còn sót.'],
+      end: ['Lữ khách: Những dòng chữ... Ta không nhớ mình từng sợ hãi đến vậy.'],
+      obj: { kill: { linh_hon_ky_uc: 15 } }, reward: { exp: sx(37, 0.12), gold: 3000, items: [['da_cuong_hoa_than_thoai', 3]] } },
+    { id: 'p8-2', name: 'Nhật ký người Số 3 (2)', npc: 'lu_khach', req: ['p8-1', 'c4q8'],
+      start: ['Lữ khách: Trang cuối của nhật ký nằm trong tay Thủ Thư Vô Diện ở Đỉnh Tháp. Hắn đọc từng chữ rồi xóa nó.', 'Lữ khách: Hạ 4 tên Thủ Thư. Ta muốn đọc trang đó trước khi quên.'],
+      end: ['Lữ khách: Trang cuối chỉ có một dòng: "Hãy là người chơi đầu tiên không bị nuốt." Cậu đã làm được rồi.'],
+      obj: { kill: { thu_thu_vo_dien: 4 } }, reward: { exp: sx(38, 0.2), gold: 5000, title: 'Người Đọc Ký Ức', items: [['sach_ky_nang', 2]] } },
+
+    // ---- Lam Sương ở lại
+    { id: 'p9-1', name: 'Lam Sương ở lại (1)', npc: 'lam_suong', req: ['c5q9'],
+      start: ['Lam Sương: Tôi muốn ở lại thật sự. Nhưng trước đó tôi cần làm một việc: dọn những thứ Hắc Nguyệt để lại ở Cổng SS.', 'Lam Sương: Hạ 25 Quái Hư Không giúp tôi.'],
+      end: ['Lam Sương: Cảm ơn. Lần đầu tôi thấy mình làm điều gì đó không vì ai ra lệnh.'],
+      obj: { kill: { quai_hu_khong: 25 } }, reward: { exp: sx(48, 0.12), gold: 8000, items: [['da_cuong_hoa_than_thoai', 3]] } },
+    { id: 'p9-2', name: 'Lam Sương ở lại (2)', npc: 'lam_suong', req: ['p9-1'],
+      start: ['Lam Sương: Còn lũ Kỵ Sĩ Hư Không từng là thợ săn Hắc Nguyệt, bạn cũ của tôi.', 'Lam Sương: Hạ 10 tên. Tôi không dám tự tay làm.'],
+      end: ['Lam Sương: ...Xong rồi. Tôi sẽ ở lại Tân Đô, thật sự ở lại. Cảm ơn, đồng đội.'],
+      obj: { kill: { ky_si_hu_khong: 10 } }, reward: { exp: sx(49, 0.2), gold: 12000, title: 'Bạn Của Lam Sương', items: [['da_cuong_hoa_than_thoai', 4]] } },
+
+    // ---- Phụ tuyến Chương 6–10 (mỗi chương một nhiệm vụ, nhẹ, không chặn chính tuyến)
+    { id: 'p10-1', name: 'Mài lại lưỡi kiếm', npc: 'tho_ren', req: ['c6q8'],
+      start: ['Thợ chế tác Thiết: Lưỡi kiếm cũ của cậu cùn rồi. Tôi mài lại bằng bụi Mảnh Khôi, nhưng cần thử trên Sói Lửa Khôi.', 'Thợ chế tác Thiết: Hạ 20 con.'],
+      end: ['Thợ chế tác Thiết: Lưỡi bén như mới. Tôi ghi lại công thức này vào sổ rèn.'],
+      obj: { kill: { soi_lua_khoi: 20 } }, reward: { exp: sx(58, 0.1), gold: 9000, items: [['loi_tinh_van', 2]] } },
+    { id: 'p11-1', name: 'Nước long mạch', npc: 'ba_thuoc', req: ['c7q8'],
+      start: ['Lan: Nước ở Vùng Long Mạch có thể chữa nhiễm đỏ tận gốc, nhưng bị Linh Thủy Mạch giữ.', 'Lan: Hạ 20 con để tôi lấy nước ngọc về bào chế.'],
+      end: ['Lan: Thuốc này sẽ cứu được nhiều người. Cầm lấy phần của cậu.'],
+      obj: { kill: { linh_thuy_mach: 20 } }, reward: { exp: sx(68, 0.1), gold: 12000, items: [['binh_mau_than_thoai', 5], ['binh_nl_than_thoai', 5]] } },
+    { id: 'p12-1', name: 'Đo sao ở trạm quan trắc', npc: 'minh_triet', req: ['c8q5'],
+      start: ['Minh Triết: Trạm quan trắc cần đo lại vị trí sao để tôi hiệu chỉnh bản vẽ. Nhưng Thợ Quan Trắc Méo cứ phá thiết bị.', 'Minh Triết: Hạ 15 con để tôi dựng lại máy đo.'],
+      end: ['Minh Triết: Số liệu khớp! Tôi sẽ ghi tên cậu vào bản đồ sao. Ngoài ra, xin tặng cậu danh hiệu này.'],
+      obj: { kill: { tho_quan_trac_meo: 15 } }, reward: { exp: sx(76, 0.1), gold: 14000, title: 'Người Đo Sao', items: [['da_cuong_hoa_than_thoai', 3]] } },
+    { id: 'p13-1', name: 'Giấc mơ về đội Bình Minh', npc: 'vy', req: ['c9q5'],
+      start: ['Vy: Sau giấc mơ đó, tôi muốn nhớ đội Bình Minh lâu hơn một khoảnh khắc. Bóng Gương trong Mê Cung có giữ lại hình họ.', 'Vy: Hạ 20 con để tôi lấy lại hình ảnh.'],
+      end: ['Vy: Họ vẫn cười như hôm ấy. Cảm ơn cậu đã đi cùng tôi tới đây.'],
+      obj: { kill: { bong_guong: 20 } }, reward: { exp: sx(84, 0.1), gold: 16000, title: 'Người Nhớ Bình Minh', items: [['da_cuong_hoa_than_thoai', 5]] } },
+    { id: 'p14-1', name: 'Lời hứa cuối cùng', npc: 'lam_suong', req: ['c10q2'],
+      start: ['Lam Sương: Tôi đã hứa với Vy sẽ ở lại. Giờ tôi muốn giữ lời hứa theo cách khác: bảo vệ lối vào Sáng Thế cho cậu.', 'Lam Sương: Hạ 20 Cá Ký Ức đang ăn ký ức người qua đường.'],
+      end: ['Lam Sương: Lối này an toàn rồi. Giờ tôi mới thật sự là người của Hiệp Hội.'],
+      obj: { kill: { ca_ky_uc: 20 } }, reward: { exp: sx(94, 0.1), gold: 20000, title: 'Người Giữ Lời Hứa', items: [['da_cuong_hoa_than_thoai', 5], ['loi_tinh_van', 3]] } },
+    // ---- Khảo hạch Tuyệt Kỹ (Hội trưởng Khải): thưởng sách tuyệt kỹ dùng chung, yếu hơn tuyệt kỹ của từng class
+    { id: 'ut-1', name: 'Khảo hạch Tuyệt Kỹ I', npc: 'lao_su', req: ['c3q10'],
+      start: ['Hội trưởng Khải: Có những tuyệt kỹ không thuộc riêng class nào, ai đủ sức cũng học được. Hiệp Hội giữ vài cuốn.', 'Hội trưởng Khải: Chứng minh cậu đủ sức: hạ 20 Yêu Tinh Băng và 8 Quỷ Búa Băng.'],
+      end: ['Hội trưởng Khải: Đạt. Cuốn này dạy Thiên Địa Chấn Động. Đọc trong Túi đồ.'],
+      obj: { kill: { yeu_tinh_bang: 20, dai_thach_nhan: 8 } }, reward: { exp: sx(28, 0.2), gold: 4000, items: [['sach_tk_ulChung1', 1]] } },
+    { id: 'ut-2', name: 'Khảo hạch Tuyệt Kỹ II', npc: 'lao_su', req: ['ut-1', 'c5q5'],
+      start: ['Hội trưởng Khải: Khảo hạch thứ hai khó hơn. Thú Thủ Vô Diện lang thang ở nơi Hệ thống từng giấu dữ liệu.', 'Hội trưởng Khải: Hạ 20 con. Xong việc, tôi trao Ý Chí Bất Diệt.'],
+      end: ['Hội trưởng Khải: Ý chí cậu đã được chứng minh. Cầm lấy.'],
+      obj: { kill: { thu_thu_vo_dien: 20 } }, reward: { exp: sx(40, 0.15), gold: 8000, items: [['sach_tk_ulChung2', 1]] } },
+    { id: 'ut-3', name: 'Khảo hạch Tuyệt Kỹ III', npc: 'lao_su', req: ['ut-2', 'c6q8'],
+      start: ['Hội trưởng Khải: Khảo hạch cuối. Kỵ Sĩ Hư Không và Ma Thần Trắng Trơn xé toạc không gian mỗi khi xuất hiện.', 'Hội trưởng Khải: Hạ 15 Kỵ Sĩ Hư Không và 10 Ma Thần Trắng Trơn rồi tôi trao Hư Không Tuyệt Trảm.'],
+      end: ['Hội trưởng Khải: Cậu đủ tư cách. Hư Không Tuyệt Trảm là của cậu.'],
+      obj: { kill: { ky_si_hu_khong: 15, ma_than_trang_tron: 10 } }, reward: { exp: sx(55, 0.15), gold: 15000, items: [['sach_tk_ulChung3', 1]] } },
+  );
 
   Object.assign(G, { SIDE_QUESTS });
 })(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

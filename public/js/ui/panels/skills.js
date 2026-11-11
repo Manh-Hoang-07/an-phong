@@ -26,7 +26,9 @@
     return out.join(' · ');
   }
 
-  function slotLabel(i) { return i === G.ULT_SLOT ? 'R' : String(i + 1); }
+  function slotLabel(i) { return G.isUltSlot(i) ? G.ultKeyLabel(i) : String(i + 1); }
+  const schoolLabel = (s) => s === 'chung' ? '✨ Dùng chung (mọi class)' : `${G.SCHOOLS[s]?.icon || ''} ${G.SCHOOLS[s]?.name || s}`;
+  const ultWho = (sk) => sk.ultAny ? 'mọi class' : (sk.ultSchools || [sk.school]).map(x => G.SCHOOLS[x]?.name || x).join(', ');
 
   function panelSkills() {
     const p = App.player, st = App.stats;
@@ -37,7 +39,7 @@
         .map(([, s]) => `<div class="school-card"><h3>${s.icon} ${esc(s.name)}</h3><p>${esc(s.desc)}</p></div>`).join('') + '</div>'];
     }
     const tn = p.school === 'toan_nang';
-    const slots = [0, 1, 2, 3].concat(tn ? [G.EXTRA_SLOT] : []).concat([G.ULT_SLOT]);
+    const slots = G.normalSlotsOf(p).concat(G.ultSlotsOf(p));
     let html = `<div class="row" style="justify-content:space-between;margin-bottom:8px">
       <div>Điểm kỹ năng: <b class="gold" style="font-size:16px">${p.skillPoints}</b></div>
       <div class="muted" style="font-size:12px">Mỗi cấp +1 điểm · Tẩy điểm ở Hội trưởng Khải</div></div>`;
@@ -48,9 +50,9 @@
     const barHtml = (bar, key) => '<div class="skill-slots">' + slots.map(i => {
       const id = bar[i];
       const sk = id && G.SKILLS[id];
-      return `<div class="sslot ${i === G.ULT_SLOT ? 'ult' : ''}"><span class="k">${slotLabel(i)}</span>` +
+      return `<div class="sslot ${G.isUltSlot(i) ? 'ult' : ''}"><span class="k">${slotLabel(i)}</span>` +
         (sk ? `<span class="ic">${sk.icon}</span><small>${esc(sk.name)}</small><button class="x" data-act="clear_slot" data-slot="${i}" data-bar="${key}" title="Gỡ">✕</button>`
-          : `<small class="muted">${i === G.ULT_SLOT ? 'Tuyệt kỹ' : 'Trống'}</small>`) + '</div>';
+          : `<small class="muted">${G.isUltSlot(i) ? 'Tuyệt kỹ' : 'Trống'}</small>`) + '</div>';
     }).join('') + '</div>';
     if (hasCareerBar) {
       html += `<div class="muted" style="margin:4px 0;font-size:12px">THANH CHỨC NGHIỆP 1 · ${esc(G.SCHOOLS[p.school].name)}${careerOn ? '' : ' (đang dùng)'}</div>` + barHtml(p.skillSlots, 'main');
@@ -66,29 +68,33 @@
     }
     // Danh sách kỹ năng
     html += '<div class="muted" style="margin:12px 0 4px;font-size:12px">KỸ NĂNG CHỦ ĐỘNG</div><div class="list">';
-    let lastSchool = null;
-    const ids = G.availableSkills(p);
-    const schoolOrder = [...new Set(ids.map(id => G.SKILLS[id].school))];
-    ids.sort((a, b) => {
-      const sa = G.SKILLS[a], sb = G.SKILLS[b];
-      if (!!sa.ult !== !!sb.ult) return sa.ult ? 1 : -1;
-      const group = schoolOrder.indexOf(sa.school) - schoolOrder.indexOf(sb.school);
-      return group || sa.level - sb.level;
-    });
+    let lastSchool = null, inUlt = false;
+    const all = G.availableSkills(p);
+    const schoolOrder = [...new Set(all.map(id => G.SKILLS[id].school))];
+    const bySchool = (a, b) => schoolOrder.indexOf(G.SKILLS[a].school) - schoolOrder.indexOf(G.SKILLS[b].school) || G.SKILLS[a].level - G.SKILLS[b].level;
+    // Tuyệt kỹ đã học lên trước
+    const ultIds = all.filter(id => G.SKILLS[id].ult).sort((a, b) => (!!G.skillLevel(p, b) - !!G.skillLevel(p, a)) || bySchool(a, b));
+    const ids = all.filter(id => !G.SKILLS[id].ult).sort(bySchool).concat(ultIds);
     for (const id of ids) {
       const base = G.SKILLS[id];
-      if (tn && base.school !== lastSchool) {
-        html += `<div class="muted" style="margin-top:6px;font-size:12px">— ${G.SCHOOLS[base.school].icon} ${G.SCHOOLS[base.school].name} —</div>`;
+      if (base.ult && !inUlt) {
+        inUlt = true; lastSchool = null;
+        html += `</div><div class="muted" style="margin:14px 0 4px;font-size:12px">TUYỆT KỸ · học bằng Sách Tuyệt Kỹ · gắn tối đa ${G.ultSlotsOf(p).length} tuyệt kỹ vào các ô ${G.ultSlotsOf(p).map(slotLabel).join(' / ')}</div><div class="list">`;
+      }
+      if (tn && !base.ult && base.school !== lastSchool) {
+        html += `<div class="muted" style="margin-top:6px;font-size:12px">— ${schoolLabel(base.school)} —</div>`;
         lastSchool = base.school;
       }
       const lv = G.skillLevel(p, id);
       const locked = base.ult ? !lv : base.level > p.level;
+      const bookName = base.ult ? G.ITEMS[G.ultBookId(id)]?.name : '';
+      const hasBook = base.ult && !lv && p.bag.some(e => e.id === G.ultBookId(id) || (e.id === 'sach_tuyet_ky' && id === G.signatureUlt(p)));
       const cur = G.skillAt(id, Math.max(1, lv));
       const next = lv && lv < G.SKILL_MAX ? G.skillAt(id, lv + 1) : null;
       const canUp = !locked && lv < G.SKILL_MAX && p.skillPoints > 0;
       const upBtn = lv >= G.SKILL_MAX ? '<span class="gold" style="font-size:12px">TỐI ĐA</span>'
         : `<button class="btn small ${canUp ? 'primary' : ''}" data-act="learn_skill" data-skill="${id}" ${canUp ? '' : 'disabled'}>${lv ? '+1 cấp' : 'Học'}</button>`;
-      const slotBtns = lv ? (base.ult ? [G.ULT_SLOT] : [0, 1, 2, 3].concat(tn ? [G.EXTRA_SLOT] : []))
+      const slotBtns = lv ? (base.ult ? G.ultSlotsOf(p) : G.normalSlotsOf(p))
         .map(i => { const on = (p[G.slotKeyOf(p, id)] || [])[i] === id; return `<button class="btn small slotbtn ${on ? 'on' : ''}" data-act="set_skill" data-slot="${i}" data-skill="${id}" ${on ? 'disabled' : ''}>${slotLabel(i)}</button>`; }).join('') : '';
       const ms = [[5, base.t5], [10, base.t10]].filter(([, t]) => t)
         .map(([m, t]) => `<span class="${lv >= m ? 'okc' : 'muted'}">${lv >= m ? '✓' : '◇'} Cấp ${m}: ${esc(t)}</span>`).join('<br>');
@@ -96,8 +102,9 @@
         <div class="ic">${base.icon}</div>
         <div class="main">
           <b>${esc(base.name)}</b> ${base.ult ? '<span class="tag-ult">TUYỆT KỸ</span>' : ''}
-          <span class="lvl">${locked ? (base.ult ? '🔒 Cần Sách Tuyệt Kỹ' : `🔒 Mở ở cấp ${base.level}`) : lv ? `Cấp ${lv}/${G.SKILL_MAX}` : 'Chưa học'}</span>
+          <span class="lvl">${locked ? (base.ult ? `🔒 Cần ${esc(bookName || 'Sách Tuyệt Kỹ')}${p.level < base.level ? ` · cấp ${base.level}` : ''}` : `🔒 Mở ở cấp ${base.level}`) : lv ? `Cấp ${lv}/${G.SKILL_MAX}` : 'Chưa học'}</span>
           <small>${esc(base.desc)}</small>
+          ${base.ult ? `<small class="muted">Dành cho: ${esc(ultWho(base))} · Nguồn: ${base.ultAny ? 'nhiệm vụ Khảo hạch Tuyệt Kỹ (Hội trưởng Khải)' : 'mã quà tặng'}${hasBook ? ' · <b class="okc">Bạn đang có sách, hãy đọc trong Túi đồ</b>' : ''}</small>` : ''}
           <small>${skillNumbers(cur)} · ${Math.round(cur.mp * st.costMul)} năng lượng · hồi ${Math.round(cur.cd * 10) / 10}s</small>
           ${next ? `<small class="okc">Cấp ${lv + 1}: ${skillNumbers(next)}</small>` : ''}
           <small>${ms}</small>

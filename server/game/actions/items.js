@@ -84,16 +84,21 @@ const actions = {
       return;
     }
     if (def.kind === 'ult_book') {
-      const ult = G.availableSkills(p).map(id => [id, G.SKILLS[id]])
-        .find(([, sk]) => sk.ult && sk.school === p.school);
-      if (!ult) fail('Class hiện tại không có tuyệt kỹ tương ứng.');
-      const [id, sk] = ult;
+      if (!p.school) fail('Hãy thức tỉnh class trước khi đọc Sách Tuyệt Kỹ.');
+      // Sách riêng (def.skill) dạy đúng tuyệt kỹ ghi trên sách; sách chức nghiệp dạy tuyệt kỹ đặc trưng của class
+      const id = def.skill || G.signatureUlt(p);
+      const sk = id && G.SKILLS[id];
+      if (!sk || !sk.ult) fail('Class hiện tại không có tuyệt kỹ tương ứng.');
+      if (!G.ultFits(p, sk)) fail('Tuyệt kỹ này không phù hợp với class của bạn.');
       if (G.skillLevel(p, id)) fail('Bạn đã học tuyệt kỹ này rồi.');
+      if (sk.level > p.level) fail(`Cần đạt cấp ${sk.level} để học ${sk.name}.`);
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
       p.skills[id] = 1;
       if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
-      p[G.slotKeyOf(p, id)][G.ULT_SLOT] = id;
+      const bar = p[G.slotKeyOf(p, id)];
+      const free = G.ultSlotsOf(p).find(i => !bar[i]);
+      if (free !== undefined) bar[free] = id;
       ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách Tuyệt Kỹ: đã học ${sk.name}.`, color: '#ffd54f' });
       return;
     }

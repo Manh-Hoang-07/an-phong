@@ -27,9 +27,26 @@
     const add = (ids) => { for (const id of ids) if (ITEMS[id] && !list.includes(id)) list.push(id); };
     if (npcId === 'ba_thuoc' && sideDone(player, 'p5-2')) add(['thuoc_nhiem_do']);
     if (npcId === 'tap_hoa' && sideDone(player, 'p2-1')) add(['binh_mau_vua', 'binh_nl_vua']);
-    if (npcId === 'tap_hoa' && sideDone(player, 'p2-2')) add([...Object.values(G.TIER_WEAPONS.hop_kim),   // vũ khí bậc hợp kim của mọi class
-      'mu_thep', 'ao_thep', 'quan_thep', 'giay_thep', 'da_cuong_hoa_cao']);
-    return list;
+    if (npcId === 'tap_hoa' && sideDone(player, 'p2-2')) add(['da_cuong_hoa_cao']);
+    return capByVillage(player, list);
+  }
+  // Cửa hàng chỉ bán trong trần của Tân Đô đang đứng (cap = cấp trang bị cao nhất; thuốc và đá theo bậc làng), không xét cấp người chơi
+  const TIER_OF = { nho: 1, vua: 2, lon: 3, dac: 4, than_thoai: 5, trung: 2, cao: 3 };
+  function itemTier(id) {
+    if (id === 'da_cuong_hoa') return 1;
+    const m = /_(nho|vua|lon|dac|than_thoai|trung|cao)$/.exec(id);
+    return m ? TIER_OF[m[1]] : 0;
+  }
+  const TIER_CAP_BY_VILLAGE = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 5, 7: 5 };
+  function capByVillage(player, list) {
+    const v = G.MAPS[player.map] && G.MAPS[player.map].village;
+    if (!v) return list;
+    return list.filter(id => {
+      const d = ITEMS[id];
+      if (d.slot) return (d.level || 1) <= v.cap;
+      const t = itemTier(id);
+      return !t || t <= TIER_CAP_BY_VILLAGE[v.n];
+    });
   }
   function shopPrice(player, def, qty = 1) {
     return Math.max(1, Math.round(def.price * qty * (1 - (player.shopDiscount || 0))));

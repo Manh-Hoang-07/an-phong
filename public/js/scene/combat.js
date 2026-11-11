@@ -219,7 +219,7 @@ WorldScene.mix(class WorldCombat {
     } catch (e) { /* mất mạng: vẫn về làng, server sẽ đồng bộ lại khi lưu */ }
     if (!(App.hp > 0)) App.hp = Math.max(1, Math.round(App.stats.maxHp * 0.5));
     App.sta = App.stats.maxSta; App.staLocked = false;
-    const restart = () => { if (this.sys && this.sys.isActive()) this.scene.restart({ map: GameData.START_MAP, arrive: 'S' }); };
+    const restart = () => { if (this.sys && this.sys.isActive()) this.scene.restart({ map: (App.player && App.player.map) || GameData.START_MAP, arrive: 'S' }); };
     try { this.cameras.main.fadeOut(300); } catch (e) { /* bỏ qua */ }
     setTimeout(restart, 340);   // dùng setTimeout thay đồng hồ cảnh: không phụ thuộc hitstop / làm chậm thời gian
   }

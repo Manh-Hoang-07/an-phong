@@ -10,6 +10,7 @@
   //   m5 / m10: thay đổi thêm khi đạt cấp 5 / cấp 10 (kèm mô tả t5 / t10)
   // type: dash | melee | projectile | spread | aoe | heal | buff | guard | backstep | manashield | shadow_toggle | shadow_command
   //       sword_fall | arrow_rain | meteor   (ult: true = tuyệt kỹ, đặt ở ô tuyệt kỹ)
+  // Tuyệt kỹ: ultSchools = các class học được (mặc định chỉ class của chính nó), ultAny = mọi class học được.
   const SKILL_MAX = 10;
   const SKILLS = {
     // ----- Kiếm Sĩ
@@ -29,10 +30,10 @@
       type: 'buff', buff: 'rage', duration: 6, atkBuff: 0.3, speedBuff: 0.5, desc: 'Tăng tấn công và tốc đánh.',
       m5: { duration: 8 }, t5: 'Kéo dài 8 giây.',
       m10: { atkBuff: 0.45 }, t10: 'Tấn công +45%.' },
-    pa5: { school: 'kiem_si', icon: '🗡️', name: 'Thiên Kiếm Giáng', level: 20, mp: 60, cd: 40, ult: true,
-      type: 'sword_fall', power: 6, radius: 180, count: 1, desc: 'Triệu hồi thanh kiếm khổng lồ đâm xuống phía trước.',
+    pa5: { school: 'kiem_si', icon: '🗡️', name: 'Thiên Kiếm Giáng', level: 20, mp: 85, cd: 40, ult: true,
+      type: 'sword_fall', power: 16, radius: 180, count: 1, desc: 'Triệu hồi thanh kiếm khổng lồ đâm xuống phía trước.',
       m5: { radius: 230 }, t5: 'Vùng sát thương rộng hơn.',
-      m10: { count: 3 }, t10: 'Ba thanh kiếm cùng giáng xuống.' },
+      m10: { count: 2 }, t10: 'Hai thanh kiếm cùng giáng xuống.' },
     pa6: { school: 'kiem_si', icon: '🌪️', name: 'Kiếm Vũ Liên Hoàn', level: 25, mp: 42, cd: 12,
       type: 'melee', power: 1.25, hits: 6, range: 150, finisher: 2.4, desc: 'Xoay kiếm chém liên tiếp, nhát cuối tung đòn kết liễu.',
       m5: { hits: 8 }, t5: 'Tăng thành 8 nhát chém.',
@@ -59,8 +60,8 @@
       type: 'buff', buff: 'eagle', duration: 8, critBuff: 25, speedBuff: 0.3, desc: 'Tăng chí mạng và tốc bắn.',
       m5: { duration: 10 }, t5: 'Kéo dài 10 giây.',
       m10: { critBuff: 40 }, t10: 'Chí mạng +40%.' },
-    hl5: { school: 'cung_thu', icon: '🌧️', name: 'Mưa Tên', level: 20, mp: 60, cd: 40, ult: true,
-      type: 'arrow_rain', power: 2.2, arrows: 12, width: 360, desc: 'Trút mưa tên xuống vùng phía trước.',
+    hl5: { school: 'cung_thu', icon: '🌧️', name: 'Mưa Tên', level: 20, mp: 85, cd: 40, ult: true,
+      type: 'arrow_rain', power: 7.5, arrows: 12, width: 360, desc: 'Trút mưa tên xuống vùng phía trước.',
       m5: { arrows: 18 }, t5: '18 mũi tên.',
       m10: { width: 480, slow: 2 }, t10: 'Vùng rộng hơn, quái trúng tên bị chậm.' },
     hl6: { school: 'cung_thu', icon: '🎯', name: 'Tam Tiễn Truy Kích', level: 25, mp: 42, cd: 11,
@@ -89,10 +90,10 @@
       type: 'aoe', power: 2.0, radius: 210, freeze: 2, desc: 'Đóng băng vùng quanh người.',
       m5: { radius: 260 }, t5: 'Vùng rộng hơn.',
       m10: { freeze: 3 }, t10: 'Quái đứng yên 3 giây.' },
-    tn5: { school: 'phap_su', icon: '☄️', name: 'Thiên Thạch', level: 20, mp: 70, cd: 40, ult: true,
-      type: 'meteor', power: 7, radius: 200, count: 1, desc: 'Gọi thiên thạch rơi xuống phía trước.',
+    tn5: { school: 'phap_su', icon: '☄️', name: 'Thiên Thạch', level: 20, mp: 100, cd: 40, ult: true,
+      type: 'meteor', power: 16, radius: 200, count: 1, desc: 'Gọi thiên thạch rơi xuống phía trước.',
       m5: { radius: 250 }, t5: 'Vụ nổ rộng hơn.',
-      m10: { count: 3 }, t10: 'Ba thiên thạch liên tiếp.' },
+      m10: { count: 2 }, t10: 'Hai thiên thạch liên tiếp.' },
     tn6: { school: 'phap_su', icon: '🌌', name: 'Băng Lưu Bạo', level: 25, mp: 48, cd: 16,
       type: 'aoe', power: 2.6, radius: 190, freeze: 2, desc: 'Gọi luồng băng nổ quanh người, gây sát thương và đóng băng quái.',
       m5: { radius: 240 }, t5: 'Vùng băng lan rộng hơn.',
@@ -103,7 +104,7 @@
       m10: { count: 3, power: 5.5 }, t10: 'Gọi thêm một thiên thạch với sức công phá lớn hơn.' },
 
     // ----- Toàn Năng (riêng)
-    vn1: { school: 'toan_nang', icon: '🌟', name: 'Thức Tỉnh Tối Thượng', level: 20, mp: 80, cd: 60, ult: true,
+    vn1: { school: 'toan_nang', icon: '🌟', name: 'Thức Tỉnh Tối Thượng', level: 20, mp: 110, cd: 60, ult: true,
       type: 'buff', buff: 'awaken', duration: 10, atkBuff: 0.5, critBuff: 20, speedBuff: 0.4,
       desc: 'Giải phóng toàn bộ sức mạnh: tăng tấn công, chí mạng, tốc đánh.',
       m5: { duration: 13 }, t5: 'Kéo dài 13 giây.',
@@ -134,8 +135,8 @@
       type: 'buff', buff: 'frenzy', duration: 6, atkBuff: 0.4, speedBuff: 0.6, desc: 'Tốc độ và tấn công tăng vọt.',
       m5: { duration: 8 }, t5: 'Kéo dài 8 giây.',
       m10: { atkBuff: 0.6, critBuff: 20 }, t10: 'Tấn công +60% và chí mạng +20%.' },
-    st5: { school: 'sat_thu', icon: '🗡️', name: 'Trăm Nhát Phân Tán', level: 20, mp: 55, cd: 38, ult: true,
-      type: 'spread', power: 1.8, count: 5, range: 380, desc: 'Phóng 5 dao ngắn tỏa ra phía trước.',
+    st5: { school: 'sat_thu', icon: '🗡️', name: 'Trăm Nhát Phân Tán', level: 20, mp: 75, cd: 38, ult: true,
+      type: 'spread', power: 3.4, count: 5, range: 380, desc: 'Phóng 5 dao ngắn tỏa ra phía trước.',
       m5: { count: 8 }, t5: '8 dao.',
       m10: { slow: 2 }, t10: 'Dao trúng làm chậm quái 2 giây.' },
     st6: { school: 'sat_thu', icon: '🌑', name: 'Ảnh Trảm Liên Kích', level: 25, mp: 40, cd: 11,
@@ -164,8 +165,8 @@
       type: 'buff', buff: 'rage', duration: 8, atkBuff: 0.35, speedBuff: 0.2, desc: 'Máu tối đa tăng, tấn công tăng.',
       m5: { duration: 10, atkBuff: 0.5 }, t5: 'Kéo dài 10 giây, tấn công +50%.',
       m10: { atkBuff: 0.6 }, t10: 'Tấn công +60%.' },
-    tk5: { school: 'tanker', icon: '🌊', name: 'Sóng Thép', level: 20, mp: 65, cd: 42, ult: true,
-      type: 'sword_fall', power: 5, radius: 220, count: 1, desc: 'Đập kiếm xuống đất, sóng thép nổ diện rộng.',
+    tk5: { school: 'tanker', icon: '🌊', name: 'Sóng Thép', level: 20, mp: 90, cd: 42, ult: true,
+      type: 'sword_fall', power: 15, radius: 220, count: 1, desc: 'Đập kiếm xuống đất, sóng thép nổ diện rộng.',
       m5: { radius: 270 }, t5: 'Vùng nổ rộng hơn.',
       m10: { count: 2 }, t10: 'Hai vụ nổ liên tiếp.' },
     tk6: { school: 'tanker', icon: '🌋', name: 'Địa Chấn', level: 25, mp: 48, cd: 16,
@@ -195,10 +196,10 @@
       type: 'buff', buff: 'grace', duration: 9, atkBuff: 0.15, speedBuff: 0.2, regen: 0.03, desc: 'Buff toàn bộ chỉ số, tự hồi máu liên tục.',
       m5: { duration: 12 }, t5: 'Kéo dài 12 giây.',
       m10: { atkBuff: 0.3, regen: 0.05 }, t10: 'Tấn công +30%, hồi máu nhanh hơn.' },
-    tl5: { school: 'tri_lieu_su', icon: '☀️', name: 'Phép Thánh Toàn Trị', level: 20, mp: 75, cd: 45, ult: true,
-      type: 'aoe', power: 3.5, radius: 240, freeze: 0, heal: 0.25, desc: 'Nổ tung ánh sáng thánh xung quanh, gây sát thương lớn và hồi máu.',
+    tl5: { school: 'tri_lieu_su', icon: '☀️', name: 'Phép Thánh Toàn Trị', level: 20, mp: 105, cd: 45, ult: true,
+      type: 'aoe', power: 22, radius: 240, freeze: 0, heal: 0.25, desc: 'Nổ tung ánh sáng thánh xung quanh, gây sát thương lớn và hồi máu.',
       m5: { radius: 300 }, t5: 'Vùng rộng hơn.',
-      m10: { power: 5.0 }, t10: 'Sát thương tăng mạnh.' },
+      m10: { heal: 0.4 }, t10: 'Hồi máu nhiều hơn.' },
     tl6: { school: 'tri_lieu_su', icon: '🌿', name: 'Thánh Quang Hộ Thể', level: 25, mp: 46, cd: 18,
       type: 'heal', heal: 0.3, mpHeal: 0.12, desc: 'Ánh sáng hồi phục máu và một phần năng lượng.',
       m5: { heal: 0.42 }, t5: 'Hồi máu nhiều hơn.',
@@ -237,9 +238,9 @@
     nl4: { school: 'tu_linh_thuat_su', icon: '👻', name: 'Đội Quân U Ảnh', level: 35, mp: 48, cd: 20,
       type: 'buff', buff: 'frenzy', duration: 8, atkBuff: 0.2, speedBuff: 0.25, desc: 'Cường hóa các bóng ma đang chiến đấu.',
       m5: { duration: 10 }, t5: 'Cường hóa lâu hơn.', m10: { atkBuff: 0.3, speedBuff: 0.4 }, t10: 'Bóng ma mạnh và nhanh hơn.' },
-    nl5: { school: 'tu_linh_thuat_su', icon: '🕳️', name: 'Cổng Âm Giới', level: 20, mp: 75, cd: 42, ult: true,
+    nl5: { school: 'tu_linh_thuat_su', icon: '🕳️', name: 'Cổng Âm Giới', level: 20, mp: 105, cd: 42, ult: true,
       type: 'meteor', power: 8, radius: 250, count: 2, desc: 'Mở cổng âm giới, giáng thiên thạch và cường hóa bóng ma đang theo.',
-      m5: { radius: 300 }, t5: 'Vùng nổ lớn hơn.', m10: { count: 3, power: 9.5 }, t10: 'Cổng gọi ba đợt thiên thạch với sức công phá tăng.' },
+      m5: { radius: 300 }, t5: 'Vùng nổ lớn hơn.', m10: { count: 3 }, t10: 'Cổng gọi ba đợt thiên thạch.' },
     nl6: { school: 'tu_linh_thuat_su', icon: '⚡', name: 'Phân Hồn', level: 40, mp: 56, cd: 18,
       type: 'shadow_command', power: 3.2, radius: 240, freeze: 1, desc: 'Phóng xung kích bóng tối, khiến đội bóng ma tập trung tấn công mục tiêu gần nhất.',
       m5: { radius: 300 }, t5: 'Xung kích lan rộng hơn.', m10: { power: 4, freeze: 2 }, t10: 'Tăng sát thương và khóa chân quái lâu hơn.' },
@@ -268,8 +269,75 @@
     hv40:{school:'tanker',evolutionKey:'ho_ve_bat_khuat',icon:'🏰',name:'Pháo Đài Tiến Quân',level:40,mp:58,cd:22,type:'dash',power:2.5,distance:140,desc:'Tiến lên trong tư thế phòng thủ, đánh bật quái phía trước.'},
     tl25:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'🌿',name:'Thánh Vực',level:25,mp:38,cd:16,type:'heal',heal:.42,desc:'Gọi thánh quang hồi phục sinh lực.'},
     tl30:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'✨',name:'Quang Tiễn',level:30,mp:34,cd:9,type:'projectile',power:2.1,pierce:true,range:440,slow:1,desc:'Bắn mũi tên thánh xuyên qua kẻ địch.'},
-    tl35:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'🔰',name:'Kết Giới Sinh Mệnh',level:35,mp:48,cd:20,type:'manashield',duration:9,absorb:.75,desc:'Tạo kết giới bảo vệ bản thân và đồng hành.'},
+    tl35:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'🔰',name: 'Kết Giới Thánh Quang',level:35,mp:48,cd:20,type:'manashield',duration:9,absorb:.75,desc:'Tạo kết giới bảo vệ bản thân và đồng hành.'},
     tl40:{school:'tri_lieu_su',evolutionKey:'thanh_linh',icon:'🌅',name:'Bình Minh Tái Sinh',level:40,mp:64,cd:30,type:'heal',heal:.72,desc:'Hồi phục lượng máu lớn bằng ánh bình minh.'},
+
+    // ===== Tuyệt kỹ học bằng sách riêng (mỗi tuyệt kỹ một sách: sach_tk_<id>, xem shared/data/items.js)
+    // ultSchools: các class học được; ultAny: mọi class đều học được. Toàn Năng dùng được mọi tuyệt kỹ.
+    // ----- Cận chiến
+    ulKiem1: { school: 'kiem_si', ultSchools: ['kiem_si', 'tanker'], icon: '⚔️', name: 'Kiếm Trận Hủy Diệt', level: 30, mp: 105, cd: 44, ult: true,
+      type: 'sword_fall', power: 8.5, radius: 170, count: 2, desc: 'Triệu hồi hai thanh kiếm khổng lồ giáng liên tiếp phía trước.',
+      m5: { radius: 210 }, t5: 'Vùng sát thương rộng hơn.',
+      m10: { count: 3 }, t10: 'Ba thanh kiếm giáng xuống.' },
+    ulKiem2: { school: 'kiem_si', ultSchools: ['kiem_si', 'sat_thu'], icon: '🌀', name: 'Kiếm Vũ Tuyệt Diệt', level: 35, mp: 100, cd: 40, ult: true,
+      type: 'melee', power: 1.6, hits: 9, range: 190, finisher: 4.5, desc: 'Xoay kiếm chém dồn dập, nhát cuối tung đòn tuyệt diệt.',
+      m5: { hits: 12 }, t5: 'Chém 12 nhát.',
+      m10: { finisher: 6.5, range: 230 }, t10: 'Nhát cuối mạnh hơn, tầm chém rộng hơn.' },
+    ulSat1: { school: 'sat_thu', ultSchools: ['sat_thu'], icon: '🩸', name: 'Huyết Ảnh Vạn Đao', level: 30, mp: 95, cd: 40, ult: true,
+      type: 'spread', power: 2.3, count: 9, range: 430, desc: 'Phóng 9 phi đao bóng tối tỏa ra phía trước.',
+      m5: { count: 12 }, t5: '12 phi đao.',
+      m10: { slow: 3 }, t10: 'Phi đao trúng làm chậm quái 3 giây.' },
+    ulTank1: { school: 'tanker', ultSchools: ['tanker', 'kiem_si'], icon: '🏯', name: 'Thành Đồng Bất Hoại', level: 30, mp: 85, cd: 50, ult: true,
+      type: 'guard', duration: 10, reduce: 0.7, reflect: 0.4, desc: 'Hóa thân thành tường thành, giảm mạnh sát thương nhận vào và phản lại cho quái.',
+      m5: { duration: 13 }, t5: 'Kéo dài 13 giây.',
+      m10: { reduce: 0.8, reflect: 0.7 }, t10: 'Giảm 80% sát thương và phản lại 70%.' },
+    ulTank2: { school: 'tanker', ultSchools: ['tanker'], icon: '🌋', name: 'Địa Chấn Thiên Hạ', level: 35, mp: 100, cd: 42, ult: true,
+      type: 'aoe', power: 24, radius: 300, desc: 'Dậm xuống đất, chấn động cả chiến trường.',
+      m5: { radius: 360 }, t5: 'Vùng chấn động rộng hơn.',
+      m10: { radius: 420 }, t10: 'Vùng chấn động cực rộng.' },
+    // ----- Tầm xa / phép
+    ulCung1: { school: 'cung_thu', ultSchools: ['cung_thu'], icon: '🌠', name: 'Tinh Vân Tuyệt Xạ', level: 30, mp: 90, cd: 38, ult: true,
+      type: 'projectile', power: 6.4, count: 3, range: 720, pierce: true, desc: 'Bắn ba mũi tên sao xuyên thủng mọi quái trên đường bay.',
+      m5: { count: 4 }, t5: '4 mũi tên.',
+      m10: { slow: 2 }, t10: 'Làm chậm quái bị xuyên.' },
+    ulCung2: { school: 'cung_thu', ultSchools: ['cung_thu', 'sat_thu'], icon: '☔', name: 'Thiên Hỏa Mưa Tên', level: 38, mp: 120, cd: 46, ult: true,
+      type: 'arrow_rain', power: 7, arrows: 24, width: 600, desc: 'Phủ mưa tên lửa lên cả một vùng chiến trường rộng.',
+      m5: { arrows: 32 }, t5: '32 mũi tên.',
+      m10: { width: 760, slow: 2 }, t10: 'Vùng rộng hơn, quái trúng tên bị chậm.' },
+    ulPhap1: { school: 'phap_su', ultSchools: ['phap_su'], icon: '⚡', name: 'Lôi Đế Giáng Thế', level: 30, mp: 110, cd: 42, ult: true,
+      type: 'meteor', power: 4.4, radius: 170, count: 4, desc: 'Gọi bốn đợt sấm sét giáng xuống phía trước.',
+      m5: { radius: 210 }, t5: 'Vùng nổ rộng hơn.',
+      m10: { count: 6 }, t10: 'Sáu đợt sấm sét.' },
+    ulPhap2: { school: 'phap_su', ultSchools: ['phap_su', 'tri_lieu_su'], icon: '❄️', name: 'Băng Hải Phong Thiên', level: 35, mp: 110, cd: 44, ult: true,
+      type: 'aoe', power: 24, radius: 330, freeze: 3, desc: 'Đóng băng mọi thứ xung quanh trong biển băng giá.',
+      m5: { radius: 400 }, t5: 'Vùng băng rộng hơn.',
+      m10: { freeze: 4.5 }, t10: 'Đóng băng lâu hơn.' },
+    // ----- Hỗ trợ / triệu hồi
+    ulTri1: { school: 'tri_lieu_su', ultSchools: ['tri_lieu_su'], icon: '😇', name: 'Thánh Quang Hồi Sinh', level: 30, mp: 120, cd: 55, ult: true,
+      type: 'heal', heal: 0.85, mpHeal: 0.4, desc: 'Ánh thánh quang hồi phục phần lớn sinh lực và năng lượng.',
+      m5: { mpHeal: 0.6 }, t5: 'Hồi năng lượng nhiều hơn.',
+      m10: { cd: 40 }, t10: 'Hồi chiêu ngắn hơn.' },
+    ulLinh1: { school: 'trieu_hoi_su', ultSchools: ['trieu_hoi_su', 'tu_linh_thuat_su'], icon: '👻', name: 'Vạn Linh Bùng Nổ', level: 30, mp: 110, cd: 42, ult: true,
+      type: 'meteor', power: 8.5, radius: 220, count: 2, desc: 'Giải phóng linh khí nổ tung thành hai đợt thiên thạch.',
+      m5: { radius: 270 }, t5: 'Vùng nổ rộng hơn.',
+      m10: { count: 3 }, t10: 'Ba đợt nổ liên tiếp.' },
+    ulLinh2: { school: 'tu_linh_thuat_su', ultSchools: ['tu_linh_thuat_su', 'trieu_hoi_su'], icon: '💀', name: 'U Minh Cuồng Triều', level: 35, mp: 100, cd: 48, ult: true,
+      type: 'buff', buff: 'awaken', duration: 12, atkBuff: 0.55, critBuff: 15, speedBuff: 0.35, desc: 'Triệu gọi triều âm khí, tăng mạnh tấn công và tốc đánh.',
+      m5: { duration: 15 }, t5: 'Kéo dài 15 giây.',
+      m10: { atkBuff: 0.8 }, t10: 'Tấn công +80%.' },
+    // ----- Đặc biệt: mọi class đều học được
+    ulChung1: { school: 'chung', ultAny: true, icon: '💥', name: 'Thiên Địa Chấn Động', level: 25, mp: 110, cd: 48, ult: true,
+      type: 'aoe', power: 15, radius: 240, desc: 'Giải phóng nguyên lực, nổ tung mọi thứ xung quanh.',
+      m5: { radius: 280 }, t5: 'Vùng nổ rộng hơn.',
+      m10: { radius: 330, power: 20 }, t10: 'Vùng nổ cực rộng, sát thương tăng mạnh.' },
+    ulChung2: { school: 'chung', ultAny: true, icon: '🔥', name: 'Ý Chí Bất Diệt', level: 30, mp: 120, cd: 60, ult: true,
+      type: 'buff', buff: 'awaken', duration: 10, atkBuff: 0.45, critBuff: 15, speedBuff: 0.25, desc: 'Bùng cháy ý chí chiến đấu: tăng tấn công, chí mạng, tốc đánh.',
+      m5: { duration: 13 }, t5: 'Kéo dài 13 giây.',
+      m10: { atkBuff: 0.62 }, t10: 'Tấn công +62%.' },
+    ulChung3: { school: 'chung', ultAny: true, icon: '🌌', name: 'Hư Không Tuyệt Trảm', level: 40, mp: 135, cd: 50, ult: true,
+      type: 'sword_fall', power: 7.2, radius: 200, count: 2, desc: 'Xé toạc hư không, hai nhát chém khổng lồ đánh xuống.',
+      m5: { radius: 240 }, t5: 'Vùng sát thương rộng hơn.',
+      m10: { count: 3 }, t10: 'Ba nhát chém hư không.' },
   });
 
   // Nội tại cốt truyện: nhận từ nhiệm vụ chính, cộng dồn suốt game
@@ -302,10 +370,15 @@
     },
   };
 
-  // Ô kỹ năng: 0–3 ô thường, 4 ô thêm của Toàn Năng, 5 ô tuyệt kỹ
-  const SKILL_SLOTS = 6;
+  // Ô kỹ năng: 0–3 ô thường, 4 ô thêm của Toàn Năng, 5–6 ô tuyệt kỹ, 7 ô tuyệt kỹ thêm của Toàn Năng
+  const SKILL_SLOTS = 8;
   const ULT_SLOT = 5;
   const EXTRA_SLOT = 4;
+  const ULT_SLOTS = [5, 6, 7];
+  const ULT_EXTRA_SLOT = 7;
 
-  Object.assign(G, { SKILL_MAX, SKILLS, PERKS, SKILL_SLOTS, ULT_SLOT, EXTRA_SLOT });
+  // Id vật phẩm sách của một tuyệt kỹ
+  const ultBookId = (id) => 'sach_tk_' + id;
+
+  Object.assign(G, { SKILL_MAX, SKILLS, PERKS, SKILL_SLOTS, ULT_SLOT, EXTRA_SLOT, ULT_SLOTS, ULT_EXTRA_SLOT, ultBookId });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

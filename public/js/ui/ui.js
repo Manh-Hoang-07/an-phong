@@ -28,7 +28,13 @@ const UI = (() => {
       .replace(/phím C\b/g, 'nút ☰ → Nhân vật');
   }
 
+  // Icon dạng ảnh SVG vẽ bằng code (art/itemicons.js); emoji chỉ còn làm dự phòng
   function itemIcon(id) {
+    if (!G.ITEMS[id]) return '?';
+    if (typeof ItemArt !== 'undefined') { try { return ItemArt.html(id); } catch (e) { /* dùng emoji */ } }
+    return itemEmoji(id);
+  }
+  function itemEmoji(id) {
     const d = G.ITEMS[id];
     if (!d) return '?';
     if (d.kind === 'weapon') return WEAPON_ICONS[d.wtype];
@@ -42,6 +48,7 @@ const UI = (() => {
     if (id === 'manh_vai_den') return '🏴';
     if (id.startsWith('manh_an')) return '🔷';
     if (id === 'sach_ky_nang') return '📘';
+    if (d.kind === 'ult_book') return '📕';
     if (id === 'tinh_the_xanh') return '💠';
     if (id === 'loi_nang_luong') return '🔶';
     return '📦';
@@ -81,7 +88,7 @@ const UI = (() => {
     badge.textContent = pts;
     badge.classList.toggle('hidden', !pts);
     const tn = p.school === 'toan_nang';
-    document.querySelectorAll('.sk-extra, .tb-s4').forEach(el => el.classList.toggle('hidden', !tn));
+    document.querySelectorAll('.sk-extra, .tb-s4, .tb-ult3').forEach(el => el.classList.toggle('hidden', !tn));
     // Nút biến hình: chỉ hiện khi đã có ấn thức tỉnh; sáng lên khi đang biến hình
     const awk = G.awakenOf(p);
     const hasForm = (p.awakenTier > 0) || !!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]];
@@ -130,17 +137,17 @@ const UI = (() => {
         setHtml(ico, `${skIcon(id)}<small>${esc(sk.name.split(' ')[0])}</small>`);
         el.title = `${sk.name} cấp ${sk.lv} (${Math.round(sk.mp * st.costMul)} năng lượng)`;
         el.classList.remove('empty');
-      } else { setHtml(ico, Number(k) === G.ULT_SLOT ? '★' : '·'); el.title = 'Trống'; el.classList.add('empty'); }
+      } else { setHtml(ico, G.isUltSlot(Number(k)) ? '★' : '·'); el.title = 'Trống'; el.classList.add('empty'); }
     });
     // nút kỹ năng cảm ứng
-    for (const [cls, i] of [['tb-s0', 0], ['tb-s1', 1], ['tb-s2', 2], ['tb-s3', 3], ['tb-s4', 4], ['tb-ult', G.ULT_SLOT]]) {
+    for (const [cls, i] of [['tb-s0', 0], ['tb-s1', 1], ['tb-s2', 2], ['tb-s3', 3], ['tb-s4', 4], ['tb-ult', G.ULT_SLOTS[0]], ['tb-ult2', G.ULT_SLOTS[1]], ['tb-ult3', G.ULT_SLOTS[2]]]) {
       const el = document.querySelector(`#touch .${cls}`);
       const id = bar[i];
       const ico = el.querySelector('.ico');
       if (id) {
         setHtml(ico, `${skIcon(id)}<small>${esc(G.SKILLS[id].name.split(' ').pop())}</small>`);
         el.classList.remove('empty');
-      } else { setHtml(ico, String(i === G.ULT_SLOT ? '★' : i + 1)); el.classList.add('empty'); }
+      } else { setHtml(ico, String(G.isUltSlot(i) ? '★' : i + 1)); el.classList.add('empty'); }
     }
     const cnt = (ids) => p.bag.filter(e => ids.includes(e.id)).reduce((s, e) => s + e.qty, 0);
     $('pot-hp').textContent = $('tpot-hp').textContent = cnt(['binh_mau_nho', 'binh_mau_vua', 'binh_mau_lon', 'binh_mau_dac', 'binh_mau_than_thoai', 'thuoc_nhiem_do']);
@@ -178,7 +185,8 @@ const UI = (() => {
       const noSta = !!skNow && (!!App.staLocked || sta < (skNow.ult ? G.STAMINA.ult : G.STAMINA.skill));
       // Khóa theo hình thái (chức nghiệp 1 / chức nghiệp 2): ô mờ hẳn đi
       const formLock = !!skNow && !!G.skillFormBlock(p, skNow, !!App.form && p.formChoice === 'evolution');
-      const touchCls = i === G.ULT_SLOT ? 'tb-ult' : 'tb-s' + i;
+      const ui = G.ULT_SLOTS.indexOf(i);
+      const touchCls = ui >= 0 ? ['tb-ult', 'tb-ult2', 'tb-ult3'][ui] : 'tb-s' + i;
       for (const el of [document.querySelector(`#skillbar .sk[data-k="${i}"]`), document.querySelector(`#touch .${touchCls}`)]) {
         if (!el) continue;
         el.querySelector('.cd').style.height = h;
@@ -506,11 +514,11 @@ const UI = (() => {
   }
 
   // Dùng nội bộ cho các file ui/panels/*.js và ui/actions.js (không gọi từ ngoài UI)
-  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
+  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, itemEmoji, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
 
   return {
     init, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questReady, hiddenChat,
-    openPanel, closePanel, itemIcon, isOpen: () => !!panel,   // openNpc, upgradeResult: gắn trong ui/panels
+    openPanel, closePanel, itemIcon, itemEmoji, isOpen: () => !!panel,   // openNpc, upgradeResult: gắn trong ui/panels
     _: lib,
   };
 })();

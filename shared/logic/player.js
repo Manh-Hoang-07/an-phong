@@ -129,7 +129,7 @@
       name,
       level: 1, exp: 0, gold: 50,
       school: null,
-      awakenTier: 0, formChoice: 'awaken1', formActive: false, careerAwaken: 0, hiddenNpcActive: false,
+      awakenTier: 0, formChoice: 'awaken1', formActive: false, careerAwaken: 0, hiddenNpcActive: false, villages: ['lang'], titles: [], choices: {},
       advancement: { quest: null, done: {}, unlocked: {} },
       points: { str: 5, vit: 5, agi: 5, spi: 5 }, freePoints: 0,
       hp: null, mp: null,

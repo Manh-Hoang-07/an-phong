@@ -193,16 +193,33 @@ function build(id, spec, counts) {
   g.fill(G, H - 1, 0, W - 1, '#');
   ARCH[spec.arch](g, spec, rng);
   // ---- cổng, điểm xuất hiện, NPC trên mặt đất
-  g.set(G - 1, 1, '<'); g.set(G - 1, 4, 'S');
-  const hasNext = !!(meta.portals && meta.portals['>']) || (counts['>'] || 0) > 0;
+  const ports = Object.keys(meta.portals || {});
+  if (ports.includes('<')) g.set(G - 1, 1, '<');
+  g.set(G - 1, 4, 'S');
+  const hasNext = ports.includes('>');
   if (hasNext) g.set(G - 1, W - 3, '>');
+  // cổng nhánh (ký hiệu khác < >): đặt trên mặt đất, từ phải sang trái, cách nhau ≥ 5 cột
+  const portalCols = [];
+  ports.filter(c => c !== '<' && c !== '>').forEach((ch, i) => {
+    for (let c = W - 9 - i * 6; c > 14; c--) {
+      if (g.get(G, c) === '#' && [-1, 0, 1].every(d => g.get(G - 1, c + d) === '.' && g.get(G - 2, c + d) === '.') && !portalCols.some(x => Math.abs(x - c) < 5)) { g.set(G - 1, c, ch); portalCols.push(c); break; }
+    }
+  });
   const npcs = Object.keys(meta.npcs || {});
-  npcs.forEach((ch, i) => g.set(G - 1, 8 + i * 5, ch));
-  const npcEnd = 8 + npcs.length * 5;
+  const far = new Set(spec.npcFar || []), near = npcs.filter(ch => !far.has(ch));
+  near.forEach((ch, i) => g.set(G - 1, 8 + i * 5, ch));
+  const npcEnd = 8 + near.length * 5;
+  // NPC "nằm sâu" (ví dụ thợ săn bị giam): rải ở nửa sau bản đồ, trên mặt đất trống
+  (spec.npcFar || []).forEach((ch, i) => {
+    const free = (c) => g.get(G, c) === '#' && g.get(G - 1, c) === '.' && g.get(G - 2, c) === '.' && ![-1, 1].some(d => /[A-Z]/.test(g.get(G - 1, c + d)));
+    let placed = false;
+    for (let c = Math.floor(W * 0.5) + i * 7; c < W - 12 && !placed; c++) if (free(c)) { g.set(G - 1, c, ch); placed = true; }
+    for (let c = W - 14; c > 14 && !placed; c--) if (free(c)) { g.set(G - 1, c, ch); placed = true; }
+  });
   // ---- quái
   const runs = surfaces(g);
   const okCell = (r, c) => {
-    if (r === G && (c < Math.max(11, npcEnd + 2) || (hasNext && c > W - 9))) return false;
+    if (r === G && (c < Math.max(11, npcEnd + 2) || (hasNext && c > W - 9) || portalCols.some(x => Math.abs(c - x) < 6))) return false;
     return true;
   };
   const pos = [];
@@ -258,6 +275,13 @@ function build(id, spec, counts) {
 // ---------------------------------------------------------------------------------- bảng cấu hình từng bản đồ
 // W = số cột gốc (nhân 1,5 khi chạy), H = số hàng. Kiểu khác nhau để các bản đồ không giống nhau.
 const SPECS = {
+  lang:           { arch: 'village', W: 104 },
+  tan_do_2:       { arch: 'village', W: 104 },
+  tan_do_3:       { arch: 'village', W: 104 },
+  tan_do_4:       { arch: 'village', W: 104 },
+  tan_do_bt:      { arch: 'village', W: 104 },
+  tan_do_6:       { arch: 'village', W: 104 },
+  tan_do_7:       { arch: 'village', W: 104 },
   cong_do:        { arch: 'skyislands', W: 64, H: 26, layers: 2, iw: 10 },
   rung:           { arch: 'towers', W: 110, H: 34, top: 10, tw: 12, gap: 11, gapMode: 'falls' },
   hang:           { arch: 'caverns', W: 96, H: 32 },
@@ -266,7 +290,29 @@ const SPECS = {
   lang_chai:      { arch: 'towers', W: 96, H: 30, top: 12, tw: 13, gap: 12 },
   cc_hac_nguyet:  { arch: 'caverns', W: 92, H: 32 },
   tp_chim_t:      { arch: 'skyislands', W: 96, H: 30, layers: 3, iw: 12 },
-  tp_chim_c:      { arch: 'caverns', W: 96, H: 32 },
+  tp_chim_c:      { arch: 'caverns', W: 96, H: 32, npcFar: ['A', 'B', 'C', 'D', 'E'] },
+  ham_ngam:       { arch: 'caverns', W: 80, H: 28 },
+  thien_khoi_1: { arch: 'terraces', W: 100, H: 32, steps: 3, sw: 9, plat: 16 },
+  thien_khoi_2: { arch: 'towers', W: 100, H: 30, top: 10, tw: 12, gap: 12, gapMode: 'zig' },
+  thien_khoi_3: { arch: 'caverns', W: 96, H: 32 },
+  thien_khoi_4: { arch: 'skyislands', W: 96, H: 30, layers: 3, iw: 12 },
+  long_mach_1: { arch: 'terraces', W: 100, H: 32, steps: 3, sw: 9, plat: 16 },
+  long_mach_2: { arch: 'towers', W: 100, H: 30, top: 10, tw: 12, gap: 12, gapMode: 'zig' },
+  long_mach_3: { arch: 'caverns', W: 96, H: 32, npcFar: ['A', 'B', 'C'] },
+  long_mach_4: { arch: 'skyislands', W: 96, H: 30, layers: 3, iw: 12 },
+  tinh_van_1: { arch: 'terraces', W: 100, H: 32, steps: 3, sw: 9, plat: 16 },
+  tinh_van_2: { arch: 'towers', W: 100, H: 30, top: 10, tw: 12, gap: 12, gapMode: 'zig' },
+  tinh_van_3: { arch: 'caverns', W: 96, H: 32, npcFar: ['A', 'B', 'C', 'D'] },
+  tinh_van_4: { arch: 'skyislands', W: 96, H: 30, layers: 3, iw: 12 },
+  than_mong_1: { arch: 'terraces', W: 100, H: 32, steps: 3, sw: 9, plat: 16 },
+  than_mong_2: { arch: 'towers', W: 100, H: 30, top: 10, tw: 12, gap: 12, gapMode: 'zig' },
+  than_mong_3: { arch: 'caverns', W: 96, H: 32 },
+  than_mong_4: { arch: 'skyislands', W: 96, H: 30, layers: 3, iw: 12 },
+  sang_the_1: { arch: 'terraces', W: 100, H: 32, steps: 3, sw: 9, plat: 16 },
+  sang_the_2: { arch: 'towers', W: 100, H: 30, top: 10, tw: 12, gap: 12, gapMode: 'zig', npcFar: ['A', 'B', 'C'] },
+  sang_the_3: { arch: 'caverns', W: 96, H: 32 },
+  sang_the_4: { arch: 'skyislands', W: 96, H: 30, layers: 3, iw: 12, npcFar: ['W'] },
+  quan_thuong_mai: { arch: 'towers', W: 96, H: 26, top: 10, tw: 12, gap: 12 },
   chan_nui:       { arch: 'terraces', W: 100, H: 32, steps: 4, sw: 9, plat: 16 },
   hem_nui:        { arch: 'caverns', W: 92, H: 32 },
   lo_ren_bang:    { arch: 'towers', W: 96, H: 30, top: 10, tw: 12, gap: 11, gapMode: 'zig' },
@@ -278,7 +324,6 @@ const SPECS = {
   thu_vien:       { arch: 'caverns', W: 92, H: 32 },
   phong_luu_tru:  { arch: 'caverns', W: 96, H: 32 },
   dinh_thap:      { arch: 'terraces', W: 96, H: 34, steps: 5, sw: 8, plat: 14 },
-  tan_do_bt:      { arch: 'towers', W: 100, H: 30, top: 11, tw: 13, gap: 12 },
   cau_dan:        { arch: 'skyislands', W: 96, H: 30, layers: 3, iw: 11 },
   sanh_cho:       { arch: 'towers', W: 110, H: 30, top: 12, tw: 13, gap: 12 },
   dinh_cong_vh:   { arch: 'terraces', W: 96, H: 32, steps: 4, sw: 9, plat: 16 },
@@ -306,27 +351,34 @@ function readCounts() {
   return out;
 }
 
-// Khu Hiệp Hội (lang): giữ nguyên hàng mặt đất cũ (NPC, cổng, quái ở đúng cột), thêm các tầng mái nhà / bục phía trên
-function buildLang() {
-  const row = fs.readFileSync(path.join(__dirname, '../../assets_raw/lang_row.txt'), 'utf8').trim();
-  const W = row.length, H = 24, G = 20, g = new Grid(W, H);
+// Tân Đô (làng an toàn): hàng mặt đất theo thứ tự  < S  NPC…  cổng nhánh…  >  rồi các tầng mái nhà / bục phía trên
+function buildVillage(id, spec, counts) {
+  const meta = MAPS[id], W = spec.W, H = 24, G = 20, g = new Grid(W, H);
   g.fill(G, H - 1, 0, W - 1, '#');
-  for (let c = 0; c < W; c++) g.set(G - 1, c, row[c]);
-  const ch = [[17, 10, 18], [14, 20, 28], [11, 30, 38], [8, 40, 48], [11, 50, 58], [14, 60, 68], [17, 70, 78], [17, 34, 42], [14, 84, 92], [17, 86, 92]];
-  for (const [r, a, b] of ch) g.ledge(r, a, b);
-  g.fill(8, 9, 41, 47, '#');                      // mái cao ở giữa
-  g.set(7, 44, '!');
-  for (const c of [12, 24, 54, 64, 74, 88]) g.set(r2(c), c, '!');
-  function r2(c) { return c < 20 ? 16 : c < 30 ? 13 : c < 60 ? 10 : c < 70 ? 13 : c < 80 ? 16 : 16; }
-  return g.text();
+  const ports = Object.keys(meta.portals || {});
+  if (ports.includes('<')) g.set(G - 1, 1, '<');
+  g.set(G - 1, 4, 'S');
+  if (ports.includes('>')) g.set(G - 1, W - 3, '>');
+  const items = Object.keys(meta.npcs || {}).concat(ports.filter(c => c !== '<' && c !== '>'));
+  const hasMobs = Object.keys(meta.spawns || {}).length > 0, last = W - (hasMobs ? 30 : 12), first = 9;
+  const step = items.length > 1 ? Math.max(5, Math.min(8, Math.floor((last - first) / (items.length - 1)))) : 0;
+  items.forEach((ch, i) => g.set(G - 1, first + i * step, ch));
+  // quái (bãi hình nhân ở Tân Đô I)
+  for (const ch of Object.keys(meta.spawns || {})) for (let i = 0; i < Math.max(1, counts[ch] || 3); i++) g.set(G - 1, W - 26 + i * 6, ch);
+  // tầng trên: bậc thang bục + mái cao ở giữa
+  const mid = Math.floor(W / 2), ch = [[17, 10, 18], [14, 20, 28], [11, 30, 38], [8, mid - 8, mid + 3], [11, mid + 6, mid + 14], [14, mid + 16, mid + 24], [17, mid + 26, mid + 34], [17, 34, 42], [14, W - 20, W - 12], [17, W - 18, W - 12]];
+  for (const [r, a, b] of ch) g.ledge(r, Math.max(1, a), Math.min(W - 2, b));
+  g.fill(8, 9, mid - 4, mid + 2, '#');
+  for (const [c, r] of [[12, 16], [24, 13], [mid - 2, 7], [mid + 10, 10], [mid + 20, 13], [mid + 30, 16], [W - 16, 13]]) if (g.empty(r, c)) g.set(r, c, '!');
+  const rr = surfaces(g), start = rr.find(r => r.r === G && r.c0 <= 4 && r.c1 >= 4), seen = reachable(g, rr, start);
+  return { text: g.text(), bad: rr.filter(r => !seen.has(r) && r.len >= 4) };
 }
 
 if (require.main === module) {
-  if (!process.argv.slice(2).length || process.argv.includes('lang')) { fs.writeFileSync(path.join(DIR, 'lang.txt'), buildLang()); console.log('lang'.padEnd(15), 'hub'); }
   const COUNTS = readCounts();
-  const want = process.argv.slice(2).filter(x => x !== 'lang'), ids = Object.keys(SPECS).filter(id => !want.length || want.includes(id));
+  const want = process.argv.slice(2), ids = Object.keys(SPECS).filter(id => !want.length || want.includes(id));
   for (const id of ids) {
-    const { text, bad } = build(id, SPECS[id], COUNTS[id] || {});
+    const { text, bad } = (SPECS[id].arch === 'village' ? buildVillage : build)(id, SPECS[id], COUNTS[id] || {});
     fs.writeFileSync(path.join(DIR, id + '.txt'), text);
     console.log(id.padEnd(15), SPECS[id].arch.padEnd(11), bad.length ? 'KHÔNG TỚI ĐƯỢC: ' + bad.map(b => `r${b.r}c${b.c0}-${b.c1}`).join(' ') : 'ok');
   }

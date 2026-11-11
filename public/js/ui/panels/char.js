@@ -15,6 +15,7 @@
       ['Điểm kỹ năng', p.skillPoints || 0],
       ['Túi đồ', G.bagSize(p) + ' ô' + (p.bagPlus ? ` (+${p.bagPlus * 10})` : '')],
       ['Giảm giá cửa hàng', Math.round((p.shopDiscount || 0) * 100) + '%'],
+      ...((p.titles || []).length ? [['Danh hiệu', p.titles.join(', ')]] : []),
       ['Đã hạ quái', fmt(Object.values(p.kills).reduce((a, b) => a + b, 0))],
     ];
     const pts = [

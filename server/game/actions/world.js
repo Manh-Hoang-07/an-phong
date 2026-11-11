@@ -3,6 +3,15 @@
 const G = require('../../../shared');
 const { fail, fmt } = require('../util');
 
+// Ghi nhận Tân Đô vừa tới (để mở Trạm dịch chuyển tới đó)
+function markVillage(p, ev) {
+  const v = G.MAPS[p.map] && G.MAPS[p.map].village;
+  if (v && !p.villages.includes(p.map)) {
+    p.villages.push(p.map);
+    if (ev) ev.push({ t: 'msg', text: 'Đã ghi nhận ' + G.MAPS[p.map].name + '. Từ nay có thể dùng Trạm dịch chuyển tới đây.', color: '#7fe3ff' });
+  }
+}
+
 const actions = {
   // Tự lưu định kỳ: vị trí, máu, năng lượng
   save(p, a) {
@@ -47,24 +56,25 @@ const actions = {
     p.hiddenNpcActive = false;
     p.x = null; p.y = null;
     p.arrive = portal.at || G.gateOf(portal.to) || 'S';   // tới đúng lối vào ứng với cổng vừa đi qua
+    markVillage(p, ev);
     ev.push({ t: 'map', map: p.map });
   },
 
-  // Dịch chuyển thẳng tới bản đồ đã mở (từ bảng Map): chỉ đi được qua cổng ở bản đồ hiện tại
-  change_map_to(p, a, ev) {
+  // Trạm dịch chuyển: đi nhanh giữa các Tân Đô đã từng tới, phí cố định G.TELEPORT_FEE (không theo cấp).
+  teleport(p, a, ev) {
+    if (!G.npcHere(p, p.map, 'tram')) fail('Phải đứng cạnh Trạm dịch chuyển.');
     const to = String(a.to || '');
-    if (!G.MAPS[to]) fail('Không có bản đồ này.');
-    if (to === p.map) fail('Bạn đang ở bản đồ này rồi.');
-    const m = G.MAPS[p.map];
-    const ch = Object.keys(m.portals || {}).find(c => m.portals[c].to === to);
-    if (!ch) fail('Chưa có đường đi từ đây tới bản đồ đó.');
-    const st = G.portalStatus(p, p.map, ch);
-    if (!st.ok) fail(`Chưa thể vào ${G.MAPS[to].name}. ${st.reason}.`);
+    const v = G.MAPS[to] && G.MAPS[to].village;
+    if (!v) fail('Trạm chỉ đưa tới các Tân Đô.');
+    if (to === p.map) fail('Bạn đang ở đây rồi.');
+    if (!p.villages.includes(to)) fail('Bạn chưa từng tới Tân Đô này. Hãy đi bộ tới đó một lần trước.');
+    const req = G.MAPS[to].require;
+    if (req && !G.questDone(p, req)) fail('Chưa đủ điều kiện vào Tân Đô này.');
+    if (p.gold < G.TELEPORT_FEE) fail('Không đủ xu (cần ' + fmt(G.TELEPORT_FEE) + ' xu).');
     if (Number.isFinite(a.hp)) actions.save(p, { map: p.map, hp: a.hp, mp: a.mp, pets: a.pets });
-    p.map = to;
-    p.hiddenNpcActive = false;
-    p.x = null; p.y = null;
-    p.arrive = m.portals[ch].at || G.gateOf(to) || 'S';
+    p.gold -= G.TELEPORT_FEE;
+    p.map = to; p.hiddenNpcActive = false; p.x = null; p.y = null; p.arrive = 'S';
+    ev.push({ t: 'msg', text: 'Dịch chuyển tới ' + G.MAPS[to].name + ' (-' + fmt(G.TELEPORT_FEE) + ' xu).', color: '#7fe3ff' });
     ev.push({ t: 'map', map: p.map });
   },
 
@@ -77,7 +87,10 @@ const actions = {
     const st = G.calcStats(p, { form: false });
     p.hp = Math.round(st.maxHp * 0.5);
     p.mp = Math.round(st.maxMp * 0.5);
-    p.map = G.START_MAP; p.x = null; p.y = null; p.arrive = 'S';
+    // hồi sinh ở làng gần nhất (nếu đã từng tới), không thì về Tân Đô I
+    const home = G.MAPS[p.map] && G.MAPS[p.map].home;
+    p.map = home && p.villages.includes(home) ? home : G.START_MAP;
+    p.x = null; p.y = null; p.arrive = 'S';
     p.hiddenNpcActive = false;
     ev.push({ t: 'msg', text: `Bạn đã bị đánh bại, mất ${fmt(lose)} kinh nghiệm. Hồi sinh ở làng.`, color: '#ef5350' });
     ev.push({ t: 'map', map: p.map });

@@ -48,6 +48,9 @@ const actions = {
     if (!q) fail('Không có nhiệm vụ.');
     if (!onCurrentMapNpc(p, q.npc)) fail('Hãy đến gặp người giao nhiệm vụ.');
     if (!questComplete(p)) fail('Nhiệm vụ chưa xong.');
+    // Nhiệm vụ có lời thoại để chọn: phải chọn một câu đáp hợp lệ
+    let chosen = null;
+    if (q.choices) { chosen = q.choices.find(c => c.id === a.choice); if (!chosen) fail('Hãy chọn một lời đáp.'); }
     const r = q.reward;
     let items = r.items.slice();
     if (r.schoolWeapon) {
@@ -66,6 +69,11 @@ const actions = {
     p.quest.state = 'none';
     p.quest.progress = {};
     ev.push({ t: 'msg', text: `Hoàn thành nhiệm vụ: ${q.name}`, color: '#ffd54f' });
+    if (chosen) {
+      p.choices[q.id] = chosen.id;
+      if (!p.titles.includes(chosen.title)) p.titles.push(chosen.title);
+      ev.push({ t: 'msg', text: `[Hệ thống] Danh hiệu: ${chosen.title}`, color: '#ffd54f' });
+    }
     gainExp(p, r.exp, ev);
     gainGold(p, r.gold, ev);
     if (r.skillPoints) {
@@ -114,6 +122,10 @@ const actions = {
     if (r.shopDiscount) {
       p.shopDiscount = Math.max(p.shopDiscount || 0, r.shopDiscount);
       ev.push({ t: 'msg', text: `[Hệ thống] Giảm giá cửa hàng: ${Math.round(p.shopDiscount * 100)}%.`, color: '#69f0ae' });
+    }
+    if (r.title) {
+      p.titles = p.titles || [];
+      if (!p.titles.includes(r.title)) { p.titles.push(r.title); ev.push({ t: 'msg', text: `[Hệ thống] Danh hiệu: ${r.title}`, color: '#ffd54f' }); }
     }
     if (r.perk && G.PERKS[r.perk] && !p.perks.includes(r.perk)) {
       p.perks.push(r.perk);

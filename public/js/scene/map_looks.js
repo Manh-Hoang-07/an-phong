@@ -217,3 +217,10 @@ MapLooks.PACKS.blank = { layers: ['sky', 'far', 'mid', 'near'], ext: 'png' };
 // Dùng qua still('lr_xxx') trong map_scenes.js: far = ảnh ghép gương (lặp ngang), các lớp khác rỗng.
 ['cav9', 'cav10', 'shr8', 'str2', 'rn10', 'rn7', 'rn22', 'tun7', 'shr5', 'rune1', 'rn6', 'rn3', 'rn16', 'shr6', 'tun29', 'rn12', 'rn19', 'rn14', 'cav6', 'rn15']
   .forEach((p) => { MapLooks.PACKS['lr_' + p] = { layers: ['far'], ext: 'jpg', cover: true }; });
+
+// Tân Đô mới dùng lại nền, cảnh trí và diện mạo của một map cùng vùng
+for (const [id, from] of Object.entries({ tan_do_2: 'lang_chai', tan_do_3: 'chan_nui', tan_do_4: 'quang_truong', tan_do_6: 'thien_khoi', tan_do_7: 'tinh_van', ham_ngam: 'tp_chim_c', quan_thuong_mai: 'vac_da', thien_khoi_1: 'thien_khoi', thien_khoi_2: 'thien_khoi', thien_khoi_3: 'thien_khoi', thien_khoi_4: 'thien_khoi', long_mach_1: 'long_mach', long_mach_2: 'long_mach', long_mach_3: 'long_mach', long_mach_4: 'long_mach', tinh_van_1: 'tinh_van', tinh_van_2: 'tinh_van', tinh_van_3: 'tinh_van', tinh_van_4: 'tinh_van', than_mong_1: 'than_mong', than_mong_2: 'than_mong', than_mong_3: 'than_mong', than_mong_4: 'than_mong', sang_the_1: 'sang_the', sang_the_2: 'sang_the', sang_the_3: 'sang_the', sang_the_4: 'sang_the' })) {
+  if (MapScenes[from]) MapScenes[id] = MapScenes[from];
+  if (MapDecor[from]) MapDecor[id] = MapDecor[from];
+  if (MapLooks.MAPS[from]) MapLooks.MAPS[id] = MapLooks.MAPS[from];
+}

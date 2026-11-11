@@ -67,8 +67,8 @@
 
     { id: 'q5', name: 'Dấu vết Hắc Nguyệt', npc: 'vy',
       start: [
-        'Vy: Bọn Yêu Tinh trong rừng mang theo những mảnh kim loại đen. Nhìn này, có khắc hình gì đó.',
-        'Vy: Thu thêm 5 mảnh. Nếu đúng là huy hiệu của Hắc Nguyệt, chúng đã vào cổng trước chúng ta.',
+        'Vy: Lũ chuột trong Hầm Ngầm Tàu Điện, ngay dưới Tân Đô, đang tha về những mảnh kim loại đen. Nhìn này, có khắc hình gì đó.',
+        'Vy: Thu thêm 5 mảnh. Hầm ngầm vào từ phía ga cũ ở Tân Đô. Nếu đúng là huy hiệu của Hắc Nguyệt, chúng đã vào cổng trước chúng ta.',
       ],
       obj: { collect: { manh_vai_den: 5 } },
       end: [
@@ -76,7 +76,7 @@
         'Vy: Tôi muốn đuổi theo ngay, nhưng cậu còn yếu lắm. Về gặp Hội trưởng đi, ông ấy sẽ giúp cậu mạnh lên.',
         'Vy: Mặc chiếc áo khoác này vào. Của đồng đội cũ của tôi.',
       ],
-      reward: { exp: 250, gold: 100, items: [['ao_vai', 1]] } },
+      reward: { exp: 250, gold: 100, items: [['ao_da', 1]] } },
 
     { id: 'q6', name: 'Thức tỉnh lần hai', npc: 'lao_su',
       start: [
@@ -163,7 +163,7 @@
       obj: { kill: { th_luoi_dam: 20 } },
       end: [
         'Vy: Xong rồi. Nhưng phía trước có tiếng đánh nhau.',
-        'Vy: Làng chài gần đây. Có người còn sống.',
+        'Vy: Phía trước là Hải Cảng, Tân Đô II. Lối vào đã mở cho cậu. Có người còn sống ở đó.',
       ],
       reward: { exp: 600, gold: 300, items: [['binh_mau_vua', 5]] } },
 
@@ -207,30 +207,30 @@
       ],
       reward: { exp: 1500, gold: 500, items: [['song_dao_lam_suong', 1]] } },
 
-    { id: 'c2q6', name: 'Vy im lặng', npc: 'lao_su',
+    { id: 'c2q6', name: 'Vy im lặng', npc: 'ha_phong',
       start: [
-        'Hội trưởng Khải: Cậu về rồi. Vy nói cô gặp Lam Sương.',
-        'Hội trưởng Khải: Lam Sương... đội Bình Minh. Ba năm trước, cả đội bị giết, chỉ Vy sống sót.',
-        'Hội trưởng Khải: Nói chuyện với Vy đi. Cô ấy cần thời gian.',
+        'Hạ Phong: Cậu về rồi. Vy nói cô gặp Lam Sương, ngoài bến này ai cũng nghe tin.',
+        'Hạ Phong: Lam Sương... đội Bình Minh. Ba năm trước, cả đội bị giết, chỉ Vy sống sót. Tôi đưa đò cho họ hôm cuối cùng.',
+        'Hạ Phong: Nói chuyện với Vy đi. Cô ấy cần thời gian.',
       ],
-      obj: { visit: ['vy', 'lao_su'] },
+      obj: { visit: ['vy', 'ha_phong'] },
       end: [
         'Vy: ...Tôi ổn. Lam Sương nói "hắn" đã cứu cô. Hắn = Kẻ Đeo Mặt Nạ Trăng.',
         'Vy: Hắn biết gì về Hệ thống mà chúng ta không biết. Tôi sẽ tìm ra.',
-        'Hội trưởng Khải: Trước tiên, cậu cần mạnh hơn. Đạt cấp 15 rồi nói tiếp.',
+        'Hạ Phong: Hội trưởng Khải vừa nhắn qua đường truyền: trước tiên, cậu cần mạnh hơn. Đạt cấp 15 rồi nói tiếp.',
       ],
       reward: { exp: 500, gold: 300, items: [['binh_mau_lon', 5]] } },
 
-    { id: 'c2q7', name: 'Thử thách hạng C', npc: 'lao_su',
+    { id: 'c2q7', name: 'Thử thách hạng C', npc: 'ha_phong',
       start: [
-        'Hội trưởng Khải: Đạt cấp 15 rồi. Cậu xứng đáng lên hạng C.',
-        'Hội trưởng Khải: Có một Cổng hạng C vừa mở: Thành Phố Chìm, dưới đáy hồ phía đông.',
-        'Hội trưởng Khải: Lõi của cổng đó đang bị nhiễm. Quái trong đó mạnh hơn bình thường.',
+        'Hạ Phong: Đạt cấp 15 rồi. Hội trưởng Khải đã duyệt: cậu xứng đáng lên hạng C.',
+        'Hạ Phong: Có một Cổng hạng C vừa mở ngay dưới bến này: Thành Phố Chìm, dưới đáy hồ.',
+        'Hạ Phong: Lõi của cổng đó đang bị nhiễm. Quái trong đó mạnh hơn bình thường.',
       ],
       obj: { level: 15 },
       end: [
         '[Hệ thống] Đạt hạng C. Đã mở khóa Thành Phố Chìm.',
-        'Hội trưởng Khải: Vy đang đợi cậu ở lối vào cổng. Cẩn thận, dưới nước không giống trên bờ.',
+        'Hạ Phong: Vy đang đợi cậu ở lối vào cổng. Cẩn thận, dưới nước không giống trên bờ.',
       ],
       reward: { exp: 800, gold: 400, items: [['da_cuong_hoa_trung', 5]] } },
 
@@ -261,9 +261,9 @@
     { id: 'c2q10', name: 'Giải cứu trong đêm', npc: 'vy',
       start: [
         'Vy: Năm lồng giam. Năm thợ săn còn sống. Hắc Nguyệt nhốt họ để thu lõi đỏ.',
-        'Vy: Mở lồng, đưa họ ra. Tôi giữ lối thoát.',
+        'Vy: Chìa khóa cậu có đủ rồi. Đi dọc cống, nói chuyện với từng người để mở lồng. Tôi giữ lối thoát.',
       ],
-      obj: {},
+      obj: { visit: ['tho_san_1', 'tho_san_2', 'tho_san_3', 'tho_san_4', 'tho_san_5'] },
       end: [
         'Năm thợ săn được giải cứu, run rẩy nhưng còn thở.',
         'Thợ săn giải cứu: Cảm ơn... bọn chúng nói lõi cổng ở dưới sâu nhất. Có con rắn khổng lồs...',
@@ -296,7 +296,7 @@
       end: [
         'Mảnh giấy: "Vy, nếu cậu đọc được, nghĩa là tôi đã rời đi. Hắn biết sự thật. Hệ thống là ký sinh trùng không gian. Nó ăn các thế giới. Lõi Đỏ là mầm bệnh. Hắn gom lõi để mở Cổng Vĩnh Hằng, nơi Hệ thống sinh ra. Hủy nguồn gốc, hủy Hệ thống. Nhưng cái giá..."',
         'Vy: Ký sinh trùng... không gian...',
-        'Hội trưởng Khải: Nếu đây là sự thật, Hắc Nguyệt không hẳn là kẻ thù. Nhưng mở Cổng Vĩnh Hằng mà không kiểm soát... hậu quả không lường được.',
+        'Hạ Phong (chuyển lời Hội trưởng Khải): Nếu đây là sự thật, Hắc Nguyệt không hẳn là kẻ thù. Nhưng mở Cổng Vĩnh Hằng mà không kiểm soát... hậu quả không lường được.',
         '[Hệ thống] Đã mở khóa cấp tối đa: 50.',
       ],
       reward: { exp: 1000, gold: 500, skillPoints: 2, items: [['sach_ky_nang', 1]] } },
@@ -358,18 +358,20 @@
         'Giữa đống băng, Trái Tim Băng Long rực sáng xanh, vẫn đập.',
         'Vy: Lõi Lò Rèn... Nó phản ứng với Trái Tim. Lò Rèn đã thức tỉnh.',
         'Thợ chế tác Thiết: (từ xa) Mang Trái Tim về, ta rèn vũ khí!',
+        'Hội trưởng Khải: (qua đường truyền) Tân Đô bị tấn công! Dùng Trạm dịch chuyển ở Tân Đô III về ngay, 300 xu, đừng đi bộ!',
       ],
       reward: { exp: 5000, gold: 1000, items: [['trai_tim_bang_long', 1]] } },
 
     { id: 'c3q6', name: 'Báo động đỏ Tân Đô', npc: 'lao_su',
       start: [
         'Hội trưởng Khải: Tân Đô vừa bị tấn công! Quái tràn vào Quận Thương Mại!',
-        'Hội trưởng Khải: Vy và lính Hiệp Hội đã đẩy lùi 3 đợt. Cậu về đúng lúc.',
-        'Hội trưởng Khải: Nhưng kho bạc Hiệp Hội bị đột kích trong lúc thành bị tấn công!',
-        'Hội trưởng Khải: Kẻ dẫn đầu đột kích... là Lam Sương.',
+        'Hội trưởng Khải: Vy và lính Hiệp Hội đã giữ được ba đợt đầu, nhưng quái vẫn tràn từ cống lên.',
+        'Hội trưởng Khải: Ra Quận Thương Mại (cổng ở cuối phố), phòng thủ cho tới khi dọn sạch 24 Quái Rác. Mỗi đợt lính sẽ đỡ cho cậu một ít.',
+        'Hội trưởng Khải: Mà kho bạc Hiệp Hội bị đột kích trong lúc thành bị tấn công! Kẻ dẫn đầu... là Lam Sương.',
       ],
-      obj: {},
+      obj: { kill: { quai_rac_td: 24 } },
       end: [
+        'Quận Thương Mại im lặng trở lại. Dân thường bắt đầu mở cửa tiệm.',
         'Hội trưởng Khải: Mặc giáp này. Vệ Binh Tân Đô cần cậu.',
         'Hội trưởng Khải: Kho bạc ở dưới Hiệp Hội. Vy đang giữ đó. Đi nhanh!',
       ],
@@ -429,10 +431,22 @@
       obj: {},
       end: [
         'Thợ chế tác Thiết: Vũ khí hạng B! Xuyên được giáp quái lõi cổng.',
-        'Thợ chế tác Thiết: Lữ khách muốn gặp cậu. Hắn nói có chuyện quan trọng về Chương 4.',
-        '[Hệ thống] Đã mở khóa: Chương 4 – Tầng Trời Thứ Bảy.',
       ],
       reward: { exp: 2000, gold: 1000, craftWeapon: true, items: [['da_cuong_hoa_cao', 5], ['sach_ky_nang', 1]] } },
+
+    { id: 'c3q11', name: 'Cổng thành cổ', npc: 'tho_ren',
+      start: [
+        'Thợ chế tác Thiết: Vũ khí xong rồi. Giờ tới chuyện khác, chuyện tôi chưa nói với ai.',
+        'Thợ chế tác Thiết: Phía đông Lò Rèn là Vách Đá Gió Thần. Sổ rèn của tổ tiên tôi ghi rằng có một cánh cổng cổ ở đó, bị Hệ thống phong ấn cả trăm năm.',
+        'Thợ chế tác Thiết: Người từng canh cổng đó là một người chơi đã bỏ trốn khỏi Hệ thống. Ông ta đang đứng ngay cạnh cổng làng này, áo choàng tím. Đi gặp ông ta đi.',
+      ],
+      obj: { visit: ['lu_khach'] },
+      end: [
+        'Thợ chế tác Thiết: Ông ta chịu nói chuyện với cậu rồi à? Hiếm đấy.',
+        'Thợ chế tác Thiết: Nhớ ghé tôi trước khi đi xa. Đồ rèn đủ bậc rồi, nhưng thuốc thì cậu phải tự mang.',
+        '[Hệ thống] Đã mở khóa: Chương 4 – Tầng Trời Thứ Bảy.',
+      ],
+      reward: { exp: 1500, gold: 800, items: [['binh_mau_dac', 3]] } },
 
     // ===== CHƯƠNG 4: TẦNG TRỜI THỨ BẢY (cấp 31–40)
     { id: 'c4q1', name: 'Lời nói của người Số 3', npc: 'lu_khach',
@@ -475,6 +489,18 @@
       ],
       reward: { exp: 5000, gold: 2000, items: [['binh_mau_than_thoai', 3]] } },
 
+    { id: 'c4q3b', name: 'Cua giáp trên quảng trường', npc: 'vy',
+      start: [
+        'Vy: Mấy con Cua Giáp trên quảng trường cứ ăn mảnh đá phát sáng. Nghe nói ăn xong chúng tự sáng lên như đèn.',
+        'Vy: Dọn 20 con trước khi vào Thư Viện. Tôi không muốn có thứ gì phát sáng sau lưng khi đi trong chỗ tối.',
+      ],
+      obj: { kill: { bo_canh_cung: 20 } },
+      end: [
+        'Vy: Xong. Lần đầu tôi thấy cua khóc vì mất đèn.',
+        'Vy: Đi thôi. Thư Viện ở phía trên, qua Tân Đô Phù Đảo là tới.',
+      ],
+      reward: { exp: 4500, gold: 1800, items: [['da_cuong_hoa_cao', 3]] } },
+
     { id: 'c4q4', name: 'Thư Viện Hệ Thống', npc: 'lu_khach',
       start: [
         'Lữ khách: Thư Viện này chứa toàn bộ dữ liệu Hệ Thống đã thu thập.',
@@ -488,6 +514,17 @@
         '[Hệ thống] Nhận được: Mảnh Tri Thức Cổ Đại.',
       ],
       reward: { exp: 4000, gold: 2000, items: [['tri_thuc_co_dai', 1]] } },
+
+    { id: 'c4q4b', name: 'Phòng cấm', npc: 'lu_khach',
+      start: [
+        'Lữ khách: Trước khi tới Phòng Lưu Trữ Cấm, phải qua đám Hộ Vệ Sát Thủ Cánh Bạc. Hệ thống đặt chúng ở đó để giữ nhật ký.',
+        'Lữ khách: Hạ 6 tên. Đừng đứng yên: chúng lướt rất nhanh.',
+      ],
+      obj: { kill: { ho_ve_sat_thu: 6 } },
+      end: [
+        'Lữ khách: Lối vào đã thông. Tôi nghe thấy tiếng chữ đang chạy trong tường... đó là nhật ký của một người chơi.',
+      ],
+      reward: { exp: 3500, gold: 1800, items: [['binh_mau_than_thoai', 2]] } },
 
     { id: 'c4q5', name: 'Trang nhật ký thứ 6', npc: 'lu_khach',
       start: [
@@ -526,12 +563,30 @@
         '[Hệ thống] Giọng nói: Người chơi thứ 7... ngươi đã đến xa hơn ta dự đoán.',
       ],
       obj: {},
+      // Chọn thoại: chỉ đổi danh hiệu và câu đáp, phần thưởng như nhau
+      choices: [
+        { id: 'tin', label: 'Chấp nhận: "Tôi sẽ dùng sức mạnh của ngươi để ngăn Thiên."', title: 'Người Dùng Hệ Thống', text: '[Hệ thống] Giọng nói: ...Sáng suốt. Ta sẽ dõi theo ngươi.' },
+        { id: 'ngo', label: 'Nghi ngờ: "Ngươi là gì? Nói rõ rồi ta mới tin."', title: 'Kẻ Hoài Nghi', text: '[Hệ thống] Giọng nói: Sự thật không phải thứ ta cho không. Hãy tự tìm.' },
+        { id: 'thach', label: 'Thách thức: "Ta không cần ngươi. Ta tự đi."', title: 'Kẻ Chống Hệ Thống', text: '[Hệ thống] Giọng nói: ...Ngươi giống Thiên hơn ngươi nghĩ.' },
+      ],
       end: [
         '[Hệ thống] Nhận 5 điểm kỹ năng. Cấp tối đa: 50.',
-        'Lữ khách: Cổng đã mở ở Tân Đô. Bầu trời rách toác. Đi, người chơi thứ 7.',
-        '[Hệ thống] Đã mở khóa: Chương 5 – Cổng Vĩnh Hằng.',
+        'Lữ khách: Hệ thống không còn che giấu nữa. Nghe thấy rồi chứ?',
       ],
       reward: { exp: 5000, gold: 3000, skillPoints: 5, items: [['sach_ky_nang', 2]] } },
+
+    { id: 'c4q8', name: 'Bầu trời rách', npc: 'lu_khach',
+      start: [
+        'Lữ khách: Cậu đã nghe giọng nói đó. Lời Hệ thống không phải lời đe dọa suông.',
+        'Lữ khách: Bầu trời phía đông Phù Đảo đã nứt. Hiệp Hội dựng một Tân Đô mới ngay dưới khe nứt: Bầu Trời Rách.',
+        'Lữ khách: Đi đi, người chơi thứ 7. Ta ở lại giữ cổng sau lưng cậu.',
+      ],
+      obj: {},
+      end: [
+        'Lữ khách: Hội trưởng Khải đã tới đó trước. Gặp ông ấy.',
+        '[Hệ thống] Đã mở khóa: Chương 5 – Cổng Vĩnh Hằng.',
+      ],
+      reward: { exp: 3000, gold: 1500, items: [['binh_mau_than_thoai', 3]] } },
 
     // ===== CHƯƠNG 5: CỔNG VĨNH HẰNG (cấp 41–50)
     { id: 'c5q1', name: 'Bầu trời rách tạc', npc: 'lao_su',
@@ -559,6 +614,24 @@
       ],
       reward: { exp: 10000, gold: 5000, items: [['da_cuong_hoa_than_thoai', 5]] } },
 
+    { id: 'c5q2b', name: 'Quỷ trăng đen', npc: 'vy',
+      start: [
+        'Vy: Mấy con Quỷ Trăng Đen này mang dấu Hắc Nguyệt, nhưng không còn là người nữa.',
+        'Vy: Hạ 25 con. Tôi không muốn ai trong chúng nhận ra tôi.',
+      ],
+      obj: { kill: { quy_trang_den: 25 } },
+      end: ['Vy: Xong. Tôi tưởng sẽ thấy ai đó quen. May là không.', 'Vy: Sảnh Chờ ở phía trên. Bọn ký sinh đang tụ ở đó.'],
+      reward: { exp: 11000, gold: 5000, items: [['da_cuong_hoa_than_thoai', 3]] } },
+
+    { id: 'c5q2c', name: 'Sinh vật ký sinh', npc: 'vy',
+      start: [
+        'Vy: Sảnh Chờ Không Gian. Những thứ ký sinh trên người thợ săn bị bắt, rồi lớn lên bằng sức mạnh của họ.',
+        'Vy: Hạ 20 con. Đừng để chúng bám lên cậu.',
+      ],
+      obj: { kill: { sv_ky_sinh_hk: 20 } },
+      end: ['Vy: Gọn. Lam Sương đang đợi ở trong sảnh. Cô ấy đổi phe rồi.', 'Vy: Đừng nhìn cô ấy như thế. Tôi đã tha rồi.'],
+      reward: { exp: 12000, gold: 5500, items: [['binh_mau_than_thoai', 4]] } },
+
     { id: 'c5q3', name: 'Tập hợp liên minh', npc: 'vy',
       start: [
         'Vy: Lam Sương, Lữ khách, Thiết... tất cả đều ở đây.',
@@ -573,6 +646,21 @@
         'Vy: Thiên ở đỉnh cổng. Đi.',
       ],
       reward: { exp: 5000, gold: 3000, perk: 'lien_minh', items: [['binh_mau_than_thoai', 10], ['binh_nl_than_thoai', 10]] } },
+
+    { id: 'c5q3b', name: 'Chuẩn bị trận chiến', npc: 'lao_su',
+      start: [
+        'Hội trưởng Khải: Liên minh đã đủ người. Giờ cậu phải chọn cách tham chiến, vì tôi không thể cho cậu hết mọi thứ.',
+        'Hội trưởng Khải: Thiên từng là học trò của tôi. Tôi biết hắn sẽ đánh theo kiểu nào. Cậu chọn đi.',
+      ],
+      obj: {},
+      // Chọn thoại: chỉ đổi danh hiệu và câu đáp, phần thưởng như nhau
+      choices: [
+        { id: 'mui', label: 'Dẫn đầu mũi nhọn: "Tôi đi trước."', title: 'Mũi Nhọn Liên Minh', text: 'Hội trưởng Khải: Đúng như tôi đoán. Đừng chết sớm quá.' },
+        { id: 'khien', label: 'Giữ đội hình: "Tôi che cho mọi người."', title: 'Lá Chắn Liên Minh', text: 'Hội trưởng Khải: Người giữ đội hình quan trọng hơn người xông lên. Nhớ điều đó.' },
+        { id: 'mat', label: 'Dò đường phía sau: "Tôi tìm điểm yếu của hắn."', title: 'Mắt Liên Minh', text: 'Hội trưởng Khải: Hắn có một điểm yếu duy nhất: hắn vẫn là con người. Tìm nó.' },
+      ],
+      end: ['[Hệ thống] Đội hình Liên Minh đã sẵn sàng.', 'Hội trưởng Khải: Thiên ở Đỉnh Cổng. Đi đi.'],
+      reward: { exp: 8000, gold: 4000, items: [['binh_mau_than_thoai', 5], ['binh_nl_than_thoai', 5]] } },
 
     { id: 'c5q4', name: 'Thầy và trò', npc: 'vy',
       start: [
@@ -665,22 +753,7 @@
         'Hội trưởng Khải: Lần này thì thật sự yên bình rồi. Tân Đô sẽ luôn mở cửa chào đón cậu.',
         '[Hệ thống] Hậu truyện hoàn thành. Cổng SS vẫn mở để thợ săn tiếp tục khám phá.',
       ],
-      reward: { exp: 30000, gold: 20000, skillPoints: 6, items: [['sach_tuyet_ky', 1], ['sach_ky_nang_vo_dinh', 1], ['da_cuong_hoa_than_thoai', 8]] } },
-    { id: 'c6q1', name: 'Khảo sát Thiên Khôi', npc: 'lao_su', start: ['Hội trưởng Khải: Thiên Khôi là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tan_du_thien_khoi: 15 }, level: 51 }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 50000, gold: 12500, skillPoints: 3, items: [['loi_tinh_van', 2], ['da_cuong_hoa_than_thoai', 3], ['ao_thien_khoi', 1]] } },
-    { id: 'c6q2', name: 'Dọn đường Thiên Khôi', npc: 'lao_su', start: ['Hội trưởng Khải: Thiên Khôi là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { ho_vuong_thien_khoi: 12 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 65000, gold: 16250, skillPoints: 3, items: [['loi_tinh_van', 2], ['da_cuong_hoa_than_thoai', 3], ['ao_thien_khoi', 1]] } },
-    { id: 'c6q3', name: 'Trùm Thiên Khôi', npc: 'lao_su', start: ['Hội trưởng Khải: Thiên Khôi là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tru_mong_thien_khoi: 1 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 90000, gold: 22500, skillPoints: 3, items: [['loi_tinh_van', 2], ['da_cuong_hoa_than_thoai', 3], ['ao_thien_khoi', 1]] } },
-    { id: 'c6q4', name: 'Khảo sát Long Mạch', npc: 'lao_su', start: ['Hội trưởng Khải: Long Mạch là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tan_du_long_mach: 15 }, level: 61 }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 68000, gold: 17000, skillPoints: 3, items: [['loi_tinh_van', 3], ['da_cuong_hoa_than_thoai', 4], ['ao_long_mach', 1]] } },
-    { id: 'c6q5', name: 'Dọn đường Long Mạch', npc: 'lao_su', start: ['Hội trưởng Khải: Long Mạch là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { ho_vuong_long_mach: 12 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 83000, gold: 20750, skillPoints: 3, items: [['loi_tinh_van', 3], ['da_cuong_hoa_than_thoai', 4], ['ao_long_mach', 1]] } },
-    { id: 'c6q6', name: 'Trùm Long Mạch', npc: 'lao_su', start: ['Hội trưởng Khải: Long Mạch là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tru_mong_long_mach: 1 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 108000, gold: 27000, skillPoints: 3, items: [['loi_tinh_van', 3], ['da_cuong_hoa_than_thoai', 4], ['ao_long_mach', 1]] } },
-    { id: 'c6q7', name: 'Khảo sát Tinh Vân', npc: 'lao_su', start: ['Hội trưởng Khải: Tinh Vân là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tan_du_tinh_van: 15 }, level: 71 }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 86000, gold: 21500, skillPoints: 3, items: [['loi_tinh_van', 4], ['da_cuong_hoa_than_thoai', 5], ['ao_tinh_van', 1]] } },
-    { id: 'c6q8', name: 'Dọn đường Tinh Vân', npc: 'lao_su', start: ['Hội trưởng Khải: Tinh Vân là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { ho_vuong_tinh_van: 12 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 101000, gold: 25250, skillPoints: 3, items: [['loi_tinh_van', 4], ['da_cuong_hoa_than_thoai', 5], ['ao_tinh_van', 1]] } },
-    { id: 'c6q9', name: 'Trùm Tinh Vân', npc: 'lao_su', start: ['Hội trưởng Khải: Tinh Vân là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tru_mong_tinh_van: 1 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 126000, gold: 31500, skillPoints: 3, items: [['loi_tinh_van', 4], ['da_cuong_hoa_than_thoai', 5], ['ao_tinh_van', 1]] } },
-    { id: 'c6q10', name: 'Khảo sát Thần Mộng', npc: 'lao_su', start: ['Hội trưởng Khải: Thần Mộng là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tan_du_than_mong: 15 }, level: 81 }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 104000, gold: 26000, skillPoints: 3, items: [['loi_tinh_van', 5], ['da_cuong_hoa_than_thoai', 6], ['ao_than_mong', 1]] } },
-    { id: 'c6q11', name: 'Dọn đường Thần Mộng', npc: 'lao_su', start: ['Hội trưởng Khải: Thần Mộng là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { ho_vuong_than_mong: 12 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 119000, gold: 29750, skillPoints: 3, items: [['loi_tinh_van', 5], ['da_cuong_hoa_than_thoai', 6], ['ao_than_mong', 1]] } },
-    { id: 'c6q12', name: 'Trùm Thần Mộng', npc: 'lao_su', start: ['Hội trưởng Khải: Thần Mộng là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tru_mong_than_mong: 1 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 144000, gold: 36000, skillPoints: 3, items: [['loi_tinh_van', 5], ['da_cuong_hoa_than_thoai', 6], ['ao_than_mong', 1]] } },
-    { id: 'c6q13', name: 'Khảo sát Sáng Thế', npc: 'lao_su', start: ['Hội trưởng Khải: Sáng Thế là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tan_du_sang_the: 15 }, level: 91 }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 122000, gold: 30500, skillPoints: 3, items: [['loi_tinh_van', 6], ['da_cuong_hoa_than_thoai', 7], ['ao_sang_the', 1]] } },
-    { id: 'c6q14', name: 'Dọn đường Sáng Thế', npc: 'lao_su', start: ['Hội trưởng Khải: Sáng Thế là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { ho_vuong_sang_the: 12 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 137000, gold: 34250, skillPoints: 3, items: [['loi_tinh_van', 6], ['da_cuong_hoa_than_thoai', 7], ['ao_sang_the', 1]] } },
-    { id: 'c6q15', name: 'Trùm Sáng Thế', npc: 'lao_su', start: ['Hội trưởng Khải: Sáng Thế là vùng săn mới. Hãy dọn quái và mở đường tiếp theo.'], obj: { kill: { tru_mong_sang_the: 1 } }, end: ['Hội trưởng Khải: Tốt lắm. Đường tiến sâu hơn đã mở.'], reward: { exp: 162000, gold: 40500, skillPoints: 3, items: [['loi_tinh_van', 6], ['da_cuong_hoa_than_thoai', 7], ['ao_sang_the', 1]] } },
+      reward: { exp: 30000, gold: 20000, skillPoints: 6, items: [['sach_ky_nang_vo_dinh', 1], ['da_cuong_hoa_than_thoai', 8]] } },
   ];
 
   Object.assign(G, { QUESTS });

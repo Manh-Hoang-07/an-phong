@@ -20,6 +20,7 @@
     }
     if (q && q.npc === id) {
       if (p.quest.state === 'none') opts.push(`<button class="btn" data-act="quest_view">❗ Nhiệm vụ: ${esc(q.name)}</button>`);
+      else if (questReady() && q.choices) for (const c of q.choices) opts.push(`<button class="btn primary" data-act="quest_complete" data-choice="${esc(c.id)}">💬 ${esc(c.label)}</button>`);
       else if (questReady()) opts.push(`<button class="btn primary" data-act="quest_complete">✔ Trả nhiệm vụ: ${esc(q.name)}</button>`);
       else opts.push(`<button class="btn" data-act="open" data-panel="quest">… Đang làm: ${esc(q.name)}</button>`);
     }
@@ -62,6 +63,7 @@
     }
     if (n.shop) opts.push(`<button class="btn" data-act="open" data-panel="shop" data-npc="${id}">🛒 Mua bán</button>`);
     if (n.role === 'smith') opts.push('<button class="btn" data-act="open" data-panel="smith">⚒️ Nâng cấp trang bị</button>');
+    if (n.role === 'teleport') opts.push('<button class="btn primary" data-act="open" data-panel="teleport">🌀 Dịch chuyển giữa các Tân Đô</button>');
     if (n.role === 'storage') opts.push('<button class="btn" data-act="open" data-panel="storage">📦 Gửi / lấy đồ</button>');
     opts.push('<button class="btn" data-act="close">Tạm biệt</button>');
     const text = (say || [n.greet]).map(l => `<p>${esc(l)}</p>`).join('');

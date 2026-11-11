@@ -149,6 +149,74 @@ const Fx = (() => {
       ell(g, 0xff5a4e, 12, 13, 1.4, 1.4); ell(g, 0xff5a4e, 25, 12, 1.4, 1.4); ell(g, 0xff5a4e, 37, 14, 1.4, 1.4);
     });
 
+    // Thợ săn bị giam (Chương 2): ngồi sau lồng sắt
+    for (let i = 1; i <= 5; i++) {
+      make(scene, 'npc_tho_san_' + i, 40, 60, (g) => {
+        drawHunter(g, { coat: [0x4a5a6a, 0x6a4a4a, 0x4a6a58, 0x5a4a6a, 0x6a5a3a][i - 1], inner: 0x2a2a32, accent: 0xc8a45a, hair: [0x2a2018, 0x5a3a20, 0x1a1a22, 0x6a5a3a, 0x3a2a30][i - 1],
+          skin: 0xe4b88f, skin2: 0xc0906a, pants: 0x30303a, boot: 0x1c1c24, long: false }, 'idle', {
+          prop: (gg) => { for (let b = 0; b < 5; b++) rect(gg, 0x2a2e38, 4 + b * 7.4, 4, 2.2, 50); rect(gg, 0x2a2e38, 3, 4, 34, 2.4); rect(gg, 0x2a2e38, 3, 52, 34, 2.4); },
+        });
+      });
+    }
+    // Điểm dẫn mạch (Chương 7): trụ ngọc xanh phát sáng
+    for (let i = 1; i <= 3; i++) make(scene, 'npc_hat_mach_' + i, 40, 60, (g) => {
+      ell(g, 0x3fc9a0, 20, 54, 14, 3.4, 0.4); ell(g, 0x3fc9a0, 20, 30, 16, 26, 0.16);
+      poly(g, 0x14584a, [[20, 6], [30, 24], [26, 54], [14, 54], [10, 24]]); poly(g, 0x3fe0b8, [[20, 10], [27, 24], [24, 50], [16, 50], [13, 24]], 0.85); poly(g, 0xd0fff0, [[20, 14], [23, 24], [20, 36], [17, 24]], 0.9);
+    });
+    // Trợ lý bị kẹt (Chương 8): học trò ôm cuộn bản vẽ, mắt kính
+    for (let i = 1; i <= 4; i++) make(scene, 'npc_tro_ly_' + i, 40, 60, (g) => {
+      drawHunter(g, { coat: [0x4a3a7a, 0x3a4a7a, 0x5a3a6a, 0x3a5a6a][i - 1], inner: 0xe8e2ff, accent: 0xffd166, hair: [0x2a2030, 0x4a3a28, 0x1a1a22, 0x5a4a3a][i - 1], skin: 0xf0cdac, skin2: 0xd09a74, pants: 0x2c2a44, boot: 0x1c1a2c, long: false }, 'idle', {
+        prop: (gg) => { rect(gg, 0x1a1a22, 15.4, 10, 4, 3.6, 0.95); rect(gg, 0xcfd8ff, 15.8, 10.4, 3.2, 2.8, 0.9); rect(gg, 0x1a1a22, 20.6, 10, 4, 3.6, 0.95); rect(gg, 0xcfd8ff, 21, 10.4, 3.2, 2.8, 0.9); rrect(gg, 0xefe4c8, 26, 27, 7, 12, 2); },
+      });
+    });
+    // Cánh cửa Sáng Thế (Chương 10): khung cửa vàng, bên trong sáng trắng
+    for (let i = 1; i <= 3; i++) make(scene, 'npc_cua_sang_' + i, 40, 60, (g) => {
+      ell(g, 0xffe8a0, 20, 30, 18, 28, 0.2);
+      rect(g, 0xc8a45a, 6, 6, 28, 50); rect(g, 0xfff6d0, 10, 10, 20, 46); rect(g, 0xffffff, 14, 16, 12, 38, 0.8); ell(g, 0xffe8a0, 20, 56, 12, 2.4, 0.5);
+    });
+    // Lăng (Chương 10): hình bóng người phụ nữ cổ xưa, áo choàng sáng, vòng ánh sáng sau đầu
+    make(scene, 'npc_lang_hinh', 40, 60, (g) => {
+      ell(g, 0xffe8a0, 20, 28, 19, 27, 0.16); g.lineStyle(1.4, 0xffe8a0, 0.9); g.strokeCircle(20, 11, 9);
+      poly(g, 0x6a5a30, [[20, 8], [31, 20], [34, 54], [6, 54], [9, 20]]); poly(g, 0xf6e6b0, [[20, 10], [28, 21], [30, 52], [10, 52], [12, 21]], 0.9);
+      ell(g, 0xf0d0b0, 20, 14, 5.4, 6.2); ell(g, 0x2a2018, 20, 10, 6, 4.6); rect(g, 0xffffff, 17.4, 14, 1.4, 1.2); rect(g, 0xffffff, 21.4, 14, 1.4, 1.2);
+    });
+    // Trạm dịch chuyển: bệ đá có vòng rune sáng
+    make(scene, 'npc_tram', 48, 60, (g) => {
+      ell(g, 0x3fd0ff, 24, 52, 22, 6, 0.25);
+      ell(g, 0x1e2a3a, 24, 52, 17, 4.4); ell(g, 0x3b4a5a, 24, 50, 15, 3.6);
+      rect(g, 0x2c3846, 9, 24, 5, 26); rect(g, 0x2c3846, 34, 24, 5, 26);
+      rect(g, 0x5a6a7a, 8, 20, 7, 4); rect(g, 0x5a6a7a, 33, 20, 7, 4);
+      ell(g, 0x3fd0ff, 24, 32, 11, 15, 0.22);
+      g.lineStyle(2, 0x7fe3ff, 0.95); g.strokeEllipse(24, 32, 18, 26);
+      g.lineStyle(1.2, 0xe1f8ff, 0.8); g.strokeEllipse(24, 32, 10, 16);
+      ell(g, 0xe1f8ff, 24, 32, 2.6, 3.4, 0.9);
+    });
+    // Hạ Phong: lái đò cụt tay, nón lá, áo ghi lê xanh
+    make(scene, 'npc_ha_phong', 40, 60, (g) => {
+      drawHunter(g, {
+        coat: 0x2f6b8a, inner: 0xe8e2d0, accent: 0xd9a65a, hair: 0x2a2a30,
+        skin: 0xc99a72, skin2: 0xa87650, pants: 0x3a3a44, boot: 0x2a2024, long: false,
+      }, 'idle', {
+        prop: (gg) => {
+          tri(gg, 0xd9c58a, 20, 1.2, 4.4, 9, 35.6, 9); line(gg, 0xb89a4a, 5.6, 9, 34.4, 9, 1.4);
+          rect(gg, 0x6b4a2f, 29, 14, 2.4, 34); rrect(gg, 0x8a6a3a, 27, 44, 6.4, 6, 1.4);
+        },
+      });
+    });
+    // Viện trưởng Minh Triết: học giả đeo kính, áo choàng tím, cuộn bản vẽ sao
+    make(scene, 'npc_minh_triet', 40, 60, (g) => {
+      drawHunter(g, {
+        coat: 0x5a3a8a, inner: 0xeee6ff, accent: 0xffd166, hair: 0xd8d6e4,
+        skin: 0xf0cdac, skin2: 0xd09a74, pants: 0x3a2c56, boot: 0x241a34, long: true, longHair: false,
+      }, 'idle', {
+        prop: (gg) => {
+          rect(gg, 0x1a1a22, 15.4, 10, 4, 3.6, 0.95); rect(gg, 0xcfd8ff, 15.8, 10.4, 3.2, 2.8, 0.9);
+          rect(gg, 0x1a1a22, 20.6, 10, 4, 3.6, 0.95); rect(gg, 0xcfd8ff, 21, 10.4, 3.2, 2.8, 0.9);
+          rrect(gg, 0xefe4c8, 27, 26, 7, 12, 2); gg.fillStyle(0xffd166, 1); gg.fillCircle(30.5, 31, 1.4); gg.fillCircle(29, 35, 1); gg.fillCircle(32, 34, 1);
+        },
+      });
+    });
+
     // Người Gác Màn (NPC ẩn): bóng áo choàng tím trùm đầu, mắt sáng, đuôi áo tan thành khói
     make(scene, 'npc_npc_an', 40, 60, (g) => {
       ell(g, 0xb46bff, 20, 30, 19, 28, 0.12);

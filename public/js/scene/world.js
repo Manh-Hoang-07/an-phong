@@ -223,7 +223,7 @@ class WorldScene extends Phaser.Scene {
     if (move) this.facing = move;
 
     if (onGround) { this.lastGroundAt = time; this.jumpedAir = false; }
-    const jumpPressed = canAct && (this.pressed('Space') || this.pressed('ArrowUp') || this.pressed('KeyW') || this.tpressed('jump'));
+    const jumpPressed = canAct && ((App.touch.up && onGround) || this.pressed('Space') || this.pressed('ArrowUp') || this.pressed('KeyW') || this.tpressed('jump'));
     if (jumpPressed) this.jumpBufferedAt = time;
     const canJump = onGround || (time - this.lastGroundAt < 110 && !this.jumpedAir);
     if (time - this.jumpBufferedAt < 140 && canJump) {
@@ -239,7 +239,9 @@ class WorldScene extends Phaser.Scene {
       if (this.pressed('KeyY')) UI.hiddenChat();
       if (this.key('KeyJ') || App.touch.attack) this.basicAttack(time);
       for (let i = 0; i < 5; i++) if (this.pressed('Digit' + (i + 1)) || this.tpressed('s' + i)) this.useSkill(i, time);
-      if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOT, time);
+      if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOTS[0], time);
+      if (this.pressed('KeyX') || this.tpressed('ult2')) this.useSkill(GameData.ULT_SLOTS[1], time);
+      if (this.pressed('KeyZ') || this.tpressed('ult3')) { if (App.player.school === 'toan_nang') this.useSkill(GameData.ULT_SLOTS[2], time); }
       if (this.pressed('KeyT') || this.tpressed('form')) this.toggleForm(time);
       if (this.pressed('KeyV') || this.tpressed('career')) Net.action('career_toggle');
       if (this.pressed('KeyG') || this.tpressed('aws')) this.switchAwaken();
@@ -364,6 +366,26 @@ class WorldScene extends Phaser.Scene {
       this.portalReady = this.time.now + 1500;
       this.player.setVelocityX(-this.facing * 300);
       this.knockUntil = this.time.now + 200;
+    }
+  }
+
+  // Trạm dịch chuyển: giống đi cổng nhưng gửi action 'teleport' (server trừ phí cố định)
+  async useTeleport(to) {
+    if (this.changing) return;
+    this.changing = true;
+    this.flushKills();
+    const s = this.saveState();
+    Sound.play('portal');
+    this.cameras.main.fadeOut(250);
+    const t0 = Date.now();
+    const res = await Net.action('teleport', { to, hp: s.hp, mp: s.mp, pet: s.pet });
+    if (!this.sys.isActive()) return;
+    if (res.ok) {
+      this.time.delayedCall(Math.max(0, 260 - (Date.now() - t0)), () => this.scene.restart({ map: res.player.map, arrive: res.player.arrive || 'S' }));
+    } else {
+      this.cameras.main.resetFX();
+      this.cameras.main.fadeIn(200);
+      this.changing = false;
     }
   }
 

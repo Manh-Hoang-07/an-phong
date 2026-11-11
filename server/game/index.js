@@ -42,8 +42,8 @@ function migrate(p) {
   for (const k in base) if (p[k] === undefined) p[k] = base[k];
   // Đổi tên từ phiên bản ninja cũ
   const OLD_SCHOOL = { phong_anh: 'kiem_si', hoa_lien: 'cung_thu', thuy_nguyet: 'phap_su', van_phap: 'toan_nang' };
-  const OLD_ITEM = { phi_tieu_sat: 'cung_go', phi_tieu_lua: 'cung_hop_kim', phi_tieu_thach_quy: 'cung_thach_vuong',
-    quat_tre: 'truong_go', quat_suong: 'truong_pha_le', quat_thach_quy: 'truong_thach_vuong' };
+  const OLD_ITEM = { phi_tieu_sat: 'cung_go', phi_tieu_lua: 'cung_go', phi_tieu_thach_quy: 'cung_thach_vuong',
+    quat_tre: 'truong_go', quat_suong: 'truong_go', quat_thach_quy: 'truong_thach_vuong' };
   if (OLD_SCHOOL[p.school]) p.school = OLD_SCHOOL[p.school];
   if (!p.advancement || typeof p.advancement !== 'object') p.advancement = { quest: null, done: {}, unlocked: {} };
   if (!p.advancement.done) p.advancement.done = {};
@@ -64,6 +64,12 @@ function migrate(p) {
   p.bag.forEach(G.normalizeInst);
   p.storage.forEach(G.normalizeInst);
   if (!G.MAPS[p.map]) { p.map = G.START_MAP; p.x = null; p.y = null; }
+  if (!Array.isArray(p.titles)) p.titles = [];
+  if (!p.choices || typeof p.choices !== 'object' || Array.isArray(p.choices)) p.choices = {};
+  if (!Array.isArray(p.villages)) p.villages = [G.START_MAP];
+  p.villages = [...new Set(p.villages.filter(id => G.MAPS[id] && G.MAPS[id].village))];
+  if (G.MAPS[p.map].village && !p.villages.includes(p.map)) p.villages.push(p.map);
+  if (!p.villages.includes(G.START_MAP)) p.villages.unshift(G.START_MAP);
   if (!Array.isArray(p.loot)) p.loot = [];
   if (!p.mounts || !Array.isArray(p.mounts.owned)) p.mounts = { owned: [], active: null };
   p.mounts.owned = p.mounts.owned.filter(id => G.MOUNTS[id]);

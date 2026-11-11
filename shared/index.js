@@ -12,6 +12,7 @@ require('./data/npcs');
 require('./data/maps');
 require('./data/mounts');
 require('./data/quests/chapter1');
+require('./data/quests/chapter6');
 require('./data/quests/side');
 require('./data/quests/legacy');
 require('./data/quests/periodic');

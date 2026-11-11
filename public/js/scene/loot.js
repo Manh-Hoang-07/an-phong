@@ -14,7 +14,23 @@ WorldScene.mix(class WorldLoot {
       this.tweens.add({ targets: beam, alpha: 0.1, duration: 700, yoyo: true, repeat: -1 });
     }
     const glow = this.add.circle(0, 0, q >= 2 ? 15 : 11, color, q >= 2 ? 0.45 : 0.25).setBlendMode(Phaser.BlendModes.ADD);
-    const icon = this.add.text(0, 0, UI.itemIcon(l.inst.id), { fontSize: '20px' }).setOrigin(0.5);
+    // Ảnh icon vẽ bằng code; trong lúc ảnh chưa nạp xong thì tạm hiện emoji
+    const tex = 'ico_' + l.inst.id;
+    let icon;
+    if (this.textures.exists(tex)) icon = this.add.image(0, 0, tex).setDisplaySize(26, 26);
+    else {
+      icon = this.add.text(0, 0, UI.itemEmoji(l.inst.id), { fontSize: '20px' }).setOrigin(0.5);
+      if (typeof ItemArt !== 'undefined') {
+        this.textures.once('addtexture-' + tex, () => {
+          if (!icon.active || !c.active) return;
+          const img = this.add.image(0, icon.y, tex).setDisplaySize(26, 26);
+          this.tweens.killTweensOf(icon);
+          c.add(img); c.remove(icon, true);
+          this.tweens.add({ targets: img, y: img.y - 4, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+        });
+        try { this.textures.addBase64(tex, ItemArt.url(l.inst.id)); } catch (e) { /* giữ emoji */ }
+      }
+    }
     c.add([glow, icon]);
     if (q >= 2) {
       const label = this.add.text(0, -24, def.name, {

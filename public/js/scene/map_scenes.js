@@ -161,3 +161,4 @@ const MapDecor = {
   than_mong: { tile: 'pink', ceil: 'none', floor: 'vine', tint: 0xffb0e0 },
   tinh_van: { tile: 'void', ceil: 'none', floor: 'vine', tint: 0xb0c0ff },
 };
+

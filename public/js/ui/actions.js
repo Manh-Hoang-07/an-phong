@@ -130,7 +130,7 @@
         closePanel();
         break;
       }
-      case 'quest_complete': await completeQuest(G.QUESTS[App.player.quest.step]); break;
+      case 'quest_complete': await completeQuest(G.QUESTS[App.player.quest.step], ds.choice); break;
       case 'side_view': {
         const sq = G.sideById(ds.id);
         if (!sq) break;
@@ -162,30 +162,8 @@
         await act('shadow_release', { uid: Number(ds.uid) }); S.confirmShadowRelease = null; renderPanel(); break;
       case 'pet_skill': await act('pet_skill_set', { id: ds.id, skill: ds.skill }); renderPanel(); break;
       case 'use_boost': await act('use', { item: ds.item }); renderPanel(); break;
+      case 'teleport_go': closePanel(); if (App.scene) App.scene.useTeleport(ds.to); break;
       case 'gate_go': closePanel(); if (App.scene) App.scene.usePortal(ds.ch); break;
-      case 'map_go': {
-        const sc = App.scene;
-        if (!sc || sc.changing) break;
-        closePanel();
-        sc.changing = true;
-        sc.flushKills();
-        const s = sc.saveState();
-        Sound.play('portal');
-        sc.cameras.main.fadeOut(250);
-        const res = await Net.action('change_map_to', { to: ds.to, hp: s.hp, mp: s.mp, pet: s.pet });
-        if (!sc.sys.isActive()) break;
-        if (res.ok) {
-          const arrive = res.player.arrive || 'S';
-          sc.time.delayedCall(260, () => sc.scene.restart({ map: res.player.map, arrive }));
-        } else {
-          sc.cameras.main.resetFX();
-          sc.cameras.main.fadeIn(200);
-          sc.changing = false;
-          sc.portalReady = sc.time.now + 1500;
-          UI.log(res.error || 'Không thể dịch chuyển.', '#ffb74d');
-        }
-        break;
-      }
       case 'school_pick': openPanel('school', { confirm: ds.school, force: true }); break;
       case 'choose_school': {
         const r = await act('choose_school', { school: ds.school });
@@ -196,10 +174,11 @@
     } finally { el.classList.remove('busy'); }
   }
 
-  async function completeQuest(q) {
-    const r = await act('quest_complete');
+  async function completeQuest(q, choice) {
+    const r = await act('quest_complete', { choice });
     if (r.ok) Sound.play('quest');
-    if (r.ok) openPanel('story', { id: q.npc, lines: q.end, button: '<button class="btn primary" data-act="close">Đã hiểu</button>', force: true });
+    const picked = q.choices && q.choices.find(c => c.id === choice);
+    if (r.ok) openPanel('story', { id: q.npc, lines: picked ? q.end.concat(picked.text) : q.end, button: '<button class="btn primary" data-act="close">Đã hiểu</button>', force: true });
   }
 
   Object.assign(UI._, { onClick, completeQuest });

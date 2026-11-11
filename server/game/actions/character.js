@@ -31,15 +31,15 @@ const actions = {
   set_skill(p, a) {
     const slot = Number(a.slot);
     if (!Number.isInteger(slot) || slot < 0 || slot >= G.SKILL_SLOTS) fail('Ô kỹ năng không hợp lệ.');
-    if (slot === G.EXTRA_SLOT && p.school !== 'toan_nang') fail('Ô này chỉ dành cho Toàn Năng.');
+    if ((slot === G.EXTRA_SLOT || slot === G.ULT_EXTRA_SLOT) && p.school !== 'toan_nang') fail('Ô này chỉ dành cho Toàn Năng.');
     // Mỗi hình thái có thanh riêng: a.bar = 'career' sửa thanh chức nghiệp 2, còn lại sửa thanh chức nghiệp 1
     if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
     if (!a.skill) { (a.bar === 'career' ? p.careerSlots : p.skillSlots)[slot] = null; return; }
     const sk = G.SKILLS[a.skill];
     if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
     if (!G.skillLevel(p, a.skill)) fail('Hãy học kỹ năng này trước.');
-    if (sk.ult && slot !== G.ULT_SLOT) fail('Tuyệt kỹ chỉ đặt được ở ô tuyệt kỹ.');
-    if (!sk.ult && slot === G.ULT_SLOT) fail('Ô tuyệt kỹ chỉ dành cho tuyệt kỹ.');
+    if (sk.ult && !G.isUltSlot(slot)) fail('Tuyệt kỹ chỉ đặt được ở ô tuyệt kỹ.');
+    if (!sk.ult && G.isUltSlot(slot)) fail('Ô tuyệt kỹ chỉ dành cho tuyệt kỹ.');
     const bar = p[G.slotKeyOf(p, a.skill)];
     const other = bar.indexOf(a.skill);
     if (other >= 0) bar[other] = null;
@@ -59,7 +59,7 @@ const actions = {
     p.skills[a.skill] = lv + 1;
     if (lv === 0) {
       // Học lần đầu thì tự đặt vào ô trống
-      const slots = sk.ult ? [G.ULT_SLOT] : [0, 1, 2, 3].concat(p.school === 'toan_nang' ? [G.EXTRA_SLOT] : []);
+      const slots = sk.ult ? G.ultSlotsOf(p) : G.normalSlotsOf(p);
       if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
       const bar = p[G.slotKeyOf(p, a.skill)];
       const free = slots.find(i => !bar[i]);
@@ -74,18 +74,23 @@ const actions = {
   // Tẩy điểm kỹ năng ở Hội trưởng
   reset_skills(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải.');
-    const ultId = Object.keys(p.skills).find(id => G.SKILLS[id]?.ult && G.skillLevel(p, id) > 0);
+    // Tuyệt kỹ đã học (bằng sách) được giữ lại ở cấp 1; chỉ hoàn điểm đã cộng thêm
+    const ults = Object.keys(p.skills).filter(id => G.SKILLS[id]?.ult && G.skillLevel(p, id) > 0);
     const totalLevels = Object.values(p.skills).reduce((x, y) => x + y, 0);
-    const spent = totalLevels - (ultId ? 1 : 0);
+    const spent = totalLevels - ults.length;
     if (!spent) fail('Bạn chưa cộng điểm kỹ năng nào.');
     const cost = resetCost(p);
     if (p.gold < cost) fail('Không đủ xu.');
     p.gold -= cost;
     p.skillPoints += spent;
-    p.skills = ultId ? { [ultId]: 1 } : {};
+    p.skills = Object.fromEntries(ults.map(id => [id, 1]));
     p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
     p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
-    if (ultId) p[G.slotKeyOf(p, ultId)][G.ULT_SLOT] = ultId;
+    for (const id of ults.filter(id => G.availableSkills(p).includes(id))) {
+      const bar = p[G.slotKeyOf(p, id)];
+      const free = G.ultSlotsOf(p).find(i => !bar[i]);
+      if (free !== undefined) bar[free] = id;
+    }
     ev.push({ t: 'msg', text: `Đã tẩy điểm kỹ năng, nhận lại ${spent} điểm (-${fmt(cost)} xu).`, color: '#ffd54f' });
   },
 
