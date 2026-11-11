@@ -22,9 +22,9 @@ const TOL = 36;                        // dung sai màu (tổng chênh lệch R+
 
 // Bộ cần làm mịn: [loại/id, hệ số]. Rất kém (khung ≤ 45px) ×4; kém ×2.
 const LIST = [
-  ['mobs/ice_sprite', 4], ['mobs/worm', 4], ['mobs/rock_golem', 4], ['mobs/cyclops', 4],
+  ['mobs/worm', 4], ['mobs/cyclops', 2],
   ['mobs/nightborne', 2], ['mobs/axe_demon', 2], ['mobs/mimic', 2], ['mobs/hero_knight', 2], ['mobs/tooth_walker', 2], ['mobs/reaper_boss', 2],
-  ['mobs/knight_silver', 2], ['mobs/stone_golem', 2], ['mobs/ronin', 2], ['mobs/huntress', 2], ['mobs/goblin', 2], ['mobs/fantasy_warrior', 2],
+  ['mobs/knight_silver', 2], ['mobs/ronin', 2], ['mobs/huntress', 2], ['mobs/goblin', 2], ['mobs/fantasy_warrior', 2],
   ['mobs/eye', 2], ['mobs/imp', 2], ['mobs/mushroom', 2], ['mobs/witch', 2], ['mobs/samurai', 2], ['mobs/skull_wolf', 2],
   ['chars/tu_linh_thuat_su', 2],
 ];

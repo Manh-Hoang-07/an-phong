@@ -116,6 +116,79 @@
     }
   }
 
-  Object.assign(Art._, { THEMES, tiles });
+  // Nước: thác (cuộn dọc, ghép liền theo chiều dọc) và mặt hồ (cuộn ngang)
+  function water(scene) {
+    make(scene, 'fx_fall', 32, 64, (g) => {
+      rect(g, 0x4fb2ec, 0, 0, 32, 64);
+      for (let i = 0; i < 8; i++) rect(g, i % 2 ? 0x8fd8ff : 0x37a0e0, i * 4 + rnd(i) * 1.5, 0, 2 + rnd(i, 2) * 2, 64, 0.55);
+      for (let i = 0; i < 12; i++) {
+        const x = (i * 2.7 + rnd(i, 5) * 3) % 30, y = rnd(i, 7) * 50, hh = 6 + rnd(i, 9) * 8;
+        rect(g, 0xffffff, x, y, 1.6, Math.min(hh, 63 - y), 0.75);
+      }
+      rect(g, 0x2b86c8, 0, 0, 2, 64, 0.35);
+      rect(g, 0x2b86c8, 30, 0, 2, 64, 0.35);
+    });
+    make(scene, 'fx_water', 32, 32, (g) => {
+      rect(g, 0x3b9de0, 0, 0, 32, 32);
+      rect(g, 0x68c0f4, 0, 0, 32, 5, 0.9);
+      rect(g, 0xffffff, 0, 0, 32, 1.6, 0.8);
+      for (let i = 0; i < 5; i++) rect(g, 0xb9e6ff, (i * 7.3 + 3) % 26, 8 + i * 4.5, 6 + rnd(i) * 5, 1.2, 0.5);
+    });
+  }
+
+  // Đất nâu + cỏ xanh kiểu vách đá ngoài trời (decor.tile = 'earth'): 3 biến thể thân đất để không lặp ô
+  function earth(scene) {
+    const pebble = (g, i, s) => {
+      const x = 4 + rnd(i, s) * 24, y = 4 + rnd(i, s + 3) * 24, r = 1.4 + rnd(i, s + 5) * 2;
+      ell(g, 0x5a3a22, x + 0.6, y + 0.8, r, r * 0.8, 0.55);
+      ell(g, i % 2 ? 0xd8c7a0 : 0xbfae8a, x, y, r, r * 0.8, 0.95);
+      ell(g, 0xffffff, x - r * 0.3, y - r * 0.3, r * 0.4, r * 0.3, 0.35);
+    };
+    for (let v = 0; v < 3; v++) {
+      make(scene, `tile_earth_fill${v}`, 32, 32, (g) => {
+        rect(g, 0x96653a, 0, 0, 32, 32);
+        for (let i = 0; i < 6; i++) { const rx = 4 + rnd(i, v) * 4; ell(g, 0x7a4f2c, rx + rnd(i, v + 9) * (32 - 2 * rx), 4 + rnd(i, v + 2) * 24, rx, rx * 0.55, 0.55); }
+        for (let i = 0; i < 5; i++) { const rx = 3 + rnd(i, v + 20) * 4; ell(g, 0xb57d48, rx + rnd(i, v + 7) * (32 - 2 * rx), 3 + rnd(i, v + 4) * 26, rx, rx * 0.5, 0.5); }
+        rect(g, 0x6b4426, 0, 10 + v * 4, 32, 1.2, 0.18);
+        rect(g, 0xc99a63, 0, 20 + v * 2, 32, 1, 0.14);
+        for (let i = 0; i < 3 + v; i++) pebble(g, i, v * 11);
+      });
+    }
+    // Lõi tháp (cách mép ≥ 3 ô): đá sẫm, mảng đá lớn → có chiều sâu, đỡ cảm giác tường phẳng
+    for (let v = 0; v < 2; v++) {
+      make(scene, `tile_earth_deep${v}`, 32, 32, (g) => {
+        rect(g, 0x5d4333, 0, 0, 32, 32);
+        for (let i = 0; i < 4; i++) { const rx = 6 + rnd(i, v + 30) * 5; ell(g, 0x4a3326, rx + rnd(i, v + 31) * (32 - 2 * rx), 6 + rnd(i, v + 32) * 20, rx, rx * 0.6, 0.7); }
+        for (let i = 0; i < 3; i++) { const rx = 4 + rnd(i, v + 40) * 4; ell(g, 0x735443, rx + rnd(i, v + 41) * (32 - 2 * rx), 4 + rnd(i, v + 42) * 24, rx, rx * 0.5, 0.55); }
+        rect(g, 0x3b281d, 0, 15 + v * 6, 32, 1.4, 0.35);
+        for (let i = 0; i < 2; i++) pebble(g, i, 90 + v * 5);
+      });
+    }
+    make(scene, 'tile_earth_top', 32, 32, (g) => {
+      rect(g, 0x96653a, 0, 0, 32, 32);
+      for (let i = 0; i < 4; i++) ell(g, 0x7a4f2c, 6 + i * 8, 16 + rnd(i) * 12, 5, 3, 0.5);
+      for (let i = 0; i < 3; i++) pebble(g, i, 40);
+      // thảm cỏ dày + rìa cỏ rủ xuống
+      rect(g, 0x3f8f2f, 0, 0, 32, 9);
+      rect(g, 0x5fbf3f, 0, 0, 32, 6);
+      rect(g, 0x9be85f, 0, 0, 32, 2);
+      for (let i = 0; i < 11; i++) {
+        const x = i * 3 + rnd(i) * 1.5, len = 3 + rnd(i, 4) * 5;
+        tri(g, i % 2 ? 0x3f8f2f : 0x2f7a28, x, 7, x + 3, 7, x + 1.5, 7 + len);
+      }
+      for (let i = 0; i < 8; i++) rect(g, 0xc4f27a, i * 4 + rnd(i, 8) * 2, 2 + rnd(i, 3) * 3, 1.4, 1, 0.7);
+    });
+    make(scene, 'plank_earth', 32, 12, (g) => {
+      rrect(g, 0x7a4f2c, 0, 0, 32, 12, 3);
+      rect(g, 0x96653a, 0, 4, 32, 7);
+      rect(g, 0x3f8f2f, 0, 0, 32, 5);
+      rect(g, 0x5fbf3f, 0, 0, 32, 3.4);
+      rect(g, 0x9be85f, 0, 0, 32, 1.2);
+      for (let i = 0; i < 9; i++) tri(g, 0x2f7a28, i * 3.6, 4, i * 3.6 + 3, 4, i * 3.6 + 1.5, 4 + 2 + rnd(i) * 3);
+      pebble(g, 1, 70); pebble(g, 2, 71);
+    });
+  }
+
+  Object.assign(Art._, { THEMES, tiles, water, earth });
   Object.assign(Art, { THEMES });
 })();

@@ -67,7 +67,6 @@ const UI = (() => {
     if (!p) return;
     const st = App.stats;
     const sc = p.school && G.SCHOOLS[p.school];
-    $('h-name').textContent = sc ? sc.name : 'Chưa thức tỉnh';
     $('tb-hidden-chat').classList.toggle('hidden', p.map !== 'lang');
     $('h-level').textContent = p.level;
     $('h-rank').textContent = G.playerRank(p);

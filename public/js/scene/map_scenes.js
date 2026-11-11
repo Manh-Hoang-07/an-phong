@@ -125,6 +125,7 @@ const MapScenes = {
  * Bộ ảnh có sẵn (public/assets/props, MapProps.SETS): cactus, pine, palm, hands (tay trồi từ mộ), stal (nhũ đá rêu treo), vine (dây xoắn ngọc), rock (đá nhỏ).
  * Thêm bộ mới: sửa SETS trong server/tools/props-extract.js rồi chạy lại. */
 const MapDecor = {
+  rung: { tile: 'earth' },
   // Ngoài trời / tuyết / sa mạc / biển
   chan_nui: { tile: 'snow', tree: 'none', ceil: 'none', bits: 'rock', tint: 0xdce8ff },
   dinh_nui: { tile: 'snow', ceil: 'none', bits: 'rock', tint: 0xdce8ff },

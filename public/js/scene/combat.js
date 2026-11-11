@@ -202,19 +202,26 @@ WorldScene.mix(class WorldCombat {
 
   async die() {
     if (this.dead) return;
-    this.endForm();
     this.dead = true;
     App.hp = 0;
-    if (this.sheetId) { this.attackUntil = 0; this.player.setAngle(0); this.player.play(this.charAnim('death')); }
-    else this.player.setTint(0x555555).setAngle(this.facing * -90);
-    this.player.body.setVelocity(0, 0);
+    // Lỗi ở hiệu ứng/ mạng không được làm kẹt nhân vật ở trạng thái "đã chết": luôn hồi sinh về làng ở cuối
+    try {
+      this.endForm();
+      if (this.sheetId) { this.attackUntil = 0; this.player.setAngle(0); this.player.play(this.charAnim('death')); }
+      else this.player.setTint(0x555555).setAngle(this.facing * -90);
+      this.player.body.setVelocity(0, 0);
+    } catch (e) { /* bỏ qua hiệu ứng chết */ }
     UI.banner('Bạn đã bị đánh bại', 1800);
     await new Promise(r => setTimeout(r, 1800));
-    const res = await Net.action('die');
-    if (res.player) { App.hp = res.player.hp; App.mp = res.player.mp; }
+    try {
+      const res = await Net.action('die');
+      if (res && res.player) { App.hp = res.player.hp; App.mp = res.player.mp; }
+    } catch (e) { /* mất mạng: vẫn về làng, server sẽ đồng bộ lại khi lưu */ }
+    if (!(App.hp > 0)) App.hp = Math.max(1, Math.round(App.stats.maxHp * 0.5));
     App.sta = App.stats.maxSta; App.staLocked = false;
-    this.cameras.main.fadeOut(300);
-    this.time.delayedCall(320, () => this.scene.restart({ map: GameData.START_MAP, arrive: 'S' }));
+    const restart = () => { if (this.sys && this.sys.isActive()) this.scene.restart({ map: GameData.START_MAP, arrive: 'S' }); };
+    try { this.cameras.main.fadeOut(300); } catch (e) { /* bỏ qua */ }
+    setTimeout(restart, 340);   // dùng setTimeout thay đồng hồ cảnh: không phụ thuộc hitstop / làm chậm thời gian
   }
 
   slashFx(x, y, sx = 1, sy = 1, flipY = false) {

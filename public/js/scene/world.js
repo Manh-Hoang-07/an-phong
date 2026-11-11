@@ -20,6 +20,9 @@ class WorldScene extends Phaser.Scene {
       else this.load.text('map_' + id, '/shared/maps/' + id + '.txt');
     }
     this.load.on('loaderror', () => { /* thiếu ảnh thì dùng hình vẽ bằng code */ });
+    // Ảnh NPC (nếu có): nạp trước Art.makeAll; make() thấy texture đã có thì không vẽ code đè lên
+    const npcV = window.BUILD ? '?v=' + BUILD.assets : '';
+    for (const id of Object.keys(Art._.NPC_IMAGES || {})) if (!this.textures.exists('npc_' + id)) this.load.image('npc_' + id, `/assets/npcs/${id}.png` + npcV);
     // Chỉ tải hình cần ngay: class của mình + quái trên bản đồ này. Phần còn lại tải ngầm sau khi vào game.
     Sprites.preload(this, Sprites.needed(this.mapId, App.player.school || 'none'));
     for (const look of new Set([...Object.values(GameData.MOUNTS), ...Object.values(GameData.SUMMONS)].map(def => def.look))) PetSprites.preload(this, look);
@@ -90,6 +93,7 @@ class WorldScene extends Phaser.Scene {
     this.buildBackground();
     this.buildTiles();
     this.buildDecorations();
+    this.buildWater();
     this.buildPortals();
     this.buildNpcs();
     this.buildPlayer();
@@ -149,7 +153,12 @@ class WorldScene extends Phaser.Scene {
     this.bgFar.tilePositionX = cam.scrollX * 0.15;
     this.bgNear.tilePositionX = cam.scrollX * 0.35;
     if (this.bgMid && this.bgMid.active) this.bgMid.tilePositionX = cam.scrollX * 0.25;
-    this.bgFar.tilePositionY = 0;
+    if (this.tallLayers) {
+      // Map cao: nền trượt dọc theo camera (kéo giãn 1,3 lần để có dư chỗ trượt)
+      const f = Phaser.Math.Clamp(cam.scrollY / Math.max(1, this.worldH - this.viewH), 0, 1);
+      for (const t of this.tallLayers) t.ts.tilePositionY = t.base + f * t.spare / t.sc;
+    } else this.bgFar.tilePositionY = 0;
+    this.updateWater(time);
 
     this.staminaTick(time, delta);
     this.formTick(time, delta);

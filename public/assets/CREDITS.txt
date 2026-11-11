@@ -75,3 +75,12 @@ Các gói này không kèm file giấy phép riêng: cần kiểm tra lại đi�
   không bán lại / phân phối lại, ghi công không bắt buộc); thay bản LuizMelo cũ; chuyển bằng server/tools/geravolva-spearman.js (11/11/2026).
 - mobs/skeleton_knight (Người Gác Lưu Trữ; thay bộ "reaper" cũ): Engvee, "FREE 2D Sideview Skeleton" (https://engvee.itch.io/free-2d-side-skeleton, x384p; dùng thương mại và chỉnh sửa được,
   không bán lại / cho người dùng tải lại hình, ghi công không bắt buộc); chuyển bằng server/tools/engvee-skeleton.js (11/11/2026).
+- mobs/cyclops (Trùm Tinh Vân; Ogre) và mobs/axe_demon (Hộ Vệ Long Mạch; quỷ cánh dơi): Ansimuz, "Legacy Collection" / Gothicvania (https://ansimuz.itch.io/gothicvania-patreon-collection; dùng thương mại được, ghi công không bắt buộc);
+  chuyển bằng server/tools/import-frames.js rồi làm mịn 2× bằng server/tools/smooth-sprites.js (11/11/2026). Thay bản Elthen / sanctumpixel cũ.
+- mobs/skull_wolf (Sói Đầu Đàn Băng Giá): Free Game Assets, "Free Werewolf Sprite Pixel Characters" (https://free-game-assets.itch.io/free-werewolf-sprite-sheets-pixel-art, bản White_Werewolf; giấy phép craftpix https://craftpix.net/file-licenses/); thay bản Atari Boy.
+- mobs/rock_golem (Thạch Vương; cũng dùng cho Hộ Vệ Mây Đá, đổi màu phủ): Yudemgoy, "Golem Full Sprite" (https://yudemgoy.itch.io/golem-full-sprite; giấy phép không ghi trên trang, dùng cá nhân); thay Admurin Golem và Kronovi Mecha-Stone Golem (bộ stone_golem đã xóa).
+- mobs/ice_beast (Người Tuyết; đổi tên từ ice_sprite): Engvee, "FREE Animated Isometric Ice Beast" (https://engvee.itch.io/animated-isometric-ice-beast, x256p, lấy hướng nhìn ngang 090, bỏ bóng đổ; trang không ghi giấy phép, chỉ dùng cá nhân,
+  thẻ "No generative AI"); chuyển bằng server/tools/import-frames.js (11/11/2026). Thay Elthen Ice Elemental.
+- npcs/lao_su (Hội trưởng Khải ← người rao tin), npcs/tap_hoa (Chủ tiệm Tư ← người bán cá), npcs/thu_kho (Quản kho Bảo ← nông dân): CSAF (Core Systems Asset Factory), "Hearthhands Sampler"
+  (https://csaf.itch.io/hearthhands-sampler; dùng thương mại được, không cần ghi công, không bán lại / phân phối lại gói); cắt + làm mịn bằng server/tools/npc-images.js (11/11/2026).
+- Các NPC còn lại (Vy, Lam Sương, Thợ rèn, Dược sư, Lữ khách, Hệ thống, Bảng nhiệm vụ, Người Gác Màn) vẽ bằng code (public/js/art/characters.js, fx.js), nay vẽ ở độ nét gấp 4.

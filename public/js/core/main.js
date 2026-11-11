@@ -114,7 +114,7 @@
 
     View.calc();
     game = new Phaser.Game({
-      type: Phaser.AUTO,
+      type: new URLSearchParams(location.search).has('canvas') ? Phaser.CANVAS : Phaser.AUTO,   // ?canvas=1 : dùng khi kiểm thử máy không có WebGL
       parent: 'game',
       width: View.pw,
       height: View.ph,

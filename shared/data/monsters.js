@@ -88,7 +88,7 @@
       drops: [['da_cuong_hoa', 0.08], ['da_cuong_hoa_trung', 0.03]],
       gear: [0.04, ['ao_bang_long', 'quan_bang_long', 'giay_bang_long', 'mu_bang_long', 'gang_bang_long', 'dai_bang_long']] },
     nguoi_tuyet: { name: 'Người Tuyết', level: 23, hp: 1410, atk: 340, def: 39, exp: 566, gold: [25, 55],
-      speed: 45, respawn: 8, look: 'troll', sprite: 'ice_sprite', tint: 0xdff2ff,
+      speed: 45, respawn: 8, look: 'troll', sprite: 'ice_beast',
       drops: [['than_co', 0.4, 'c3q4'], ['binh_mau_lon', 0.1], ['da_cuong_hoa_trung', 0.06]],
       gear: [0.05, ['mu_bang_long', 'ao_bang_long', 'gang_bang_long', 'dai_bang_long', 'quan_bang_long', 'giay_bang_long', 'nhan_bang_long', 'day_chuyen_bang_long', 'ngoc_boi_bang_long']] },
     yeu_tinh_bang: { name: 'Yêu Tinh Băng', level: 25, hp: 1550, atk: 380, def: 42, exp: 635, gold: [30, 65],
@@ -114,7 +114,7 @@
 
     // ===== CHƯƠNG 4: TẦNG TRỜI THỨ BẢY (cấp 31–40)
     ho_ve_may: { name: 'Hộ Vệ Mây Đá', level: 31, hp: 1965, atk: 510, def: 52, exp: 847, gold: [30, 70],
-      speed: 55, respawn: 8, look: 'troll', sprite: 'stone_golem',
+      speed: 55, respawn: 8, look: 'troll', sprite: 'rock_golem', tint: 0xb4c6e0,
       drops: [['binh_mau_dac', 0.12], ['da_cuong_hoa_cao', 0.05], ['manh_luu_tru', 0.35, 'c4q4']],
       gear: [0.05, ['mu_luu_tru', 'gang_luu_tru', 'dai_luu_tru', 'ao_luu_tru', 'nhan_luu_tru', 'day_chuyen_luu_tru', 'ngoc_boi_luu_tru']] },
     bo_canh_cung: { name: 'Cua Giáp', level: 33, hp: 2095, atk: 565, def: 55, exp: 919, gold: [35, 75],

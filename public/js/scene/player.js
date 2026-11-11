@@ -22,7 +22,10 @@ WorldScene.mix(class WorldPlayer {
   buildPlayer() {
     let x, y;
     const p = App.player;
-    if (p.x != null && p.y != null && !this.arrive) { x = p.x; y = p.y; }
+    // Tọa độ đã lưu chỉ dùng khi thân nhân vật không chạm khối đất (bố cục bản đồ có thể đã đổi từ lúc lưu)
+    const savedOk = p.x != null && p.y != null && !this.arrive && p.x > 20 && p.x < this.worldW - 20 && p.y > 0 && p.y < this.worldH &&
+      ![-24, -8, 8, 22].some(dy => [-10, 0, 10].some(dx => this.isSolid(Math.floor((p.y + dy) / T), Math.floor((p.x + dx) / T))));
+    if (savedOk) { x = p.x; y = p.y; }
     else {
       const pos = (this.arrive && this.findChar(this.arrive)) || this.findChar('S') || this.findChar('<') || { r: 2, c: 2 };
       x = pos.c * T + T / 2;

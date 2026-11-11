@@ -159,3 +159,64 @@ Game đã làm thế với `trieu_hoi_su` ("làm mịn 2× bằng Scale2x"). Ph�
 ### 6.6 Đã làm mịn (11/11/2026, Cách B)
 Tool `server/tools/smooth-sprites.js` (Scale2x/EPX có dung sai màu): ×4 cho `ice_sprite`, `worm`, `rock_golem`, `cyclops`; ×2 cho 18 bộ kém còn lại và `tu_linh_thuat_su`. Tự sửa `fw, fh, cx, cy, fy` (nhân hệ số), `s` (chia hệ số) và thêm `hd: true` trong `sprites.js`; kích thước hiển thị và hộp va chạm không đổi. Bản gốc lưu ở `assets_raw/pixel_orig/` (chạy lại không làm mịn chồng); hoàn nguyên bằng `git checkout public/assets public/js/art/sprites.js`.
 Chưa thử trong game. Bộ nặng nhất sau làm mịn: `reaper_boss` ≈ 10,7 MB, `tu_linh_thuat_su` ≈ 10 MB giải nén. Cần xem bằng mắt các bộ: lưu ý `hd: true` đổi cách vẽ từ NEAREST (cạnh vuông) sang LINEAR (mượt).
+
+### 6.7 Tìm thêm đợt 4 (11/11/2026) — chưa tải gì
+Đã tìm ở itch.io, OpenGameArt, GameArt2D, GameDevMarket, DeviantArt, CraftPix và trang Engvee.
+| Ứng viên | Thay cho | Giá / giấy phép | Ghi chú |
+|---|---|---|---|
+| [Engvee Medusa](https://engvee.itch.io/free-animated-sidefront-view-medusa) | `witch` (Kẻ Đeo Mặt Nạ Trăng) hoặc quái nữ | Miễn phí; dùng thương mại được | **Có bản nhìn ngang** (SideView_Spritesheets 4,4 MB); 9 hoạt ảnh (idle, attack, cast, hit, death). Cùng tác giả, hợp tông. Model 3D của Artcoding |
+| [Engvee Ice Beast](https://engvee.itch.io/animated-isometric-ice-beast) | `ice_sprite` (Người Tuyết) hoặc `skull_wolf` | Miễn phí (name-your-price); trang không ghi giấy phép, có thẻ "No generative AI" | Quái băng, **16 hướng** (isometric) nên phải lấy hướng quay ngang làm bản nhìn ngang; 18 hoạt ảnh; sheet cao 180/256/320px; **bản nhẹ nhất ≈ 172 MB** |
+| OpenGameArt Golem animations (CC-BY 3.0, hoạt hình), Ice Golem RPG sprite (rất nhỏ), DeviantArt Giant/Golem 144×144 (CC-BY 3.0, **tĩnh**) | golem | CC-BY | Không đạt (hoạt hình / tĩnh / quá nhỏ) |
+| GameArt2D free (zombie, knight, ninja…), Karsiori City (CC0, ~250×158), VISTA najjar320 (CC0, 384×216), OGA Night City 576×324 | – | – | GameArt2D phong cách hoạt hình chibi; nền thành phố đều **nhỏ hơn** nền `bcn`/`brl` hiện tại (1900×600) → loại |
+| Necromancer: Creativekind (đang dùng), Marco Brito (pixel thường), SPRITEARTS (không còn tải được), LPC (3/4, CC-BY-SA) | `tu_linh_thuat_su` | – | Không có bản HD miễn phí |
+| Sói/werewolf: sovdigital Free Wolf (HD nhưng **top-down 8 hướng**), OGA Dog/Wolf (16×16), các gói còn lại có phí | `skull_wolf` | – | Không có sói nhìn ngang HD miễn phí |
+| Samurai/ronin/knight: OGA Samurai Sprites (CC0, 48×48), itch Samurai 32×32… | `samurai`, `ronin` | – | Nhỏ hơn bộ hiện tại → loại |
+
+### 6.8 Đợt tìm + tải một lần (11/11/2026)
+Tìm ở itch.io, OpenGameArt, DeviantArt, CraftPix, GameDevMarket, GameArt2D, trang tác giả (Engvee, CSAF, Penusbmic, Ansimuz). itch.io chặn trang danh mục (403/429) nên chỉ đọc được từng trang gói. **Đã tải tất cả gói miễn phí đạt vào `assets_raw/_dl/`** (thư mục `_dl` không nằm trong git):
+| Thư mục | Gói | Đánh giá sau khi xem mẫu | Dùng cho |
+|---|---|---|---|
+| `golem/` | Yudemgoy "Golem Full Sprite" (6,4 MB, giải nén từ .rar bằng WinRAR) | Vector HD, khung 512×512, đi/đánh×2/chết/idle; **phong cách hoạt hình phẳng** (sáng hơn tông game) | `rock_golem`, `stone_golem` |
+| `werewolf/` | Free Game Assets "Free Werewolf" (3 bản đen/đỏ/trắng; giấy phép craftpix) | Pixel art ~130px, thiết kế tối đẹp; đủ idle/walk/run/attack×3/hurt/dead/jump | `skull_wolf` (Sói Đầu Đàn), `mushroom`? không |
+| `icebeast/` | Engvee Ice Beast (đã trích riêng 16 hướng 090/270 ở 256p, bỏ phần còn lại) | Quái băng 3D hầm hố, **góc nhìn xiên isometric và có bóng đổ xám dính sẵn** → cần xử lý bóng; 18 hoạt ảnh | `ice_sprite` (Người Tuyết) |
+| `medusa/` | Engvee Medusa (SideView 256/320/360p) | Bản nhìn ngang đẹp, 9 hoạt ảnh; **thân trên để trần** (3D) | `witch` — bạn quyết định có dùng không |
+| `dungeonenemy1/` | Penusbmic Dungeon Enemy Pack 1 (Barrel Knight, Slime, Archer) | Pixel art **rất nhỏ** (cung thủ vài chục px) | không dùng |
+| `deepwarren_sampler/` | CSAF Deepwarren Sampler (chuột 160px, dơi 176px; dùng tự do) | Pixel HD, 4 hướng; chuột/dơi — game đã có `ff_rat`, `ff_bat` | dự phòng |
+| `ansimuz/` | Ansimuz Legacy Collection (20 MB, 40+ nhân vật 16-bit, miễn phí thương mại) | Chưa xem cỡ; có demon, hell beast, hell hound, flying-eye-demon, death, ghost, nightmare… | có thể thay `imp`, `eye`, `axe_demon`, `skull_wolf` nếu đủ lớn |
+Đã bỏ: Wraith của CloneWards (ảnh có nền/nhãn, 8 hướng top-down), Deepwarren Side bản đầy đủ (có phí $8,99; bản demo xương 224px không có trên trang tải).
+
+### 6.9 Tải hết các gói miễn phí còn lại (11/11/2026)
+Đã tải vào `assets_raw/_dl/<tên>/` (giải nén ở `x/`; thư mục không nằm trong git). Bỏ qua file >60 MB (Sov Wolf 409 MB top-down; frames HQ của Engvee Crab) và xóa gói Engvee Crab (game đã có `ff_crab`).
+| Thư mục | Nội dung thực tế | Đánh giá |
+|---|---|---|
+| `ansimuz/` (đã tải trước, nay đã khảo sát cỡ) | Gothicvania: **Ogre 80–240px**, **demon 96–220px**, Hell-Beast ~160px, Terrible Knight, Death 96px, Nightmare 96px, Fire-Skull 112px, Ghost 80px, WereWolf 76px, Hell-Hound 48px, flying-eye-demon 48px, mutant-toad 64px… | **Nguồn tốt nhất còn lại**, pixel 16-bit lớn hơn nhiều bộ hiện tại (ví dụ `imp` 35px, `cyclops` 45px). Hợp: Ogre → `cyclops`; demon → `axe_demon`/`imp`; Terrible Knight → `knight_silver`/`hero_knight`; Death → `reaper_boss`; Hell-Beast/Hell-Hound → `skull_wolf`. Dùng thương mại được (trang ghi) |
+| `marco_necromancer/` | Necromancer 1024×1536/ô, **8 hướng kiểu RPG top-down, nhìn giống AI vẽ** (pixel nhòe) | Loại (không nhìn ngang) |
+| `penusbmic_skeleton/`, `penusbmic_monsterpack1/`, `penusbmic_dark_hero/` | Pixel 46–48px, vài sheet 384px của Monster Pack I | Nhỏ; Monster Pack I đã là nguồn `tooth_walker` |
+| `oliveiramiro_enemies/` | 7 quái 64×64 (slime, minotaur, mage, golem, goblin, winged eye, elf) | Cỡ ngang bộ hiện tại, không cải thiện |
+| `monopixel_forest/`, `skyflakes_monster/`, `fga_enemies/`, `karsiori_city/`, `najjar_vista/`, `tehemlo_ghost/`, `originum_wraith/`, `kibbitz_knight/`, `creativekind_necro/`, `deadpixelsz_wolf/` | 48–128px hoặc nền 384×216 / 250×158; ghost 96×256 | Không đạt hoặc nhỏ hơn nền `bcn`/`brl` |
+
+### 6.10 Đã gắn (11/11/2026) — Ansimuz + Werewolf + Golem
+Tool `server/tools/import-frames.js` (tự thay dòng cấu hình trong `sprites.js`, căn đáy-giữa; chạy lại được). Đã thay: `cyclops` ← Ogre (Ansimuz, ×2 làm mịn), `axe_demon` ← Demon (Ansimuz, ×2), `skull_wolf` ← Werewolf trắng (×2), `rock_golem` ← Golem Yudemgoy (vector HD, thu 0,75×). `stone_golem` (Hộ Vệ Mây Đá) **dùng chung hình `rock_golem` với màu phủ xanh xám** (`tint: 0xb4c6e0` trong `monsters.js`); bộ `stone_golem` cũ đã xóa. Ogre / Demon thiếu hit và chết → dùng khung đứng + `fakeDeath: true` (game tự cho ngã); demon cỡ khung lớn (358×322 sau làm mịn, ≈14 MB giải nén). Giấy phép Golem không ghi trên trang (dùng cá nhân). **Chưa thử trong game.**
+**Còn lại chưa thay:** `ice_sprite` (Ice Beast đã tải nhưng cần xử lý bóng/góc nhìn), `worm`, và các quái kém khác; Necromancer; 3 map nền pixel.
+
+### 6.11 Đợt cuối (11/11/2026): Ice Beast + tìm thêm
+- **`ice_sprite` → `ice_beast`** (đổi tên vì hình mới là quái băng 3D, không còn là "ice sprite"): Engvee Ice Beast, hướng nhìn ngang 090 ở 256p, bỏ bóng đổ xám bằng lọc pixel gần đen bán trong suốt; cao ≈ 78px logic. Đổi trong `sprites.js`, `monsters.js` (Người Tuyết, bỏ `tint` cũ), `smooth-sprites.js`, `CREDITS.txt`; bộ `ice_sprite` cũ đã xóa. Trang gói không ghi giấy phép → chỉ dùng cá nhân.
+- **Đã tìm thêm, không có gói đạt cho:** `mimic`, `huntress`, `goblin`, `mushroom`, `nightborne`, `imp`, `witch`, `worm`, `hero_knight`, `knight_silver`, `ronin`, `samurai`, `reaper_boss`, `tooth_walker`, `eye`, `fantasy_warrior`. Các gói tìm được hoặc có phí (Elthen, Creativekind Fire Elemental…), hoặc nhỏ (32–70px), hoặc phong cách hoạt hình vector (OpenGameArt Worm Bevouliin, Golem, Knights; Free Game Assets Knight). TTMini Wizard (128px) có phí 3,49 đô. Engvee "Free sideview collection" chỉ có 5 nhân vật đã dùng (Knight Girl/Man, Thief, Insect, Fox). Các bộ này giữ bản đã làm mịn (Cách B).
+- Kiểm tra tên ↔ hình: đã xem `worm`, `tooth_walker`, `imp`, `witch`, `goblin`, `eye`, `cyclops` — không có bộ nào sai tên rõ ràng ngoài `ice_sprite`.
+
+### 6.12 NPC (11/11/2026)
+**Hiện trạng:** 11 NPC trong `shared/data/npcs.js`; **toàn bộ vẽ bằng code** (Phaser Graphics) rồi hiển thị ở 40×60 px logic (texture 80×120, `HD_KEYS` trong `art.js`) → phóng ~1,5× lên màn hình nên mờ. 5 NPC dùng chung bộ vẽ "thợ săn" trong `characters.js` (`lao_su`, `tho_ren`, `ba_thuoc`, `tap_hoa`, `thu_kho`); 5 vẽ riêng trong `fx.js` (`lu_khach`, `he_thong`, `vy`, `lam_suong`, `bang_nv`); `npc_an` (Người Gác Màn, ẩn) vẽ trong `map.js`. NPC chỉ đứng yên + nhún nhẹ (không cần hoạt ảnh).
+**Đã tải vào `assets_raw/_dl/npc/`:**
+| Gói | Đánh giá | Dùng cho |
+|---|---|---|
+| **CSAF Hearthhands Sampler** (1,8 MB; dùng tự do, không ghi công) | Pixel art thực tế, **nhìn ngang, ô 200×200, thân cao ≈110px**, 4 hướng; 6 dân làng: nông dân, người bán cá (mũ đỏ + xô), người rao tin (áo dài đỏ, mũ ba góc), cô bé, người cào muối, bí ngô | Tốt nhất: `lao_su` (người rao tin áo đỏ), `tap_hoa` (người bán cá), `thu_kho` (nông dân / cào muối). Không có thợ rèn, nữ, thuốc sư |
+| Free Game Assets Free NPC Pack (112 MB: Blacksmith, Jeweler, Sage, Warlord) | Vector **chibi hoạt hình** 700×700 | Lệch tông → loại |
+| Nightsparrow VN Sprite Set (shopkeeper nữ, merchant, maid; CC-BY 4.0, ghi công bắt buộc) | Nửa người kiểu anime visual novel 583×1100 | Không hợp đứng trên map → loại |
+| Penzilla Hooded Protagonist, FartFish Hooded Figure | Pixel nhỏ, có người trùm đầu | Có thể cho `lu_khach` (chưa xem kỹ) |
+| Franuka, Tiny Questers, Larchrow, Kiddolink, Fexu Blacksmith | 16–64px top-down hoặc chân dung phác họa | Nhỏ hơn bản vẽ code hiện tại → loại |
+**Chưa có ảnh cho:** `tho_ren` (thợ rèn), `ba_thuoc` (nữ), `vy`, `lam_suong`; `he_thong`, `bang_nv`, `npc_an` là vật thể / hiệu ứng nên giữ vẽ code (hoặc làm lại bằng code nét hơn).
+
+### 6.13 NPC đã làm (11/11/2026)
+- **Ảnh thật** cho `lao_su` (người rao tin áo đỏ), `tap_hoa` (người bán cá), `thu_kho` (nông dân), từ CSAF Hearthhands (`server/tools/npc-images.js` → `public/assets/npcs/<id>.png`, làm mịn Scale2x). Nối vào game: `world.js` nạp ảnh trước `Art.makeAll`; `Art.registerImage` (art.js) khai báo chiều cao hiển thị (`NPC_IMAGES` trong characters.js, 62–64px logic) để `artImage` thu về đúng cỡ. Ảnh không tải được thì tự quay về hình vẽ code.
+- **Vẽ lại độ nét cao** cho NPC còn lại: mọi texture `npc_*` vẽ ở hệ số 4 (`NPC_HD = 4` trong art.js; trước là 2) → đã kiểm tra bằng trang thử Phaser: nét hẳn. Người Gác Màn (`npc_an`) trước là hình chữ nhật + biểu tượng ☠; nay là bóng áo choàng tím trùm đầu vẽ code (`npc_npc_an` trong fx.js), lơ lửng nhẹ (map.js).
+- Chưa chạy game thật (máy chưa kết nối được PostgreSQL) — đã kiểm tra bằng trang thử riêng, không có lỗi JS.

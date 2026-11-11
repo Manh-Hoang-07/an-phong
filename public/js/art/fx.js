@@ -5,7 +5,7 @@
  */
 const Fx = (() => {
   function makeAll(scene) {
-    const { make, drawHunter, ell, rect, rrect, poly, tri } = Art;
+    const { make, drawHunter, ell, rect, rrect, poly, tri, line } = Art;
 
     // Lữ khách bí ẩn: áo choàng tím sẫm, mũ trùm, mắt phát sáng
     make(scene, 'npc_lu_khach', 40, 60, (g) => {
@@ -147,6 +147,26 @@ const Fx = (() => {
       rect(g, 0xe8e2d0, 7, 13, 10, 12); rect(g, 0xfff3c4, 20, 12, 10, 14); rect(g, 0xe8e2d0, 33, 14, 9, 11);
       rect(g, 0x9aa3b8, 9, 16, 6, 1); rect(g, 0x9aa3b8, 22, 16, 6, 1); rect(g, 0x9aa3b8, 35, 17, 5, 1);
       ell(g, 0xff5a4e, 12, 13, 1.4, 1.4); ell(g, 0xff5a4e, 25, 12, 1.4, 1.4); ell(g, 0xff5a4e, 37, 14, 1.4, 1.4);
+    });
+
+    // Người Gác Màn (NPC ẩn): bóng áo choàng tím trùm đầu, mắt sáng, đuôi áo tan thành khói
+    make(scene, 'npc_npc_an', 40, 60, (g) => {
+      ell(g, 0xb46bff, 20, 30, 19, 28, 0.12);
+      ell(g, 0xb46bff, 20, 30, 14, 22, 0.1);
+      // thân áo choàng loe xuống, mép dưới rách như khói
+      poly(g, 0x1c1228, [[20, 6], [30, 14], [34, 34], [37, 54], [31, 51], [27, 57], [21, 52], [16, 58], [11, 51], [5, 55], [7, 34], [10, 14]]);
+      poly(g, 0x2c1c40, [[20, 8], [27, 15], [30, 34], [32, 50], [27, 47], [21, 50], [15, 47], [9, 50], [11, 34], [13, 15]], 0.95);
+      // mũ trùm: bóng tối bên trong + viền sáng
+      ell(g, 0x120a1c, 20, 17, 8.2, 9.2);
+      g.lineStyle(1.2, 0xb46bff, 0.85); g.strokeEllipse(20, 17, 16.4, 18.4);
+      // mắt phát sáng
+      ell(g, 0xe9d4ff, 16.6, 17, 1.7, 1.2); ell(g, 0xe9d4ff, 23.4, 17, 1.7, 1.2);
+      ell(g, 0xb46bff, 16.6, 17, 3, 2.2, 0.35); ell(g, 0xb46bff, 23.4, 17, 3, 2.2, 0.35);
+      // tay áo giơ ra + quả cầu sáng
+      poly(g, 0x2c1c40, [[28, 26], [34, 30], [33, 34], [27, 31]]);
+      ell(g, 0xe1c6ff, 35, 30, 2.6, 2.6, 0.95); ell(g, 0xb46bff, 35, 30, 5, 5, 0.3);
+      // nếp áo
+      line(g, 0x120a1c, 20, 24, 20, 52, 0.8, 0.5); line(g, 0x120a1c, 14, 28, 12, 50, 0.7, 0.4); line(g, 0x120a1c, 26, 28, 28, 50, 0.7, 0.4);
     });
 
     // Vòng sóng nổ dùng chung

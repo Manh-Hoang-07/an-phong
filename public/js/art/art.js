@@ -19,6 +19,7 @@ const Art = (() => {
   // Ô đất và chi tiết pixel nhỏ giữ 1×; nền vẽ ở 2× để rõ trên màn hình độ phân giải cao.
   const HD = 2;
   const BG_HD = 2;
+  const NPC_HD = 4;   // NPC vẽ bằng code ở độ nét gấp 4 (texture 160×240) cho đỡ mờ khi phóng lên màn hình
   const HD_KEYS = /^(npc_|d_(shop|lamp|tree|dtree|shroom|crystal|redcrystal|stalactite|portal))/;
   const SMOOTH_KEYS = /^(bg_|fx_vignette$|fx_grade$|shadow$)/;
   const textureScale = new Map();
@@ -29,7 +30,7 @@ const Art = (() => {
     if (scene.textures.exists(key)) return;
     if (onlyTheme) { const m = THEME_BG.exec(key); if (m && m[1] !== onlyTheme) return; }
     const g = scene.make.graphics({ x: 0, y: 0, add: false });
-    const scale = HD_KEYS.test(key) ? HD : (/^bg_/.test(key) || key === 'fx_vignette' ? BG_HD : 1);
+    const scale = /^npc_/.test(key) ? NPC_HD : HD_KEYS.test(key) ? HD : (/^bg_/.test(key) || key === 'fx_vignette' ? BG_HD : 1);
     if (scale > 1) g.scaleCanvas(scale, scale);
     draw(g);
     g.generateTexture(key, Math.round(w * scale), Math.round(h * scale));
@@ -38,6 +39,14 @@ const Art = (() => {
     if (scale > 1 || SMOOTH_KEYS.test(key)) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
   }
   const hdScale = (key) => 1 / (textureScale.get(key) || 1);
+  // Ảnh có sẵn (không vẽ bằng code) dùng làm hình NPC: khai báo chiều cao hiển thị (px logic) để artImage thu về đúng cỡ
+  function registerImage(scene, key, logicH) {
+    if (!scene.textures.exists(key) || textureScale.has(key)) return;
+    const tex = scene.textures.get(key), src = tex.getSourceImage();
+    if (!src || !src.height) return;
+    textureScale.set(key, src.height / logicH);
+    tex.setFilter(Phaser.Textures.FilterMode.LINEAR);
+  }
   const ell = (g, c, x, y, rx, ry, a = 1) => { g.fillStyle(c, a); g.fillEllipse(x, y, rx * 2, ry * 2); };
   const rect = (g, c, x, y, w, h, a = 1) => { g.fillStyle(c, a); g.fillRect(x, y, w, h); };
   const rrect = (g, c, x, y, w, h, r, a = 1) => { g.fillStyle(c, a); g.fillRoundedRect(x, y, w, h, r); };
@@ -57,11 +66,11 @@ const Art = (() => {
     onlyTheme = theme || null;
     const p = lib;
     p.hunters(scene); p.weapons(scene); p.effects(scene); p.monsters(scene); p.npcs(scene);
-    p.tiles(scene); p.decorations(scene); p.backgrounds(scene);
+    p.tiles(scene); p.water(scene); p.earth(scene); p.decorations(scene); p.backgrounds(scene);
   }
 
   // Dùng nội bộ cho các file public/js/art/*.js
   const lib = { OUT, shade, light, make, ell, rect, rrect, poly, line, bone, tri, rnd, makeAll };
   // THEMES, HUNTERS, drawHunter: gắn trong art/terrain.js và art/characters.js
-  return { makeAll, make, hdScale, ell, rect, rrect, poly, line, tri, _: lib };
+  return { makeAll, make, hdScale, registerImage, ell, rect, rrect, poly, line, tri, _: lib };
 })();

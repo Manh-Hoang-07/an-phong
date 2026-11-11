@@ -256,13 +256,18 @@
     },
   };
 
+  // NPC có ảnh riêng (public/assets/npcs/<id>.png, nguồn CSAF Hearthhands, xem server/tools/npc-images.js): chiều cao hiển thị (px logic).
+  // Không tải được ảnh thì make() bên dưới vẽ lại bằng code như cũ.
+  const NPC_IMAGES = { lao_su: 62, tap_hoa: 62, thu_kho: 64 };
+
   function npcs(scene) {
     for (const id in NPCS) {
       const pal = NPCS[id];
       make(scene, 'npc_' + id, 40, 60, (g) => drawHunter(g, pal, 'idle', { prop: pal.prop }));
     }
+    for (const id in NPC_IMAGES) Art.registerImage(scene, 'npc_' + id, NPC_IMAGES[id]);
   }
 
-  Object.assign(Art._, { HUNTERS, drawHunter, hunters, NPCS, npcs });
+  Object.assign(Art._, { HUNTERS, drawHunter, hunters, NPCS, NPC_IMAGES, npcs });
   Object.assign(Art, { HUNTERS, drawHunter });
 })();

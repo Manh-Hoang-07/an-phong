@@ -111,6 +111,8 @@ WorldScene.mix(class WorldMap {
       }
       return key;
     };
+    const tall = this.rows > 20;   // map nhiều tầng: nền trượt dọc
+    this.tallLayers = tall ? [] : null;
     const bgTile = (layer, depth) => {
       const key = layerKey(layer);
       if (key) {
@@ -120,8 +122,10 @@ WorldScene.mix(class WorldMap {
           sc = Math.max(sc, w / (src.width / (d.mirror ? 2 : 1)));
           ty = Math.max(0, (src.height - h / sc) / 2);
         }
+        if (tall) { sc = Math.max(sc, h * 1.3 / src.height); ty = 0; }
         const ts = this.add.tileSprite(0, 0, w, h, key).setOrigin(0).setScrollFactor(0).setDepth(depth).setTileScale(sc);
         ts.tilePositionY = ty;
+        if (tall) this.tallLayers.push({ ts, sc, base: 0, spare: Math.max(0, src.height * sc - h) });
         return ts;
       }
       return this.add.tileSprite(0, 0, w, h, `bg_${this.theme}_${layer}`)
@@ -203,6 +207,7 @@ WorldScene.mix(class WorldMap {
   tileKeys() {
     const th = { top: `tile_${this.theme}_top`, fill: `tile_${this.theme}_fill`, plank: `plank_${this.theme}` };
     const v = this.look.decor && this.look.decor.tile, def = v && MapLooks.TILE_VARIANTS[v];
+    if (v === 'earth' && this.textures.exists('tile_earth_top')) return { top: 'tile_earth_top', fill: 'tile_earth_fill0', fills: ['tile_earth_fill0', 'tile_earth_fill1', 'tile_earth_fill2'], deeps: ['tile_earth_deep0', 'tile_earth_deep1'], plank: 'plank_earth' };
     if (!def) return th;
     const out = {};
     for (const slot of ['top', 'fill', 'plank']) {
@@ -218,11 +223,86 @@ WorldScene.mix(class WorldMap {
     return out;
   }
 
+  // Biến thể ô đất có viền theo hàng xóm (tạo một lần từ ô gốc bằng canvas, lưu cache theo khóa)
+  edgeTileKey(baseKey, mask, R, soft) {
+    return mask ? this.edgeOutline(baseKey, mask, R, soft) : baseKey;
+  }
+  edgeOutline(baseKey, mask, R, soft) {
+    const key = `${baseKey}~e${mask}${soft ? 's' : ''}`;
+    if (this.textures.exists(key)) return key;
+    if (!this.textures.exists(baseKey)) return baseKey;
+    try {
+      const tex = this.textures.get(baseKey), src = tex.getSourceImage(), w = src.width, h = src.height, s = w / 32;
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const g = cv.getContext('2d');
+      g.drawImage(src, 0, 0);
+      const r = R * s, N = mask & 1, E = mask & 2, S = mask & 4, W = mask & 8;
+      const cTL = N && W, cTR = N && E, cBR = S && E, cBL = S && W;
+      // Cắt bo góc
+      g.globalCompositeOperation = 'destination-out';
+      g.beginPath();
+      if (cTL) { g.moveTo(0, 0); g.lineTo(r, 0); g.arc(r, r, r, 1.5 * Math.PI, Math.PI, true); g.closePath(); }
+      if (cTR) { g.moveTo(w, 0); g.lineTo(w - r, 0); g.arc(w - r, r, r, 1.5 * Math.PI, 0, false); g.closePath(); }
+      if (cBR) { g.moveTo(w, h); g.lineTo(w, h - r); g.arc(w - r, h - r, r, 0, 0.5 * Math.PI, false); g.closePath(); }
+      if (cBL) { g.moveTo(0, h); g.lineTo(r, h); g.arc(r, h - r, r, 0.5 * Math.PI, Math.PI, false); g.closePath(); }
+      g.fill();
+      // Đổ bóng/sáng rồi viền tối (chỉ vẽ lên phần còn lại của ô)
+      g.globalCompositeOperation = 'source-atop';
+      if (S && !soft) { const gr = g.createLinearGradient(0, h - 9 * s, 0, h); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(10,6,2,0.35)'); g.fillStyle = gr; g.fillRect(0, h - 9 * s, w, 9 * s); }
+      if (W && !soft) { g.fillStyle = 'rgba(255,255,255,0.14)'; g.fillRect(2 * s, 0, 2 * s, h); }
+      if (E && !soft) { g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(w - 5 * s, 0, 3 * s, h); }
+      g.strokeStyle = soft ? 'rgba(40,24,14,0.6)' : 'rgba(28,18,10,0.85)'; g.lineWidth = (soft ? 4 : 3) * s; g.lineCap = 'butt';
+      g.beginPath();
+      if (N) { g.moveTo(cTL ? r : 0, 0); g.lineTo(cTR ? w - r : w, 0); }
+      if (E) { g.moveTo(w, cTR ? r : 0); g.lineTo(w, cBR ? h - r : h); }
+      if (S) { g.moveTo(cBL ? r : 0, h); g.lineTo(cBR ? w - r : w, h); }
+      if (W) { g.moveTo(0, cTL ? r : 0); g.lineTo(0, cBL ? h - r : h); }
+      if (cTL) { g.moveTo(0, r); g.arc(r, r, r, Math.PI, 1.5 * Math.PI); }
+      if (cTR) { g.moveTo(w - r, 0); g.arc(w - r, r, r, 1.5 * Math.PI, 2 * Math.PI); }
+      if (cBR) { g.moveTo(w, h - r); g.arc(w - r, h - r, r, 0, 0.5 * Math.PI); }
+      if (cBL) { g.moveTo(r, h); g.arc(r, h - r, r, 0.5 * Math.PI, Math.PI); }
+      g.stroke();
+      this.textures.addCanvas(key, cv);
+      this.textures.get(key).setFilter(tex.source[0].scaleMode);
+      return key;
+    } catch (e) { return baseKey; }
+  }
+
+  // Thân đất: ô sâu trong lõi (4 hướng cách mép ≥ 3 ô) dùng đá sẫm, ô gần mép dùng đất sáng; xen kẽ biến thể
+  fillKey(tk, r, k) {
+    if (!tk.fills) return tk.fill;
+    return tk.fills[(k * 7 + r * 13) % tk.fills.length];
+  }
+  // Lõi sâu: mọi ô trong bán kính 2 đều là đất đặc
+  isDeep(r, k) {
+    for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) if (this.cell(r + dr, k + dc) !== '#') return false;
+    return true;
+  }
+
+  // Lõi sâu cho theme không phải đất nâu: ô thân tối hơn kèm vài mảng đá lớn
+  deepTile(fillKey, v) {
+    const key = `${fillKey}~deep${v}`;
+    if (this.textures.exists(key)) return key;
+    if (!this.textures.exists(fillKey)) return fillKey;
+    try {
+      const tex = this.textures.get(fillKey), src = tex.getSourceImage(), w = src.width, h = src.height;
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const g = cv.getContext('2d');
+      g.drawImage(src, 0, 0);
+      g.fillStyle = 'rgba(8,6,14,0.42)'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 3; i++) { g.fillStyle = 'rgba(0,0,0,0.16)'; g.beginPath(); g.ellipse(((i * 11 + v * 7) % 24 + 4) * w / 32, ((i * 13 + v * 5) % 22 + 5) * h / 32, 7 * w / 32, 4 * h / 32, 0, 0, 7); g.fill(); }
+      this.textures.addCanvas(key, cv);
+      this.textures.get(key).setFilter(tex.source[0].scaleMode);
+      return key;
+    } catch (e) { return fillKey; }
+  }
+
   buildTiles() {
     this.tileLayer = this.chunkLayer(-2);
     this.solids = this.physics.add.staticGroup();
     this.platforms = this.physics.add.staticGroup();
     const tk = this.tileKeys();
+    if (!tk.deeps && this.rows > 20) tk.deeps = [this.deepTile(tk.fill, 0), this.deepTile(tk.fill, 1)];
     const addBody = (group, x, y, w, h, oneWay) => {
       const z = this.add.zone(x + w / 2, y + h / 2, w, h);
       this.physics.add.existing(z, true);
@@ -241,9 +321,16 @@ WorldScene.mix(class WorldMap {
         for (let k = c; k <= e; k++) {
           if (ch === '#') {
             const top = !this.isSolid(r - 1, k);
-            this.stampTile(top ? tk.top : tk.fill, k * T, r * T);
+            // Mặt lộ ra ngoài (bit: 1 trên, 2 phải, 4 dưới, 8 trái) → bo góc + viền tối kiểu vách đất
+            const mask = (top ? 1 : 0) | (this.isSolid(r, k + 1) ? 0 : 2) | (this.isSolid(r + 1, k) ? 0 : 4) | (this.isSolid(r, k - 1) ? 0 : 8);
+            this.stampTile(this.edgeTileKey(top ? tk.top : this.fillKey(tk, r, k), mask, 10), k * T, r * T);
+            if (tk.deeps && this.rows > 20 && this.isDeep(r, k)) {   // lõi đá sẫm đè lên, bo góc mềm
+              const dm = (this.isDeep(r - 1, k) ? 0 : 1) | (this.isDeep(r, k + 1) ? 0 : 2) | (this.isDeep(r + 1, k) ? 0 : 4) | (this.isDeep(r, k - 1) ? 0 : 8);
+              this.stampTile(this.edgeTileKey(tk.deeps[(k * 5 + r * 3) % tk.deeps.length], dm, 12, true), k * T, r * T);
+            }
           } else {
-            this.stampTile(tk.plank, k * T, r * T);
+            const mask = 1 | 4 | (this.cell(r, k + 1) === '=' ? 0 : 2) | (this.cell(r, k - 1) === '=' ? 0 : 8);
+            this.stampTile(this.edgeTileKey(tk.plank, mask, 4), k * T, r * T);
           }
         }
         c = e + 1;
@@ -344,6 +431,44 @@ WorldScene.mix(class WorldMap {
     this.flushLayer(bitLayer);
   }
 
+  // Thác nước '%' (rơi từ trên xuống, nằm sau ô đất) và hồ nước '"' (phủ mờ lên nhân vật như đang lội)
+  buildWater() {
+    this.falls = []; this.pools = [];
+    if (!this.textures.exists('fx_fall')) return;
+    // Bục '=' nằm giữa hai đoạn thác thì nước vẫn chảy liền phía sau bục
+    const isFall = (r, c) => { const ch = this.grid[r]?.[c]; return ch === '%' || (ch === '=' && this.grid[r - 1]?.[c] === '%' && this.grid[r + 1]?.[c] === '%'); };
+    for (let c = 0; c < this.cols; c++) {
+      let r = 0;
+      while (r < this.rows) {
+        if (!isFall(r, c)) { r++; continue; }
+        let e = r;
+        while (e + 1 < this.rows && isFall(e + 1, c)) e++;
+        this.falls.push(this.add.tileSprite(c * T, r * T, T, (e - r + 1) * T, 'fx_fall').setOrigin(0).setDepth(-3).setAlpha(0.88));
+        // bọt nước ở chân thác
+        const fx = c * T + T / 2, fy = (e + 1) * T;
+        if (!Quality.low && c % 2 === 0) {
+          const foam = this.add.image(fx, fy - 4, 'mote').setTint(0xffffff).setBlendMode(Phaser.BlendModes.ADD).setDepth(4.3).setScale(1.6).setAlpha(0.5);
+          this.tweens.add({ targets: foam, scale: 2.6, alpha: 0.1, y: fy - 16, duration: 900 + (c % 5) * 120, repeat: -1, delay: (c % 7) * 130 });
+        }
+        r = e + 1;
+      }
+    }
+    for (let r = 0; r < this.rows; r++) {
+      let c = 0;
+      while (c < this.cols) {
+        if (this.grid[r][c] !== '"') { c++; continue; }
+        let e = c;
+        while (e + 1 < this.cols && this.grid[r][e + 1] === '"') e++;
+        this.pools.push(this.add.tileSprite(c * T, r * T, (e - c + 1) * T, T, 'fx_water').setOrigin(0).setDepth(4.2).setAlpha(this.grid[r - 1]?.[c] === '"' ? 0.4 : 0.6));
+        c = e + 1;
+      }
+    }
+  }
+  updateWater(time) {
+    for (const f of this.falls || []) f.tilePositionY = -time * 0.22;
+    for (const p of this.pools || []) p.tilePositionX = time * 0.015;
+  }
+
   // Bản đồ có gate chỉ dựng một cổng gom nhiều điểm đến; bản đồ thường dựng cổng
   // ở từng ký hiệu để giữ riêng lối vào và lối ra.
   buildPortals() {
@@ -402,10 +527,10 @@ WorldScene.mix(class WorldMap {
     const x = Phaser.Math.Clamp((this.player?.x || this.worldW * 0.5) + 100, 50, this.worldW - 50);
     const y = this.groundY(Math.max(0, Math.floor((this.player?.y || 0) / T)), Math.floor(x / T));
     const sprite = this.add.container(x, y - 28).setDepth(5);
-    const g = this.add.graphics(); g.fillStyle(0x251a35, .95).fillRoundedRect(-18,-27,36,48,10).lineStyle(2,0xb46bff,.9).strokeRoundedRect(-18,-27,36,48,10);
-    const face = this.add.text(0,-6,'☠',{fontSize:'21px'}).setOrigin(.5);
+    const body = this.add.image(0, 28, 'npc_npc_an').setOrigin(0.5, 1).setScale(Art.hdScale('npc_npc_an'));   // chân ở gốc container +28 = mặt đất
+    this.tweens.add({ targets: body, y: 24, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });   // lơ lửng nhẹ
     const label = this.add.text(0,-52,'Người Gác Màn',{fontSize:'12px',color:'#e1c6ff',stroke:'#000',strokeThickness:3}).setOrigin(.5);
-    sprite.add([g,face,label]).setSize(44,62).setInteractive(new Phaser.Geom.Rectangle(-22,-58,44,62),Phaser.Geom.Rectangle.Contains).on('pointerdown',()=>this.talkTo('npc_an',x));
+    sprite.add([body,label]).setSize(44,62).setInteractive(new Phaser.Geom.Rectangle(-22,-58,44,62),Phaser.Geom.Rectangle.Contains).on('pointerdown',()=>this.talkTo('npc_an',x));
     this.hiddenNpcSprite=sprite; this.npcs.push({id:'npc_an',x,y,sprite,label,mark:{setVisible(){}},visible:true});
   }
 
