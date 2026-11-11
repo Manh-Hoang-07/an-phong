@@ -831,7 +831,7 @@ body.touch #tbtns .tb-aws { right: 137px; bottom: 235px; width: 50px; height: 50
 .sk.formlock .ico, .tb.formlock .ico { opacity: .45; }
 
 /* Bản đồ thế giới (chỉ xem) */
-.wm-svg { width: 100%; height: auto; display: block; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.wm-svg { width: 100%; max-width: min(100%, 72vh); aspect-ratio: 1; height: auto; margin: 0 auto; display: block; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
 .wm-node { cursor: pointer; }
 .wm-node:hover circle:first-of-type { filter: brightness(1.15); }
 .wm-lbl { fill: #3b2610; font-weight: 700; paint-order: stroke; stroke: #f3e2b8; stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }

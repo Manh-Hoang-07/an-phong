@@ -84,8 +84,7 @@
   }
 
   // ---------------------------------------------------------------- Cổng dịch chuyển
-  // Bản đồ nhánh có thể khai báo gate để gom nhiều điểm đến tại một cổng.
-  // Các bản đồ tuyến tính giữ từng ký hiệu portal riêng ở hai đầu.
+  // Bản đồ có nhiều lối ra khai báo gate: các lối ra gộp thành một cổng. Lối vào '<' vẫn là cổng riêng.
   // Helper này trả vị trí cổng gom hoặc cổng đầu tiên làm điểm xuất hiện mặc định.
   function gateOf(mapId) {
     const m = G.MAPS[mapId];
@@ -104,9 +103,13 @@
     return { ok: false, reason: q ? `Cần hoàn thành nhiệm vụ "${q.name}"` : 'Chưa mở' };
   }
   // Danh sách điểm đến của cổng trong bản đồ: [{ ch, to, name, ok, reason }]
-  function gateDestinations(player, mapId) {
+  // ch bỏ trống hoặc là cổng gom: các lối ra gộp lại (mọi cổng trừ '<' lối vào); ch khác: đúng điểm đến của cổng đó.
+  function gateDestinations(player, mapId, ch) {
     const m = G.MAPS[mapId];
-    return Object.keys((m && m.portals) || {}).map(ch => ({ ch, to: m.portals[ch].to, name: G.MAPS[m.portals[ch].to].name, ...portalStatus(player, mapId, ch) }));
+    let keys = Object.keys((m && m.portals) || {});
+    if (m && m.gate && (ch === undefined || ch === m.gate)) keys = keys.filter(k => k !== '<');
+    else if (ch !== undefined) keys = keys.filter(k => k === ch);
+    return keys.map(k => ({ ch: k, to: m.portals[k].to, name: G.MAPS[m.portals[k].to].name, ...portalStatus(player, mapId, k) }));
   }
 
   // ---------------------------------------------------------------- Danh sách toàn bộ bản đồ (bảng Map)

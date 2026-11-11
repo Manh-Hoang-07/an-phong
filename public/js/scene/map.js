@@ -472,7 +472,7 @@ WorldScene.mix(class WorldMap {
   // Bản đồ có gate chỉ dựng một cổng gom nhiều điểm đến; bản đồ thường dựng cổng
   // ở từng ký hiệu để giữ riêng lối vào và lối ra.
   buildPortals() {
-    const gates = this.meta.gate ? [this.meta.gate] : Object.keys(this.meta.portals || {});
+    const gm = this.meta.gate, gates = Object.keys(this.meta.portals || {}).filter(ch => !gm || ch === '<' || ch === gm);
     for (const ch of gates) {
       const pos = this.findChar(ch);
       if (!pos) continue;
@@ -489,10 +489,10 @@ WorldScene.mix(class WorldMap {
   }
 
   refreshPortals() {
-    const dests = GameData.gateDestinations(App.player, this.mapId);
-    const open = dests.filter(d => d.ok).length;
     for (const p of this.portals) {
-      if (this.meta.gate) {
+      const dests = GameData.gateDestinations(App.player, this.mapId, p.ch);
+      const open = dests.filter(d => d.ok).length;
+      if (this.meta.gate && p.ch === this.meta.gate) {
         p.label.setText(`Cổng dịch chuyển · ${open}/${dests.length} nơi`).setColor(open ? '#e1d5ff' : '#bbbbbb');
       } else {
         const d = dests.find(x => x.ch === p.ch);

@@ -27,6 +27,7 @@ WorldScene.mix(class WorldPlayer {
       ![-24, -8, 8, 22].some(dy => [-10, 0, 10].some(dx => this.isSolid(Math.floor((p.y + dy) / T), Math.floor((p.x + dx) / T))));
     if (savedOk) { x = p.x; y = p.y; }
     else {
+      if (this.meta.gate && this.arrive && this.arrive !== '<' && this.meta.portals && this.meta.portals[this.arrive]) this.arrive = this.meta.gate;   // trở về từ lối ra nào cũng tới cổng gom
       const pos = (this.arrive && this.findChar(this.arrive)) || this.findChar('S') || this.findChar('<') || { r: 2, c: 2 };
       x = pos.c * T + T / 2;
       // Tới bằng cổng: đứng lệch khỏi cổng 50px về phía giữa bản đồ (cổng nằm ở đầu hoặc cuối bản đồ)

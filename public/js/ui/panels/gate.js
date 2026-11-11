@@ -5,7 +5,7 @@
 
   function panelGate() {
     const p = App.player, mapId = App.scene ? App.scene.mapId : p.map;
-    const list = G.gateDestinations(p, mapId);
+    const list = G.gateDestinations(p, mapId, App.scene && App.scene.meta && App.scene.meta.gate);
     let html = '<p class="muted" style="margin-top:0">Chọn nơi muốn đến. Nơi có 🔒 sẽ mở khi bạn hoàn thành nhiệm vụ tương ứng.</p><div class="list">';
     for (const d of list) {
       html += `<div class="li gate-dest${d.ok ? '' : ' locked'}">

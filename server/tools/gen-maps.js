@@ -196,11 +196,11 @@ function build(id, spec, counts) {
   const ports = Object.keys(meta.portals || {});
   if (ports.includes('<')) g.set(G - 1, 1, '<');
   g.set(G - 1, 4, 'S');
-  const hasNext = ports.includes('>');
-  if (hasNext) g.set(G - 1, W - 3, '>');
+  const gate = meta.gate, hasNext = ports.includes('>') || !!gate;      // bản đồ có gate: các lối ra gộp thành một cổng ở cuối đường
+  if (hasNext) g.set(G - 1, W - 3, gate || '>');
   // cổng nhánh (ký hiệu khác < >): đặt trên mặt đất, từ phải sang trái, cách nhau ≥ 5 cột
   const portalCols = [];
-  ports.filter(c => c !== '<' && c !== '>').forEach((ch, i) => {
+  (gate ? [] : ports.filter(c => c !== '<' && c !== '>')).forEach((ch, i) => {
     for (let c = W - 9 - i * 6; c > 14; c--) {
       if (g.get(G, c) === '#' && [-1, 0, 1].every(d => g.get(G - 1, c + d) === '.' && g.get(G - 2, c + d) === '.') && !portalCols.some(x => Math.abs(x - c) < 5)) { g.set(G - 1, c, ch); portalCols.push(c); break; }
     }
@@ -358,8 +358,8 @@ function buildVillage(id, spec, counts) {
   const ports = Object.keys(meta.portals || {});
   if (ports.includes('<')) g.set(G - 1, 1, '<');
   g.set(G - 1, 4, 'S');
-  if (ports.includes('>')) g.set(G - 1, W - 3, '>');
-  const items = Object.keys(meta.npcs || {}).concat(ports.filter(c => c !== '<' && c !== '>'));
+  if (meta.gate || ports.includes('>')) g.set(G - 1, W - 3, meta.gate || '>');
+  const items = Object.keys(meta.npcs || {}).concat(meta.gate ? [] : ports.filter(c => c !== '<' && c !== '>'));
   const hasMobs = Object.keys(meta.spawns || {}).length > 0, last = W - (hasMobs ? 30 : 12), first = 9;
   const step = items.length > 1 ? Math.max(5, Math.min(8, Math.floor((last - first) / (items.length - 1)))) : 0;
   items.forEach((ch, i) => g.set(G - 1, first + i * step, ch));

@@ -55,7 +55,8 @@ const actions = {
     p.map = portal.to;
     p.hiddenNpcActive = false;
     p.x = null; p.y = null;
-    p.arrive = portal.at || G.gateOf(portal.to) || 'S';   // tới đúng lối vào ứng với cổng vừa đi qua
+    const dm = G.MAPS[portal.to];
+    p.arrive = (dm.gate && portal.at && portal.at !== '<' && dm.portals[portal.at] ? dm.gate : portal.at) || G.gateOf(portal.to) || 'S';   // tới đúng lối vào ứng với cổng vừa đi qua
     markVillage(p, ev);
     ev.push({ t: 'map', map: p.map });
   },

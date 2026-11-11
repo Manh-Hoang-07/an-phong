@@ -299,8 +299,7 @@ class WorldScene extends Phaser.Scene {
   // Cổng gom mở danh sách; cổng riêng của bản đồ tuyến tính chỉ đi tới đúng bản đồ kế bên.
   enterGate(ch) {
     this.gateArmed = false;
-    const all = GameData.gateDestinations(App.player, this.mapId);
-    const dests = this.meta.gate ? all : all.filter(d => d.ch === ch);
+    const dests = GameData.gateDestinations(App.player, this.mapId, ch);
     if (!dests.length) return;
     if (dests.length === 1) {
       if (dests[0].ok) this.usePortal(dests[0].ch);
