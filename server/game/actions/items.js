@@ -38,6 +38,17 @@ const actions = {
     ev.push({ t: 'msg', text: `Đã bán ${def.name}${qty > 1 ? ' ×' + qty : ''} (+${fmt(gain)} xu).`, color: '#e0e0e0' });
   },
 
+  // Bỏ vật phẩm khỏi túi (ở đâu cũng được, mất luôn, không được xu). Vật phẩm nhiệm vụ không bỏ được để khỏi kẹt nhiệm vụ.
+  drop(p, a, ev) {
+    const e = bagEntry(p, a.uid);
+    const def = G.ITEMS[e.id];
+    if (def.kind === 'quest') fail('Không bỏ được vật phẩm nhiệm vụ.');
+    const qty = Math.max(1, Math.min(e.qty, Math.floor(Number(a.qty) || e.qty)));
+    e.qty -= qty;
+    if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+    ev.push({ t: 'msg', text: `Đã bỏ ${def.name}${e.plus ? ' +' + e.plus : ''}${qty > 1 ? ' ×' + qty : ''}.`, color: '#e0e0e0' });
+  },
+
   equip(p, a, ev) {
     const e = bagEntry(p, a.uid);
     const def = G.ITEMS[e.id];

@@ -330,10 +330,8 @@ html.rot #game-wrap { inset: auto; left: 0; top: 0; transform-origin: 0 0; }
 /* 3 nút mũi tên tròn: trái, xuống, phải */
 #arrows {
   position: absolute; left: calc(14px + var(--sal)); bottom: calc(12px + var(--sab)); width: 188px; height: 148px;
-  pointer-events: auto; touch-action: none;
+  pointer-events: none; touch-action: none;   /* chỉ 3 nút nhận chạm, khoảng trống giữa các nút bỏ qua */
 }
-/* Nới viền một chút để ngón chạm sát mép nút vẫn ăn (việc trúng nút hay không do JS quyết định) */
-#arrows::before { content: ''; position: absolute; inset: -6px; }
 .tb-arrow { width: 76px; height: 76px; bottom: 2px; }
 .tb-arrow[data-arrow="left"] { left: 0; }
 .tb-arrow-up { left: 56px; bottom: 70px; }   /* ▲ nhảy: nằm giữa, phía trên ◀ ▶ (kiểu chữ T ngược) */
@@ -848,3 +846,39 @@ img.ico { width: 1.3em; height: 1.3em; vertical-align: -0.3em; pointer-events: n
 .cell img.ico { width: 78%; height: 78%; vertical-align: middle; }
 .li .ic img.ico { width: 30px; height: 30px; }
 h3 img.ico { width: 1.5em; height: 1.5em; vertical-align: -0.4em; }
+
+/* ===== Cụm nút bên phải trên cảm ứng: kỹ năng xếp vòng cung quanh nút đánh + nút ẩn/hiện =====
+   Tâm nút đánh cách mép phải/dưới 44px. Vòng trong (bán kính 118): 4 kỹ năng thường. Vòng ngoài (192): tuyệt kỹ, kỹ năng 5, biến hình.
+   Ngón cái đặt trên nút đánh với tới mọi nút bằng cùng một khoảng → dễ bấm hơn hàng ngang (phải duỗi ngón sang trái).
+   Thu gọn: chỉ còn nút đánh, bình máu/năng lượng và nút ẩn/hiện. Vị trí = tâm − nửa cỡ nút. */
+body.touch #tbtns { width: 420px; height: 300px; }
+body.touch #tbtns .tb-attack { right: 0; bottom: 0; }
+body.touch #tbtns .tb-s0 { right: 133px; bottom: 15px; }   /* 180°  */
+body.touch #tbtns .tb-s1 { right: 117px; bottom: 74px; }   /* 150°  */
+body.touch #tbtns .tb-s2 { right: 74px;  bottom: 117px; }  /* 120°  */
+body.touch #tbtns .tb-s3 { right: 15px;  bottom: 133px; }  /* 90°   */
+body.touch #tbtns .tb-form  { right: 208px; bottom: 16px;  width: 56px; height: 56px; }  /* 180°   */
+body.touch #tbtns .tb-ult3  { right: 193px; bottom: 89px;  width: 56px; height: 56px; }  /* 157,5° */
+body.touch #tbtns .tb-ult   { right: 149px; bottom: 149px; width: 62px; height: 62px; }  /* 135°   */
+body.touch #tbtns .tb-ult2  { right: 89px;  bottom: 193px; width: 56px; height: 56px; }  /* 112,5° */
+body.touch #tbtns .tb-s4    { right: 16px;  bottom: 208px; width: 56px; height: 56px; }  /* 90°    */
+body.touch #tbtns .tb-career { right: 262px; bottom: 120px; width: 50px; height: 50px; }
+body.touch #tbtns .tb-aws    { right: 262px; bottom: 180px; width: 50px; height: 50px; }
+body.touch #tbtns .tb-hp   { right: 274px; bottom: 6px; }
+body.touch #tbtns .tb-mp   { right: 326px; bottom: 6px; }
+body.touch #tbtns .tb-pets { right: 378px; bottom: 6px; }
+body.touch .tb-talk { bottom: 300px; }
+/* Nút ẩn/hiện: nằm ở khe chéo giữa nút đánh và vòng kỹ năng, ngón cái chạm tới ngay */
+.tb-toggle { display: none; }
+body.touch #tbtns .tb-toggle {
+  display: flex; right: 73px; bottom: 73px; width: 40px; height: 40px; font-size: 0;
+  background: rgba(20, 19, 20, .78); border-color: rgba(231, 182, 107, .55);
+}
+.tb-toggle svg { width: 60%; height: 60%; fill: none; stroke: #f1d49b; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; transition: transform .2s; }
+#tbtns.collapsed .tb-toggle svg { transform: rotate(180deg); }
+/* Kỹ năng thu vào nút đánh khi ẩn, bung ra khi hiện */
+body.touch #tbtns .tb-skill, body.touch #tbtns .tb-pets { transition: opacity .16s, transform .18s ease-out, visibility 0s; }
+body.touch #tbtns.collapsed .tb-skill, body.touch #tbtns.collapsed .tb-pets {
+  opacity: 0; visibility: hidden; pointer-events: none; transform: scale(.3);
+  transition: opacity .14s, transform .16s ease-in, visibility 0s .16s;
+}

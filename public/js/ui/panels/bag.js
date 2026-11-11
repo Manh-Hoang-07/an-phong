@@ -1,7 +1,7 @@
 'use strict';
 /* UI · Bảng túi đồ. */
 (() => {
-  const { G, $, fmt, cellHtml, itemInfo, shopHere, selectedEntry } = UI._;
+  const { G, $, fmt, cellHtml, itemInfo, shopHere, selectedEntry, S } = UI._;
 
   // ---------- Túi đồ
   function panelBag() {
@@ -24,10 +24,20 @@
       if (where === 'bag') {
         if (d.slot) btns += `<button class="btn primary" data-act="equip" data-uid="${entry.uid}">Trang bị</button>`;
         if (d.kind === 'potion') btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Dùng</button>`;
+        if (d.kind === 'book' || d.kind === 'ult_book') btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Đọc sách</button>`;
         if (d.kind === 'boost') btns += `<button class="btn primary" data-act="use_boost" data-item="${entry.id}">Dùng</button>`;
         if (d.kind === 'transform_book') btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Đọc sách</button>`;
         if (shopHere() && d.price && d.kind !== 'quest') btns += `<button class="btn" data-act="sell" data-uid="${entry.uid}" data-qty="1">Bán 1</button>`;
         if (shopHere() && d.price && d.kind !== 'quest' && entry.qty > 1) btns += `<button class="btn" data-act="sell" data-uid="${entry.uid}" data-qty="${entry.qty}">Bán hết</button>`;
+        // Bỏ đi (ở đâu cũng được): bấm lần đầu hỏi lại, bấm lần nữa mới bỏ
+        if (d.kind !== 'quest') {
+          const dropBtn = (qty, label) => {
+            const ask = S.confirmDrop === `${entry.uid}:${qty}`;
+            return `<button class="btn${ask ? ' primary' : ''}" data-act="drop" data-uid="${entry.uid}" data-qty="${qty}">${ask ? '⚠️ Bấm lần nữa để bỏ' : label}</button>`;
+          };
+          btns += dropBtn(1, entry.qty > 1 ? '🗑 Bỏ 1' : '🗑 Bỏ đi');
+          if (entry.qty > 1) btns += dropBtn(entry.qty, '🗑 Bỏ hết');
+        }
       } else btns += `<button class="btn" data-act="unequip" data-slot="${sel.key}">Tháo ra</button>`;
       detail = `<div class="detail">${itemInfo(entry, { sell: where === 'bag' && shopHere(), compare: where === 'bag' })}<div class="row" style="margin-top:8px">${btns}</div></div>`;
     }

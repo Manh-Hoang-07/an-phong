@@ -60,6 +60,7 @@ const UI = (() => {
   const S = {
     selected: null,         // { where: 'bag'|'equip'|'storage', key }
     smithTab: 'upgrade', lastUpgrade: null, confirmSalvage: null,   // thợ rèn
+    confirmDrop: null,   // túi đồ: "uid:số lượng" đang chờ bấm lần nữa để bỏ
     codeDraft: '', codeMsg: '',                                    // nhập mật mã
   };
   // Các bảng tự đăng ký vào đây: tên bảng → hàm trả về [tiêu đề, html]

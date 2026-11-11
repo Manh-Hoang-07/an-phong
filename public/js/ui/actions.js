@@ -10,6 +10,7 @@
     if (selEl && !el) {
       const [where, key] = selEl.dataset.sel.split(':');
       S.selected = { where, key };
+      S.confirmDrop = null;
       renderPanel();
       return;
     }
@@ -86,10 +87,19 @@
       case 'equip': await act('equip', { uid: Number(ds.uid) }); S.selected = null; renderPanel(); break;
       case 'unequip': await act('unequip', { slot: ds.slot }); S.selected = null; renderPanel(); break;
       case 'use':
-        if (G.ITEMS[ds.item]?.kind === 'transform_book') { await act('use', { item: ds.item }); renderPanel(); }
+        if (['transform_book', 'book', 'ult_book'].includes(G.ITEMS[ds.item]?.kind)) { await act('use', { item: ds.item }); renderPanel(); }
         else App.scene.usePotion(ds.item === 'thuoc_nhiem_do' || ds.item.startsWith('binh_mau') ? 'hp' : 'mp', ds.item);
         break;
       case 'sell': await act('sell', { uid: Number(ds.uid), qty: Number(ds.qty) }); break;
+      case 'drop': {
+        const k = `${ds.uid}:${ds.qty}`;
+        if (S.confirmDrop !== k) { S.confirmDrop = k; renderPanel(); break; }
+        S.confirmDrop = null;
+        const r = await act('drop', { uid: Number(ds.uid), qty: Number(ds.qty) });
+        if (r.ok && !App.player.bag.some(e => e.uid === Number(ds.uid))) S.selected = null;
+        renderPanel();
+        break;
+      }
       case 'buy': await act('buy', { npc: ds.npc, item: ds.item, qty: Number(ds.qty) }); break;
       case 'add_stat': await act('add_stat', { stat: ds.stat, n: Number(ds.n) }); break;
       case 'set_skill': await act('set_skill', { slot: Number(ds.slot), skill: ds.skill }); break;

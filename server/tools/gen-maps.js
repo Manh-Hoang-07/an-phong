@@ -115,7 +115,8 @@ const ARCH = {
     for (let c = 0; c < W; c++) { const d = Math.floor(rng() * 3); if (c % 4 === 0 || d === 2) g.fill(3, 3 + (d % 2), c, c + 2, '#'); }
     const s1 = G - 6, s2 = G - 12, s3 = G - 18;
     const L = [Math.floor(W * 0.12), Math.floor(W * 0.4)], R = [Math.floor(W * 0.58), Math.floor(W * 0.88)];
-    const slab = (top, c0, c1) => { g.fill(top, top + 2, c0, c1, '#'); g.fill(top + 3, G - 1, c0, c0 + 2, '#'); g.fill(top + 3, G - 1, c1 - 2, c1, '#'); };
+    // Cột chống dừng cách mặt đất 2 ô (chừa cửa cho người đi vào): cột chạm đất sẽ biến gầm khối đá thành phòng kín, quái bên trong không đánh được
+    const slab = (top, c0, c1) => { g.fill(top, top + 2, c0, c1, '#'); g.fill(top + 3, G - 3, c0, c0 + 2, '#'); g.fill(top + 3, G - 3, c1 - 2, c1, '#'); };
     slab(s1, L[0], L[1]); slab(s1, R[0], R[1]);
     const m0 = Math.floor(W * 0.32), m1 = Math.floor(W * 0.68);
     g.fill(s2, s2 + 2, m0, m1, '#');

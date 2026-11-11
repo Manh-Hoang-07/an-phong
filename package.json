@@ -9,7 +9,8 @@
     "dev": "node --watch --env-file-if-exists=.env server/index.js",
     "backup": "node --env-file-if-exists=.env server/backup.js",
     "giftcode": "node --env-file-if-exists=.env server/tools/giftcode.js",
-    "check:mobs": "node server/tools/check-mob-sprites.js"
+    "check:mobs": "node server/tools/check-mob-sprites.js",
+    "check:maps": "node server/tools/check-maps.js"
   },
   "engines": {
     "node": ">=22.13"

@@ -273,17 +273,32 @@
       b.addEventListener('lostpointercapture', up);
     });
 
-    // Cụm mũi tên ◀ ▲ ▶. Mỗi ngón tay điều khiển độc lập (đi + nhảy cùng lúc bằng hai ngón):
-    //  - Chỉ ăn khi chạm TRÚNG nút (nới nhẹ ~8% bán kính); chạm vào khoảng trống quanh nút thì không đi.
-    //  - Trượt ngón sang nút khác thì đổi hướng ngay; trượt chéo lên trên ◀ / ▶ thì vừa đi vừa nhảy.
-    //  - Ngón trượt ra xa cụm nút thì thả hướng. Tọa độ lấy từ getBoundingClientRect nên đúng cả khi khung game bị xoay.
+    // Nút ẩn/hiện kỹ năng (nhớ lựa chọn trên máy này)
+    const tbtns = $('tbtns'), tgl = $('tb-toggle');
+    const setSkills = (open) => {
+      tbtns.classList.toggle('collapsed', !open);
+      tgl.setAttribute('aria-expanded', String(open));
+      try { localStorage.setItem('skillsOpen', open ? '1' : '0'); } catch { /* bỏ qua */ }
+    };
+    let skillsOpen = true;
+    try { skillsOpen = localStorage.getItem('skillsOpen') !== '0'; } catch { /* bỏ qua */ }
+    setSkills(skillsOpen);
+    tgl.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      firstTouch();
+      setSkills(tbtns.classList.contains('collapsed'));
+    });
+
+    // Cụm mũi tên ◀ ▲ ▶: ngón đặt lên nút nào thì bắt đúng nút đó (trình duyệt tự xác định nút bị chạm,
+    // nên đúng cả khi khung game bị xoay / thu phóng). Mỗi ngón độc lập → bấm 2 nút cùng lúc bằng 2 ngón.
+    // Ngón đang giữ trượt sang nút khác thì đổi theo nút đó; trượt ra khoảng trống thì thả.
+    // Chạm vào khoảng trống giữa các nút: không làm gì.
     const pad = $('arrows');
     const btn = {};
     for (const dir of ['left', 'up', 'right']) btn[dir] = pad.querySelector(`[data-arrow="${dir}"]`);
-    const held = new Map();   // pointerId → Set các hướng
+    const held = new Map();   // pointerId → hướng ('left' | 'up' | 'right' | null)
     const syncArrows = () => {
-      const on = new Set();
-      for (const set of held.values()) for (const d of set) on.add(d);
+      const on = new Set(held.values());
       // ▲ = nhảy: mỗi lần có ngón mới chạm / trượt vào là một cú nhảy
       if (on.has('up') && !App.touch.up) App.touch._p_jump = true;
       for (const dir of ['left', 'up', 'right']) {
@@ -291,46 +306,30 @@
         btn[dir].classList.toggle('on', on.has(dir));
       }
     };
-    // Trả về: Set hướng nếu ngón nằm TRONG một nút; null nếu ngón ở khe giữa các nút (vẫn sát cụm);
-    // Set rỗng nếu ngón ở xa. Chạm xuống chỉ ăn khi trúng nút (không còn chạm khoảng trống mà vẫn đi).
-    const dirsAt = (e, sliding) => {
-      const c = {};
-      for (const dir in btn) { const r = btn[dir].getBoundingClientRect(); c[dir] = { x: r.left + r.width / 2, y: r.top + r.height / 2, s: Math.max(r.width, r.height) }; }
-      const size = c.left.s, rad = size / 2;
-      let best = null, bd = Infinity;
-      for (const dir in c) { const d = Math.hypot(e.clientX - c[dir].x, e.clientY - c[dir].y); if (d < bd) { bd = d; best = dir; } }
-      if (bd > rad * (sliding ? 1.2 : 1.08)) {
-        // Đang trượt mà lọt vào khe giữa hai nút → giữ hướng cũ; ra hẳn ngoài cụm → thả
-        return sliding && bd <= rad * 1.6 ? null : new Set();
-      }
-      const out = new Set([best]);
-      if (best === 'up') {
-        // trục ngang của cụm nút (từ ◀ sang ▶) → biết ngón lệch trái hay phải so với ▲
-        const ax = c.right.x - c.left.x, ay = c.right.y - c.left.y, len = Math.hypot(ax, ay) || 1;
-        const t = ((e.clientX - c.up.x) * ax + (e.clientY - c.up.y) * ay) / len;
-        if (t < -size * 0.22) out.add('left'); else if (t > size * 0.22) out.add('right');
-      }
-      return out;
+    const arrowAt = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      const b = el && el.closest && el.closest('[data-arrow]');
+      return b && pad.contains(b) ? b.dataset.arrow : null;
     };
-    const sameSet = (a, b) => a.size === b.size && [...a].every(x => b.has(x));
-    pad.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      firstTouch();
-      const dirs = dirsAt(e, false);
-      if (!dirs.size) return;   // chạm vào khoảng trống → bỏ qua
-      try { pad.setPointerCapture(e.pointerId); } catch { /* bỏ qua */ }
-      held.set(e.pointerId, dirs);
-      syncArrows();
-    });
-    pad.addEventListener('pointermove', (e) => {
-      if (!held.has(e.pointerId)) return;
-      const dirs = dirsAt(e, true);
-      if (dirs && !sameSet(dirs, held.get(e.pointerId))) { held.set(e.pointerId, dirs); syncArrows(); }
-    });
-    const release = (e) => { if (held.delete(e.pointerId)) syncArrows(); };
-    pad.addEventListener('pointerup', release);
-    pad.addEventListener('pointercancel', release);
-    pad.addEventListener('lostpointercapture', release);
+    for (const dir in btn) {
+      const b = btn[dir];
+      b.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        firstTouch();
+        try { b.setPointerCapture(e.pointerId); } catch { /* bỏ qua */ }
+        held.set(e.pointerId, dir);
+        syncArrows();
+      });
+      b.addEventListener('pointermove', (e) => {
+        if (!held.has(e.pointerId)) return;
+        const d = arrowAt(e.clientX, e.clientY);
+        if (d !== held.get(e.pointerId)) { held.set(e.pointerId, d); syncArrows(); }
+      });
+      const release = (e) => { if (held.delete(e.pointerId)) syncArrows(); };
+      b.addEventListener('pointerup', release);
+      b.addEventListener('pointercancel', release);
+      b.addEventListener('lostpointercapture', release);
+    }
     // Mở bảng / đổi tab / ẩn trang: nhả hết hướng để nhân vật không tự chạy tiếp
     const clearArrows = () => { if (held.size) { held.clear(); syncArrows(); } };
     new MutationObserver(() => { if (document.body.classList.contains('panel-open')) clearArrows(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
