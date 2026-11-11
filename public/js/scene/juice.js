@@ -282,6 +282,24 @@ const Juice = {
     });
   },
 
+  // ---- M3 · Bóng đổ động (KE_HOACH_NANG_DO_HOA.md): bóng trượt xuống mặt đất dưới chân,
+  // nhảy/rơi lên cao thì bóng thu nhỏ + nhạt dần, chạm đất thì đậm lại → có cảm giác "trọng lượng".
+  // Mặt đất đứng được ngay dưới điểm (x, yChân): trả về y của mặt đất, hoặc null nếu dưới là hố / quá sâu.
+  groundBelowY(x, yFeet) {
+    const gy = this.groundY(Math.floor((yFeet - 2) / T), Math.floor(x / T));
+    return gy >= this.worldH ? null : gy;
+  },
+  // Đặt 1 ảnh bóng theo vị trí chân vật: trả về true nếu bóng đang hiện (quá cao / trên hố thì ẩn).
+  // baseScaleX là chiều rộng bóng khi đứng trên đất (dựa theo bề ngang vật, dùng cho cả kho bóng quái).
+  shadowPose(img, x, yFeet, baseScaleX, maxDist = 200) {
+    const gy = this.groundBelowY(x, yFeet);
+    const d = gy == null ? maxDist + 1 : Math.max(0, gy - yFeet);
+    if (d > maxDist) { img.setVisible(false); return false; }
+    const t = 1 - d / maxDist;   // 1 = đứng trên đất, 0 = ngay ngưỡng mờ dần
+    img.setVisible(true).setPosition(x, gy - 1).setScale(baseScaleX * (0.5 + 0.5 * t), 1).setAlpha(0.45 + 0.55 * t);
+    return true;
+  },
+
   // Quái ở xa ngoài màn hình: dừng xử lý, ẩn đi cho nhẹ (quái đang đuổi, trùm thì luôn xử lý)
   mobActive(m) {
     const cam = this.cameras.main.worldView;

@@ -328,6 +328,7 @@ WorldScene.mix(class WorldPlayer {
     for (const [id, c] of Object.entries(this.companionSprites)) {
       if (wanted.has(id) && c.sprite.scene) continue;   // sprite đã bị hủy (đổi bản đồ) thì dựng lại
       c.sprite.destroy();
+      if (c.shadow) c.shadow.destroy();
       delete this.companionSprites[id];
     }
     const ps = GameData.petStats(App.player), pets = App.player.pets || (App.player.pets = {});
@@ -341,8 +342,9 @@ WorldScene.mix(class WorldPlayer {
       const scale = PetSprites.def(def.look)?.scale || 1.2;
       const x = this.player.x - this.facing * PetSprites.gap(this.petLooks, index);
       const sprite = this.add.sprite(x, this.player.body.bottom, tex, 0).setOrigin(0.5, 1).setDepth(3.6 + index * 0.001).setScale(scale).setTint(def.tint || 0xffffff);
+      const shadow = this.add.image(x, this.player.body.bottom, 'shadow').setDepth(3.55 + index * 0.001);
       if (!PetSprites.def(def.look).static) sprite.play(`pet_${def.look}_walk_anim`);
-      this.companionSprites[id] = { sprite, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
+      this.companionSprites[id] = { sprite, shadow, nextAttack: 0, deadUntil: 0, lastCombat: 0, attackUntil: 0 };
     });
   }
   companionUpdate(time, delta) {
@@ -572,7 +574,7 @@ WorldScene.mix(class WorldPlayer {
       if (time >= c.deadUntil) {
         c.deadUntil = 0; state.hp = Math.max(1, Math.round(ps.maxHp * 0.5)); state.mp = ps.maxMp; state.sta = ps.maxSta;
         sprite.setVisible(true);
-      } else return;
+      } else { if (c.shadow) c.shadow.setVisible(false); return; }
     }
     const regen = delta / 1000;
     if (time - c.lastCombat >= 3000) {
@@ -623,6 +625,8 @@ WorldScene.mix(class WorldPlayer {
       } else if (sprite.anims.currentAnim?.key !== key) sprite.play(key, true);
     }
     sprite.setTint(time < c.lastCombat + 120 ? 0xffffff : (def.tint || 0xffffff));
+    // Bóng đổ động dưới linh thú (M3): thú bay lơ lửng (lift) thì bóng nhỏ và nhạt hơn
+    if (c.shadow) this.shadowPose(c.shadow, sprite.x, sprite.y, Math.max(0.6, sprite.displayWidth / 40));
   }  // ------------------------------------------------------------------ Biến hình (thức tỉnh)
   // Bật/tắt bằng phím T hoặc nút ⚡. Đang biến hình: chỉ số nhân theo ấn, hào quang lửa, mỗi giây tốn `drain` năng lượng
   // và thể lực (ấn 1: 1, ấn 2: 2); MP và thể lực không tự hồi. Cạn một trong hai thì tự trở lại dạng thường.

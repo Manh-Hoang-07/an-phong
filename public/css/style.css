@@ -610,7 +610,7 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
 /* HUD dạng dải trạng thái và bảng nhiệm vụ, để mở rộng tầm nhìn khu vực chơi */
 #hud-char {
   left: 20px; top: 18px; width: 360px; padding: 12px 14px 11px;
-  display: grid; grid-template-columns: 1fr 1.15fr; column-gap: 14px; align-items: center;
+  display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center;
   background: linear-gradient(120deg, rgba(21,20,22,.92), rgba(21,20,22,.72));
   border: 1px solid rgba(255,255,255,.13); border-radius: 14px; clip-path: none;
 }

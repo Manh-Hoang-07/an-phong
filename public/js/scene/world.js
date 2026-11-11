@@ -178,19 +178,21 @@ class WorldScene extends Phaser.Scene {
     UI.tick(time, this);
   }
 
-  // Bóng mờ dưới chân quái đi bộ (dùng lại một kho ảnh, ẩn ảnh thừa)
+  // Bóng mờ dưới chân nhân vật và quái (dùng lại một kho ảnh, ẩn ảnh thừa).
+  // Bóng đổ động (M3, KE_HOACH_NANG_DO_HOA.md): quái trên không / quái bay cũng có bóng
+  // nằm xuống mặt đất bên dưới, nhạt dần theo độ cao; trên hố thì không có bóng.
   updateMobShadows() {
     if (!this.mobShadowPool || (this.mobShadowPool[0] && !this.mobShadowPool[0].scene)) this.mobShadowPool = [];
     const pool = this.mobShadowPool;
     let n = 0;
+    if (this.shadow && this.shadow.scene && this.player?.body) this.shadowPose(this.shadow, this.player.x, this.player.body.bottom, 1.05);
     for (const m of this.monsters) {
       const s = m.sprite;
-      if (!m.alive || m.def.fly || !s.active || !s.visible || !s.body) continue;
-      const onGround = s.body.blocked.down || s.body.touching.down;
-      if (!onGround) continue;
+      if (!m.alive || !s.active || !s.visible || !s.body) continue;
       let img = pool[n];
       if (!img) { img = this.add.image(0, 0, 'shadow').setDepth(2.9); pool.push(img); }
-      img.setVisible(true).setPosition(s.x, s.body.bottom - 1).setScale(Math.max(0.6, s.body.width / 26), 1);
+      // Bóng bị ẩn (quái trên hố) thì không chiếm slot: vật kế tiếp dùng lại ảnh này
+      if (!this.shadowPose(img, s.x, s.body.bottom, Math.max(0.6, s.body.width / 26))) continue;
       n++;
     }
     for (let i = n; i < pool.length; i++) pool[i].setVisible(false);
