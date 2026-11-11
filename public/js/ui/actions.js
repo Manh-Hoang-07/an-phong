@@ -102,7 +102,7 @@
       }
       case 'buy': await act('buy', { npc: ds.npc, item: ds.item, qty: Number(ds.qty) }); break;
       case 'add_stat': await act('add_stat', { stat: ds.stat, n: Number(ds.n) }); break;
-      case 'set_skill': await act('set_skill', { slot: Number(ds.slot), skill: ds.skill }); break;
+      case 'set_skill': await act('set_skill', { slot: Number(ds.slot), skill: ds.skill, bar: ds.bar }); break;
       case 'store': await act('store', { uid: Number(ds.uid) }); hideTip(); break;
       case 'retrieve': await act('retrieve', { uid: Number(ds.uid) }); hideTip(); break;
       case 'upgrade': {

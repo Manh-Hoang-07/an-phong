@@ -2,13 +2,14 @@
 /* Dò bản đồ: quái / NPC / cổng nào người chơi không tới được (bị nhốt trong vùng kín hoặc ở quá cao).
  *   node server/tools/check-maps.js          → tất cả bản đồ
  *   node server/tools/check-maps.js hang     → một bản đồ
- * Mô phỏng gần đúng: người cao 2 ô, nhảy cao 3 ô, lướt ngang tối đa 4 ô (đơn vị ô sau khi giãn cột 1,5 lần). */
+ * Mô phỏng vật lý nhảy thật (jump-sim.js), chạy chậm nhất (190 px/s), không tính nút xuống (điện thoại không có). */
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '../..');
 const G = require(path.join(ROOT, 'shared/index.js'));
 const MAPS = G.MAPS, MON = G.MONSTERS;
 const only = process.argv[2];
-const JUMP_ROWS = 3, JUMP_COLS = 4, HIT_DC = 2, HIT_DR = 2;
+const { simulate, T } = require('./jump-sim');
+const SPEED = 190, HIT_DC = 2, HIT_DR = 2;
 
 function load(id) {
   const meta = MAPS[id];
@@ -38,27 +39,27 @@ function analyze(id) {
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === 'S') start = [r, c];
   if (!start) for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === '<') start = start || [r, c];
   const s0 = fall(start[0], start[1]);
-  const seen = new Set([key(...s0)]), q = [s0];
-  const push = (p) => { if (p && !seen.has(key(...p))) { seen.add(key(...p)); q.push(p); } };
-  while (q.length) {
-    const [r, c] = q.shift();
-    for (const d of [-1, 1]) if (fits(r, c + d)) push(fall(r, c + d));
-    if (cell(r + 1, c) === '=') push(fall(r + 1, c, false));
-    // nhảy: lên thẳng h hàng rồi lướt ngang, rồi rơi
-    for (let h = 1; h <= JUMP_ROWS; h++) {
-      if (!fits(r - h, c)) break;
-      for (const d of [-1, 1]) for (let k = 1; k <= JUMP_COLS; k++) {
-        if (!fits(r - h, c + d * k)) break;
-        push(fall(r - h, c + d * k));
-      }
-      if (isPos(r - h, c)) push([r - h, c]);
-    }
-  }
+  // Đi tới được: mô phỏng vật lý nhảy thật (xem jump-sim.js). SPEED nhỏ nhất của nhân vật = 190 px/s.
+  const sim = simulate(grid, rows, cols, start, SPEED);
+  const seen = new Set(), tileOf = (n) => [n.y / T - 1, Math.floor(n.x / T)];
+  for (const n of sim.nodes.values()) seen.add(key(...tileOf(n)));
   // Ô khí liên thông (bay được) từ chỗ đứng của người chơi
   const air = new Set(), aq = [s0]; air.add(key(...s0));
   while (aq.length) { const [r, c] = aq.shift(); for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) { const nr = r + dr, nc = c + dc; if (!solid(nr, nc) && nr >= 0 && nr < rows && nc >= 0 && nc < cols && !air.has(key(nr, nc))) { air.add(key(nr, nc)); aq.push([nr, nc]); } } }
   const reachNear = (r, c) => { for (let dr = -HIT_DR; dr <= HIT_DR; dr++) for (let dc = -HIT_DC; dc <= HIT_DC; dc++) if (seen.has(key(r + dr, c + dc))) return true; return false; };
+  // Đường quay lại: từ mọi chỗ đứng có về được điểm xuất hiện (cổng '<') không? Không thì là đường MỘT CHIỀU (nhảy / rơi xuống rồi kẹt)
+  const rev = new Map();
+  for (const [a2, set] of sim.edges) for (const b2 of set) (rev.get(b2) || rev.set(b2, []).get(b2)).push(a2);
+  const backIds = new Set([sim.start]), bq = [sim.start];
+  while (bq.length) { const n = bq.pop(); for (const p of rev.get(n) || []) if (!backIds.has(p)) { backIds.add(p); bq.push(p); } }
+  const oneWay = [...sim.nodes.entries()].filter(([id]) => !backIds.has(id)).map(([, n]) => tileOf(n));
   const issues = [];
+  if (oneWay.length) {
+    const cols1 = oneWay.map(p => p[1]), c0 = Math.min(...cols1), c1 = Math.max(...cols1);
+    const marks = [];
+    for (const [r, c] of oneWay) for (const dr of [0, -1]) { const ch = grid[r + dr]?.[c]; if (ch && (/[A-Za-z]/.test(ch) || '<>()[]'.includes(ch)) && ch !== 'S') marks.push(ch); }
+    issues.push(`[1 CHIỀU] ${oneWay.length} chỗ đứng (cột ${Math.floor(c0 / 1.5) + 1}–${Math.floor(c1 / 1.5) + 1}) vào được nhưng KHÔNG quay lại được${marks.length ? ' — có ' + [...new Set(marks)].join(' ') : ''}`);
+  }
   for (const ch in meta.spawns || {}) {
     const mid = meta.spawns[ch], def = MON[mid] || {};
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === ch) {

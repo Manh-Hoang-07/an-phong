@@ -54,6 +54,8 @@ function gapStairs(g, c0, c1, G, top) {
   rows.forEach((r, i) => {
     const left = (rows.length - 1 - i) % 2 === 1;           // bục cuối cùng sát tháp phải
     g.ledge(r, left ? c0 + 1 : c1 - bw, left ? c0 + bw : c1 - 1);
+    // Bục trên cùng: thêm bục sát tháp bên kia để từ khe leo ngược lại được lên đỉnh cả hai tháp (không có thì chỉ đi một chiều)
+    if (i === rows.length - 1) g.ledge(r, left ? c1 - bw : c0 + 1, left ? c1 - 1 : c0 + bw);
   });
 }
 function tower(g, a, b, top, G, dir) {

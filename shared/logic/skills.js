@@ -68,7 +68,10 @@
   // Kỹ năng có dùng được ở hình thái hiện tại không (careerOn: đang bật chức nghiệp 2). Trả về lý do khi KHÔNG dùng được.
   // - Kỹ năng chức nghiệp 2 chỉ dùng khi đang bật chức nghiệp 2.
   // - Đang bật chức nghiệp 2 thì mọi kỹ năng chức nghiệp 1 bị khóa. Ngoại lệ: Toàn Năng (Tinh Thông không có bộ kỹ năng riêng).
+  // Tuyệt kỹ không thuộc nhánh chức nghiệp 2: dùng được ở cả hai hình thái và gắn được vào cả hai thanh
+  const isSharedUlt = (s) => !!(s && s.ult && !isCareerSkill(s));
   function skillFormBlock(player, s, careerOn) {
+    if (isSharedUlt(s)) return null;
     if (isCareerSkill(s)) return careerOn ? null : 'Cần bật chức nghiệp 2 để dùng kỹ năng nhánh này.';
     if (careerOn && player.school !== 'toan_nang') return 'Đang ở chức nghiệp 2: kỹ năng chức nghiệp 1 không dùng được.';
     return null;
@@ -88,5 +91,5 @@
   // Đang bật chức nghiệp 2 (theo dữ liệu nhân vật phía server)
   const careerActive = (player) => !!player.formActive && player.formChoice === 'evolution';
 
-  Object.assign(G, { skillAt, schoolsOf, ultFits, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, availableSkills, skillLevel, isCareerSkill, skillFormBlock, usesCareerBar, slotsOf, slotKeyOf, careerActive });
+  Object.assign(G, { skillAt, schoolsOf, ultFits, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, availableSkills, skillLevel, isCareerSkill, skillFormBlock, isSharedUlt, usesCareerBar, slotsOf, slotKeyOf, careerActive });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

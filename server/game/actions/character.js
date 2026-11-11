@@ -40,7 +40,9 @@ const actions = {
     if (!G.skillLevel(p, a.skill)) fail('Hãy học kỹ năng này trước.');
     if (sk.ult && !G.isUltSlot(slot)) fail('Tuyệt kỹ chỉ đặt được ở ô tuyệt kỹ.');
     if (!sk.ult && G.isUltSlot(slot)) fail('Ô tuyệt kỹ chỉ dành cho tuyệt kỹ.');
-    const bar = p[G.slotKeyOf(p, a.skill)];
+    // Tuyệt kỹ dùng chung hai chức nghiệp: gắn vào thanh người chơi chọn (a.bar = 'career' → thanh chức nghiệp 2)
+    const key = G.isSharedUlt(sk) && p.school !== 'toan_nang' && a.bar === 'career' ? 'careerSlots' : G.slotKeyOf(p, a.skill);
+    const bar = p[key];
     const other = bar.indexOf(a.skill);
     if (other >= 0) bar[other] = null;
     bar[slot] = a.skill;
