@@ -332,8 +332,8 @@ html.rot #game-wrap { inset: auto; left: 0; top: 0; transform-origin: 0 0; }
   position: absolute; left: calc(14px + var(--sal)); bottom: calc(12px + var(--sab)); width: 188px; height: 148px;
   pointer-events: auto; touch-action: none;
 }
-/* Vùng chạm rộng hơn nút nhìn thấy: lệch ngón một chút vẫn ăn */
-#arrows::before { content: ''; position: absolute; inset: -34px -30px -14px -24px; }
+/* Nới viền một chút để ngón chạm sát mép nút vẫn ăn (việc trúng nút hay không do JS quyết định) */
+#arrows::before { content: ''; position: absolute; inset: -6px; }
 .tb-arrow { width: 76px; height: 76px; bottom: 2px; }
 .tb-arrow[data-arrow="left"] { left: 0; }
 .tb-arrow-up { left: 56px; bottom: 70px; }   /* ▲ nhảy: nằm giữa, phía trên ◀ ▶ (kiểu chữ T ngược) */
