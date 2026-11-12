@@ -1,0 +1,15 @@
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: an-phong
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/opt/an-phong
+            git pull origin main
+            pm2 restart an-phong

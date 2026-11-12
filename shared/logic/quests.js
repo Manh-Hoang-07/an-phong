@@ -174,5 +174,29 @@
     return sideLines(player, q).every(l => l[1]);
   }
 
-  Object.assign(G, { questGuide, npcAt, gateOf, portalStatus, gateDestinations, mapList, npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
+  // ---------------------------------------------------------------- Cấp tối thiểu để NHẬN nhiệm vụ chính
+  // Nhiệm vụ nào khai báo `minLevel` thì dùng đúng số đó. Không khai báo thì tự suy ra:
+  //   cấp quái cao nhất phải hạ − MIN_LEVEL_GAP (quái rơi vật phẩm nhiệm vụ: tính quái cấp thấp nhất rơi món đó),
+  //   và không bao giờ thấp hơn nhiệm vụ đứng trước (chuỗi chính là đường thẳng). Nhiệm vụ chỉ nói chuyện / thăm NPC thừa hưởng mốc trước đó.
+  // Mục đích: làm nhiệm vụ quá nhanh không kéo nhân vật vào vùng quái cao hơn hẳn cấp của mình.
+  const MIN_LEVEL_GAP = 3;
+  (function () {
+    let run = 1;
+    for (const q of QUESTS) {
+      if (q.minLevel == null) {
+        let need = 0;
+        const o = q.obj || {};
+        for (const m in o.kill || {}) need = Math.max(need, MONSTERS[m] ? MONSTERS[m].level : 0);
+        for (const it in o.collect || {}) {
+          const lvs = Object.values(MONSTERS).filter(mon => (mon.drops || []).some(d => d[0] === it && d[2] === q.id)).map(mon => mon.level);
+          if (lvs.length) need = Math.max(need, Math.min(...lvs));
+        }
+        q.minLevel = Math.max(1, run, need ? need - MIN_LEVEL_GAP : 1);
+      }
+      run = Math.max(run, q.minLevel);
+    }
+  })();
+  const questMinLevel = (q) => (q && q.minLevel) || 1;
+
+  Object.assign(G, { questMinLevel, questGuide,npcAt, gateOf, portalStatus, gateDestinations, mapList, npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

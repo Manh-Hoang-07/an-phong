@@ -20,6 +20,10 @@
     if (!q) return ['Nhiệm vụ', `<p>Bạn đã hoàn thành tất cả chương. Cốt truyện kết thúc!</p><p class="muted">Cổng SS ở phía đông Tân Đô đã mở cho chế độ end-game.</p>${sidePanelHtml(p)}${dailyLines(p).map(l => `<div>${l.icon} ${esc(l.text)} ${l.have}/${l.x.need}${l.x.claimed ? ' ✓' : ''}</div>`).join('')}<hr style="border-color:#333">${doneList}`];
     let html = `<h3 class="gold" style="margin:0 0 6px">${esc(q.name)}</h3>`;
     html += guideHtml(G.questGuide(p, q, false), p.quest.state);
+    if (p.quest.state === 'none' && G.questMinLevel(q) > 1) {
+      const need = G.questMinLevel(q), ok = p.level >= need;
+      html += `<p class="${ok ? 'okc' : ''}" style="margin:4px 0;${ok ? '' : 'color:#ff8a80'}">${ok ? '✓' : '🔒'} Cần đạt cấp ${need} để nhận nhiệm vụ${ok ? '' : ` (bạn đang cấp ${p.level})`}</p>`;
+    }
     if (p.quest.state !== 'none') {
       html += q.start.map(l => `<p class="muted" style="margin:0 0 4px">${esc(keyText(l))}</p>`).join('');
       html += '<div style="margin:10px 0">' + questLines(p).map(([t, ok]) => `<div class="${ok ? 'okc' : ''}">${ok ? '✓' : '•'} ${esc(t)}</div>`).join('') + '</div>';

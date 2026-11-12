@@ -129,6 +129,8 @@
       }
       case 'quest_view': {
         const q = G.QUESTS[App.player.quest.step];
+        const need = G.questMinLevel(q);
+        if (App.player.level < need) { UI.log(`Cần đạt cấp ${need} để nhận nhiệm vụ này.`, '#ffca28'); break; }
         openPanel('story', { id: q.npc, lines: q.start, button: '<button class="btn primary" data-act="quest_accept">Nhận nhiệm vụ</button>', force: true });
         break;
       }

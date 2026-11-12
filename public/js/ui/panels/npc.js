@@ -19,7 +19,11 @@
       return [n.name, `<div class="dialog"><div class="face">☠</div><div class="text" style="flex:1"><p>Ba con đường. Ba cuốn sách. Chứng minh sức mạnh bằng cách hạ quái rồi trở về đây.</p><div class="opts">${opts.join('')}</div></div></div>`];
     }
     if (q && q.npc === id) {
-      if (p.quest.state === 'none') opts.push(`<button class="btn" data-act="quest_view">❗ Nhiệm vụ: ${esc(q.name)}</button>`);
+      if (p.quest.state === 'none') {
+        const need = G.questMinLevel(q);
+        if (p.level < need) opts.push(`<button class="btn" disabled>🔒 Nhiệm vụ: ${esc(q.name)} (cần cấp ${need})</button>`);
+        else opts.push(`<button class="btn" data-act="quest_view">❗ Nhiệm vụ: ${esc(q.name)}</button>`);
+      }
       else if (questReady() && q.choices) for (const c of q.choices) opts.push(`<button class="btn primary" data-act="quest_complete" data-choice="${esc(c.id)}">💬 ${esc(c.label)}</button>`);
       else if (questReady()) opts.push(`<button class="btn primary" data-act="quest_complete">✔ Trả nhiệm vụ: ${esc(q.name)}</button>`);
       else opts.push(`<button class="btn" data-act="open" data-panel="quest">… Đang làm: ${esc(q.name)}</button>`);

@@ -38,6 +38,8 @@ const actions = {
     if (!q) fail('Bạn đã làm hết nhiệm vụ hiện có.');
     if (!onCurrentMapNpc(p, q.npc)) fail('Hãy đến gặp người giao nhiệm vụ.');
     if (p.quest.state !== 'none') fail('Bạn đang làm nhiệm vụ này rồi.');
+    const need = G.questMinLevel(q);
+    if (p.level < need) fail(`Cần đạt cấp ${need} để nhận nhiệm vụ này (bạn đang cấp ${p.level}). Hãy luyện thêm rồi quay lại.`);
     p.quest.state = 'active';
     p.quest.progress = {};
     ev.push({ t: 'msg', text: `Nhận nhiệm vụ: ${q.name}`, color: '#ffd54f' });

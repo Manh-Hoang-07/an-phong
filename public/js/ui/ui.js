@@ -277,7 +277,11 @@ const UI = (() => {
     const q = G.QUESTS[p.quest.step];
     const el = $('quest-track');
     if (!q) { el.textContent = 'Đã hoàn thành cốt truyện.'; return; }
-    if (p.quest.state === 'none') { el.textContent = `Gặp ${G.npcAt(p, q.npc)} để nhận nhiệm vụ.`; return; }
+    if (p.quest.state === 'none') {
+      const need = G.questMinLevel(q);
+      el.textContent = p.level < need ? `Đạt cấp ${need} để nhận nhiệm vụ "${q.name}".` : `Gặp ${G.npcAt(p, q.npc)} để nhận nhiệm vụ.`;
+      return;
+    }
     const line = currentQuestLine(p);
     el.textContent = line ? line[0] : `Trả nhiệm vụ cho ${G.npcAt(p, q.npc)}.`;
   }
