@@ -33,7 +33,7 @@ const Sprites = (() => {
     trieu_hoi_su: { fw: 246, fh: 202, cx: 116, fy: 202, s: 0.45, hd: true, combo: ['attack1', 'attack2'],
       anims: { idle: [8, 10], run: [8, 14], jump: [4, 10], fall: [4, 10], attack1: [7, 16], attack2: [9, 18], hit: [4, 12], death: [4, 8] } },
     // Tử Linh Thuật Sư: Necromancer (áo choàng đen, đầu lâu, trượng đỏ)
-    tu_linh_thuat_su: { fw: 184, fh: 222, cx: 72, fy: 210, hd: true, s: 0.55, combo: ['attack1', 'attack2'],
+    tu_linh_thuat_su: { fw: 184, fh: 222, cx: 72, fy: 210, hd: true, s: 0.6, combo: ['attack1', 'attack2'],
       anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [13, 18], attack2: [17, 18], hit: [5, 12], death: [9, 10] } },
     // ---- Dạng tiến hóa (GameData.EVOLUTIONS). Dạng không có bộ hình riêng mượn hình class gốc (EVO_ALIAS).
     // Kiếm Thánh: Female Hero (nữ hiệp sĩ, vệt kiếm sáng)
