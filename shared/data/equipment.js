@@ -18,13 +18,13 @@
     mp: { name: 'Năng lượng', min: (l) => 5 + l * 3, max: (l) => 10 + l * 5 },
     atk: { name: 'Tấn công', min: (l) => 1 + l * 0.5, max: (l) => 2 + l * 1.1 },
     def: { name: 'Phòng thủ', min: (l) => 1 + l * 0.4, max: (l) => 2 + l * 0.8 },
-    crit: { name: 'Chí mạng', unit: '%', min: () => 1, max: (l) => 2 + l * 0.25 },
-    lifesteal: { name: 'Hút máu', unit: '%', min: () => 1, max: (l) => 2 + l * 0.15 },
-    cdr: { name: 'Giảm hồi chiêu', unit: '%', min: () => 2, max: (l) => 4 + l * 0.4 },
+    crit: { name: 'Chí mạng', unit: '%', min: () => 1, max: (l) => Math.min(15, 2 + l * 0.25) },
+    lifesteal: { name: 'Hút máu', unit: '%', min: () => 1, max: (l) => Math.min(6, 2 + l * 0.15) },
+    cdr: { name: 'Giảm hồi chiêu', unit: '%', min: () => 2, max: (l) => Math.min(12, 4 + l * 0.4) },
     speed: { name: 'Tốc chạy', min: () => 4, max: (l) => 8 + l },
-    boss: { name: 'Sát thương lên trùm', unit: '%', min: () => 3, max: (l) => 6 + l * 0.6 },
-    goldfind: { name: 'Xu rơi thêm', unit: '%', min: () => 5, max: (l) => 12 + l },
-    expfind: { name: 'Kinh nghiệm thêm', unit: '%', min: () => 3, max: (l) => 6 + l * 0.5 },
+    boss: { name: 'Sát thương lên trùm', unit: '%', min: () => 3, max: (l) => Math.min(20, 6 + l * 0.6) },
+    goldfind: { name: 'Xu rơi thêm', unit: '%', min: () => 5, max: (l) => Math.min(25, 12 + l) },
+    expfind: { name: 'Kinh nghiệm thêm', unit: '%', min: () => 3, max: (l) => Math.min(15, 6 + l * 0.5) },
   };
   const STAT_NAMES = { atk: 'Tấn công', def: 'Phòng thủ', hp: 'Máu', mp: 'Năng lượng', crit: 'Chí mạng' };
 

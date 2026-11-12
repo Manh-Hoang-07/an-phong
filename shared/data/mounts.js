@@ -69,9 +69,10 @@
   // ATK thấp vì đi 7 bóng cùng lúc: 7 bóng thường ~ 1 người chơi cùng cấp.
   const SHADOW_MUL = {
     normal: { hp: 0.8, atk: 0.13, def: 1 },
-    elite: { hp: 0.6, atk: 0.15, def: 1 },
-    leader: { hp: 0.5, atk: 0.17, def: 1 },
-    boss: { hp: 0.3, atk: 0.19, def: 1 },
+    // hp đã chia theo hệ số máu quái (tinh anh ×10, thủ lĩnh ×100, trùm ×200) để chỉ số bóng giữ nguyên như khi hệ số còn ×2,5 / ×5 / ×12
+    elite: { hp: 0.15, atk: 0.15, def: 1 },
+    leader: { hp: 0.025, atk: 0.17, def: 1 },
+    boss: { hp: 0.018, atk: 0.19, def: 1 },
   };
   // Cấp thật của bóng ma (lưu lúc thu phục = cấp quái lúc chết, sau đó lên cấp bằng kinh nghiệm)
   function shadowTrueLv(soul) {

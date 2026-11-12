@@ -12,14 +12,16 @@ Các mục dưới đây (0–7) là bản đề xuất ban đầu. **Bản đã
 | Chỉ số nghề | Đường cong riêng mỗi nghề (`SCHOOLS[...].curve = [cơ bản, mỗi cấp]`), **mỗi cấp gấp 2.5 lần bản đề xuất ban đầu** để cấp và nghề có trọng lượng. VD Kiếm Sĩ: HP 120 + 60/cấp, ATK 10 + 6/cấp, DEF 4 + 3.25/cấp. Bỏ hết hệ số % nhân. Chưa chọn nghề: `NOVICE_CURVE` |
 | Trọng lượng cấp + nghề | Cấp + nghề chiếm khoảng 31–56% chỉ số (trước đây 10–46%); xem bảng đo bên dưới |
 | Quái | Đường cong `MON_CURVE` (HP, ATK theo cấp, DEF = 2 + 1.6 × cấp), ATK ≈ gấp 2 bản đầu: quái thường chết sau ~5 đòn, mỗi đòn quái gây ~6–7% máu người, trùm ~11–12% |
-| Hạng quái | HP/EXP: tinh anh ×2.5/×3, thủ lĩnh ×5/×8, trùm ×12/×25, trùm cuối thêm ×1.67/×1.6. `atk`/`def` trong dữ liệu là giá trị CUỐI đã nhân hệ số hạng |
+| Hạng quái | **Đã đổi:** HP tinh anh ×10, thủ lĩnh ×100, trùm ×200 là mức TRẦN (trùm cuối thêm ×1.67); thủ lĩnh / trùm dốc theo cấp quái (×0.25 ở cấp ≤15 → ×1 ở cấp ≥70, xem GRADE_RAMP) để trùm đầu game đánh được. EXP: tinh anh ×6, thủ lĩnh ×20, trùm ×25. Bản cũ:  HP/EXP tinh anh ×2.5/×3, thủ lĩnh ×5/×8, trùm ×12/×25, trùm cuối thêm ×1.67/×1.6. `atk`/`def` trong dữ liệu là giá trị CUỐI đã nhân hệ số hạng |
 | EXP quái thường | `expToNext(cấp) / (10 + 0.2 × cấp)` (cần 10 con ở cấp 1, 20 con cấp 50, 30 con cấp 100). Trùm hết lỗi 2.4 triệu EXP |
 | Trang bị cấp 51+ | Hạ sâu hơn bản đầu: HP Áo 900/1290/1680/2070/2460 → **650/800/950/1100/1250**, DEF Áo 57/80/102/125/147 → **52/62/72/84/96**, ATK Kiếm 145/200/255/310/365 → **145/165/185/205/225**; MP trên đồ nhân cùng tỉ lệ HP. Cường hóa giữ +8% |
 | Thú triệu hồi | **Độc lập với chủ**: chỉ số theo cấp thú (`PET_CURVE`: HP, ATK, DEF), không cộng gì từ chỉ số chủ. Cấp thú vẫn bị kẹp tối đa bằng cấp chủ. Linh thú có hệ số loài HP/DEF/ATK/tốc đánh (Linh Phong đánh nhanh hơn 15%) |
 | Bóng ma | **Gọi 7 cùng lúc, lưu 20.** Chỉ số = chỉ số hiện tại của loài quái gốc × (đường cong quái ở cấp bóng ÷ ở cấp quái) × hệ số hạng: HP ×0.8/0.6/0.5/0.3, ATK ×0.13/0.15/0.17/0.19 (thường/tinh anh/thủ lĩnh/trùm). 7 bóng thường ≈ 1 người cùng cấp |
 | Nhánh tiến hóa (chức nghiệp 2) | Thêm `EVOLUTION_FORMS`: hình thái chức nghiệp 2 nhân chỉ số riêng từng nhánh (bảng dưới). Toàn Năng Tinh Thông: HP/MP/ATK/thể lực ×2 (cũ ×3), DEF ×1.3 |
 
-### Chỉ số nhánh tiến hóa (nhân lên khi đang ở hình thái này)
+> **Đã thay thế:** chức nghiệp 2 không còn nhân chỉ số. Sức mạnh nằm ở bộ 4 kỹ năng riêng của nhánh (xem `shared/data/skills.js`, các kỹ năng có `evolutionKey`); Ấn thức tỉnh dùng chung mọi class và chồng được lên chức nghiệp 2. Bảng dưới là bản cũ, giữ để tham khảo.
+
+### (Bản cũ) Chỉ số nhánh tiến hóa
 
 | Nhánh | HP | MP | ATK | DEF | Chí mạng |
 |---|---|---|---|---|---|

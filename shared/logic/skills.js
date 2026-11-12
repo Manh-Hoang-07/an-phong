@@ -13,11 +13,11 @@
     const s = { ...base };
     if (lv >= 5 && base.m5) Object.assign(s, base.m5);
     if (lv >= 10 && base.m10) Object.assign(s, base.m10);
-    const mul = 1 + 0.1 * (lv - 1);
+    const mul = 1 + 0.05 * (lv - 1);   // sát thương +5% mỗi cấp (cả kỹ năng thường và tuyệt kỹ)
     if (s.power) s.power = s.power * mul;
     if (s.after) s.after *= mul;
     if (s.finisher) s.finisher *= mul;
-    if (s.heal) s.heal = Math.min(0.9, s.heal * (1 + 0.05 * (lv - 1)));
+    if (s.heal) s.heal = Math.min(0.9, s.heal * (1 + 0.03 * (lv - 1)));
     if (s.atkBuff) s.atkBuff *= (1 + 0.05 * (lv - 1));
     s.mp = Math.round(base.mp * (1 + 0.04 * (lv - 1)));
     if (lv >= 10) s.cd = s.cd * 0.85;
@@ -44,7 +44,8 @@
     return Object.keys(SKILLS).filter(id => {
       const s = SKILLS[id];
       if (s.ult) return ultFits(player, s);
-      if (s.evolutionKey && !player.advancement?.unlocked?.[s.evolutionKey]) return false;
+      // Kỹ năng chức nghiệp 2: cần mở nhánh tiến hóa tương ứng. Toàn Năng Tinh Thông mở khóa kỹ năng nhánh của MỌI class.
+      if (s.evolutionKey && !(player.school === 'toan_nang' ? player.advancement?.unlocked?.toan_nang_tinh_thong : player.advancement?.unlocked?.[s.evolutionKey])) return false;
       if (s.type === 'shadow_toggle' && player.school !== 'trieu_hoi_su' && player.school !== 'tu_linh_thuat_su') return false;
       if (player.school === 'toan_nang') return true;
       if (player.school === 'tu_linh_thuat_su') return s.school === 'trieu_hoi_su' || s.school === 'tu_linh_thuat_su';

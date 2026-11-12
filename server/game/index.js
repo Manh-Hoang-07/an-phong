@@ -164,6 +164,11 @@ function migrate(p) {
     }
   }
   if (!Number.isFinite(p.skillPoints)) p.skillPoints = 0;
+  // Toàn Năng Tinh Thông không còn là hình thái nhân chỉ số: Ấn II dùng chung, Tinh Thông chỉ mở khóa kỹ năng nhánh của mọi class
+  if (p.school === 'toan_nang') {
+    if (p.advancement?.unlocked?.toan_nang_tinh_thong && (p.awakenTier || 0) < 2) p.awakenTier = 2;
+    if (p.formChoice === 'evolution') { p.formChoice = p.awakenTier >= 2 ? 'awaken2' : 'awaken1'; p.formActive = false; }
+  }
   while (p.skillSlots.length < G.SKILL_SLOTS) p.skillSlots.push(null);
   p.skillSlots = p.skillSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] ? id : null));
   // Thanh kỹ năng chức nghiệp 2: chuyển kỹ năng nhánh đang nằm ở thanh chức nghiệp 1 (dữ liệu cũ) sang thanh riêng

@@ -8,7 +8,7 @@ WorldScene.mix(class WorldPlayer {
   }
   // Đang biến hình THỨC TỈNH (ấn 1 / ấn 2). Hình thái chức nghiệp (tiến hóa) cũng bật App.form nhưng là hình thái ổn định:
   // không tốn năng lượng / thể lực mỗi giây, vẫn hồi bình thường và không có hiệu ứng của ấn thức tỉnh.
-  // Tử Linh Thuật Sư có thể bật thêm ấn thức tỉnh chồng lên chức nghiệp (App.player.careerAwaken = bậc ấn) → tính như đang thức tỉnh.
+  // Mọi class có thể bật thêm ấn thức tỉnh chồng lên chức nghiệp 2 (App.player.careerAwaken = bậc ấn) → tính như đang thức tỉnh.
   inAwakenForm() { return !!App.form && (App.player?.formChoice !== 'evolution' || !!App.player?.careerAwaken); }
   inCareerForm() { return !!App.form && App.player?.formChoice === 'evolution'; }
   activeAwaken() {
@@ -269,10 +269,15 @@ WorldScene.mix(class WorldPlayer {
     const grace = this.buffOn('grace');
     if (grace) App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * (grace.regen || 0.03) / 2);
     if (this.inAwakenForm()) return;
+    const maxHp = App.stats.maxHp, maxMp = App.stats.maxMp;
+    // Nội tại Dòng Chảy (Pháp Sư): hồi 0,5% năng lượng tối đa mỗi giây ngay cả khi đang chiến đấu
+    const flow = this.hasPassive('phap_su');
+    if (flow) App.mp = Math.min(maxMp, App.mp + maxMp * 0.005);
     const fighting = now - (this.staUsedAt || -1e9) < R.calmMs || now - (this.lastHurt || -1e9) < R.calmMs;
     if (fighting) return;
-    App.hp = Math.min(App.stats.maxHp, App.hp + R.hp);
-    App.mp = Math.min(App.stats.maxMp, App.mp + R.mp * (this.hasPassive('phap_su') ? 2 : 1));   // Pháp Sư hồi năng lượng gấp đôi
+    // Ngoài giao chiến: hồi 0,5% máu và năng lượng tối đa mỗi giây (Pháp Sư cộng thêm phần Dòng Chảy ở trên = gấp đôi)
+    App.hp = Math.min(maxHp, App.hp + Math.max(R.hp, maxHp * 0.005));
+    App.mp = Math.min(maxMp, App.mp + Math.max(R.mp, maxMp * 0.005));
   }
 
   // ------------------------------------------------------------------ Thể lực (tách riêng với năng lượng)
@@ -634,8 +639,8 @@ WorldScene.mix(class WorldPlayer {
   toggleForm(time) {
     // Nút biến hình (⚡ / T) chỉ dành cho ấn thức tỉnh; hình thái chức nghiệp bật/tắt bằng nút riêng (V)
     if (this.inCareerForm()) {
-      // Tử Linh Thuật Sư: bật / tắt ấn thức tỉnh chồng lên chức nghiệp
-      if (!GameData.canCareerAwaken(App.player)) { UI.log('Đang ở hình thái chức nghiệp. Tắt chức nghiệp (nút ✦ / phím V) trước khi biến hình.', '#c6a7ff'); return; }
+      // Mọi class đã mở chức nghiệp 2: bật / tắt ấn thức tỉnh chồng lên chức nghiệp
+      if (!GameData.canCareerAwaken(App.player)) { UI.log('Cần mở chức nghiệp 2 và có Ấn thức tỉnh để chồng Ấn lên chức nghiệp.', '#c6a7ff'); return; }
       if (!App.player.careerAwaken) {
         if (time < (this.formReadyAt || 0)) return;
         const drain = GameData.AWAKENS[(App.player.awakenTier >= 2 ? 2 : 1) - 1]?.drain || 3, need = drain * 3;

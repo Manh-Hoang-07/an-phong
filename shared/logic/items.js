@@ -45,8 +45,8 @@
     if (!def || !def.stats) return { main, aff, all };
     const mul = (inst.roll || 1) * QUALITY_MUL[inst.q || 1] * (1 + 0.08 * (inst.plus || 0));
     for (const k in def.stats) {
-      const v = def.stats[k] * mul;
-      main[k] = k === 'crit' ? r1(v) : Math.round(v);
+      // Chí mạng trên đồ là số cố định: không nhân theo độ ngẫu nhiên, phẩm chất hay cấp cường hóa (để không chạm trần 60% quá sớm)
+      main[k] = k === 'crit' ? r1(def.stats[k]) : Math.round(def.stats[k] * mul);
     }
     for (const [k, v] of inst.aff || []) aff[k] = r1((aff[k] || 0) + v);
     for (const k in main) all[k] = main[k];

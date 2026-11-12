@@ -14,9 +14,11 @@
     return (t >= 1 && t <= AWAKENS.length) ? AWAKENS[t - 1] : null;
   }
 
-  // Ấn thức tỉnh chồng lên chức nghiệp 2: hiện chỉ Tử Linh Thuật Sư (nhánh tiến hóa của Triệu Hồi Sư)
+  // Ấn thức tỉnh đi theo NGƯỜI chơi, không theo nghề: mọi class đã mở chức nghiệp 2 và có ít nhất Ấn I đều chồng được Ấn lên chức nghiệp 2.
+  // (Toàn Năng không có thanh kỹ năng nhánh riêng nên bật Ấn ngay ở dạng thường.)
   function canCareerAwaken(player) {
-    return player.school === 'trieu_hoi_su' && !!player.advancement?.unlocked?.tu_linh_thuat_su && (player.awakenTier || 0) >= 1;
+    const evo = G.EVOLUTIONS[player.school];
+    return player.school !== 'toan_nang' && !!evo && !!player.advancement?.unlocked?.[evo] && (player.awakenTier || 0) >= 1;
   }
 
   function passivesOf(player) {
@@ -70,7 +72,8 @@
       for (const k in pk.mul || {}) perkMul[k] *= pk.mul[k];
       for (const k in pk.add || {}) perkAdd[k] += pk.add[k];
     }
-    let skillMul = 1 + p.spi * 0.015;
+    // Sức mạnh kỹ năng theo Tinh thần: có trần ×2 (SPI/(SPI+150)), không tăng vô hạn như trước. Chỉ nhân vào sát thương kỹ năng (không nhân hồi máu / buff).
+    let skillMul = 1 + p.spi / (p.spi + 150);
     let costMul = 1;
     if (sc) {
       const b = sc.bonus;
@@ -95,9 +98,7 @@
       if (m.atk) atk *= m.atk;
       if (m.def) def *= m.def;
     };
-    // Hình thái chức nghiệp 2 (nhánh tiến hóa): chỉ số riêng từng nhánh, xem EVOLUTION_FORMS
-    const evoForm = opts.form && player.formChoice === 'evolution' ? G.EVOLUTION_FORMS[G.EVOLUTIONS[player.school]] : null;
-    if (evoForm) { applyMul(evoForm.mul); crit += evoForm.critAdd || 0; }
+    // Chức nghiệp 2 KHÔNG nhân chỉ số: sức mạnh của nó nằm ở bộ kỹ năng riêng (xem SKILLS, evolutionKey). Chỉ Ấn thức tỉnh (dùng chung mọi class) mới nhân chỉ số.
     if (aw) applyMul(aw.mul);
     crit += perkAdd.crit;
     const w = player.equip.weapon;
@@ -108,14 +109,15 @@
     // speed: tính trước clamp, nhân thêm hệ số class (sat_thu)
     const speedFinal = Math.round(Math.min(290, Math.min(260, 190 + p.agi * 2) * scSpeed + eq.speed));
     // Thể lực tối đa: dạng thường x1.3 (STAMINA.maxMul). Đang biến hình thì KHÔNG có hệ số này, thay bằng hệ số của ấn / hình thái
-    const staMul = (aw || evoForm) ? formSta : G.STAMINA.maxMul;
+    const staMul = aw ? formSta : G.STAMINA.maxMul;
     return {
       maxHp: Math.round(hp), maxMp: Math.round(mp), atk: Math.round(atk), def: Math.round(def),
       maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * staMul * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)),
       crit: Math.min(60, r1(crit)), speed: speedFinal, skillMul, costMul, wtype,
       lifesteal: Math.min(15, r1(eq.lifesteal + scLifesteal)),
       cdr: Math.min(30, r1(eq.cdr + perkAdd.cdr + scCdr)),
-      boss: r1(eq.boss + perkAdd.boss), goldfind: r1(eq.goldfind + perkAdd.goldfind), expfind: r1(eq.expfind + perkAdd.expfind),
+      // Trần cộng dồn: sát thương lên trùm 80%, xu rơi thêm 100%, kinh nghiệm thêm 60%
+      boss: Math.min(80, r1(eq.boss + perkAdd.boss)), goldfind: Math.min(100, r1(eq.goldfind + perkAdd.goldfind)), expfind: Math.min(60, r1(eq.expfind + perkAdd.expfind)),
     };
   }
 

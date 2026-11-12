@@ -14,10 +14,10 @@ WorldScene.mix(class WorldSkills {
   }
   buffOn(name, time = this.time.now) { const b = this.buffs[name]; return b && time < b.until ? b : null; }
   hasPassive(id) { return GameData.passivesOf(App.player).includes(id); }
-  // Hồi máu từ kỹ năng (Trị Liệu Sư có nội tại "Sinh Lực": +20% máu tối đa)
+  // Hồi máu từ kỹ năng: theo % máu tối đa của kỹ năng (không nhân sức mạnh kỹ năng / SPI); nội tại "Sinh Lực" của Trị Liệu Sư: +20% lượng hồi
   skillHeal(ratio) {
-    const extra = this.hasPassive('tri_lieu_su') ? 0.2 : 0;
-    const amount = Math.round(App.stats.maxHp * (ratio * App.stats.skillMul + extra));
+    const boost = this.hasPassive('tri_lieu_su') ? 1.2 : 1;
+    const amount = Math.round(App.stats.maxHp * ratio * boost);
     App.hp = Math.min(App.stats.maxHp, App.hp + amount);
     this.floatText(this.player.x, this.player.y - 30, '+' + amount, '#69f0ae', 16);
   }
@@ -115,20 +115,28 @@ WorldScene.mix(class WorldSkills {
         break;
       }
       case 'guard': {
-        this.buffs.guard = { until: time + sk.duration * 1000, reduce: sk.reduce, reflect: sk.reflect || 0 };
+        // Đang có thủ thế mạnh hơn thì thủ thế yếu không ghi đè (vd. Khiêu Chiến không phá Thuẫn Trận)
+        const curGuard = this.buffOn('guard', time);
+        if (curGuard && curGuard.reduce > sk.reduce) { this.floatText(pl.x, pl.y - 70, 'Đang có thủ thế mạnh hơn', '#bdbdbd', 12); break; }
+        // Kỹ năng thủ có thể kèm buff tấn công / chí mạng / tốc đánh (cộng dồn qua buffTotals vì cùng nằm trong this.buffs)
+        this.buffs.guard = { until: time + sk.duration * 1000, reduce: sk.reduce, reflect: sk.reflect || 0,
+          atk: sk.atkBuff || 0, crit: sk.critBuff || 0, speed: sk.speedBuff || 0 };
         this.ringFx(pl.x, pl.y, 0xffb36b);
         break;
       }
       case 'manashield': {
+        const curShield = this.buffOn('manashield', time);
+        if (curShield && curShield.absorb > sk.absorb) { this.floatText(pl.x, pl.y - 70, 'Đang có khiên mạnh hơn', '#bdbdbd', 12); break; }
         this.buffs.manashield = { until: time + sk.duration * 1000, absorb: sk.absorb };
         this.ringFx(pl.x, pl.y, 0x8fb4ff);
         break;
       }
       case 'buff': {
         // Không để buff yếu ghi đè buff cùng loại đang mạnh hơn (vd. tuyệt kỹ dùng chung đè Thức Tỉnh Tối Thượng)
-        const prev = this.buffs[sk.buff], nextAtk = (sk.atkBuff || 0) * App.stats.skillMul;
+        // Buff tấn công theo % của kỹ năng, không nhân sức mạnh kỹ năng / SPI
+        const prev = this.buffs[sk.buff], nextAtk = sk.atkBuff || 0;
         if (!(prev && time < prev.until && (prev.atk || 0) > nextAtk))
-        this.buffs[sk.buff] = { until: time + sk.duration * 1000, atk: (sk.atkBuff || 0) * App.stats.skillMul, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0 };
+        this.buffs[sk.buff] = { until: time + sk.duration * 1000, atk: nextAtk, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0 };
         for (let k = 0; k < (sk.ult ? 10 : 6); k++) {
           const ghost = this.add.image(pl.x, pl.y, pl.texture.key).setTint(this.accent()).setAlpha(0.6).setDepth(3);
           this.tweens.add({ targets: ghost, x: pl.x + Phaser.Math.Between(-70, 70), y: pl.y + Phaser.Math.Between(-20, 10), alpha: 0, duration: 520, onComplete: () => ghost.destroy() });
@@ -179,7 +187,7 @@ WorldScene.mix(class WorldSkills {
           if (t >= 21) g.destroy();
         } });
         this.cameras.main.shake(150, 0.006);
-        this.hitCircle(pl.x, pl.y, sk.radius, pw, { freeze: sk.freeze });
+        this.hitCircle(pl.x, pl.y, sk.radius, pw, { freeze: sk.freeze, slow: sk.slow });
         if (sk.heal) this.skillHeal(sk.heal);
         break;
       }

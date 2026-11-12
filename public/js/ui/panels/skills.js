@@ -10,12 +10,12 @@
     if (s.power) out.push(`${Math.round(s.power * st.skillMul * 100)}% sức mạnh` + (s.hits ? ` × ${s.hits} nhát` : '') + (s.count > 1 ? ` × ${s.count}` : '') + (s.arrows ? ` × ${s.arrows} mũi` : ''));
     if (s.finisher) out.push(`nhát cuối ${Math.round(s.finisher * st.skillMul * 100)}%`);
     if (s.after) out.push(`vệt kiếm ${Math.round(s.after * st.skillMul * 100)}%`);
-    if (s.heal) out.push(`hồi ${Math.round(s.heal * st.skillMul * 100)}% máu`);
+    if (s.heal) out.push(`hồi ${Math.round(s.heal * (G.passivesOf(App.player).includes('tri_lieu_su') ? 1.2 : 1) * 100)}% máu`);
     if (s.mpHeal) out.push(`+${Math.round(s.mpHeal * 100)}% năng lượng`);
     if (s.reduce) out.push(`giảm ${Math.round(s.reduce * 100)}% sát thương`);
     if (s.reflect) out.push(`phản ${Math.round(s.reflect * 100)}%`);
     if (s.absorb) out.push(`đỡ ${Math.round(s.absorb * 100)}% sát thương`);
-    if (s.atkBuff) out.push(`tấn công +${Math.round(s.atkBuff * st.skillMul * 100)}%`);
+    if (s.atkBuff) out.push(`tấn công +${Math.round(s.atkBuff * 100)}%`);
     if (s.critBuff) out.push(`chí mạng +${s.critBuff}%`);
     if (s.speedBuff) out.push(`tốc đánh +${Math.round(s.speedBuff * 100)}%`);
     if (s.duration) out.push(`${s.duration} giây`);
@@ -72,8 +72,8 @@
     const all = G.availableSkills(p);
     const schoolOrder = [...new Set(all.map(id => G.SKILLS[id].school))];
     const bySchool = (a, b) => schoolOrder.indexOf(G.SKILLS[a].school) - schoolOrder.indexOf(G.SKILLS[b].school) || G.SKILLS[a].level - G.SKILLS[b].level;
-    // Tuyệt kỹ đã học lên trước
-    const ultIds = all.filter(id => G.SKILLS[id].ult).sort((a, b) => (!!G.skillLevel(p, b) - !!G.skillLevel(p, a)) || bySchool(a, b));
+    // Chỉ hiện tuyệt kỹ ĐÃ HỌC (đọc sách trong Túi đồ để học); tuyệt kỹ chưa học không lộ ra trong bảng
+    const ultIds = all.filter(id => G.SKILLS[id].ult && G.skillLevel(p, id) > 0).sort(bySchool);
     const ids = all.filter(id => !G.SKILLS[id].ult).sort(bySchool).concat(ultIds);
     for (const id of ids) {
       const base = G.SKILLS[id];

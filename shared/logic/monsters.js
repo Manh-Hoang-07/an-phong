@@ -20,7 +20,9 @@
       speed: d.speed || 0, look: d.look, map: mapId || null, at: Date.now() };
   }
   function monGrade(def) { return MON_GRADE[gradeOf(def)] || MON_GRADE.normal; }
-  function monHp(def) { return Math.max(1, Math.round(def.hp * monGrade(def).hp * (def.finalBoss ? G.FINAL_BOSS.hp : 1))); }
+  // Thủ lĩnh / trùm: hệ số hạng là mức trần, cấp thấp được giảm theo GRADE_RAMP (tinh anh và quái thường không dốc)
+  function gradeRamp(def) { const g = gradeOf(def); return (g === 'leader' || g === 'boss') ? G.interp(G.GRADE_RAMP, (def && def.level) || 1) : 1; }
+  function monHp(def) { return Math.max(1, Math.round(def.hp * monGrade(def).hp * gradeRamp(def) * (def.finalBoss ? G.FINAL_BOSS.hp : 1))); }
   function monExp(def) { return def.exp * monGrade(def).exp * (def.finalBoss ? G.FINAL_BOSS.exp : 1); }
 
   // Chỉ số quái THƯỜNG theo cấp (đường cong chuẩn): dùng để bóng ma lớn lên theo cấp và để cân bằng
@@ -32,5 +34,5 @@
     };
   }
 
-  Object.assign(G, { gradeOf, monGrade, monHp, monExp, monSnapshot, monCurve });
+  Object.assign(G, { gradeOf, monGrade, gradeRamp, monHp, monExp, monSnapshot, monCurve });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

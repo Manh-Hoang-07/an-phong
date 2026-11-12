@@ -93,7 +93,7 @@ const UI = (() => {
     // Nút biến hình: chỉ hiện khi đã có ấn thức tỉnh; sáng lên khi đang biến hình
     const awk = G.awakenOf(p);
     const hasForm = (p.awakenTier > 0) || !!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]];
-    const hasCareer = !!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]];
+    const hasCareer = !!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]] && p.school !== 'toan_nang';
     const summoned = Array.isArray(p.mounts?.summoned) ? p.mounts.summoned : (p.mounts?.active ? [p.mounts.active] : []);
     $('hud-pet').classList.toggle('hidden', !summoned.length);
     const petStats = G.petStats(p), petStates = p.pets || {};

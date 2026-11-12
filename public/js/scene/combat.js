@@ -7,7 +7,9 @@ WorldScene.mix(class WorldCombat {
     const bt = this.buffTotals();
     const bossMul = (mon.def.boss || mon.def.leader) ? 1 + (st.boss || 0) / 100 : 1;
     // Giảm giáp theo tỉ lệ: DEF / (DEF + 60 + 12 x cấp quái), tối đa 75% (xem GameData.defReduce)
-    let dmg = st.atk * mult * (1 + bt.atk) * bossMul * (1 - GameData.defReduce(mon.def.def, mon.def.level));
+    // Thần Kiếm Vĩnh Hằng: đòn đánh xuyên mọi phòng thủ của quái Hư Không (cấp 41–50)
+    const pierce = App.player?.equip?.weapon?.id === 'than_kiem_vinh_hang' && mon.def.level >= 41 && mon.def.level <= 50;
+    let dmg = st.atk * mult * (1 + bt.atk) * bossMul * (pierce ? 1 : 1 - GameData.defReduce(mon.def.def, mon.def.level));
     dmg = Math.max(1, dmg) * Phaser.Math.FloatBetween(0.9, 1.1);
     const crit = Math.random() * 100 < Math.min(90, st.crit + bt.crit);
     if (crit) {
@@ -129,10 +131,10 @@ WorldScene.mix(class WorldCombat {
     if (!extra.pet && App.stats.lifesteal && !m.def.passive && !this.dead) {
       App.hp = Math.min(App.stats.maxHp, App.hp + dmg * App.stats.lifesteal / 100);
     }
-    // Nội tại Kiếm Tâm: đánh thường trúng quái hồi 1% máu
+    // Nội tại Kiếm Tâm: đánh thường trúng quái hồi 0,5% máu
     if (!extra.pet && extra.basic && !m.def.passive && !this.dead && this.hasPassive('kiem_si') && this.time.now > (this.healTick || 0)) {
       this.healTick = this.time.now + 120;
-      App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * 0.01);
+      App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * 0.005);
     }
     const s = m.sprite;
     this.floatText(s.x + Phaser.Math.Between(-8, 8), this.monsterTop(m) - 4, (crit ? '💥' : '') + dmg, crit ? '#ffd740' : '#ffffff', crit ? 20 : 15);
@@ -146,7 +148,11 @@ WorldScene.mix(class WorldCombat {
       m.knockUntil = this.time.now + 150;
     }
     if (extra.slow) m.slowUntil = this.time.now + extra.slow * 1000;
-    if (extra.freeze) m.freezeUntil = this.time.now + extra.freeze * 1000;
+    if (extra.freeze) {
+      // Thủ lĩnh / trùm không bị đóng băng: đổi thành làm chậm cùng thời gian
+      if (m.def.boss || m.def.leader || m.def.finalBoss) m.slowUntil = Math.max(m.slowUntil || 0, this.time.now + extra.freeze * 1000);
+      else m.freezeUntil = this.time.now + extra.freeze * 1000;
+    }
     // Trùm phụ bỏ chạy khi còn ít máu (Lam Sương): tính là hạ gục cho nhiệm vụ
     if (m.hp > 0 && m.def.fleeAt && m.hp <= m.maxHp * m.def.fleeAt) {
       m.fled = true;

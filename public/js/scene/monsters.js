@@ -164,6 +164,8 @@ WorldScene.mix(class WorldMonsters {
 
     const dx = pl.x - s.x, dy = pl.y - (d.fly ? s.y : s.body.center.y);
     const dist = Math.hypot(dx, dy);
+    // Kiếm Thượng Băng Sương: quái lại gần (trong 170) bị làm chậm
+    if (App.player?.equip?.weapon?.id === 'thuong_bang_suong' && !this.dead && dist < 170) m.slowUntil = Math.max(m.slowUntil || 0, time + 400);
     if (!this.dead && dist < (d.boss || d.leader ? 380 : 220) && Math.abs(dy) < 160) m.aggro = true;
     if (dist > 600 || this.dead) { m.aggro = false; if (m.state !== 'move') this.endAttack(m, time); }
 

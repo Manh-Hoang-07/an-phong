@@ -38,8 +38,6 @@
       name: 'Sát Thủ', weapon: 'song_dao', color: 0xe040fb, icon: '🗡️',
       desc: 'Tốc độ cao, chí mạng cực mạnh. Tấn công tăng nhanh nhất, chí mạng +10%, tốc chạy +15%, máu và phòng thủ thấp.',
       // chỉ số gốc = [cơ bản, mỗi cấp]
-      curve: { hp: [110,52.5], mp: [60,8], atk: [10,6], def: [3,2.75] },
-      // chỉ số gốc = [cơ bản, mỗi cấp]
       curve: { hp: [90,42.5], mp: [40,5], atk: [12,7.25], def: [2,1.75] },
       bonus: { critAdd: 10, speed: 1.15 },
     },
@@ -76,19 +74,8 @@
   // Chưa chọn class (cấp 1–4): đường cong chung
   const NOVICE_CURVE = { hp: [100, 50], mp: [40, 6], atk: [8, 5], def: [2, 2.5] };
 
-  // Hình thái chức nghiệp 2 (nhánh tiến hóa, cấp 25): nhân chỉ số khi ĐANG ở hình thái này.
-  // Chỉ một hình thái bật cùng lúc, nên mức nhân nằm giữa Ấn 1 (x1.3) và Ấn 2 (x1.6) nhưng nghiêng theo vai trò.
-  // critAdd: cộng thêm % chí mạng. Tử Linh Thuật Sư còn chồng ấn thức tỉnh (careerAwaken) lên trên.
-  const EVOLUTION_FORMS = {
-    kiem_thanh:          { mul: { hp: 1.35, mp: 1.15, atk: 1.45, def: 1.25 }, critAdd: 3 },
-    than_xa:             { mul: { hp: 1.2,  mp: 1.2,  atk: 1.55, def: 1.1 },  critAdd: 8 },
-    dai_phap_su:         { mul: { hp: 1.25, mp: 1.6,  atk: 1.5,  def: 1.15 }, critAdd: 3 },
-    anh_vuong:           { mul: { hp: 1.2,  mp: 1.2,  atk: 1.55, def: 1.1 },  critAdd: 10 },
-    ho_ve_bat_khuat:     { mul: { hp: 1.6,  mp: 1.2,  atk: 1.2,  def: 1.5 },  critAdd: 0 },
-    thanh_linh:          { mul: { hp: 1.4,  mp: 1.6,  atk: 1.2,  def: 1.2 },  critAdd: 0 },
-    tu_linh_thuat_su:    { mul: { hp: 1.3,  mp: 1.5,  atk: 1.3,  def: 1.2 },  critAdd: 0 },
-    toan_nang_tinh_thong:{ mul: { hp: 2,    mp: 2,    atk: 2,    def: 1.3 },  critAdd: 0 },
-  };
+  // Chức nghiệp 2 (nhánh tiến hóa, cấp 25) KHÔNG nhân chỉ số. Nó mạnh hơn chức nghiệp 1 nhờ bộ kỹ năng riêng (SKILLS có evolutionKey).
+  // Ấn thức tỉnh (AWAKENS) dùng chung mọi class và chồng được lên chức nghiệp 2.
 
   // ---------------------------------------------------------------- Thức tỉnh (biến hình)
   // Sau khi chọn class (cấp 5) người chơi có thể "thức tỉnh" thêm các bậc biến hình.
@@ -129,8 +116,8 @@
   const WEAPON_TYPES = {
     tay: { name: 'Tay không', range: 46, cooldown: 400, mult: 0.8, style: 'melee', look: 'kiem', icon: '👊' },
     kiem: { name: 'Kiếm', range: 74, cooldown: 360, mult: 1.0, style: 'melee', look: 'kiem', icon: '🗡️' },
-    cung: { name: 'Cung', range: 400, cooldown: 430, mult: 0.9, style: 'projectile', look: 'cung', icon: '🏹' },
-    truong: { name: 'Trượng', range: 170, cooldown: 480, mult: 0.85, style: 'wave', look: 'truong', icon: '🪄' },
+    cung: { name: 'Cung', range: 400, cooldown: 430, mult: 0.8, style: 'projectile', look: 'cung', icon: '🏹' },
+    truong: { name: 'Trượng', range: 170, cooldown: 480, mult: 0.95, style: 'wave', look: 'truong', icon: '🪄' },
     // Sát Thủ: hai dao ngắn, đánh rất nhanh, tầm ngắn
     song_dao: { name: 'Song Đao', range: 58, cooldown: 270, mult: 0.78, style: 'melee', look: 'kiem', icon: '🔪' },
     // Tanker: chùy nặng + khiên, chậm nhưng đòn mạnh
@@ -159,12 +146,12 @@
 
   // Nội tại: luôn có tác dụng sau khi thức tỉnh class
   const PASSIVES = {
-    kiem_si: { icon: '❤️', name: 'Kiếm Tâm', desc: 'Mỗi lần đánh thường trúng quái hồi 1% máu tối đa.' },
+    kiem_si: { icon: '❤️', name: 'Kiếm Tâm', desc: 'Mỗi lần đánh thường trúng quái hồi 0,5% máu tối đa.' },
     cung_thu: { icon: '🎯', name: 'Yếu Điểm', desc: 'Đòn chí mạng gây 180% sát thương thay vì 160%.' },
-    phap_su: { icon: '💠', name: 'Dòng Chảy', desc: 'Hồi năng lượng nhanh gấp đôi.' },
+    phap_su: { icon: '💠', name: 'Dòng Chảy', desc: 'Hồi 0,5% năng lượng tối đa mỗi giây ngay cả khi đang chiến đấu; ngoài chiến đấu hồi gấp đôi.' },
     sat_thu: { icon: '🌑', name: 'Bóng Tối', desc: 'Chí mạng đầu tiên sau kỹ năng lướt gây 250% sát thương.' },
     tanker: { icon: '⚔️', name: 'Thành Đồng', desc: 'Giảm thêm 10% sát thương nhận vào khi máu dưới 50%.' },
-    tri_lieu_su: { icon: '🌿', name: 'Sinh Lực', desc: 'Kỹ năng hồi máu hồi thêm 20% theo máu tối đa.' },
+    tri_lieu_su: { icon: '🌿', name: 'Sinh Lực', desc: 'Kỹ năng hồi máu hồi thêm 20% lượng hồi.' },
     trieu_hoi_su: { icon: '🔮', name: 'Liên Kết Linh Thể', desc: 'Thực thể được triệu hồi gây thêm 10% sát thương.' },
     tu_linh_thuat_su: { icon: '☠️', name: 'Thu Hồn', desc: 'Quái thường và tinh anh do bạn kết liễu được lưu thành bóng ma. Bộ sưu tập tối đa 20 bóng.' },
   };
@@ -175,5 +162,5 @@
   };
   const EVOLUTION_NAMES = { kiem_thanh:'Kiếm Thánh', than_xa:'Thần Xạ', dai_phap_su:'Đại Pháp Sư', anh_vuong:'Ảnh Vương',
     ho_ve_bat_khuat:'Hộ Vệ Bất Khuất', thanh_linh:'Thánh Linh', tu_linh_thuat_su:'Tử Linh Thuật Sư', toan_nang_tinh_thong:'Toàn Năng Tinh Thông' };
-  Object.assign(G, { SCHOOLS, NOVICE_CURVE, EVOLUTION_FORMS, AWAKENS, EVOLUTIONS, EVOLUTION_NAMES, WEAPON_TYPES, classWeapon, weaponOwners, PASSIVES, STAMINA, REGEN });
+  Object.assign(G, { SCHOOLS, NOVICE_CURVE, AWAKENS, EVOLUTIONS, EVOLUTION_NAMES, WEAPON_TYPES, classWeapon, weaponOwners, PASSIVES, STAMINA, REGEN });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

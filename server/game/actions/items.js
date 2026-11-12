@@ -86,11 +86,11 @@ const actions = {
       if (id==='awaken2' && (p.awakenTier>=2 || p.level<45 || !p.advancement.done.awaken2)) fail('Sách này chưa thể sử dụng.');
       if (id==='evolution') { const evo=G.EVOLUTIONS[p.school]; if (p.school==='toan_nang' || !evo || p.level<25 || !p.advancement.done.evolution || p.advancement.unlocked[evo]) fail('Sách này chưa thể sử dụng với class/cấp hiện tại.'); p.advancement.unlocked[evo]=true; }
       if(id==='awaken1') p.awakenTier=1;
-      if(id==='awaken2' && p.school==='toan_nang') p.advancement.unlocked.toan_nang_tinh_thong=true;
-      else if(id==='awaken2') p.awakenTier=2;
+      // Ấn II dùng chung mọi class. Toàn Năng đọc sách này thì có thêm Tinh Thông: mở khóa kỹ năng chức nghiệp 2 của MỌI class (không nhân chỉ số)
+      if(id==='awaken2') { p.awakenTier=2; if(p.school==='toan_nang') p.advancement.unlocked.toan_nang_tinh_thong=true; }
       e.qty--; if(e.qty<=0) p.bag.splice(p.bag.indexOf(e),1);
-      p.formChoice=id==='awaken1'?'awaken1':id==='awaken2'?(p.school==='toan_nang'?'evolution':'awaken2'):'evolution';
-      const label=id==='evolution'?G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]]:id==='awaken1'?'Biến Hình I':p.school==='toan_nang'?'Toàn Năng Tinh Thông':'Biến Hình II';
+      p.formChoice=id==='awaken1'?'awaken1':id==='awaken2'?'awaken2':'evolution';
+      const label=id==='evolution'?G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]]:id==='awaken1'?'Biến Hình I':p.school==='toan_nang'?'Biến Hình II và Toàn Năng Tinh Thông (mở mọi kỹ năng chức nghiệp 2)':'Biến Hình II';
       ev.push({t:'msg',text:`[Hệ thống] Đã mở khóa hình thái ${label}. Có thể bật/tắt bằng nút biến hình.`,color:'#ffd54f'});
       return;
     }
