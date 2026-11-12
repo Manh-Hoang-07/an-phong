@@ -5,8 +5,8 @@ const PetSprites = (() => {
   const DEF = {
     // scale: tỉ lệ vẽ trong game · hd: hình vẽ tay (lọc mượt) · lift: bay lơ lửng cao hơn mặt đất (px) · rate: khung/giây theo hoạt ảnh
     wolf: { fw: 174, fh: 98, frames: { run: 3, walk: 4, attack: 5 }, baseLeft: true, scale: 0.75, hd: true },
-    horse: { fw: 82, frames: { run: 7, walk: 7 }, fh: 66, scale: 0.82 },
-    bird: { fw: 48, fh: 32, frames: { walk: 11, run: 11, attack: 11 }, rows: { walk: 2, run: 4, attack: 3 }, scale: 1.6 },
+    horse: { fw: 82, frames: { run: 7, walk: 7 }, fh: 66, scale: 0.82, hd: true },
+    bird: { fw: 48, fh: 32, frames: { walk: 11, run: 11, attack: 11 }, rows: { walk: 2, run: 4, attack: 3 }, scale: 1.6, hd: true },
     lizard: { fw: 209, fh: 118, frames: { run: 8, walk: 8, attack: 8 }, scale: 0.55, hd: true },
     fox: { fw: 177, fh: 128, frames: { walk: 10, run: 12, attack: 10 }, scale: 0.55, hd: true, rate: { walk: 10, run: 16, attack: 14 } },
     insect: { fw: 136, fh: 117, frames: { walk: 10, run: 10, attack: 12 }, scale: 0.5, hd: true, lift: 20, rate: { walk: 14, run: 18, attack: 16 } },
@@ -39,7 +39,10 @@ const PetSprites = (() => {
     const d = DEF[look];
     if (!d || d.static) return;
     // Hình vẽ tay (hd) bị thu nhỏ: lọc mượt, không để chế độ pixelArt của game làm răng cưa
-    if (d.hd) for (const a of Object.keys(d.frames)) if (scene.textures.exists(`pet_${look}_${a}`)) scene.textures.get(`pet_${look}_${a}`).setFilter(Phaser.Textures.FilterMode.LINEAR);
+    if (d.hd) {
+      if (look === 'bird') { if (scene.textures.exists('pet_bird_sheet')) scene.textures.get('pet_bird_sheet').setFilter(Phaser.Textures.FilterMode.LINEAR); }
+      else for (const a of Object.keys(d.frames)) if (scene.textures.exists(`pet_${look}_${a}`)) scene.textures.get(`pet_${look}_${a}`).setFilter(Phaser.Textures.FilterMode.LINEAR);
+    }
     if (look === 'bird') {
       for (const a of Object.keys(d.frames)) {
         const animKey = `pet_${look}_${a}_anim`;

@@ -18,7 +18,7 @@ const Art = (() => {
   // nên phóng to trên màn hình nét vẫn mịn. Khi đặt hình phải nhân scale với Art.hdScale(key) (xem scene.artImage).
   // Ô đất và chi tiết pixel nhỏ giữ 1×; nền vẽ ở 2× để rõ trên màn hình độ phân giải cao.
   const HD = 2;
-  const BG_HD = 2;
+  const BG_HD = 3;   // nền vẽ code ở 3× (2880×1728) cho nét trên màn hình độ phân giải cao
   const NPC_HD = 4;   // NPC vẽ bằng code ở độ nét gấp 4 (texture 160×240) cho đỡ mờ khi phóng lên màn hình
   const HD_KEYS = /^(npc_|d_(shop|lamp|tree|dtree|shroom|crystal|redcrystal|stalactite|portal))/;
   const SMOOTH_KEYS = /^(bg_|fx_vignette$|fx_grade$|shadow$)/;
