@@ -737,7 +737,7 @@
         'Hội trưởng Khải: Những Kỵ Sĩ Hư Không ở Đỉnh Cổng đang tụ tập quanh một vệt sáng.',
         'Hội trưởng Khải: Hạ 20 tên. Có lẽ dấu vết của Thiên vẫn còn lưu lại ở đó.',
       ],
-      obj: { kill: { ky_si_hu_khong: 20 } },
+      obj: { kill: { ky_si_hu_khong: 10 } },
       end: [
         'Hội trưởng Khải: Cậu đã giải phóng nơi đó. Một tín hiệu mới xuất hiện ở Tâm Điểm Dị Giới.',
       ],
@@ -748,7 +748,7 @@
         'Hội trưởng Khải: Tâm Điểm vẫn còn Ma Thần Trắng Trơn. Chúng đang bảo vệ tàn tích cuối cùng.',
         'Hội trưởng Khải: Hạ 15 con để chắc chắn Cổng SS không còn đe dọa thế giới.',
       ],
-      obj: { kill: { ma_than_trang_tron: 15 } },
+      obj: { kill: { ma_than_trang_tron: 3 } },
       end: [
         'Hội trưởng Khải: Lần này thì thật sự yên bình rồi. Tân Đô sẽ luôn mở cửa chào đón cậu.',
         '[Hệ thống] Hậu truyện hoàn thành. Cổng SS vẫn mở để thợ săn tiếp tục khám phá.',

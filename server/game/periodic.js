@@ -24,7 +24,7 @@ function ensureDaily(p) {
   const list = [];
   if (maps.length) {
     const mons = [...new Set(maps.flatMap(id => Object.values(G.MAPS[id].spawns)))]
-      .filter(id => !G.MONSTERS[id].boss && !G.MONSTERS[id].passive)
+      .filter(id => !G.MONSTERS[id].boss && !G.MONSTERS[id].passive && G.gradeOf(G.MONSTERS[id]) === 'normal')   // tinh anh / thủ lĩnh hiếm: không giao làm nhiệm vụ ngày
       .sort((a, b) => Math.abs(G.MONSTERS[a].level - p.level) - Math.abs(G.MONSTERS[b].level - p.level));
     const pick = mons.slice(0, 3).sort(() => Math.random() - 0.5);
     list.push({ type: 'kill', target: pick[0], need: 15 + Math.floor(Math.random() * 3) * 5, have: 0, claimed: false });
