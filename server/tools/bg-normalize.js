@@ -130,14 +130,15 @@ const seq = (n, desc) => Array.from({ length: n }, (_, i) => (desc ? n - i : i +
 
 // Craftpix freebies đợt 2 (thứ tự lớp đã dò bằng cách thử hoán vị so với ảnh tổng hợp):
 //   win1..4  Winter Holiday (1920×1080): rừng thông tuyết ngày / làng tuyết ngày / làng tuyết đêm có núi / cây thông Giáng sinh đêm
-//   cfr1..4  Cartoon Forest (3840×2160 → 1440×810): rừng xanh / rừng huyền ảo đom đóm / rừng nắng / rừng thu đèn lồng nấm sáng
+//   cfr1..4  Cartoon Forest (1920×1080 → 1920×1080, giữ nguyên): rừng xanh / rừng huyền ảo đom đóm / rừng nắng / rừng thu đèn lồng nấm sáng
+//   (trước thu 0,375× → 720×405, quá mờ khi phóng lên màn hình; nguồn là vector nên giữ nguyên cỡ)
 //   des1..4  Scrolling Desert: hẻm đá tím / ốc đảo xương rồng / cồn cát xương hóa thạch / cồn cát xương rồng
 //   elv3,elv4  Elven Land (3840×2160): tàn tích vòm đá / tường thành bên sông có làng
 //   hor1,3,4 Horizontal: núi hồ / rừng thông đêm sao / thác nước hồ pastel
 const lay = (dir, resize, sky, far, mid, near) => ({ dir, resize, layers: { sky, far, mid, near } });
 [1, 2, 3, 4].forEach((i) => {
   JOBS['win' + i] = lay(`craftpix_winter/src/PNG/BG_0${i}/Layers`, 0.75, i === 4 ? ['Sky.png', 'Moon.png'] : ['Sky.png'], ['BG.png'], ['Middle.png'], ['Foreground.png', 'Ground_01.png', 'Snow.png', 'Ground_02.png']);
-  JOBS['cfr' + i] = lay(`craftpix_cartoonforest/src/PNG/Cartoon_Forest_BG_0${i}/Layers`, 0.375, ['Sky.png'], ['BG_Decor.png'], ['Middle_Decor.png'], ['Foreground.png', 'Ground.png']);
+  JOBS['cfr' + i] = lay(`craftpix_cartoonforest/src/PNG/Cartoon_Forest_BG_0${i}/Layers`, 1, ['Sky.png'], ['BG_Decor.png'], ['Middle_Decor.png'], ['Foreground.png', 'Ground.png']);
   JOBS['des' + i] = lay(`craftpix_desert/src/${i}`, 0.75, ['1.png'], ['2.png', '3.png'], ['4.png'], ['5.png']);
 });
 [3, 4].forEach((i) => {
