@@ -1,3 +1,9 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "main" ] # Hoặc nhánh "master" của bạn
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
