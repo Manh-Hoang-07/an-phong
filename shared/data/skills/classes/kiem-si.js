@@ -38,6 +38,22 @@
       type: 'melee', power: 0.38, hits: 4, range: 190, finisher: 0.67, desc: 'Dồn lực chém bốn nhát, kết thúc bằng đòn phá giáp.',
       m5: { hits: 5 }, t5: 'Tăng thành 5 nhát chém.',
       m10: { finisher: 0.88, range: 230 }, t10: 'Đòn cuối mạnh hơn và tầm chém xa hơn.' },
+    pa8: { school: 'kiem_si', icon: '🗡️', name: 'Đâm Xuyên', level: 10, mp: 30, cd: 4,
+      type: 'melee', power: 1.5, hits: 1, range: 240, desc: 'Đâm một đường dài về phía trước, xuyên mọi quái thẳng hàng.',
+      m5: { range: 310 }, t5: 'Tầm xa hơn (310).',
+      m10: { finisher: 2 }, t10: 'Đòn cuối 200%.' },
+    pa9: { school: 'kiem_si', icon: '🔰', name: 'Kiếm Phản Kích', level: 18, mp: 52, cd: 14,
+      type: 'guard', duration: 3, reduce: 0.3, reflect: 0.8, desc: 'Thủ thế bằng kiếm, giảm sát thương và chém trả kẻ đánh.',
+      m5: { duration: 4 }, t5: 'Kéo dài 4 giây.',
+      m10: { reduce: 0.45, reflect: 1.2 }, t10: 'Giảm 45% sát thương. Phản 120% sát thương.' },
+    pa10: { school: 'kiem_si', icon: '🌀', name: 'Cuồng Phong Trảm', level: 30, mp: 90, cd: 12,
+      type: 'aoe', power: 2.2, radius: 200, desc: 'Xoay kiếm chém mọi quái quanh người.',
+      m5: { radius: 250 }, t5: 'Vùng rộng hơn (250).',
+      m10: { power: 2.8 }, t10: 'Sức mạnh 280%.' },
+    pa11: { school: 'kiem_si', icon: '☄️', name: 'Kiếm Khí Tung Hoành', level: 40, mp: 118, cd: 10,
+      type: 'projectile', power: 2.4, pierce: true, range: 520, count: 1, desc: 'Phóng luồng kiếm khí xuyên mọi quái phía trước.',
+      m5: { range: 700 }, t5: 'Tầm xa hơn (700).',
+      m10: { count: 2, power: 1.8 }, t10: 'Số lượng tăng lên 2. Sức mạnh 180%.' },
   };
 
   (G.SKILL_PARTS = G.SKILL_PARTS || []).push(PART);

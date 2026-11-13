@@ -24,7 +24,7 @@
       if (where === 'bag') {
         if (d.slot) btns += `<button class="btn primary" data-act="equip" data-uid="${entry.uid}">Trang bị</button>`;
         if (d.kind === 'potion') btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Dùng</button>`;
-        if (d.kind === 'book' || d.kind === 'ult_book') btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Đọc sách</button>`;
+        if (['book', 'ult_book', 'skill_book', 'slot_book', 'erase_book'].includes(d.kind)) btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Đọc sách</button>`;
         if (d.kind === 'boost') btns += `<button class="btn primary" data-act="use_boost" data-item="${entry.id}">Dùng</button>`;
         if (d.kind === 'transform_book') btns += `<button class="btn primary" data-act="use" data-item="${entry.id}">Đọc sách</button>`;
         if (shopHere() && d.price && d.kind !== 'quest') btns += `<button class="btn" data-act="sell" data-uid="${entry.uid}" data-qty="1">Bán 1</button>`;

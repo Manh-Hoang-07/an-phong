@@ -2,6 +2,7 @@
 /* Luật chơi phía server · Tiến độ nhân vật: kinh nghiệm, xu, class, giới hạn máu / năng lượng. */
 const G = require('../../../shared');
 const { fmt } = require('./util');
+const { giveItem } = require('./inventory');
 
 // ------------------------------------------------------------ Kinh nghiệm
 function gainExp(p, amount, ev) {
@@ -17,8 +18,8 @@ function gainExp(p, amount, ev) {
     p.hp = st.maxHp; p.mp = st.maxMp;
     ev.push({ t: 'levelup', level: p.level });
     ev.push({ t: 'msg', text: `[Hệ thống] Thăng cấp! Đạt cấp ${p.level}: +${G.STAT_POINTS_PER_LEVEL} điểm tiềm năng, +1 điểm kỹ năng.`, color: '#ffd54f' });
-    const newSkills = G.availableSkills(p).filter(id => G.SKILLS[id].level === p.level && !G.SKILLS[id].ult);
-    for (const id of newSkills) ev.push({ t: 'msg', text: `Có thể học kỹ năng mới: ${G.SKILLS[id].name} (phím K).`, color: '#4fc3f7' });
+    const newSkills = G.availableSkills(p).filter(id => G.SKILLS[id].level === p.level && !G.SKILLS[id].ult && !G.skillLevel(p, id));
+    for (const id of newSkills) ev.push({ t: 'msg', text: `Đã đủ cấp học kỹ năng ${G.SKILLS[id].name}: mua Sách Kỹ Năng ở tiệm tạp hóa.`, color: '#4fc3f7' });
     const nr = G.nextRank(p);
     if (nr && nr.level === p.level) ev.push({ t: 'msg', text: `[Hiệp Hội] Bạn đã đủ cấp để đánh giá hạng ${nr.rank}. Gặp Hội trưởng Khải ở Hiệp Hội nếu muốn được đánh giá.`, color: '#ffb74d' });
   }
@@ -54,23 +55,48 @@ function unequipWrongWeapon(p, ev) {
   return true;
 }
 
-// Đặt class: trả lại toàn bộ điểm kỹ năng đã cộng, xóa ô kỹ năng.
-// Dùng cho cả ba đường: chọn class nền ở cấp 5, mật mã mở class đặc biệt, và Sách Tiến Hóa Chức Nghiệp.
+// Học một kỹ năng mới (đã kiểm tra điều kiện): cấp 1, tự đặt vào ô thanh kỹ năng còn trống.
+function learnNewSkill(p, id) {
+  const sk = G.SKILLS[id];
+  p.skills[id] = 1;
+  const slots = sk.ult ? G.ultSlotsOf(p) : G.normalSlotsOf(p);
+  const free = slots.find(i => !p.skillSlots[i]);
+  if (free !== undefined) p.skillSlots[free] = id;
+}
+
+// Quà khởi đầu mỗi lần đặt class: 2 Sách Kỹ Năng cấp thấp nhất của class (để không phải tay trắng khi chưa mua được sách)
+function giveStarterBooks(p, ev) {
+  const mine = G.availableSkills(p)
+    .filter(id => !G.SKILLS[id].ult && !G.skillLevel(p, id) && G.SKILLS[id].level <= p.level && (G.SKILLS[id].evolutionKey || G.SKILLS[id].school === p.school))
+    .sort((a, b) => G.SKILLS[a].level - G.SKILLS[b].level).slice(0, 2);
+  for (const id of mine) giveItem(p, G.skillBookId(id), 1, ev);
+}
+
+// Đặt class (chọn class nền ở cấp 5, mật mã mở class đặc biệt, Sách Tiến Hóa Chức Nghiệp).
+// Kỹ năng đã học mà class mới không dùng được thì MẤT LUÔN (hoàn lại điểm đã cộng thêm, không hoàn sách).
+// Kỹ năng vẫn dùng được (vd. tuyệt kỹ chung dòng, bộ triệu hồi của Tử Linh) giữ nguyên cấp.
 function setSchool(p, school, ev) {
-  // Tuyệt kỹ đã học bằng sách được giữ lại (cấp 1), chỉ hoàn điểm đã cộng
-  const ults = Object.keys(p.skills || {}).filter(id => G.SKILLS[id]?.ult && p.skills[id] > 0);
-  const spent = Object.values(p.skills || {}).reduce((x, y) => x + y, 0) - ults.length;
-  p.skillPoints += spent;
-  p.skills = Object.fromEntries(ults.map(id => [id, 1]));
-  p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
   p.school = school;
-  // Gắn lại các tuyệt kỹ đã học (phù hợp class mới) vào ô tuyệt kỹ
+  const usable = new Set(G.availableSkills(p));
+  let refund = 0, lost = 0;
   for (const id of Object.keys(p.skills || {})) {
-    if (!G.SKILLS[id]?.ult || !G.availableSkills(p).includes(id)) continue;
-    if (p.skillSlots.includes(id)) continue;
+    if (usable.has(id)) continue;
+    refund += Math.max(0, (p.skills[id] || 1) - 1);
+    delete p.skills[id];
+    lost++;
+  }
+  p.skillPoints += refund;
+  const old = Array.isArray(p.skillSlots) ? p.skillSlots : [];
+  p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+  old.slice(0, G.SKILL_SLOTS).forEach((id, i) => { if (id && p.skills[id]) p.skillSlots[i] = id; });
+  // Gắn lại các tuyệt kỹ đã học chưa có ô
+  for (const id of Object.keys(p.skills)) {
+    if (!G.SKILLS[id]?.ult || p.skillSlots.includes(id)) continue;
     const free = G.ultSlotsOf(p).find(i => !p.skillSlots[i]);
     if (free !== undefined) p.skillSlots[free] = id;
   }
+  if (lost && ev) ev.push({ t: 'msg', text: `[Hệ thống] ${lost} kỹ năng của class cũ đã mất${refund ? `, hoàn ${refund} điểm kỹ năng` : ''}.`, color: '#ffb74d' });
+  giveStarterBooks(p, ev);
   unequipWrongWeapon(p, ev);
   if (school !== 'tu_linh_thuat_su' && p.shadows) p.shadows.enabled = false;
   p.formActive = false;
@@ -78,8 +104,8 @@ function setSchool(p, school, ev) {
   p.hp = st.maxHp; p.mp = st.maxMp;
   const sc = G.SCHOOLS[school];
   ev.push({ t: 'msg', text: sc.evolved
-    ? `[Hệ thống] Tiến hóa thành ${sc.name}! Chức nghiệp 1 không còn nữa — mở bảng Kỹ năng để học bộ kỹ năng mới.`
-    : `[Hệ thống] Thức tỉnh class ${sc.name} thành công! Mở bảng Kỹ năng để học kỹ năng.`, color: '#ffd54f' });
+    ? `[Hệ thống] Tiến hóa thành ${sc.name}! Chức nghiệp 1 không còn nữa — mua Sách Kỹ Năng ở tiệm tạp hóa để học bộ kỹ năng mới.`
+    : `[Hệ thống] Thức tỉnh class ${sc.name} thành công! Mua Sách Kỹ Năng ở tiệm tạp hóa để học kỹ năng.`, color: '#ffd54f' });
   ev.push({ t: 'school', school });
 }
 
@@ -91,4 +117,4 @@ function clampHpMp(p) {
   if (p.mp != null) p.mp = Math.min(p.mp, st.maxMp);
 }
 
-module.exports = { gainExp, gainGold, setSchool, resetCost, clampHpMp, unequipWrongWeapon, storageFor };
+module.exports = { learnNewSkill, gainExp, gainGold, setSchool, resetCost, clampHpMp, unequipWrongWeapon, storageFor };

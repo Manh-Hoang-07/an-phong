@@ -105,7 +105,7 @@ WorldScene.mix(class WorldCombat {
         if (!m.alive || p.hitSet.has(m) || Math.abs(m.sprite.x - p.x) > 350) continue;   // quái xa: không cần tính khung va chạm
         if (Phaser.Geom.Intersects.RectangleToRectangle(b, this.mBounds(m))) {
           p.hitSet.add(m);
-          this.damageMonster(m, p.o.mult, { slow: p.o.slow, freeze: p.o.freeze, knock: p.o.knock, dir: Math.sign(p.vx), basic: p.o.basic });
+          this.damageMonster(m, p.o.mult, { slow: p.o.slow, freeze: p.o.freeze, knock: p.o.knock, dir: Math.sign(p.vx), basic: p.o.basic, shred: p.o.shred });
           if (!p.o.pierce) { this.fadeProjectile(p); break; }
         }
       }
@@ -119,6 +119,15 @@ WorldScene.mix(class WorldCombat {
 
   damageMonster(m, mult, extra = {}) {
     if (!m.alive) return;
+    const now = this.time.now;
+    // Hiệu ứng kỹ năng: nhân sức mạnh lên quái đang chậm / dưới ngưỡng máu (buff "exec")
+    if (extra.vsSlowed && ((m.slowUntil || 0) > now || (m.freezeUntil || 0) > now)) mult *= extra.vsSlowed;
+    if (!extra.pet && !extra.shadow && !extra.reflect && !extra.isChain) {
+      for (const k in this.buffs) {
+        const b = this.buffs[k];
+        if (b.exec && now < b.until && m.hp <= m.maxHp * b.exec.below) mult *= b.exec.mult;
+      }
+    }
     m.lastHitSource = extra.pet ? 'pet' : extra.shadow ? 'shadow' : 'player';
     let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : extra.shadow
       ? { dmg: Math.max(1, Math.round((extra.shadowAtk || GameData.calcStats(App.player).atk * 0.13) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
@@ -126,6 +135,8 @@ WorldScene.mix(class WorldCombat {
       ? { dmg: Math.max(1, Math.round((extra.petAtk || GameData.petStats(App.player).atk) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
       : this.calcDamage(mult, m);
     if (extra.basic && m.def.resist) dmg = Math.max(1, Math.round(dmg * (1 - m.def.resist)));
+    if (m.shredUntil > now && !extra.reflect) dmg = Math.max(1, Math.round(dmg * (1 + (m.shred || 0))));   // Tên Phá Giáp: quái chịu thêm sát thương
+    if (extra.shred) { m.shred = extra.shred; m.shredUntil = now + 6000; }
     m.hp -= dmg;
     m.aggro = true;
     if (!extra.pet && App.stats.lifesteal && !m.def.passive && !this.dead) {
@@ -148,6 +159,15 @@ WorldScene.mix(class WorldCombat {
       m.knockUntil = this.time.now + 150;
     }
     if (extra.slow) m.slowUntil = this.time.now + extra.slow * 1000;
+    // Hồn Nổ Dây Chuyền: mỗi quái trúng gây thêm vụ nổ nhỏ lên quái bên cạnh (tối đa chainBudget.n lần mỗi lần dùng)
+    if (extra.chain && !extra.isChain) {
+      const budget = extra.chainBudget || (extra.chainBudget = { n: 6 });
+      for (const o of this.monsters) {
+        if (budget.n <= 0) break;
+        if (o === m || !o.alive || o.def.passive) continue;
+        if (Math.hypot(o.sprite.x - s.x, o.sprite.y - s.y) <= (extra.chainRadius || 150)) { budget.n--; this.damageMonster(o, extra.chain, { isChain: true }); }
+      }
+    }
     if (extra.freeze) {
       // Thủ lĩnh / trùm không bị đóng băng: đổi thành làm chậm cùng thời gian
       if (m.def.boss || m.def.leader || m.def.finalBoss) m.slowUntil = Math.max(m.slowUntil || 0, this.time.now + extra.freeze * 1000);

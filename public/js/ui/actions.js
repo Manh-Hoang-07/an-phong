@@ -47,6 +47,9 @@
         break;
       }
       case 'learn_skill': await act('learn_skill', { skill: ds.skill }); break;
+      case 'erase_skill':
+        if (window.confirm(`Tẩy kỹ năng ${G.SKILLS[ds.skill]?.name || ''}? Kỹ năng và toàn bộ điểm đã cộng sẽ mất, tốn 1 Sách Tẩy Kỹ Năng.`)) { await act('erase_skill', { skill: ds.skill }); renderPanel(); }
+        break;
       case 'clear_slot': await act('set_skill', { slot: Number(ds.slot), skill: null }); break;
       case 'reset_skills': await act('reset_skills'); renderPanel(); break;
       case 'redeem': {
@@ -87,7 +90,7 @@
       case 'equip': await act('equip', { uid: Number(ds.uid) }); S.selected = null; renderPanel(); break;
       case 'unequip': await act('unequip', { slot: ds.slot }); S.selected = null; renderPanel(); break;
       case 'use':
-        if (['transform_book', 'book', 'ult_book'].includes(G.ITEMS[ds.item]?.kind)) { await act('use', { item: ds.item }); renderPanel(); }
+        if (['transform_book', 'book', 'ult_book', 'skill_book', 'slot_book', 'erase_book'].includes(G.ITEMS[ds.item]?.kind)) { await act('use', { item: ds.item }); renderPanel(); }
         else App.scene.usePotion(ds.item === 'thuoc_nhiem_do' || ds.item.startsWith('binh_mau') ? 'hp' : 'mp', ds.item);
         break;
       case 'sell': await act('sell', { uid: Number(ds.uid), qty: Number(ds.qty) }); break;

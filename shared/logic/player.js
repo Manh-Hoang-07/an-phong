@@ -141,7 +141,7 @@
       equip: Object.fromEntries(SLOTS.map(sl => [sl, null])),
       bag: [], storageByMap: {}, bagPlus: 0,   // storageByMap: kho riêng từng làng { mapId: [vật phẩm] }
       skillSlots: Array(SKILL_SLOTS).fill(null),
-      skills: {}, skillPoints: 0,
+      skills: {}, skillPoints: 0, skillExpand: { normal: 0, ult: 0 },
       unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
       mounts: { owned: [], active: null, summoned: [], skill: 'bite', skills: {} },   // giữ active / skill để đọc dữ liệu client cũ
       pets: {},

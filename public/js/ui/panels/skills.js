@@ -21,6 +21,10 @@
     if (s.duration) out.push(`${s.duration} giây`);
     if (s.slow) out.push(`làm chậm ${s.slow}s`);
     if (s.freeze) out.push(`đóng băng ${s.freeze}s`);
+    if (s.vsSlowed) out.push(`×${s.vsSlowed} lên quái đang chậm`);
+    if (s.shred) out.push(`quái chịu thêm ${Math.round(s.shred * 100)}% sát thương`);
+    if (s.chain) out.push(`nổ lan ${Math.round(s.chain * 100)}%`);
+    if (s.exec) out.push(`×${s.exec.mult} lên quái dưới ${Math.round(s.exec.below * 100)}% máu`);
     if (s.distance) out.push(`xa ${s.distance}`);
     if (s.radius) out.push(`bán kính ${s.radius}`);
     return out.join(' · ');
@@ -42,7 +46,8 @@
     const slots = G.normalSlotsOf(p).concat(G.ultSlotsOf(p));
     let html = `<div class="row" style="justify-content:space-between;margin-bottom:8px">
       <div>Điểm kỹ năng: <b class="gold" style="font-size:16px">${p.skillPoints}</b></div>
-      <div class="muted" style="font-size:12px">Mỗi cấp +1 điểm · Tẩy điểm ở Hội trưởng Khải</div></div>`;
+      <div class="muted" style="font-size:12px">Mỗi cấp +1 điểm · Tẩy điểm ở Hội trưởng Khải</div></div>
+      <div class="muted" style="font-size:12px;margin-bottom:6px">Ô học: kỹ năng thường <b>${G.usedSkillSlots(p, false)}/${G.skillCap(p, false)}</b> · tuyệt kỹ <b>${G.usedSkillSlots(p, true)}/${G.skillCap(p, true)}</b> · Học thêm bằng Sách Kỹ Năng (tiệm tạp hóa), mở rộng ô bằng Sách Mở Rộng, tẩy bỏ bằng Sách Tẩy Kỹ Năng.</div>`;
     // Một thanh kỹ năng duy nhất: class hiện tại (chức nghiệp 1 hay chức nghiệp 2) dùng đúng thanh này
     const barHtml = '<div class="skill-slots">' + slots.map(i => {
       const id = p.skillSlots[i];
@@ -66,28 +71,29 @@
     const all = G.availableSkills(p);
     const schoolOrder = [...new Set(all.map(id => G.SKILLS[id].school))];
     const bySchool = (a, b) => schoolOrder.indexOf(G.SKILLS[a].school) - schoolOrder.indexOf(G.SKILLS[b].school) || G.SKILLS[a].level - G.SKILLS[b].level;
-    // Chỉ hiện tuyệt kỹ ĐÃ HỌC (đọc sách trong Túi đồ để học); tuyệt kỹ chưa học không lộ ra trong bảng
-    const ultIds = all.filter(id => G.SKILLS[id].ult && G.skillLevel(p, id) > 0).sort(bySchool);
-    const ids = all.filter(id => !G.SKILLS[id].ult).sort(bySchool).concat(ultIds);
+    // Chỉ hiện kỹ năng ĐÃ HỌC (đọc sách trong Túi đồ để học); chưa học thì không hiện
+    const learned = all.filter(id => G.skillLevel(p, id) > 0);
+    const ids = learned.filter(id => !G.SKILLS[id].ult).sort(bySchool).concat(learned.filter(id => G.SKILLS[id].ult).sort(bySchool));
+    if (!ids.length) html += '<p class="muted">Bạn chưa học kỹ năng nào. Mua Sách Kỹ Năng của class ở tiệm tạp hóa rồi đọc trong Túi đồ.</p>';
+    const eraseBooks = p.bag.filter(e => e.id === 'sach_tay_ky_nang').reduce((x, e) => x + e.qty, 0);
     for (const id of ids) {
       const base = G.SKILLS[id];
       if (base.ult && !inUlt) {
         inUlt = true; lastSchool = null;
-        html += `</div><div class="muted" style="margin:14px 0 4px;font-size:12px">TUYỆT KỸ · học bằng Sách Tuyệt Kỹ · gắn tối đa ${G.ultSlotsOf(p).length} tuyệt kỹ vào các ô ${G.ultSlotsOf(p).map(slotLabel).join(' / ')}</div><div class="list">`;
+        html += `</div><div class="muted" style="margin:14px 0 4px;font-size:12px">TUYỆT KỸ · gắn tối đa ${G.ultSlotsOf(p).length} tuyệt kỹ vào các ô ${G.ultSlotsOf(p).map(slotLabel).join(' / ')}</div><div class="list">`;
       }
       if (tn && !base.ult && base.school !== lastSchool) {
         html += `<div class="muted" style="margin-top:6px;font-size:12px">— ${schoolLabel(base.school)} —</div>`;
         lastSchool = base.school;
       }
       const lv = G.skillLevel(p, id);
-      const locked = base.ult ? !lv : base.level > p.level;
-      const bookName = base.ult ? G.ITEMS[G.ultBookId(id)]?.name : '';
-      const hasBook = base.ult && !lv && p.bag.some(e => e.id === G.ultBookId(id) || (e.id === 'sach_tuyet_ky' && id === G.signatureUlt(p)));
+      const locked = false;
       const cur = G.skillAt(id, Math.max(1, lv));
       const next = lv && lv < G.SKILL_MAX ? G.skillAt(id, lv + 1) : null;
       const canUp = !locked && lv < G.SKILL_MAX && p.skillPoints > 0;
-      const upBtn = lv >= G.SKILL_MAX ? '<span class="gold" style="font-size:12px">TỐI ĐA</span>'
-        : `<button class="btn small ${canUp ? 'primary' : ''}" data-act="learn_skill" data-skill="${id}" ${canUp ? '' : 'disabled'}>${lv ? '+1 cấp' : 'Học'}</button>`;
+      const upBtn = (lv >= G.SKILL_MAX ? '<span class="gold" style="font-size:12px">TỐI ĐA</span>'
+        : `<button class="btn small ${canUp ? 'primary' : ''}" data-act="learn_skill" data-skill="${id}" ${canUp ? '' : 'disabled'}>+1 cấp</button>`)
+        + ` <button class="btn small" data-act="erase_skill" data-skill="${id}" ${eraseBooks ? '' : 'disabled'} title="${eraseBooks ? 'Xóa kỹ năng này (tốn 1 Sách Tẩy Kỹ Năng)' : 'Cần Sách Tẩy Kỹ Năng'}">Tẩy</button>`;
       // Nút gắn vào ô (một thanh duy nhất)
       const slotGroup = () => (base.ult ? G.ultSlotsOf(p) : G.normalSlotsOf(p))
         .map(i => { const on = p.skillSlots[i] === id; return `<button class="btn small slotbtn ${on ? 'on' : ''}" data-act="set_skill" data-slot="${i}" data-skill="${id}" ${on ? 'disabled' : ''}>${slotLabel(i)}</button>`; }).join('');
@@ -98,9 +104,8 @@
         <div class="ic">${base.icon}</div>
         <div class="main">
           <b>${esc(base.name)}</b> ${base.ult ? '<span class="tag-ult">TUYỆT KỸ</span>' : ''}
-          <span class="lvl">${locked ? (base.ult ? `🔒 Cần ${esc(bookName || 'Sách Tuyệt Kỹ')}${p.level < base.level ? ` · cấp ${base.level}` : ''}` : `🔒 Mở ở cấp ${base.level}`) : lv ? `Cấp ${lv}/${G.SKILL_MAX}` : 'Chưa học'}</span>
+          <span class="lvl">Cấp ${lv}/${G.SKILL_MAX}</span>
           <small>${esc(base.desc)}</small>
-          ${base.ult ? `<small class="muted">Dành cho: ${esc(ultWho(base))} · Nguồn: ${base.ultAny ? 'nhiệm vụ Khảo hạch Tuyệt Kỹ (Hội trưởng Khải)' : 'mã quà tặng'}${hasBook ? ' · <b class="okc">Bạn đang có sách, hãy đọc trong Túi đồ</b>' : ''}</small>` : ''}
           <small>${skillNumbers(cur)} · ${Math.round(cur.mp * st.costMul)} năng lượng · hồi ${Math.round(cur.cd * 10) / 10}s</small>
           ${next ? `<small class="okc">Cấp ${lv + 1}: ${skillNumbers(next)}</small>` : ''}
           <small>${ms}</small>

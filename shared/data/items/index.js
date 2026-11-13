@@ -82,5 +82,13 @@
       desc: `Đọc để học tuyệt kỹ ${sk.name}. Dành cho: ${who}. Cần cấp ${sk.level}. ${sk.ultAny ? 'Nhận từ nhiệm vụ Khảo hạch Tuyệt Kỹ.' : 'Chỉ có qua mã quà tặng.'}` };
   }
 
+  // Kỹ năng thường học bằng sách riêng sach_kn_<id> (bán ở tiệm tạp hóa theo class, hoặc rơi / thưởng nhiệm vụ)
+  for (const [sid, sk] of Object.entries(G.SKILLS)) {
+    if (sk.ult) continue;
+    const who = sk.evolutionKey ? (G.SCHOOLS[sk.evolutionKey]?.name || sk.evolutionKey) : (G.SCHOOLS[sk.school]?.name || sk.school);
+    ITEMS[G.skillBookId(sid)] = { name: `Sách Kỹ Năng: ${sk.name}`, kind: 'skill_book', skill: sid, level: sk.level, stack: true, price: 60 * sk.level * sk.level,
+      desc: `Đọc để học kỹ năng ${sk.name}. Dành cho: ${who}. Cần cấp ${sk.level}.` };
+  }
+
   Object.assign(G, { ITEMS, WEAPON_TIERS, TIER_WEAPONS, WEAPON_TIER_OF, classTierWeapon });
 })(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

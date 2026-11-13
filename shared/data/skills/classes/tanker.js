@@ -38,6 +38,22 @@
       type: 'guard', duration: 8, reduce: 0.6, desc: 'Dựng thế phòng thủ vững chắc, giảm mạnh sát thương nhận vào.',
       m5: { duration: 10 }, t5: 'Kéo dài trạng thái phòng thủ.',
       m10: { duration: 10, reduce: 0.6 }, t10: 'Giảm sát thương nhiều hơn trong thời gian dài hơn.' },
+    tk8: { school: 'tanker', icon: '🐂', name: 'Xung Phong', level: 10, mp: 32, cd: 6,
+      type: 'dash', power: 1.25, distance: 190, desc: 'Lao tới đẩy lùi quái trên đường đi.',
+      m5: { distance: 250 }, t5: 'Xa hơn (250).',
+      m10: { after: 0.8 }, t10: 'Vệt chém 80%.' },
+    tk9: { school: 'tanker', icon: '📢', name: 'Tiếng Gầm Uy Hiếp', level: 18, mp: 52, cd: 12,
+      type: 'aoe', power: 1.3, radius: 230, slow: 3, desc: 'Gầm vang làm chậm mọi quái quanh người và gây sát thương nhẹ.',
+      m5: { radius: 290 }, t5: 'Vùng rộng hơn (290).',
+      m10: { power: 1.9, slow: 4 }, t10: 'Sức mạnh 190%. Làm chậm 4 giây.' },
+    tk10: { school: 'tanker', icon: '🛡️', name: 'Phản Giáp', level: 30, mp: 80, cd: 20,
+      type: 'guard', duration: 6, reduce: 0.45, reflect: 0.3, desc: 'Giảm sát thương và phản một phần về kẻ đánh.',
+      m5: { duration: 8 }, t5: 'Kéo dài 8 giây.',
+      m10: { reduce: 0.55, reflect: 0.6 }, t10: 'Giảm 55% sát thương. Phản 60% sát thương.' },
+    tk11: { school: 'tanker', icon: '🔨', name: 'Búa Thiên Lôi', level: 40, mp: 120, cd: 18,
+      type: 'sword_fall', power: 5, radius: 210, count: 1, desc: 'Giáng búa khổng lồ xuống phía trước, hất văng quái.',
+      m5: { radius: 260 }, t5: 'Vùng rộng hơn (260).',
+      m10: { count: 2, power: 3.3 }, t10: 'Số lượng tăng lên 2. Sức mạnh 330%.' },
   };
 
   (G.SKILL_PARTS = G.SKILL_PARTS || []).push(PART);

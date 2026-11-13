@@ -39,6 +39,22 @@
       type: 'aoe', power: 1.97, radius: 260, heal: 0.35, desc: 'Tỏa ánh sáng quanh thân, gây sát thương và hồi phục sinh lực.',
       m5: { radius: 320, heal: 0.42 }, t5: 'Vùng ảnh hưởng và lượng hồi phục tăng.',
       m10: { power: 2.76, heal: 0.5 }, t10: 'Sát thương và hồi phục tăng mạnh.' },
+    tl8: { school: 'tri_lieu_su', icon: '💧', name: 'Giọt Thánh', level: 10, mp: 24, cd: 5,
+      type: 'heal', heal: 0.15, mpHeal: 0.05, desc: 'Hồi ít máu nhưng hồi chiêu ngắn.',
+      m5: { heal: 0.2 }, t5: 'Hồi 20% máu.',
+      m10: { heal: 0.25, mpHeal: 0.1 }, t10: 'Hồi 25% máu. Hồi 10% năng lượng.' },
+    tl9: { school: 'tri_lieu_su', icon: '🔆', name: 'Thánh Ấn', level: 18, mp: 46, cd: 6,
+      type: 'projectile', power: 1.9, range: 420, count: 1, desc: 'Ấn thánh bắn thẳng, sát thương lớn lên một mục tiêu.',
+      m5: { range: 540 }, t5: 'Tầm xa hơn (540).',
+      m10: { power: 2.4 }, t10: 'Sức mạnh 240%.' },
+    tl10: { school: 'tri_lieu_su', icon: '🕊️', name: 'Thanh Tẩy', level: 30, mp: 90, cd: 24,
+      type: 'buff', buff: 'cleanse', duration: 8, atkBuff: 0.1, speedBuff: 0.15, regen: 0.05, desc: 'Hồi máu liên tục và tăng nhẹ tốc độ trong thời gian ngắn.',
+      m5: { duration: 11 }, t5: 'Kéo dài 11 giây.',
+      m10: { regen: 0.07 }, t10: 'Hồi máu nhanh hơn (7%/s).' },
+    tl11: { school: 'tri_lieu_su', icon: '🌅', name: 'Quang Vũ Tái Sinh', level: 40, mp: 130, cd: 30,
+      type: 'heal', heal: 0.6, mpHeal: 0.3, desc: 'Hồi phần lớn máu và năng lượng.',
+      m5: { heal: 0.7 }, t5: 'Hồi 70% máu.',
+      m10: { heal: 0.8, mpHeal: 0.4 }, t10: 'Hồi 80% máu. Hồi 40% năng lượng.' },
   };
 
   (G.SKILL_PARTS = G.SKILL_PARTS || []).push(PART);

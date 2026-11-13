@@ -55,8 +55,7 @@
   // Kỹ năng nhánh (có evolutionKey) khai báo school = class NỀN nhưng chỉ thuộc về nhánh:
   //   - class nền KHÔNG thấy kỹ năng nhánh
   //   - chức nghiệp 2 chỉ thấy kỹ năng có evolutionKey đúng bằng id nhánh mình
-  // Ngoại lệ: Tử Linh Thuật Sư giữ lại bộ triệu hồi của Triệu Hồi Sư (cùng một cây linh thú),
-  // nên nó thấy cả kỹ năng school = trieu_hoi_su.
+  // Tử Linh Thuật Sư có bộ kỹ năng thường riêng (school = tu_linh_thuat_su), không còn học kỹ năng của Triệu Hồi Sư.
   function availableSkills(player) {
     const school = player.school;
     if (!school) return [];
@@ -67,7 +66,6 @@
       if (isToanNang) return true;   // Toàn Năng: mọi kỹ năng thường của mọi class
       if (s.type === 'shadow_toggle' && school !== 'trieu_hoi_su' && school !== 'tu_linh_thuat_su') return false;
       if (s.evolutionKey) return s.evolutionKey === school;
-      if (school === 'tu_linh_thuat_su') return s.school === 'tu_linh_thuat_su' || s.school === 'trieu_hoi_su';
       return s.school === school;
     });
   }
@@ -84,10 +82,15 @@
     return Object.keys(SKILLS).find(id => SKILLS[id].ult && !id.startsWith('ul') && (SKILLS[id].ultSchools || [SKILLS[id].school]).some(x => list.includes(x))) || null;
   }
 
+  // Giới hạn học: 5 ô gốc + số ô đã mở rộng (tối đa 2) cho mỗi loại; usedSkillSlots = số kỹ năng đã học của loại đó
+  const skillCap = (player, ult) => G.SKILL_BASE_CAP + Math.min(G.SKILL_EXPAND_MAX, Math.max(0, (player.skillExpand && player.skillExpand[ult ? 'ult' : 'normal']) || 0));
+  const learnedIds = (player, ult) => Object.keys(player.skills || {}).filter(id => player.skills[id] > 0 && G.SKILLS[id] && !!G.SKILLS[id].ult === !!ult);
+  const usedSkillSlots = (player, ult) => learnedIds(player, ult).length;
+
   function skillLevel(player, id) { return (player.skills && player.skills[id]) || 0; }
 
   // Chỉ còn MỘT thanh kỹ năng. Giữ hàm để chỗ gọi cũ không vỡ, nhưng luôn trả về skillSlots.
   const slotsOf = (player) => player.skillSlots;
 
-  Object.assign(G, { skillAt, schoolsOf, ultFits, availableSkills, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, skillLevel, slotsOf });
+  Object.assign(G, { skillAt, schoolsOf, ultFits, availableSkills, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, skillCap, learnedIds, usedSkillSlots, skillLevel, slotsOf });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

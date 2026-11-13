@@ -103,7 +103,7 @@ WorldScene.mix(class WorldSkills {
             this.swing();
             this.slashFx(pl.x + this.facing * 34, pl.y + (h % 2 ? 8 : -8), last ? 1.8 : 1.3, last ? 1.5 : 1, h % 2 === 1);
             this.hitBox(pl.x + this.facing * sk.range / 2, pl.y, sk.range, 70,
-              last ? sk.finisher * App.stats.skillMul : pw, last ? { knock: 360 } : {});
+              last ? sk.finisher * App.stats.skillMul : pw, { ...(last ? { knock: 360 } : {}), ...(sk.vsSlowed ? { vsSlowed: sk.vsSlowed } : {}) });
             if (last) this.cameras.main.shake(120, 0.006);
           });
         }
@@ -131,7 +131,7 @@ WorldScene.mix(class WorldSkills {
         // Buff tấn công theo % của kỹ năng, không nhân sức mạnh kỹ năng / SPI
         const prev = this.buffs[sk.buff], nextAtk = sk.atkBuff || 0;
         if (!(prev && time < prev.until && (prev.atk || 0) > nextAtk))
-        this.buffs[sk.buff] = { until: time + sk.duration * 1000, atk: nextAtk, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0 };
+        this.buffs[sk.buff] = { until: time + sk.duration * 1000, atk: nextAtk, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0, exec: sk.exec || null };
         for (let k = 0; k < (sk.ult ? 10 : 6); k++) {
           const ghost = this.add.image(pl.x, pl.y, pl.texture.key).setTint(this.accent()).setAlpha(0.6).setDepth(3);
           this.tweens.add({ targets: ghost, x: pl.x + Phaser.Math.Between(-70, 70), y: pl.y + Phaser.Math.Between(-20, 10), alpha: 0, duration: 520, onComplete: () => ghost.destroy() });
@@ -145,7 +145,7 @@ WorldScene.mix(class WorldSkills {
         const n = sk.count || 1;
         for (let k = 0; k < n; k++) {
           this.shoot({ key: water ? 'fx_wave' : 'proj_fire', speed: water ? 520 : 820, range: sk.range, mult: pw,
-            pierce: sk.pierce, slow: sk.slow, freeze: sk.freeze, knock: water ? 140 : 60, dy: (k - (n - 1) / 2) * 16 });
+            pierce: sk.pierce, slow: sk.slow, freeze: sk.freeze, shred: sk.shred, knock: water ? 140 : 60, dy: (k - (n - 1) / 2) * 16 });
         }
         break;
       }
@@ -182,7 +182,7 @@ WorldScene.mix(class WorldSkills {
           if (t >= 21) g.destroy();
         } });
         this.cameras.main.shake(150, 0.006);
-        this.hitCircle(pl.x, pl.y, sk.radius, pw, { freeze: sk.freeze, slow: sk.slow });
+        this.hitCircle(pl.x, pl.y, sk.radius, pw, { freeze: sk.freeze, slow: sk.slow, ...(sk.chain ? { chain: pw * sk.chain, chainRadius: 150, chainBudget: { n: 6 } } : {}) });
         if (sk.heal) this.skillHeal(sk.heal);
         break;
       }

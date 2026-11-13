@@ -196,6 +196,20 @@ function migrate(p) {
     // Người chơi cũ đã mở khóa nhánh: chuyển hẳn sang chức nghiệp 2 (không còn quay lại chức nghiệp 1)
     p.school = G.evolutionOf(p.school);
   }
+  // Học kỹ năng bằng sách (bản 1): kỹ năng đã học giữ nguyên; mỗi kỹ năng thường trước đây tốn 1 điểm để học nên hoàn lại.
+  // Ai đã học nhiều hơn 5 thì giữ nguyên (chỉ không học thêm được cho tới khi có ô trống).
+  if (!p.skillExpand || typeof p.skillExpand !== 'object') p.skillExpand = { normal: 0, ult: 0 };
+  if (!p.skillBookVer) {
+    const usable = p.school ? new Set(G.availableSkills(p)) : null;
+    for (const id of Object.keys(p.skills)) {
+      const sk = G.SKILLS[id];
+      if (!sk || !(p.skills[id] > 0)) { delete p.skills[id]; continue; }
+      // Kỹ năng không còn thuộc class hiện tại (vd. Tử Linh Thuật Sư không còn học bộ Triệu Hồi Sư): mất, hoàn mọi điểm đã cộng
+      if (usable && !usable.has(id) && G.baseSchool(p.school) !== 'toan_nang') { if (!sk.ult) p.skillPoints += p.skills[id]; delete p.skills[id]; continue; }
+      if (!sk.ult) p.skillPoints += 1;
+    }
+    p.skillBookVer = 1;
+  }
   while (p.skillSlots.length < G.SKILL_SLOTS) p.skillSlots.push(null);
   p.skillSlots = p.skillSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] && G.availableSkills(p).includes(id) ? id : null));
   pruneLoot(p);

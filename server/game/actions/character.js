@@ -5,6 +5,7 @@ const codes = require('../../accounts/codes');
 const { fail, fmt } = require('../core/util');
 const { bagFree, slotsNeeded, giveItem } = require('../core/inventory');
 const { gainGold, gainExp, setSchool, resetCost } = require('../core/progress');
+const { removeItem, countItem } = require('../core/inventory');
 const { questActive, onCurrentMapNpc } = require('../core/quests');
 
 const redeemTries = new Map();
@@ -46,47 +47,42 @@ const actions = {
     p.skillSlots[slot] = a.skill;
   },
 
-  // Học hoặc nâng cấp kỹ năng bằng điểm kỹ năng
+  // Nâng cấp kỹ năng ĐÃ HỌC bằng điểm kỹ năng (học mới: đọc sách trong Túi đồ)
   learn_skill(p, a, ev) {
     const sk = G.SKILLS[a.skill];
     if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
-    if (sk.ult && !G.skillLevel(p, a.skill)) fail('Cần dùng Sách Tuyệt Kỹ để học tuyệt kỹ này.');
-    if (sk.level > p.level) fail(`Cần đạt cấp ${sk.level}.`);
     const lv = G.skillLevel(p, a.skill);
+    if (!lv) fail(sk.ult ? 'Cần dùng Sách Tuyệt Kỹ để học tuyệt kỹ này.' : 'Cần đọc Sách Kỹ Năng để học kỹ năng này.');
     if (lv >= G.SKILL_MAX) fail('Kỹ năng đã đạt cấp tối đa.');
     if (p.skillPoints < 1) fail('Không còn điểm kỹ năng.');
     p.skillPoints -= 1;
     p.skills[a.skill] = lv + 1;
-    if (lv === 0) {
-      // Học lần đầu thì tự đặt vào ô trống
-      const slots = sk.ult ? G.ultSlotsOf(p) : G.normalSlotsOf(p);
-      const free = slots.find(i => !p.skillSlots[i]);
-      if (free !== undefined) p.skillSlots[free] = a.skill;
-      ev.push({ t: 'msg', text: `Đã học ${sk.name}.`, color: '#4fc3f7' });
-    } else {
-      const milestone = (lv + 1 === 5 && sk.t5) || (lv + 1 === 10 && sk.t10);
-      ev.push({ t: 'msg', text: `${sk.name} lên cấp ${lv + 1}.${milestone ? ' Mở hiệu ứng: ' + milestone : ''}`, color: '#4fc3f7' });
-    }
+    const milestone = (lv + 1 === 5 && sk.t5) || (lv + 1 === 10 && sk.t10);
+    ev.push({ t: 'msg', text: `${sk.name} lên cấp ${lv + 1}.${milestone ? ' Mở hiệu ứng: ' + milestone : ''}`, color: '#4fc3f7' });
   },
 
-  // Tẩy điểm kỹ năng ở Hội trưởng
+  // Sách Tẩy Kỹ Năng: xóa hẳn một kỹ năng đã học (mất cả điểm đã cộng), trả lại ô học
+  erase_skill(p, a, ev) {
+    const sk = G.SKILLS[a.skill];
+    if (!sk || !G.skillLevel(p, a.skill)) fail('Bạn chưa học kỹ năng này.');
+    if (countItem(p, 'sach_tay_ky_nang') < 1) fail('Cần Sách Tẩy Kỹ Năng.');
+    removeItem(p, 'sach_tay_ky_nang', 1);
+    delete p.skills[a.skill];
+    p.skillSlots = p.skillSlots.map(id => (id === a.skill ? null : id));
+    ev.push({ t: 'msg', text: `[Hệ thống] Đã tẩy kỹ năng ${sk.name}. Ô học được trả lại.`, color: '#ffd54f' });
+  },
+
+  // Tẩy điểm kỹ năng ở Hội trưởng: các kỹ năng đã học giữ nguyên nhưng về cấp 1, hoàn điểm đã cộng
   reset_skills(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải.');
-    // Tuyệt kỹ đã học (bằng sách) được giữ lại ở cấp 1; chỉ hoàn điểm đã cộng thêm
-    const ults = Object.keys(p.skills).filter(id => G.SKILLS[id]?.ult && G.skillLevel(p, id) > 0);
-    const totalLevels = Object.values(p.skills).reduce((x, y) => x + y, 0);
-    const spent = totalLevels - ults.length;
+    const ids = Object.keys(p.skills).filter(id => G.skillLevel(p, id) > 0);
+    const spent = ids.reduce((x, id) => x + G.skillLevel(p, id) - 1, 0);
     if (!spent) fail('Bạn chưa cộng điểm kỹ năng nào.');
     const cost = resetCost(p);
     if (p.gold < cost) fail('Không đủ xu.');
     p.gold -= cost;
     p.skillPoints += spent;
-    p.skills = Object.fromEntries(ults.map(id => [id, 1]));
-    p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
-    for (const id of ults.filter(id => G.availableSkills(p).includes(id))) {
-      const free = G.ultSlotsOf(p).find(i => !p.skillSlots[i]);
-      if (free !== undefined) p.skillSlots[free] = id;
-    }
+    for (const id of ids) p.skills[id] = 1;
     ev.push({ t: 'msg', text: `Đã tẩy điểm kỹ năng, nhận lại ${spent} điểm (-${fmt(cost)} xu).`, color: '#ffd54f' });
   },
 

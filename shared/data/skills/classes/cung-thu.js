@@ -38,6 +38,22 @@
       type: 'arrow_rain', power: 0.71, arrows: 16, width: 430, desc: 'Gọi một loạt tên dày đặc xuống khu vực phía trước.',
       m5: { arrows: 22 }, t5: 'Mưa tên dày hơn.',
       m10: { width: 540, slow: 2 }, t10: 'Vùng tên rộng hơn và làm chậm quái.' },
+    hl8: { school: 'cung_thu', icon: '🧊', name: 'Tên Băng', level: 10, mp: 28, cd: 4,
+      type: 'projectile', power: 1.35, range: 420, count: 1, slow: 2, desc: 'Mũi tên băng làm chậm mục tiêu.',
+      m5: { range: 560 }, t5: 'Tầm xa hơn (560).',
+      m10: { freeze: 1 }, t10: 'Đóng băng 1 giây.' },
+    hl9: { school: 'cung_thu', icon: '🏹', name: 'Xạ Liên Hoàn', level: 18, mp: 48, cd: 7,
+      type: 'spread', power: 0.75, count: 3, range: 400, desc: 'Bắn loạt tên theo quạt hẹp.',
+      m5: { count: 5 }, t5: 'Số lượng tăng lên 5.',
+      m10: { power: 0.9, slow: 1 }, t10: 'Sức mạnh 90%. Làm chậm 1 giây.' },
+    hl10: { school: 'cung_thu', icon: '🎯', name: 'Tiễn Xuyên Tâm', level: 30, mp: 86, cd: 12,
+      type: 'projectile', power: 3.4, pierce: true, range: 760, count: 1, desc: 'Một mũi tên cực mạnh, tầm xa, xuyên mọi quái.',
+      m5: { range: 900 }, t5: 'Tầm xa hơn (900).',
+      m10: { power: 4.2 }, t10: 'Sức mạnh 420%.' },
+    hl11: { school: 'cung_thu', icon: '🔥', name: 'Hỏa Vũ Liên Châu', level: 40, mp: 120, cd: 14,
+      type: 'spread', power: 0.62, count: 7, range: 460, desc: 'Bắn bảy mũi tên lửa tỏa quạt.',
+      m5: { count: 9 }, t5: 'Số lượng tăng lên 9.',
+      m10: { power: 0.78, slow: 1.5 }, t10: 'Sức mạnh 78%. Làm chậm 1.5 giây.' },
   };
 
   (G.SKILL_PARTS = G.SKILL_PARTS || []).push(PART);

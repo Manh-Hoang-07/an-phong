@@ -38,6 +38,22 @@
       type: 'meteor', power: 1.05, radius: 250, count: 2, desc: 'Triệu hồi hai thiên thạch lửa phát nổ trên chiến trường.',
       m5: { radius: 300 }, t5: 'Vụ nổ lan rộng hơn.',
       m10: { count: 3, power: 0.92 }, t10: 'Gọi thêm một thiên thạch, tổng sức công phá lớn hơn.' },
+    tn8: { school: 'phap_su', icon: '☄️', name: 'Hỏa Cầu', level: 10, mp: 30, cd: 3.5,
+      type: 'projectile', power: 2.3, range: 380, count: 1, desc: 'Cầu lửa gây sát thương lớn lên một mục tiêu.',
+      m5: { range: 480 }, t5: 'Tầm xa hơn (480).',
+      m10: { count: 2, power: 1.6 }, t10: 'Số lượng tăng lên 2. Sức mạnh 160%.' },
+    tn9: { school: 'phap_su', icon: '⚡', name: 'Tia Sét Xuyên', level: 18, mp: 56, cd: 8,
+      type: 'projectile', power: 2, pierce: true, range: 520, count: 1, slow: 2, desc: 'Tia sét xuyên mọi quái trên đường bay, làm chậm.',
+      m5: { range: 680 }, t5: 'Tầm xa hơn (680).',
+      m10: { freeze: 1, power: 2.4 }, t10: 'Đóng băng 1 giây. Sức mạnh 240%.' },
+    tn10: { school: 'phap_su', icon: '🌌', name: 'Dịch Chuyển Nguyên Tố', level: 30, mp: 80, cd: 14,
+      type: 'backstep', power: 0.9, distance: 220, count: 3, desc: 'Dịch chuyển lùi về sau, để lại loạt đạn nguyên tố.',
+      m5: { cd: 11 }, t5: 'Hồi chiêu còn 11 giây.',
+      m10: { count: 5 }, t10: 'Số lượng tăng lên 5.' },
+    tn11: { school: 'phap_su', icon: '🌋', name: 'Địa Ngục Liệt Hỏa', level: 40, mp: 126, cd: 16,
+      type: 'meteor', power: 0.95, radius: 270, count: 3, desc: 'Ba cầu lửa lớn rơi xuống vùng phía trước.',
+      m5: { radius: 320 }, t5: 'Vùng rộng hơn (320).',
+      m10: { count: 4, power: 0.85 }, t10: 'Số lượng tăng lên 4. Sức mạnh 85%.' },
   };
 
   (G.SKILL_PARTS = G.SKILL_PARTS || []).push(PART);

@@ -55,6 +55,9 @@ const UI = (() => {
     if (id.startsWith('manh_an')) return '🔷';
     if (id === 'sach_ky_nang') return '📘';
     if (d.kind === 'ult_book') return '📕';
+    if (d.kind === 'skill_book') return '📘';
+    if (d.kind === 'slot_book') return '📒';
+    if (d.kind === 'erase_book') return '🧽';
     if (id === 'tinh_the_xanh') return '💠';
     if (id === 'loi_nang_luong') return '🔶';
     return '📦';

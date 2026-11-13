@@ -38,6 +38,22 @@
       type: 'dash', power: 1.43, distance: 280, after: 0.95, desc: 'Lướt chớp nhoáng qua kẻ địch, để lại bóng ảnh chém bồi.',
       m5: { distance: 340 }, t5: 'Tăng tầm lướt.',
       m10: { after: 1.33 }, t10: 'Bóng ảnh gây sát thương mạnh hơn.' },
+    st8: { school: 'sat_thu', icon: '✴️', name: 'Phi Tiêu Độc', level: 10, mp: 26, cd: 4,
+      type: 'spread', power: 0.6, count: 3, range: 380, slow: 2, desc: 'Ba phi tiêu tỏa nhẹ, làm chậm.',
+      m5: { count: 5 }, t5: 'Số lượng tăng lên 5.',
+      m10: { power: 0.8 }, t10: 'Sức mạnh 80%.' },
+    st9: { school: 'sat_thu', icon: '💨', name: 'Xóa Dấu', level: 18, mp: 44, cd: 10,
+      type: 'backstep', power: 0.6, distance: 200, count: 2, desc: 'Lùi nhanh, miễn sát thương ngắn, tung phi tiêu trả đòn.',
+      m5: { cd: 8 }, t5: 'Hồi chiêu còn 8 giây.',
+      m10: { count: 3 }, t10: 'Số lượng tăng lên 3.' },
+    st10: { school: 'sat_thu', icon: '💀', name: 'Tử Huyệt', level: 30, mp: 88, cd: 14,
+      type: 'melee', power: 3.2, hits: 1, range: 150, vsSlowed: 2, desc: 'Một nhát cực mạnh vào mục tiêu trước mặt, nhân đôi nếu mục tiêu đang bị chậm.',
+      m5: { range: 190 }, t5: 'Tầm xa hơn (190).',
+      m10: { finisher: 3.8, vsSlowed: 2.5 }, t10: 'Đòn cuối 380%. Gấp 2.5 lần lên quái đang bị chậm.' },
+    st11: { school: 'sat_thu', icon: '🌑', name: 'Bóng Đêm Bao Phủ', level: 40, mp: 116, cd: 16,
+      type: 'aoe', power: 2.4, radius: 250, slow: 4, desc: 'Bóng tối nổ quanh người, làm chậm mọi quái.',
+      m5: { radius: 300 }, t5: 'Vùng rộng hơn (300).',
+      m10: { power: 3, slow: 5 }, t10: 'Sức mạnh 300%. Làm chậm 5 giây.' },
   };
 
   (G.SKILL_PARTS = G.SKILL_PARTS || []).push(PART);

@@ -28,6 +28,13 @@
     if (n.shopKind === 'herb' && sideDone(player, 'p5-2')) add(['thuoc_nhiem_do']);
     if (n.shopKind === 'gear' && sideDone(player, 'p2-1')) add(['binh_mau_vua', 'binh_nl_vua']);
     if (n.shopKind === 'gear' && sideDone(player, 'p2-2')) add(['da_cuong_hoa_cao']);
+    if (n.shopKind === 'gear') {
+      add(['sach_mo_rong_thuong', 'sach_mo_rong_tuyet_ky', 'sach_tay_ky_nang']);
+      if (player.school) {
+        const mine = G.availableSkills(player).filter(id => !G.SKILLS[id].ult).sort((a, b) => G.SKILLS[a].level - G.SKILLS[b].level);
+        add(mine.map(G.skillBookId));
+      }
+    }
     return capByVillage(player, list);
   }
   // Cửa hàng chỉ bán trong trần của Tân Đô đang đứng (cap = cấp trang bị cao nhất; thuốc và đá theo bậc làng), không xét cấp người chơi

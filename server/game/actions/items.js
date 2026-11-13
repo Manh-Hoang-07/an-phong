@@ -3,7 +3,7 @@
 const G = require('../../../shared');
 const { fail, fmt } = require('../core/util');
 const { bagFree, slotsNeeded, addItem, addInst, instName, bagEntry, qualityColor, pruneLoot } = require('../core/inventory');
-const { clampHpMp, storageFor, setSchool } = require('../core/progress');
+const { clampHpMp, storageFor, setSchool, learnNewSkill } = require('../core/progress');
 const { onCurrentMapNpc, roleHere } = require('../core/quests');
 
 const lastPotion = new Map();
@@ -114,14 +114,38 @@ const actions = {
       if (!G.ultFits(p, sk)) fail('Tuyệt kỹ này không phù hợp với class của bạn.');
       if (G.skillLevel(p, id)) fail('Bạn đã học tuyệt kỹ này rồi.');
       if (sk.level > p.level) fail(`Cần đạt cấp ${sk.level} để học ${sk.name}.`);
+      if (G.usedSkillSlots(p, true) >= G.skillCap(p, true)) fail('Đã hết ô học tuyệt kỹ. Dùng Sách Mở Rộng Ô Tuyệt Kỹ hoặc Sách Tẩy Kỹ Năng.');
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
-      p.skills[id] = 1;
-      const free = G.ultSlotsOf(p).find(i => !p.skillSlots[i]);
-      if (free !== undefined) p.skillSlots[free] = id;
+      learnNewSkill(p, id);
       ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách Tuyệt Kỹ: đã học ${sk.name}.`, color: '#ffd54f' });
       return;
     }
+    if (def.kind === 'skill_book') {
+      if (!p.school) fail('Hãy thức tỉnh class trước khi đọc Sách Kỹ Năng.');
+      const id = def.skill, sk = G.SKILLS[id];
+      if (!sk || sk.ult) fail('Sách này không hợp lệ.');
+      if (!G.availableSkills(p).includes(id)) fail('Kỹ năng này không thuộc class của bạn.');
+      if (G.skillLevel(p, id)) fail('Bạn đã học kỹ năng này rồi.');
+      if (sk.level > p.level) fail(`Cần đạt cấp ${sk.level} để học ${sk.name}.`);
+      if (G.usedSkillSlots(p, false) >= G.skillCap(p, false)) fail('Đã hết ô học kỹ năng thường. Dùng Sách Mở Rộng Ô Kỹ Năng hoặc Sách Tẩy Kỹ Năng.');
+      e.qty--;
+      if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+      learnNewSkill(p, id);
+      ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách Kỹ Năng: đã học ${sk.name}.`, color: '#4fc3f7' });
+      return;
+    }
+    if (def.kind === 'slot_book') {
+      const key = def.ult ? 'ult' : 'normal';
+      p.skillExpand = p.skillExpand || { normal: 0, ult: 0 };
+      if ((p.skillExpand[key] || 0) >= G.SKILL_EXPAND_MAX) fail(`Ô học ${def.ult ? 'tuyệt kỹ' : 'kỹ năng thường'} đã mở rộng tối đa (+${G.SKILL_EXPAND_MAX}).`);
+      e.qty--;
+      if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+      p.skillExpand[key] = (p.skillExpand[key] || 0) + 1;
+      ev.push({ t: 'msg', text: `[Hệ thống] Đã mở thêm 1 ô học ${def.ult ? 'tuyệt kỹ' : 'kỹ năng thường'} (${G.skillCap(p, !!def.ult)} ô).`, color: '#ffd54f' });
+      return;
+    }
+    if (def.kind === 'erase_book') fail('Mở bảng Kỹ năng và bấm nút Tẩy ở kỹ năng muốn xóa.');
     if (def.kind === 'book') {
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
