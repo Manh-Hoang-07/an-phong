@@ -1430,3 +1430,9 @@ html.compact body.touch #panel-body.inv-mode .bag-side { order: 0; }
 .book-skill-h { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12.5px; margin-bottom: 3px; }
 .book-skill-h .ic { font-size: 18px; line-height: 1; }
 .book-skill .sk-desc { display: block; font-size: 11.5px; line-height: 1.45; }
+
+/* Túi đồ / cửa hàng trên điện thoại (khung thấp): mỗi cột phải được GIỚI HẠN theo chiều cao khung thì mới tự cuộn được.
+   Trước đây cột dùng align-items:start nên cao bằng nội dung, tràn ra ngoài khung overflow:hidden và không kéo được. */
+html.compact body.touch #panel-body.inv-mode > .bag-wrap { align-items: stretch; }
+html.compact body.touch #panel-body.inv-mode > .bag-wrap > div { max-height: 100%; -webkit-overflow-scrolling: touch; }
+html.compact body.touch #panel-body.inv-mode > .bag-wrap > .bag-side { align-self: stretch; }
