@@ -6,13 +6,23 @@
  */
 const Sound = (() => {
   let ctx = null, master = null, sfxBus = null, musicBus = null;
-  const settings = { sfx: true, music: true };
+  // sfxVol / musicVol: mức âm lượng 0–1 (1 = mức gốc của từng kênh). Bật/tắt vẫn là công tắc riêng.
+  const settings = { sfx: true, music: true, sfxVol: 1, musicVol: 1 };
   try {
     const saved = JSON.parse(localStorage.getItem('tt_sound') || '{}');
     if (typeof saved.sfx === 'boolean') settings.sfx = saved.sfx;
     if (typeof saved.music === 'boolean') settings.music = saved.music;
+    if (typeof saved.sfxVol === 'number') settings.sfxVol = Math.min(1, Math.max(0, saved.sfxVol));
+    if (typeof saved.musicVol === 'number') settings.musicVol = Math.min(1, Math.max(0, saved.musicVol));
   } catch { /* bỏ qua */ }
   const save = () => { try { localStorage.setItem('tt_sound', JSON.stringify(settings)); } catch { /* bỏ qua */ } };
+
+  // Mức gốc của từng kênh (nhân thêm với âm lượng người chơi chọn)
+  const SFX_BASE = 0.5, MUSIC_BASE = 0.16;
+  function applyGain() {
+    if (sfxBus) sfxBus.gain.value = settings.sfx ? SFX_BASE * settings.sfxVol : 0;
+    if (musicBus) musicBus.gain.value = settings.music ? MUSIC_BASE * settings.musicVol : 0;
+  }
 
   function init() {
     if (ctx) return ctx;
@@ -20,8 +30,9 @@ const Sound = (() => {
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = 0.8; master.connect(ctx.destination);
-    sfxBus = ctx.createGain(); sfxBus.gain.value = settings.sfx ? 0.5 : 0; sfxBus.connect(master);
-    musicBus = ctx.createGain(); musicBus.gain.value = settings.music ? 0.16 : 0; musicBus.connect(master);
+    sfxBus = ctx.createGain(); sfxBus.connect(master);
+    musicBus = ctx.createGain(); musicBus.connect(master);
+    applyGain();
     return ctx;
   }
   function unlock() {
@@ -165,8 +176,10 @@ const Sound = (() => {
     startMusic(theme);
   }
 
-  function setSfx(on) { settings.sfx = on; save(); if (sfxBus) sfxBus.gain.value = on ? 0.5 : 0; }
-  function setMusic(on) { settings.music = on; save(); if (musicBus) musicBus.gain.value = on ? 0.16 : 0; }
+  function setSfx(on) { settings.sfx = on; save(); applyGain(); }
+  function setMusic(on) { settings.music = on; save(); applyGain(); }
+  function setSfxVol(v) { settings.sfxVol = Math.min(1, Math.max(0, Number(v) || 0)); save(); applyGain(); }
+  function setMusicVol(v) { settings.musicVol = Math.min(1, Math.max(0, Number(v) || 0)); save(); applyGain(); }
 
-  return { play, music, setSfx, setMusic, settings };
+  return { play, music, setSfx, setMusic, setSfxVol, setMusicVol, settings };
 })();

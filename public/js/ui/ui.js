@@ -7,7 +7,8 @@ const UI = (() => {
   const fmt = (n) => Number(Math.floor(n)).toLocaleString('vi-VN');
 
   const skIcon = (id) => (G.SKILLS[id] && G.SKILLS[id].icon) || '✨';
-  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi'], ['companion', '🐕 Thú đồng hành'], ['shadows', '☠ Bóng ma']];
+  // Túi đồ và Trang bị là hai bảng riêng. Cấu hình (âm thanh, đồ họa) mở bằng nút ⚙️ trên HUD.
+  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['equip', '🛡 Trang bị'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi'], ['companion', '🐕 Thú đồng hành'], ['shadows', '☠ Bóng ma']];
   // Thú triệu hồi: chỉ khi đã học kỹ năng Triệu Hồi Linh Thú; Bóng ma: chỉ Tử Linh Thuật Sư; Thú đồng hành: ai cũng có tab
   const hasSummon = () => G.skillLevel(App.player || {}, 'th5') > 0;
   const visibleTabs = () => MENU_TABS.filter(([k]) => (k !== 'shadows' || App.player?.school === 'tu_linh_thuat_su' || (App.player?.school === 'trieu_hoi_su' && App.player?.advancement?.unlocked?.tu_linh_thuat_su)) && (k !== 'mount' || hasSummon()));
@@ -73,6 +74,7 @@ const UI = (() => {
     selected: null,         // { where: 'bag'|'equip'|'storage', key }
     smithTab: 'upgrade', lastUpgrade: null, confirmSalvage: null,   // thợ rèn
     confirmDrop: null,   // túi đồ: "uid:số lượng" đang chờ bấm lần nữa để bỏ
+    detailOpen: null,    // "where:key" của vật phẩm đang mở khung chi tiết đầy đủ
     codeDraft: '', codeMsg: '',                                    // nhập mật mã
   };
   // Các bảng tự đăng ký vào đây: tên bảng → hàm trả về [tiêu đề, html]
@@ -156,8 +158,9 @@ const UI = (() => {
       } else { setHtml(ico, String(G.isUltSlot(i) ? '★' : i + 1)); el.classList.add('empty'); }
     }
     const cnt = (ids) => p.bag.filter(e => ids.includes(e.id)).reduce((s, e) => s + e.qty, 0);
-    $('pot-hp').textContent = $('tpot-hp').textContent = cnt(['binh_mau_nho', 'binh_mau_vua', 'binh_mau_lon', 'binh_mau_dac', 'binh_mau_than_thoai', 'thuoc_nhiem_do']);
-    $('pot-mp').textContent = $('tpot-mp').textContent = cnt(['binh_nl_nho', 'binh_nl_vua']);
+    const potIds = (isMp) => Object.keys(G.ITEMS).filter(i => G.ITEMS[i].kind === 'potion' && (isMp ? G.ITEMS[i].mp : (G.ITEMS[i].hp || G.ITEMS[i].hpPct)));
+    $('pot-hp').textContent = $('tpot-hp').textContent = cnt(potIds(false));
+    $('pot-mp').textContent = $('tpot-mp').textContent = cnt(potIds(true));
 
     renderQuestTrack();
     if (App.scene && App.scene.player) { App.scene.updateWeaponLook(); App.scene.refreshNpcMarks(); }
@@ -375,17 +378,17 @@ const UI = (() => {
         `<button class="btn tab ${panel.name === k ? 'active' : ''}" data-act="tab" data-tab="${k}">${n}${count[k] ? ` <b class="tabcount">${count[k]}</b>` : ''}</button>`).join('') + '</div>' + html;
     }
     // Bảng có nhiều tab (menu, thợ rèn) giữ cố định kích cỡ, chuyển tab không bị co giãn
-    const fixed = visibleTabs().some(([k]) => k === panel.name) || panel.name === 'smith';
+    const fixed = visibleTabs().some(([k]) => k === panel.name) || panel.name === 'smith' || panel.name === 'shop';
     document.querySelector('.panel-box').classList.toggle('fixed', fixed);
     $('panel-title').textContent = title;
     const body = $('panel-body');
     const same = panel.lastName === panel.name;
     const detailKey = S.selected ? `${S.selected.where}:${S.selected.key}` : '';
-    const detailScroll = same && panel.lastDetailKey === detailKey ? (body.querySelector('.inv-detail')?.scrollTop || 0) : 0;
+    const detailScroll = same && panel.lastDetailKey === detailKey ? (body.querySelector('.bag-side')?.scrollTop || 0) : 0;
     const scroll = same ? body.scrollTop : 0;
-    // Túi đồ trên điện thoại nằm ngang: mỗi cột (trang bị / túi) tự cuộn → giữ vị trí cuộn khi bảng vẽ lại
-    const colScroll = same ? [...body.querySelectorAll('.inv > div:not(.inv-detail)')].map(el => el.scrollTop) : [];
-    body.classList.toggle('inv-mode', panel.name === 'bag');
+    // Túi đồ trên điện thoại nằm ngang: mỗi cột tự cuộn → giữ vị trí cuộn khi bảng vẽ lại
+    const colScroll = same ? [...body.querySelectorAll('.bag-main, .bag-side, .eq-wrap')].map(el => el.scrollTop) : [];
+    body.classList.toggle('inv-mode', panel.name === 'bag' || panel.name === 'shop');
     panel.lastName = panel.name;
     panel.lastDetailKey = detailKey;
     // Bảng được vẽ lại mỗi khi server trả lời (kể cả lần tự lưu 10 giây một lần). Giữ nguyên chữ đang gõ và con trỏ
@@ -404,9 +407,9 @@ const UI = (() => {
       if (el && body.contains(el)) { el.focus({ preventScroll: true }); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch { /* bỏ qua */ } }
     }
     body.scrollTop = scroll;
-    const detail = body.querySelector('.inv-detail');
+    const detail = body.querySelector('.bag-side');
     if (detail) detail.scrollTop = detailScroll;
-    body.querySelectorAll('.inv > div:not(.inv-detail)').forEach((el, i) => { if (colScroll[i]) el.scrollTop = colScroll[i]; });
+    body.querySelectorAll('.bag-main, .bag-side, .eq-wrap').forEach((el, i) => { if (colScroll[i]) el.scrollTop = colScroll[i]; });
   }
 
   function act(type, params) { return Net.action(type, params); }
@@ -426,7 +429,7 @@ const UI = (() => {
     const d = G.ITEMS[entry.id];
     const p = App.player;
     const q = qOf(entry);
-    let h = `<h3 class="q${q}">${itemIcon(entry.id)} ${esc(d.name)}${entry.plus ? ' +' + entry.plus : ''}</h3>`;
+    let h = opts.noTitle ? '' : `<h3 class="q${q}">${itemIcon(entry.id)} ${esc(d.name)}${entry.plus ? ' +' + entry.plus : ''}</h3>`;
     const tags = [];
     if (d.slot) tags.push(`<span class="q${q}">${G.QUALITY_NAMES[q]}</span>`, G.SLOT_NAMES[d.slot]);
     if (d.level) tags.push(`<span class="${d.level > p.level ? 'bad' : ''}">Cấp ${d.level}</span>`);
@@ -455,8 +458,34 @@ const UI = (() => {
       } else if (opts.compare && !cur) h += '<div class="cmp up">Ô này đang trống ▲</div>';
     }
     if (d.desc) h += `<div class="muted">${esc(d.desc)}</div>`;
+    if (d.kind === 'skill_book' || d.kind === 'ult_book') h += bookSkillInfo(d, p);
     if (opts.sell && G.sellPrice(entry)) h += `<div class="gold">Bán được: ${fmt(G.sellPrice(entry))} xu / cái</div>`;
     return h;
+  }
+
+  // Sách kỹ năng / tuyệt kỹ: cho xem kỹ năng sẽ học làm gì (sát thương, hiệu ứng, năng lượng, hồi chiêu, mốc cấp 5/10)
+  function bookSkillInfo(d, p) {
+    const id = d.skill || (d.kind === 'ult_book' && p.school && G.signatureUlt ? G.signatureUlt(p) : null);
+    const sk = id && G.SKILLS[id];
+    if (!sk) return '';
+    const nums = UI._.skillNumbers || (() => '');
+    const costMul = (App.stats && App.stats.costMul) || 1;
+    const lv1 = G.skillAt(id, 1), max = G.skillAt(id, G.SKILL_MAX);
+    const learned = G.skillLevel(p, id);
+    const fits = sk.ult ? (!p.school || !G.ultFits || G.ultFits(p, sk)) : (!p.school || G.availableSkills(p).includes(id));
+    const status = learned ? `<span class="okc">Đã học (cấp ${learned})</span>`
+      : !fits ? '<span class="bad">Không thuộc class của bạn</span>'
+        : sk.level > p.level ? `<span class="bad">Cần cấp ${sk.level}</span>` : '<span class="okc">Học được</span>';
+    const ms = [[5, sk.t5], [10, sk.t10]].filter(([, t]) => t)
+      .map(([m, t]) => `<div class="sk-milestone">◇ <b>Cấp ${m}</b>: ${esc(t)}</div>`).join('');
+    return `<div class="book-skill">
+      <div class="book-skill-h"><span class="ic">${sk.icon}</span><b>${esc(sk.name)}</b>${sk.ult ? ' <span class="tag-ult">TUYỆT KỸ</span>' : ''} · ${status}</div>
+      <small class="sk-desc">${esc(sk.desc || '')}</small>
+      <div class="sk-nums"><span>Cấp 1: ${nums(lv1) || '—'}</span>
+        <span class="muted">${Math.round(lv1.mp * costMul)} năng lượng · hồi ${Math.round(lv1.cd * 10) / 10}s</span></div>
+      ${G.SKILL_MAX > 1 ? `<div class="sk-next">▲ Cấp ${G.SKILL_MAX}: ${nums(max) || '—'} · ${Math.round(max.mp * costMul)} năng lượng · hồi ${Math.round(max.cd * 10) / 10}s</div>` : ''}
+      ${ms}
+    </div>`;
   }
 
   function shopHere() {
@@ -500,9 +529,21 @@ const UI = (() => {
 
   function init() {
     $('panel-body').addEventListener('click', (e) => lib.onClick(e));
+    // Thanh kéo âm lượng: chỉnh là nghe thay đổi ngay, không vẽ lại bảng (giữ được vị trí đang kéo)
+    $('panel-body').addEventListener('input', (e) => {
+      const el = e.target;
+      if (!el || !el.dataset || !el.dataset.vol) return;
+      const v = Number(el.value) / 100;
+      if (el.dataset.vol === 'sfx_vol') Sound.setSfxVol(v); else Sound.setMusicVol(v);
+      const out = el.parentElement && el.parentElement.querySelector('b');
+      if (out) out.textContent = Math.round(v * 100) + '%';
+      if (el.dataset.vol === 'sfx_vol') Sound.play('click');
+    });
     $('panel-body').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'code-input') { e.preventDefault(); lib.onClick({ target: document.querySelector('[data-act="redeem"]') }); } });
     $('btn-menu').addEventListener('click', () => openPanel(lastMenuTab));
     $('btn-map').addEventListener('click', () => openPanel('map'));
+    const cfg = $('btn-config');
+    if (cfg) cfg.addEventListener('click', () => openPanel('config'));
     $('panel-body').addEventListener('mouseover', showTip);
     $('panel-body').addEventListener('mouseleave', hideTip);
     $('panel-close').addEventListener('click', closePanel);

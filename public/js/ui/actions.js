@@ -11,10 +11,14 @@
       const [where, key] = selEl.dataset.sel.split(':');
       S.selected = { where, key };
       S.confirmDrop = null;
+      S.detailOpen = null;
       renderPanel();
       return;
     }
     if (!el || el.disabled) return;
+    // Bấm ra ngoài khung chi tiết thì đóng; bấm trong khung thì không.
+    // Nút Đóng nằm TRONG khung nên phải chừa nó ra, nếu không thì bấm mãi không đóng được.
+    if (el.dataset.act === 'close_detail' && e.target.closest('[data-stop]') && !el.dataset.close) return;
     const a = el.dataset.act, ds = el.dataset;
     Sound.play('click');
     // Nút mờ đi trong lúc chờ server, không bấm lặp được
@@ -46,9 +50,21 @@
         renderPanel();
         break;
       }
+      case 'set_quality': {
+        Quality.set(ds.mode);
+        if (Quality.low && App.scene) App.scene.applyLowQuality();
+        else if (ds.mode === 'high') UI.log('Đã bật đồ họa chất lượng cao.', '#d7bd8a');
+        if (App.refit) App.refit();
+        renderPanel();
+        break;
+      }
+      case 'open_detail': S.detailOpen = `${S.selected.where}:${S.selected.key}`; renderPanel(); break;
+      case 'close_detail': S.detailOpen = null; renderPanel(); break;
       case 'learn_skill': await act('learn_skill', { skill: ds.skill }); break;
       case 'erase_skill':
-        if (window.confirm(`Tẩy kỹ năng ${G.SKILLS[ds.skill]?.name || ''}? Kỹ năng và toàn bộ điểm đã cộng sẽ mất, tốn 1 Sách Tẩy Kỹ Năng.`)) { await act('erase_skill', { skill: ds.skill }); renderPanel(); }
+        if (S.confirmErase !== ds.skill) { S.confirmErase = ds.skill; renderPanel(); break; }
+        S.confirmErase = null;
+        await act('erase_skill', { skill: ds.skill }); renderPanel();
         break;
       case 'clear_slot': await act('set_skill', { slot: Number(ds.slot), skill: null }); break;
       case 'reset_skills': await act('reset_skills'); renderPanel(); break;
@@ -90,6 +106,7 @@
       case 'equip': await act('equip', { uid: Number(ds.uid) }); S.selected = null; renderPanel(); break;
       case 'unequip': await act('unequip', { slot: ds.slot }); S.selected = null; renderPanel(); break;
       case 'use':
+        if (G.ITEMS[ds.item]?.kind === 'erase_book') { S.confirmErase = null; openPanel('erase', { force: true }); break; }
         if (['transform_book', 'book', 'ult_book', 'skill_book', 'slot_book', 'erase_book'].includes(G.ITEMS[ds.item]?.kind)) { await act('use', { item: ds.item }); renderPanel(); }
         else App.scene.usePotion(ds.item === 'thuoc_nhiem_do' || ds.item.startsWith('binh_mau') ? 'hp' : 'mp', ds.item);
         break;
@@ -104,6 +121,22 @@
         break;
       }
       case 'buy': await act('buy', { npc: ds.npc, item: ds.item, qty: Number(ds.qty) }); break;
+      // Cửa hàng dạng ô: đổi tab Mua/Bán, đổi nhóm hàng, mua/bán theo số lượng nhập
+      case 'shop_tab': S.shopTab = ds.tab; S.selected = null; S.detailOpen = null; renderPanel(); break;
+      case 'shop_group': S.shopGroup = ds.key; S.selected = null; renderPanel(); break;
+      case 'shop_step': {
+        const inp = el.closest('.shop-qty')?.querySelector('input');
+        if (inp) inp.value = Math.max(1, Math.min(Number(inp.max) || 99, (Number(inp.value) || 1) + Number(ds.d)));
+        inp?.dispatchEvent(new Event('input', { bubbles: true }));
+        break;
+      }
+      case 'buy_many': case 'sell_many': {
+        const inp = el.closest('.shop-qty')?.querySelector('input');
+        const qty = Math.max(1, Math.min(Number(inp?.max) || 99, Math.floor(Number(inp?.value) || 1)));
+        if (a === 'buy_many') await act('buy', { npc: ds.npc, item: ds.item, qty });
+        else await act('sell', { uid: Number(ds.uid), qty });
+        break;
+      }
       case 'add_stat': await act('add_stat', { stat: ds.stat, n: Number(ds.n) }); break;
       case 'set_skill': await act('set_skill', { slot: Number(ds.slot), skill: ds.skill }); break;
       case 'store': await act('store', { uid: Number(ds.uid) }); hideTip(); break;

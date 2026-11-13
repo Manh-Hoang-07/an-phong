@@ -222,9 +222,16 @@ WorldScene.mix(class WorldPlayer {
 
   usePotion(kind, wanted) {
     const p = App.player;
-    const ids = kind === 'hp' ? ['binh_mau_vua', 'thuoc_nhiem_do', 'binh_mau_nho'] : ['binh_nl_vua', 'binh_nl_nho'];
-    const can = (i) => p.bag.some(e => e.id === i) && (GameData.ITEMS[i].level || 1) <= p.level;
-    const id = (wanted && can(wanted)) ? wanted : ids.find(can);
+    // Mọi loại bình cùng hệ (nhỏ → thần thoại), xếp theo lượng hồi tăng dần
+    const heal = (i) => { const d = GameData.ITEMS[i]; return kind === 'hp' ? (d.hp || 0) + (d.hpPct ? Math.round(App.stats.maxHp * d.hpPct) : 0) : (d.mp || 0); };
+    const ids = Object.keys(GameData.ITEMS).filter(i => GameData.ITEMS[i].kind === 'potion' && heal(i) > 0
+      && (kind === 'hp' ? !GameData.ITEMS[i].mp : !!GameData.ITEMS[i].mp)).sort((a, b) => heal(a) - heal(b));
+    const can = (i) => p.bag.some(e => e.id === i && e.qty > 0) && (GameData.ITEMS[i].level || 1) <= p.level;
+    // Tự chọn: bình nhỏ nhất đủ lấp phần đang thiếu (đỡ phí bình xịn), không đủ thì dùng bình mạnh nhất đang có
+    const missing = kind === 'hp' ? App.stats.maxHp - App.hp : App.stats.maxMp - App.mp;
+    const usable = ids.filter(can);
+    const auto = usable.filter(i => i !== 'thuoc_nhiem_do').find(i => heal(i) >= missing) || usable.filter(i => i !== 'thuoc_nhiem_do').pop() || usable[0];
+    const id = (wanted && can(wanted)) ? wanted : auto;
     if (!id) { UI.log(kind === 'hp' ? 'Hết bình máu! Mua ở Bà Lan.' : 'Hết bình năng lượng! Mua ở Bà Lan.', '#ef5350'); return; }
     if (kind === 'hp' && App.hp >= App.stats.maxHp) return;
     if (kind === 'mp' && App.mp >= App.stats.maxMp) return;

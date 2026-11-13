@@ -145,7 +145,7 @@ const actions = {
       ev.push({ t: 'msg', text: `[Hệ thống] Đã mở thêm 1 ô học ${def.ult ? 'tuyệt kỹ' : 'kỹ năng thường'} (${G.skillCap(p, !!def.ult)} ô).`, color: '#ffd54f' });
       return;
     }
-    if (def.kind === 'erase_book') fail('Mở bảng Kỹ năng và bấm nút Tẩy ở kỹ năng muốn xóa.');
+    if (def.kind === 'erase_book') fail('Đọc sách trong Túi đồ rồi chọn kỹ năng muốn xóa.');
     if (def.kind === 'book') {
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);

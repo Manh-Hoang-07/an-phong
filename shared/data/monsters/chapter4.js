@@ -34,7 +34,7 @@
       gear: [0.07, ['kiem_luu_tru', 'cung_luu_tru', 'truong_luu_tru', 'ao_luu_tru', 'mu_luu_tru', 'gang_luu_tru', 'dai_luu_tru', 'quan_luu_tru', 'giay_luu_tru', 'nhan_luu_tru', 'day_chuyen_luu_tru', 'ngoc_boi_luu_tru']] },
     nguoi_gac_luu_tru: { name: 'Người Gác Lưu Trữ', level: 38, hp: 2420, atk: 1210, def: 94, exp: 1102, gold: [2000, 3000],
       speed: 65, respawn: 300, look: 'reaper', sprite: 'skeleton_knight', boss: true, style: 'copy', minion: 'ho_ve_sat_thu',
-      drops: [['da_cuong_hoa_than_thoai', 1], ['da_cuong_hoa_than_thoai', 0.6], ['sach_ky_nang_vo_dinh', 0.2]],
+      drops: [['da_cuong_hoa_than_thoai', 1], ['da_cuong_hoa_than_thoai', 0.6]],
       gear: [1, ['kiem_luu_tru', 'cung_luu_tru', 'truong_luu_tru', 'vuong_mien_tri_thuc', 'ao_luu_tru', 'mu_luu_tru', 'gang_luu_tru', 'dai_luu_tru', 'quan_luu_tru', 'giay_luu_tru', 'nhan_luu_tru', 'day_chuyen_luu_tru', 'ngoc_boi_luu_tru'], 0.35] },
   };
 

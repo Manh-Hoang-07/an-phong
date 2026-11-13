@@ -161,7 +161,7 @@
       if (typing(e)) return;
       if (gameKeys.has(e.code)) e.preventDefault();
       if (e.code === 'Escape') { UI.closePanel(); return; }
-      const panels = { KeyI: 'bag', KeyB: 'bag', KeyC: 'char', KeyK: 'skills', KeyL: 'quest', KeyM: 'map' };
+      const panels = { KeyI: 'bag', KeyB: 'bag', KeyC: 'char', KeyK: 'skills', KeyL: 'quest', KeyM: 'map', KeyO: 'config' };
       if (panels[e.code] && !e.repeat) { UI.openPanel(panels[e.code]); return; }
       if (App.panelOpen) return;
       if (!e.repeat) App.keys['_p_' + e.code] = true;
