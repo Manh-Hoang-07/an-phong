@@ -24,8 +24,21 @@
     return new Date(ms + 7 * 3600 * 1000).toISOString().slice(0, 10);
   }
   // Phần thưởng mỗi nhiệm vụ ngày theo cấp nhân vật
-  function dailyReward(level) {
-    return { exp: Math.round(expToNext(level) * 0.22), gold: 40 * level, stones: 1 };
+  // Hệ số thưởng theo làng của bảng nhiệm vụ: Tân Đô I ×0.4 … Tân Đô VII ×1.0 (thưởng đã tăng theo cấp người chơi,
+  // hệ số này chỉ để đứng ở làng cũ thì thưởng thấp hơn làng đang theo cấp, và 7 bảng không nhân 7 lần thưởng).
+  function villageRewardMult(mapId) {
+    const v = MAPS[mapId] && MAPS[mapId].village;
+    return v ? 0.4 + 0.1 * (v.n - 1) : 1;
+  }
+  // Làng của bản đồ: chính nó nếu là làng, không thì làng gốc (home) của vùng săn
+  function villageOf(mapId) {
+    const m = MAPS[mapId];
+    return !m ? null : m.village ? mapId : (m.home || null);
+  }
+  // Phần thưởng mỗi nhiệm vụ ngày theo cấp nhân vật (mapId: bảng của làng nào; bỏ trống = không nhân hệ số)
+  function dailyReward(level, mapId) {
+    const k = mapId ? villageRewardMult(mapId) : 1;
+    return { exp: Math.round(expToNext(level) * 0.22 * k), gold: Math.round(40 * level * k), stones: 1 };
   }
 
   // Tuần ISO theo giờ Việt Nam, dạng 2026-W45
@@ -38,10 +51,12 @@
     const week = Math.ceil((((t - Date.UTC(y, 0, 1)) / 86400000) + 1) / 7);
     return y + '-W' + String(week).padStart(2, '0');
   }
-  function weeklyReward(level) {
+  function weeklyReward(level, mapId) {
+    const k = mapId ? villageRewardMult(mapId) : 1;
+    const st = (n) => Math.max(1, Math.round(n * k));
     return {
-      kills: { exp: Math.round(expToNext(level) * 0.5), gold: 100 * level, stones: 8 },
-      bosses: { exp: Math.round(expToNext(level) * 0.6), gold: 150 * level, stones: 3, items: [['sach_ky_nang', 1]] },
+      kills: { exp: Math.round(expToNext(level) * 0.5 * k), gold: Math.round(100 * level * k), stones: st(8) },
+      bosses: { exp: Math.round(expToNext(level) * 0.6 * k), gold: Math.round(150 * level * k), stones: st(3), items: [['sach_ky_nang', 1]] },
     };
   }
 
@@ -52,6 +67,14 @@
 
   // ---------------------------------------------------------------- Hướng dẫn nhiệm vụ: nhận ở đâu, làm ở đâu, trả ở đâu
   const mapName = (id) => (MAPS[id] ? MAPS[id].name : id);
+  // NPC có vai trò (role) này đang đứng ở bản đồ, hoặc null. Dùng cho NPC dịch vụ mỗi làng một người
+  // (smith, storage, daily, teleport...), khỏi phải so id từng người.
+  function npcByRole(player, mapId, role) {
+    const m = MAPS[mapId];
+    if (!m) return null;
+    return Object.values(m.npcs).find(id => NPCS[id] && NPCS[id].role === role && npcHere(player, mapId, id)) || null;
+  }
+
   // Các bản đồ có NPC này ở thời điểm hiện tại của cốt truyện (NPC có thể đổi chỗ theo chương)
   function npcMaps(player, npcId) { return Object.keys(MAPS).filter(m => npcHere(player, m, npcId)); }
   function mobMaps(monId) { return Object.keys(MAPS).filter(m => Object.values(MAPS[m].spawns || {}).includes(monId)); }
@@ -80,7 +103,10 @@
     for (const n of o.visit || []) where.push(`Gặp ${npcAt(player, n)}`);
     if (o.level) where.push(`Lên cấp ${o.level} (hạ quái ở bất kỳ đâu)`);
     if (o.school) where.push(`Chọn class ở ${npcAt(player, 'lao_su')}`);
-    return { giver: npcAt(player, q.npc), where, turnIn: npcAt(player, q.npc) };
+    // Nhận ở đâu trả ở đó: nhiệm vụ đã nhận thì trả đúng bản đồ đã ghi
+    const rec = side ? (player.side && player.side.active && player.side.active[q.id] && player.side.active[q.id].map) : (player.quest && player.quest.state === 'active' ? player.quest.map : null);
+    const turnIn = rec && MAPS[rec] ? `${NPCS[q.npc].name} · ${mapName(rec)}` : npcAt(player, q.npc);
+    return { giver: npcAt(player, q.npc), where, turnIn };
   }
 
   // ---------------------------------------------------------------- Cổng dịch chuyển
@@ -198,5 +224,5 @@
   })();
   const questMinLevel = (q) => (q && q.minLevel) || 1;
 
-  Object.assign(G, { questMinLevel, questGuide,npcAt, gateOf, portalStatus, gateDestinations, mapList, npcHere, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
+  Object.assign(G, { questMinLevel, questGuide,npcAt, gateOf, portalStatus, gateDestinations, mapList, npcHere, npcMaps, npcByRole, villageOf, villageRewardMult, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

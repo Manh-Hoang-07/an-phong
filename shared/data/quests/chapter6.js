@@ -17,81 +17,81 @@
   const Q = (id, name, npc, start, end, obj, reward, more) => QUESTS.push(Object.assign({ id, name, npc, start, end, obj, reward }, more || {}));
 
   // ===================================================================== Chương 6 – Thiên Khôi (51–60) · giao: Khải
-  Q('c6q1', 'Năm vết nứt trên trời', 'lao_su', [
-    'Hội trưởng Khải: Cổng Vĩnh Hằng đã đóng, Thiên ở lại bên kia để giữ nó. Ba tháng yên ổn, rồi bầu trời nứt thành năm vết sáng.',
-    'Hội trưởng Khải: Năm hòn đảo rơi xuống quanh Cổng SS, mảnh còn lại của thế giới bên kia cổng. Chúng tôi gọi chúng là Vùng. Hiệp Hội dựng Thiên Đô ngay tại đây làm tiền đồn.',
-    'Hội trưởng Khải: Vùng gần nhất là Thiên Khôi, nơi lửa và thiên thạch. Đi khảo sát đi. Cậu có một mảnh Hệ thống trong túi, nó đang rung theo nhịp của Vùng đó.',
-  ], ['Hội trưởng Khải: Bãi Thiên Thạch đã mở. Đừng đi quá xa khi chưa biết gì.'], {}, rw(51, 'story', [['binh_mau_than_thoai', 3]]));
-  Q('c6q2', 'Khảo sát Thiên Khôi', 'lao_su', [
-    'Hội trưởng Khải: Bãi Thiên Thạch và Đồi Khôi Đỏ là hai khu đầu của Vùng. Quái ở đó mang hơi lửa, không còn là sinh vật bình thường.',
-    'Hội trưởng Khải: Hạ 12 Quỷ Tro và 12 Bọ Thiên Thạch. Cần đạt cấp 51 để chịu được nhiệt.',
-  ], ['Hội trưởng Khải: Số liệu cậu mang về rất hữu ích. Đồi Khôi Đỏ đã mở.'], { kill: { tan_du_thien_khoi: 12, bo_thien_thach: 12 }, level: 51 }, rw(51, 'hunt', [['da_cuong_hoa_than_thoai', 2]]));
-  Q('c6q3', 'Tro thiên thạch', 'lao_su', [
-    'Hội trưởng Khải: Thợ chế tác Thiết cần Mảnh Khôi để rèn bộ trang bị cấp 51–60. Mảnh rơi từ Quỷ Tro và Bọ Thiên Thạch.',
-    'Hội trưởng Khải: Thu 8 mảnh. Đừng cầm lâu, nó nóng.',
-  ], ['Hội trưởng Khải: Đủ rồi. Thiết sẽ rèn ngay. Còn lại là phần của cậu.'], { collect: { manh_khoi: 8 } }, rw(52, 'hunt', [['loi_tinh_van', 2]]));
-  Q('c6q4', 'Đường vào mỏ', 'lao_su', [
-    'Hội trưởng Khải: Phía sau Đồi Khôi Đỏ là Mỏ Lửa Cổ, nơi thợ mỏ của Hiệp Hội từng khai thác thiên thạch. Giờ Sói Lửa Khôi chiếm hết.',
-    'Hội trưởng Khải: Hạ 20 con để mở đường. Cần cấp 55.',
-  ], ['Hội trưởng Khải: Mỏ đã sạch lối vào. Nhưng trong mỏ còn thợ mỏ bị kẹt.'], { kill: { soi_lua_khoi: 20 }, level: 55 }, rw(55, 'hunt', [['da_cuong_hoa_than_thoai', 2]]));
-  Q('c6q5', 'Giữ trạm khai thác', 'lao_su', [
-    'Hội trưởng Khải: Trạm khai thác ở Mỏ Lửa Cổ là nơi còn người sống. Sói Lửa Khôi đang tràn vào từng đợt.',
-    'Hội trưởng Khải: Phòng thủ cho tới khi dọn sạch 30 con. Tôi sẽ cho người tiếp tế phía sau cậu.',
-  ], ['Trạm khai thác giữ được. Thợ mỏ chui ra khỏi hầm, mặt lấm than nhưng còn sống.', 'Hội trưởng Khải: Phòng thủ tốt. Lần này không ai phải chết.'], { kill: { soi_lua_khoi: 30 } }, rw(56, 'hunt', [['binh_mau_than_thoai', 4]]));
-  Q('c6q6', 'Hộ vệ lửa', 'lao_su', [
-    'Hội trưởng Khải: Hộ Vệ Khôi Đỏ canh các hầm sâu. Đây là loại tinh anh, đánh theo đội.',
-    'Hội trưởng Khải: Hạ 8 tên. Đừng tách ra, nhất là khi nó nổi giận.',
-  ], ['Hội trưởng Khải: Thành Khôi Sụp ở phía sau đã mở. Nơi đó có thứ cậu cần thấy.'], { kill: { ho_vuong_thien_khoi: 8 } }, rw(57, 'elite', [['da_cuong_hoa_than_thoai', 3]]));
-  Q('c6q7', 'Lá thư của Số 1', 'lao_su', [
-    'Hội trưởng Khải: Trong Thành Khôi Sụp có một cuốn nhật ký của người chơi số 1. Tên anh ta là Triệu Cương.',
-    'Hội trưởng Khải: Thủ Lĩnh Khôi Tàn giữ nó. Hạ hắn rồi đọc.',
+  Q('c6q1', 'Năm vết nứt trên trời', 'truong_lang_6', [
+    'Trưởng Thịnh: Cổng Vĩnh Hằng đã đóng, Thiên ở lại bên kia để giữ nó. Ba tháng yên ổn, rồi bầu trời nứt thành năm vết sáng.',
+    'Trưởng Thịnh: Năm hòn đảo rơi xuống quanh Cổng SS, mảnh còn lại của thế giới bên kia cổng. Chúng tôi gọi chúng là Vùng. Hiệp Hội dựng Thiên Đô ngay tại đây làm tiền đồn.',
+    'Trưởng Thịnh: Vùng gần nhất là Thiên Khôi, nơi lửa và thiên thạch. Đi khảo sát đi. Cậu có một mảnh Hệ thống trong túi, nó đang rung theo nhịp của Vùng đó.',
+  ], ['Trưởng Thịnh: Bãi Thiên Thạch đã mở. Đừng đi quá xa khi chưa biết gì.'], {}, rw(51, 'story', [['binh_mau_than_thoai', 3]]));
+  Q('c6q2', 'Khảo sát Thiên Khôi', 'truong_lang_6', [
+    'Trưởng Thịnh: Bãi Thiên Thạch và Đồi Khôi Đỏ là hai khu đầu của Vùng. Quái ở đó mang hơi lửa, không còn là sinh vật bình thường.',
+    'Trưởng Thịnh: Hạ 12 Quỷ Tro và 12 Bọ Thiên Thạch. Cần đạt cấp 51 để chịu được nhiệt.',
+  ], ['Trưởng Thịnh: Số liệu cậu mang về rất hữu ích. Đồi Khôi Đỏ đã mở.'], { kill: { tan_du_thien_khoi: 12, bo_thien_thach: 12 }, level: 51 }, rw(51, 'hunt', [['da_cuong_hoa_than_thoai', 2]]));
+  Q('c6q3', 'Tro thiên thạch', 'truong_lang_6', [
+    'Trưởng Thịnh: Thợ chế tác Thiết cần Mảnh Khôi để rèn bộ trang bị cấp 51–60. Mảnh rơi từ Quỷ Tro và Bọ Thiên Thạch.',
+    'Trưởng Thịnh: Thu 8 mảnh. Đừng cầm lâu, nó nóng.',
+  ], ['Trưởng Thịnh: Đủ rồi. Thiết sẽ rèn ngay. Còn lại là phần của cậu.'], { collect: { manh_khoi: 8 } }, rw(52, 'hunt', [['loi_tinh_van', 2]]));
+  Q('c6q4', 'Đường vào mỏ', 'truong_lang_6', [
+    'Trưởng Thịnh: Phía sau Đồi Khôi Đỏ là Mỏ Lửa Cổ, nơi thợ mỏ của Hiệp Hội từng khai thác thiên thạch. Giờ Sói Lửa Khôi chiếm hết.',
+    'Trưởng Thịnh: Hạ 20 con để mở đường. Cần cấp 55.',
+  ], ['Trưởng Thịnh: Mỏ đã sạch lối vào. Nhưng trong mỏ còn thợ mỏ bị kẹt.'], { kill: { soi_lua_khoi: 20 }, level: 55 }, rw(55, 'hunt', [['da_cuong_hoa_than_thoai', 2]]));
+  Q('c6q5', 'Giữ trạm khai thác', 'truong_lang_6', [
+    'Trưởng Thịnh: Trạm khai thác ở Mỏ Lửa Cổ là nơi còn người sống. Sói Lửa Khôi đang tràn vào từng đợt.',
+    'Trưởng Thịnh: Phòng thủ cho tới khi dọn sạch 30 con. Tôi sẽ cho người tiếp tế phía sau cậu.',
+  ], ['Trạm khai thác giữ được. Thợ mỏ chui ra khỏi hầm, mặt lấm than nhưng còn sống.', 'Trưởng Thịnh: Phòng thủ tốt. Lần này không ai phải chết.'], { kill: { soi_lua_khoi: 30 } }, rw(56, 'hunt', [['binh_mau_than_thoai', 4]]));
+  Q('c6q6', 'Hộ vệ lửa', 'truong_lang_6', [
+    'Trưởng Thịnh: Hộ Vệ Khôi Đỏ canh các hầm sâu. Đây là loại tinh anh, đánh theo đội.',
+    'Trưởng Thịnh: Hạ 8 tên. Đừng tách ra, nhất là khi nó nổi giận.',
+  ], ['Trưởng Thịnh: Thành Khôi Sụp ở phía sau đã mở. Nơi đó có thứ cậu cần thấy.'], { kill: { ho_vuong_thien_khoi: 8 } }, rw(57, 'elite', [['da_cuong_hoa_than_thoai', 3]]));
+  Q('c6q7', 'Lá thư của Số 1', 'truong_lang_6', [
+    'Trưởng Thịnh: Trong Thành Khôi Sụp có một cuốn nhật ký của người chơi số 1. Tên anh ta là Triệu Cương.',
+    'Trưởng Thịnh: Thủ Lĩnh Khôi Tàn giữ nó. Hạ hắn rồi đọc.',
   ], [
     'Nhật ký Triệu Cương: "Ngày 1: Hệ thống nói tôi là người mạnh nhất. Ngày 300: Tôi không nhớ mình đã đánh ai. Ngày 301: Tôi chỉ còn cơn giận."',
     'Nhật ký Triệu Cương: "Ngày 302: Nó nói tôi đã đạt thành. Tôi bị cắm vào một cột đá. Tôi vẫn nghe thấy tiếng lửa."',
   ], { kill: { thu_linh_khoi_tan: 1 } }, rw(58, 'elite', [['loi_tinh_van', 3]]));
-  Q('c6q8', 'Trụ Mộng Thiên Khôi', 'lao_su', [
-    'Hội trưởng Khải: Trụ Mộng là cột đá giam ý thức của Triệu Cương. Hệ thống dùng anh ta để giữ cổng, và anh ta đã hóa thành cơn giận không ngừng.',
-    'Hội trưởng Khải: Hạ anh ta không phải để giết. Hãy xem như để giải thoát.',
+  Q('c6q8', 'Trụ Mộng Thiên Khôi', 'truong_lang_6', [
+    'Trưởng Thịnh: Trụ Mộng là cột đá giam ý thức của Triệu Cương. Hệ thống dùng anh ta để giữ cổng, và anh ta đã hóa thành cơn giận không ngừng.',
+    'Trưởng Thịnh: Hạ anh ta không phải để giết. Hãy xem như để giải thoát.',
   ], [
     'Trụ Mộng vỡ, lửa tắt dần. Giữa tro tàn, một người đàn ông cao lớn quỳ xuống, tỉnh lại trong một khắc.',
     'Triệu Cương: ...Đã lâu rồi mới thấy ánh sáng. Cậu là người chơi thứ bảy?',
     'Triệu Cương: Đừng trở thành người thứ tám.',
     '[Hệ thống] Mảnh Hệ thống trong túi nóng lên.',
   ], { kill: { tru_mong_thien_khoi: 1 } }, rw(60, 'boss', [['ao_thien_khoi', 1], ['loi_tinh_van', 4]], { skillPoints: 3 }));
-  Q('c6q9', 'Điều Hệ thống không nói', 'lao_su', [
-    'Hội trưởng Khải: Cậu về rồi. Lữ khách đã nói chuyện với tôi qua đường truyền.',
-    'Hội trưởng Khải: Các người chơi trước không biến mất khi chạm hạng S. Họ bị Hệ thống cắm vào trụ để giữ các cổng khỏi vỡ ra, rồi gọi việc đó là "đạt thành".',
+  Q('c6q9', 'Điều Hệ thống không nói', 'truong_lang_6', [
+    'Trưởng Thịnh (chuyển lời Hội trưởng Khải): Cậu về rồi. Lữ khách đã nói chuyện với tôi qua đường truyền.',
+    'Trưởng Thịnh (chuyển lời Hội trưởng Khải): Các người chơi trước không biến mất khi chạm hạng S. Họ bị Hệ thống cắm vào trụ để giữ các cổng khỏi vỡ ra, rồi gọi việc đó là "đạt thành".',
   ], [
-    'Hội trưởng Khải: Thiên đã biết điều này. Chúng tôi từng cãi nhau về nó suốt đêm.',
-    'Hội trưởng Khải: Vùng tiếp theo là Long Mạch. Cửa đã mở.',
+    'Trưởng Thịnh (chuyển lời Hội trưởng Khải): Thiên đã biết điều này. Chúng tôi từng cãi nhau về nó suốt đêm.',
+    'Trưởng Thịnh (chuyển lời Hội trưởng Khải): Vùng tiếp theo là Long Mạch. Cửa đã mở.',
     '[Hệ thống] Đã mở khóa: Chương 7 – Long Mạch.',
   ], {}, rw(60, 'story', [['binh_mau_than_thoai', 4]]));
 
   // ===================================================================== Chương 7 – Long Mạch (61–70) · giao: Khải, Vy
-  Q('c7q1', 'Vết thương của đất', 'lao_su', [
-    'Hội trưởng Khải: Mạch ngầm của Vùng Long Mạch đang chảy ngược. Nước ngọc tràn ra từ hang, người chạm vào thì ngủ mê không dậy.',
-    'Hội trưởng Khải: Vy xin đi cùng lần này. Cô ấy nói trong Vùng có tiếng gọi quen.',
-  ], ['Hội trưởng Khải: Cửa Long Mạch đã mở. Giữ lấy dây an toàn, đá ở đó trơn.'], {}, rw(61, 'story', [['binh_mau_than_thoai', 3]]));
-  Q('c7q2', 'Cửa Long Mạch', 'lao_su', [
-    'Hội trưởng Khải: Rắn Mạch Ngọc và Rùa Đá Mạch canh cửa vào. Chúng không ác, nhưng đã mất mạch để theo, nên cắn bất cứ thứ gì.',
-    'Hội trưởng Khải: Hạ 12 con mỗi loại. Cần cấp 61.',
-  ], ['Hội trưởng Khải: Suối Long Cốt đã mở. Nước ở đó đục như sữa, đừng uống.'], { kill: { tan_du_long_mach: 12, rua_da_mach: 12 }, level: 61 }, rw(61, 'hunt', [['da_cuong_hoa_than_thoai', 2]]));
-  Q('c7q3', 'Nước ngọc', 'lao_su', [
-    'Hội trưởng Khải: Thợ chế tác Thiết cần Mảnh Ngọc Mạch để rèn bộ cấp 61–70. Ngọc rơi từ rắn và rùa.',
-    'Hội trưởng Khải: Thu 8 mảnh.',
-  ], ['Hội trưởng Khải: Ngọc này ấm lắm, như còn mạch đập bên trong. Thiết sẽ vui.'], { collect: { manh_ngoc_mach: 8 } }, rw(62, 'hunt', [['loi_tinh_van', 2]]));
-  Q('c7q4', 'Suối Long Cốt', 'lao_su', [
-    'Hội trưởng Khải: Linh Thủy Mạch ở suối đang sinh sôi bất thường. Chúng uống mạch rồi lớn như thủy quái.',
-    'Hội trưởng Khải: Hạ 20 con và đạt cấp 65 trước khi vào sâu hơn.',
-  ], ['Hội trưởng Khải: Mạch Ngầm Lam đã mở. Ở đó có thứ Vy muốn cậu nhìn.'], { kill: { linh_thuy_mach: 20 }, level: 65 }, rw(65, 'hunt', [['da_cuong_hoa_than_thoai', 2]]));
-  Q('c7q5', 'Dẫn Hạt Mạch', 'lao_su', [
-    'Hội trưởng Khải: Có một Hạt Mạch, mảnh nhỏ của dòng chảy, bị kẹt trong Mạch Ngầm Lam. Nếu nó nối lại, mạch của cả Vùng sẽ liền.',
-    'Hội trưởng Khải: Đi dọc ba điểm dẫn mạch, chạm vào từng điểm để dẫn Hạt Mạch qua. Quái sẽ tìm cách ngăn.',
-  ], ['Ba điểm dẫn mạch sáng lên liền nhau. Dòng chảy xanh ngọc chảy xuôi, êm như hơi thở.', 'Hội trưởng Khải: Hạt Mạch đã qua. Mạch bắt đầu liền lại.'], { visit: ['hat_mach_1', 'hat_mach_2', 'hat_mach_3'] }, rw(66, 'hunt', [['binh_mau_than_thoai', 4]]));
-  Q('c7q6', 'Giáp vảy', 'lao_su', [
-    'Hội trưởng Khải: Điện Vảy Rồng ở phía trong có Hộ Mạch Giáp Vảy và Rồng Con Mất Mẹ. Rồng con thì đừng đánh quá tay, nó chỉ đang tìm mẹ.',
-    'Hội trưởng Khải: Hạ 8 Hộ Mạch Giáp Vảy.',
-  ], ['Hội trưởng Khải: Điện Vảy Rồng đã mở. Mạch chảy về phía đó, và Vy nói tiếng gọi cũng từ đó ra.'], { kill: { ho_vuong_long_mach: 8 } }, rw(67, 'elite', [['da_cuong_hoa_than_thoai', 3]]));
+  Q('c7q1', 'Vết thương của đất', 'truong_lang_6', [
+    'Trưởng Thịnh: Mạch ngầm của Vùng Long Mạch đang chảy ngược. Nước ngọc tràn ra từ hang, người chạm vào thì ngủ mê không dậy.',
+    'Trưởng Thịnh: Vy xin đi cùng lần này. Cô ấy nói trong Vùng có tiếng gọi quen.',
+  ], ['Trưởng Thịnh: Cửa Long Mạch đã mở. Giữ lấy dây an toàn, đá ở đó trơn.'], {}, rw(61, 'story', [['binh_mau_than_thoai', 3]]));
+  Q('c7q2', 'Cửa Long Mạch', 'truong_lang_6', [
+    'Trưởng Thịnh: Rắn Mạch Ngọc và Rùa Đá Mạch canh cửa vào. Chúng không ác, nhưng đã mất mạch để theo, nên cắn bất cứ thứ gì.',
+    'Trưởng Thịnh: Hạ 12 con mỗi loại. Cần cấp 61.',
+  ], ['Trưởng Thịnh: Suối Long Cốt đã mở. Nước ở đó đục như sữa, đừng uống.'], { kill: { tan_du_long_mach: 12, rua_da_mach: 12 }, level: 61 }, rw(61, 'hunt', [['da_cuong_hoa_than_thoai', 2]]));
+  Q('c7q3', 'Nước ngọc', 'truong_lang_6', [
+    'Trưởng Thịnh: Thợ chế tác Thiết cần Mảnh Ngọc Mạch để rèn bộ cấp 61–70. Ngọc rơi từ rắn và rùa.',
+    'Trưởng Thịnh: Thu 8 mảnh.',
+  ], ['Trưởng Thịnh: Ngọc này ấm lắm, như còn mạch đập bên trong. Thiết sẽ vui.'], { collect: { manh_ngoc_mach: 8 } }, rw(62, 'hunt', [['loi_tinh_van', 2]]));
+  Q('c7q4', 'Suối Long Cốt', 'truong_lang_6', [
+    'Trưởng Thịnh: Linh Thủy Mạch ở suối đang sinh sôi bất thường. Chúng uống mạch rồi lớn như thủy quái.',
+    'Trưởng Thịnh: Hạ 20 con và đạt cấp 65 trước khi vào sâu hơn.',
+  ], ['Trưởng Thịnh: Mạch Ngầm Lam đã mở. Ở đó có thứ Vy muốn cậu nhìn.'], { kill: { linh_thuy_mach: 20 }, level: 65 }, rw(65, 'hunt', [['da_cuong_hoa_than_thoai', 2]]));
+  Q('c7q5', 'Dẫn Hạt Mạch', 'truong_lang_6', [
+    'Trưởng Thịnh: Có một Hạt Mạch, mảnh nhỏ của dòng chảy, bị kẹt trong Mạch Ngầm Lam. Nếu nó nối lại, mạch của cả Vùng sẽ liền.',
+    'Trưởng Thịnh: Đi dọc ba điểm dẫn mạch, chạm vào từng điểm để dẫn Hạt Mạch qua. Quái sẽ tìm cách ngăn.',
+  ], ['Ba điểm dẫn mạch sáng lên liền nhau. Dòng chảy xanh ngọc chảy xuôi, êm như hơi thở.', 'Trưởng Thịnh: Hạt Mạch đã qua. Mạch bắt đầu liền lại.'], { visit: ['hat_mach_1', 'hat_mach_2', 'hat_mach_3'] }, rw(66, 'hunt', [['binh_mau_than_thoai', 4]]));
+  Q('c7q6', 'Giáp vảy', 'truong_lang_6', [
+    'Trưởng Thịnh: Điện Vảy Rồng ở phía trong có Hộ Mạch Giáp Vảy và Rồng Con Mất Mẹ. Rồng con thì đừng đánh quá tay, nó chỉ đang tìm mẹ.',
+    'Trưởng Thịnh: Hạ 8 Hộ Mạch Giáp Vảy.',
+  ], ['Trưởng Thịnh: Điện Vảy Rồng đã mở. Mạch chảy về phía đó, và Vy nói tiếng gọi cũng từ đó ra.'], { kill: { ho_vuong_long_mach: 8 } }, rw(67, 'elite', [['da_cuong_hoa_than_thoai', 3]]));
   Q('c7q7', 'Tiếng gọi người y sư', 'vy', [
     'Vy: Cậu nghe không? Phép chữa đó... tôi quen. Đội Bình Minh từng có một y sư dùng đúng nhịp thở này.',
     'Vy: Thủ Lĩnh Mạch Vỡ giữ lối vào hang trụ. Hạ nó, tôi muốn biết ai đang gọi.',
@@ -107,10 +107,10 @@
     'Vy cầm tay cô ấy lúc cô tan đi. Diệp Tâm: Chữa cho người khác xong thì tự chữa cho mình nữa nhé.',
     'Vy khóc, lần đầu tiên trước mặt cậu.',
   ], { kill: { tru_mong_long_mach: 1 } }, rw(70, 'boss', [['ao_long_mach', 1], ['loi_tinh_van', 4]], { skillPoints: 3 }));
-  Q('c7q9', 'Đường tới Tinh Hà', 'lao_su', [
-    'Hội trưởng Khải: Lối từ Mạch Ngầm Lam dẫn tới một Tân Đô mới của Hiệp Hội: Tinh Hà. Viện trưởng Minh Triết đang đợi cậu.',
-    'Hội trưởng Khải: Ông ta hay quên ăn quên ngủ. Nhưng ông ta đã theo dấu Hệ thống suốt mười năm.',
-  ], ['Hội trưởng Khải: Đi đi. Tôi ở lại giữ Thiên Đô.', '[Hệ thống] Đã mở khóa: Chương 8 – Tinh Vân (Tân Đô VII – Tinh Hà).'], {}, rw(70, 'story', [['binh_mau_than_thoai', 5]]));
+  Q('c7q9', 'Đường tới Tinh Hà', 'truong_lang_6', [
+    'Trưởng Thịnh: Lối từ Mạch Ngầm Lam dẫn tới một Tân Đô mới của Hiệp Hội: Tinh Hà. Viện trưởng Minh Triết đang đợi cậu.',
+    'Trưởng Thịnh: Ông ta hay quên ăn quên ngủ. Nhưng ông ta đã theo dấu Hệ thống suốt mười năm.',
+  ], ['Trưởng Thịnh: Đi đi. Tôi ở lại giữ Thiên Đô.', '[Hệ thống] Đã mở khóa: Chương 8 – Tinh Vân (Tân Đô VII – Tinh Hà).'], {}, rw(70, 'story', [['binh_mau_than_thoai', 5]]));
 
   // ===================================================================== Chương 8 – Tinh Vân (71–80) · giao: Viện trưởng Minh Triết
   Q('c8q1', 'Viện trưởng Minh Triết', 'minh_triet', [

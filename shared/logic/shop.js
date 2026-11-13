@@ -25,9 +25,9 @@
     if (!n || !n.shop) return [];
     const list = n.gearShop ? shopGear().concat(n.shop.filter(id => !shopGear().includes(id))) : n.shop.slice();
     const add = (ids) => { for (const id of ids) if (ITEMS[id] && !list.includes(id)) list.push(id); };
-    if (npcId === 'ba_thuoc' && sideDone(player, 'p5-2')) add(['thuoc_nhiem_do']);
-    if (npcId === 'tap_hoa' && sideDone(player, 'p2-1')) add(['binh_mau_vua', 'binh_nl_vua']);
-    if (npcId === 'tap_hoa' && sideDone(player, 'p2-2')) add(['da_cuong_hoa_cao']);
+    if (n.shopKind === 'herb' && sideDone(player, 'p5-2')) add(['thuoc_nhiem_do']);
+    if (n.shopKind === 'gear' && sideDone(player, 'p2-1')) add(['binh_mau_vua', 'binh_nl_vua']);
+    if (n.shopKind === 'gear' && sideDone(player, 'p2-2')) add(['da_cuong_hoa_cao']);
     return capByVillage(player, list);
   }
   // Cửa hàng chỉ bán trong trần của Tân Đô đang đứng (cap = cấp trang bị cao nhất; thuốc và đá theo bậc làng), không xét cấp người chơi

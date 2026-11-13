@@ -256,6 +256,29 @@
     },
   };
 
+  // NPC dịch vụ của làng II–VII (xem shared/data/npcs.js): cùng dáng và đạo cụ với NPC gốc nhưng đổi tông màu áo / phụ kiện
+  // theo làng, không vẽ tay từng người. Hình ảnh riêng (NPC_IMAGES) chỉ có cho NPC gốc ở Hiệp Hội; các làng khác dùng hình vẽ code.
+  function hueShift(color, deg) {
+    const r = ((color >> 16) & 255) / 255, g = ((color >> 8) & 255) / 255, b = (color & 255) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+    if (!d) return color;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h = ((h * 60 + deg) % 360 + 360) % 360 / 360;
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+    const f = (t) => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+    const to = (v) => Math.round(Math.max(0, Math.min(1, v)) * 255);
+    return (to(f(h + 1 / 3)) << 16) | (to(f(h)) << 8) | to(f(h - 1 / 3));
+  }
+  const VILLAGE_HUE = { 2: 55, 3: 110, 4: 170, 5: 230, 6: 285, 7: 330 };
+  const VILLAGE_HAIR = { 2: 0x3b2a20, 3: 0xc9ccd6, 4: 0x6a3b2a, 5: 0x1b1d2e, 6: 0x8a5a2b, 7: 0xd8c27a };
+  for (const base of ['tho_ren', 'ba_thuoc', 'tap_hoa', 'thu_kho']) {
+    for (const n in VILLAGE_HUE) {
+      const b = NPCS[base];
+      NPCS[base + '_' + n] = { ...b, coat: hueShift(b.coat, VILLAGE_HUE[n]), inner: hueShift(b.inner, VILLAGE_HUE[n]), accent: hueShift(b.accent, VILLAGE_HUE[n] + 40), hair: VILLAGE_HAIR[n] };
+    }
+  }
+
   // NPC có ảnh riêng (public/assets/npcs/<id>.png, nguồn CSAF Hearthhands, xem server/tools/npc-images.js): chiều cao hiển thị (px logic).
   // Không tải được ảnh thì make() bên dưới vẽ lại bằng code như cũ.
   const NPC_IMAGES = { lao_su: 62, tap_hoa: 62, thu_kho: 64 };

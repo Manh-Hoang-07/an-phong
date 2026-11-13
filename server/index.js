@@ -122,7 +122,8 @@ async function api(req, res, url) {
 
   if (url === '/api/me' && req.method === 'GET') {
     if (!session) return send(res, 200, { user: null, registerOpen: await auth.registerOpen() });
-    return send(res, 200, { user: session.username, player: await getPlayer(session.userId) });
+    const player = await getPlayer(session.userId);
+    return send(res, 200, { user: session.username, player, rev: cache.getRev(session.userId) });
   }
 
   if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' });
@@ -179,25 +180,29 @@ async function api(req, res, url) {
     if (!p) return send(res, 404, { error: 'Không tìm thấy nhân vật.' });
     const rid = typeof body.rid === 'string' && body.rid.length <= 40 ? body.rid : null;
     delete body.rid;
+    // Gửi lại cùng mã yêu cầu (rid): trả kết quả cũ kèm nhân vật đầy đủ hiện tại (client coi như đồng bộ lại)
     if (rid) {
       const old = recentReplies.get(session.userId)?.get(rid);
-      if (old) return send(res, old[0], { ...old[1], player: p });
+      if (old) return send(res, old[0], { ...old[1], player: p, rev: cache.getRev(session.userId) });
     }
-    const backup = JSON.stringify(p);
-    cache.begin(session.userId);
+    // Không còn sao lưu cả nhân vật mỗi hành động: `token` chỉ là JSON từng section lần trước (đã có sẵn),
+    // lỗi giữa chừng thì hoàn tác đúng các section đã đổi.
+    const token = cache.begin(session.userId);
     try {
       const events = await game.handle(session.userId, p, body);
-      if (DEFERRED_SAVE.has(body.type)) cache.markDirty(session.userId);
-      else await cache.saveNow(session.userId);
+      const c = cache.commit(session.userId);   // so với trước: biết section nào đổi, dựng bản vá cho client
+      // Hạ quái / lưu vị trí: ghi trễ (cache.js, tối đa mỗi 6 giây); còn lại ghi ngay
+      if (!DEFERRED_SAVE.has(body.type)) await cache.saveNow(session.userId, c.strings);
       rememberReply(session.userId, rid, 200, { ok: true, events });
-      return send(res, 200, { ok: true, player: p, events });
+      // Chỉ gửi phần thay đổi; client giữ `rev` để biết có lỡ bản vá nào không (khi lệch thì tải lại cả nhân vật)
+      return send(res, 200, { ok: true, events, patch: c.patch, base: c.base, rev: c.rev });
     } catch (e) {
       // Lỗi giữa chừng thì trả nhân vật về trạng thái trước đó
-      const restored = JSON.parse(backup);
-      cache.replacePlayer(session.userId, restored);
+      const restored = cache.rollback(session.userId, token);
+      const rev = cache.getRev(session.userId);
       if (e instanceof game.GameError) {
         rememberReply(session.userId, rid, 200, { ok: false, error: e.message });
-        return send(res, 200, { ok: false, error: e.message, player: restored });
+        return send(res, 200, { ok: false, error: e.message, player: restored, rev });
       }
       console.error(e);
       return send(res, 500, { error: 'Lỗi server.' });

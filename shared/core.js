@@ -10,7 +10,7 @@
 
   const MAX_LEVEL = 100;
   const BAG_SIZE = 40;
-  const STORAGE_SIZE = 60;
+  const STORAGE_SIZE = 30;   // mỗi làng một kho riêng, mỗi kho chừng này ô
   const STAT_POINTS_PER_LEVEL = 3;
 
   // Hạng thợ săn: [cấp tối thiểu để được đánh giá, hạng]. Hạng KHÔNG tự lên theo cấp: đủ cấp thì người chơi đến

@@ -507,7 +507,9 @@ WorldScene.mix(class WorldMap {
       if (!pos) continue;
       const id = this.meta.npcs[ch];
       const x = pos.c * T + T / 2, y = this.groundY(pos.r, pos.c);
-      const s = this.artImage(x, y, 'npc_' + id).setOrigin(0.5, 1).setDepth(2).setFlipX(x > this.worldW / 2);
+      // NPC dịch vụ của làng có hình riêng (đổi tông màu); bảng nhiệm vụ / trạm các làng dùng chung hình gốc (look)
+      const texKey = this.textures.exists('npc_' + id) ? 'npc_' + id : 'npc_' + (GameData.NPCS[id].look || id);
+      const s = this.artImage(x, y, texKey).setOrigin(0.5, 1).setDepth(2).setFlipX(x > this.worldW / 2);
       this.tweens.add({ targets: s, scaleY: s.scaleY * 1.02, duration: 1200 + Math.random() * 500, yoyo: true, repeat: -1 });
       const label = this.add.text(x, y - 70, GameData.NPCS[id].name, {
         fontFamily: '"Be Vietnam Pro", "Segoe UI", sans-serif', fontSize: '12px', color: '#ffe9a8', stroke: '#000', strokeThickness: 3,

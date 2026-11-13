@@ -68,8 +68,8 @@ function printLog(rows) {
     if (!snap) { console.error('Không có bản chụp', rest[0], 'của', u.username); process.exit(1); }
     // Chụp lại trạng thái hiện tại trước khi ghi đè, để còn quay lại được
     const current = await store.loadPlayer(u.id);
-    if (current) await store.savePlayer(u.id, JSON.stringify(current), 'before_restore');
-    await store.savePlayer(u.id, JSON.stringify(snap.data));
+    if (current) await store.savePlayerFull(u.id, current, 'before_restore');
+    await store.savePlayerFull(u.id, snap.data);
     await store.logAuth({ userId: u.id, username: u.username, event: 'restore', detail: `bản chụp #${id} lúc ${fmtTime(snap.at)}` });
     console.log(`Đã khôi phục ${u.username} về bản chụp #${id} (${fmtTime(snap.at)}).`);
     console.log('Trạng thái trước đó được lưu thành bản chụp "before_restore".');

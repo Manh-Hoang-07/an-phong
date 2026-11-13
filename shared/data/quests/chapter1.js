@@ -302,15 +302,15 @@
       reward: { exp: 1000, gold: 500, skillPoints: 2, items: [['sach_ky_nang', 1]] } },
 
     // ===== CHƯƠNG 3: LÒ RÈN CỔ (cấp 21–30)
-    { id: 'c3q1', name: 'Lưỡi kiếm không xuyên', npc: 'tho_ren',
+    { id: 'c3q1', name: 'Lưỡi kiếm không xuyên', npc: 'tho_ren_2',
       start: [
-        'Thợ chế tác Thiết: Vũ khí cậu dùng bây giờ... chỉ là thép pha pha lê. Đánh quái lõi cổng mạnh hơn thì không xuyên nổi.',
-        'Thợ chế tác Thiết: Dòng họ thợ rèn cổ đại tôi từng nói tới... Lò Rèn Cổ dưới núi tuyết phía bắc. Nơi đó mới rèn được vũ khí thật sự.',
-        'Thợ chế tác Thiết: Cổng vừa mở ở đó. Nhưng lạnh lắm. Mang đủ thuốc.',
+        'Thợ chế tác Phong: Vũ khí cậu dùng bây giờ... chỉ là thép pha pha lê. Đánh quái lõi cổng mạnh hơn thì không xuyên nổi.',
+        'Thợ chế tác Phong: Dòng họ thợ rèn cổ đại tôi từng nói tới... Lò Rèn Cổ dưới núi tuyết phía bắc. Nơi đó mới rèn được vũ khí thật sự.',
+        'Thợ chế tác Phong: Cổng vừa mở ở đó. Nhưng lạnh lắm. Mang đủ thuốc.',
       ],
       obj: {},
       end: [
-        'Thợ chế tác Thiết: Cổng đã mở ở phía bắc Tân Đô. Vy sẽ đi cùng cậu.',
+        'Thợ chế tác Phong: Cổng đã mở ở phía bắc Tân Đô. Vy sẽ đi cùng cậu.',
         '[Hệ thống] Đã mở khóa: Chương 3 – Lò Rèn Cổ.',
       ],
       reward: { exp: 500, gold: 300, items: [['binh_mau_lon', 5], ['binh_nl_lon', 5]] } },
@@ -589,15 +589,15 @@
       reward: { exp: 3000, gold: 1500, items: [['binh_mau_than_thoai', 3]] } },
 
     // ===== CHƯƠNG 5: CỔNG VĨNH HẰNG (cấp 41–50)
-    { id: 'c5q1', name: 'Bầu trời rách tạc', npc: 'lao_su',
+    { id: 'c5q1', name: 'Bầu trời rách tạc', npc: 'truong_lang_5',
       start: [
-        'Hội trưởng Khải: Nhìn lên! Bầu trời đang nứt!',
-        'Hội trưởng Khải: Cổng Vĩnh Hằng đang rỉ năng lượng xuống. Quái Hư Không chui qua khe.',
-        'Hội trưởng Khải: Cậu phải lên đó. Cầu dẫn lên cổng ở phía đông thành.',
+        'Trưởng làng Vực: Nhìn lên! Bầu trời đang nứt!',
+        'Trưởng làng Vực: Cổng Vĩnh Hằng đang rỉ năng lượng xuống. Quái Hư Không chui qua khe.',
+        'Trưởng làng Vực: Cậu phải lên đó. Cầu dẫn lên cổng ở phía đông thành.',
       ],
       obj: {},
       end: [
-        'Hội trưởng Khải: Leo lên cầu. Vy đang đợi ở giữa.',
+        'Trưởng làng Vực: Leo lên cầu. Vy đang đợi ở giữa.',
         '[Hệ thống] Cổng Vĩnh Hằng phát năng lượng mạnh. Cầu dẫn đang mở.',
       ],
       reward: { exp: 5000, gold: 3000, items: [['binh_mau_than_thoai', 5], ['binh_nl_than_thoai', 5]] } },
@@ -647,10 +647,10 @@
       ],
       reward: { exp: 5000, gold: 3000, perk: 'lien_minh', items: [['binh_mau_than_thoai', 10], ['binh_nl_than_thoai', 10]] } },
 
-    { id: 'c5q3b', name: 'Chuẩn bị trận chiến', npc: 'lao_su',
+    { id: 'c5q3b', name: 'Chuẩn bị trận chiến', npc: 'truong_lang_5',
       start: [
-        'Hội trưởng Khải: Liên minh đã đủ người. Giờ cậu phải chọn cách tham chiến, vì tôi không thể cho cậu hết mọi thứ.',
-        'Hội trưởng Khải: Thiên từng là học trò của tôi. Tôi biết hắn sẽ đánh theo kiểu nào. Cậu chọn đi.',
+        'Trưởng làng Vực: Liên minh đã đủ người. Giờ cậu phải chọn cách tham chiến, vì tôi không thể cho cậu hết mọi thứ.',
+        'Trưởng làng Vực: Thiên từng là học trò của tôi. Tôi biết hắn sẽ đánh theo kiểu nào. Cậu chọn đi.',
       ],
       obj: {},
       // Chọn thoại: chỉ đổi danh hiệu và câu đáp, phần thưởng như nhau
@@ -720,37 +720,37 @@
       reward: { exp: 10000, gold: 10000, skillPoints: 10, perk: 'tu_do', items: [['sach_ky_nang_vo_dinh', 1]] } },
 
     // ===== HẬU TRUYỆN: TÀN DƯ CỔNG VĨNH HẰNG
-    { id: 'c5q7', name: 'Tàn dư trong Vực Không Cùng', npc: 'lao_su',
+    { id: 'c5q7', name: 'Tàn dư trong Vực Không Cùng', npc: 'truong_lang_5',
       start: [
-        'Hội trưởng Khải: Cổng Vĩnh Hằng đã khép, nhưng Cổng SS vẫn phát ra tín hiệu lạ.',
-        'Hội trưởng Khải: Vào Vực Không Cùng, dọn sạch 30 Quái Hư Không rồi báo cho ta.',
+        'Trưởng làng Vực: Cổng Vĩnh Hằng đã khép, nhưng Cổng SS vẫn phát ra tín hiệu lạ.',
+        'Trưởng làng Vực: Vào Vực Không Cùng, dọn sạch 30 Quái Hư Không rồi báo cho ta.',
       ],
       obj: { kill: { quai_hu_khong: 30 } },
       end: [
-        'Hội trưởng Khải: Tín hiệu yếu đi rồi. Nhưng ta cảm nhận được một nguồn năng lượng khác ở Đỉnh Cổng.',
+        'Trưởng làng Vực: Tín hiệu yếu đi rồi. Nhưng ta cảm nhận được một nguồn năng lượng khác ở Đỉnh Cổng.',
         '[Hệ thống] Đã mở nhiệm vụ hậu truyện tiếp theo.',
       ],
       reward: { exp: 18000, gold: 12000, skillPoints: 4, items: [['da_cuong_hoa_than_thoai', 4]] } },
 
-    { id: 'c5q8', name: 'Dư ảnh của Thiên', npc: 'lao_su',
+    { id: 'c5q8', name: 'Dư ảnh của Thiên', npc: 'truong_lang_5',
       start: [
-        'Hội trưởng Khải: Những Kỵ Sĩ Hư Không ở Đỉnh Cổng đang tụ tập quanh một vệt sáng.',
-        'Hội trưởng Khải: Hạ 20 tên. Có lẽ dấu vết của Thiên vẫn còn lưu lại ở đó.',
+        'Trưởng làng Vực: Những Kỵ Sĩ Hư Không ở Đỉnh Cổng đang tụ tập quanh một vệt sáng.',
+        'Trưởng làng Vực: Hạ 20 tên. Có lẽ dấu vết của Thiên vẫn còn lưu lại ở đó.',
       ],
       obj: { kill: { ky_si_hu_khong: 10 } },
       end: [
-        'Hội trưởng Khải: Cậu đã giải phóng nơi đó. Một tín hiệu mới xuất hiện ở Tâm Điểm Dị Giới.',
+        'Trưởng làng Vực: Cậu đã giải phóng nơi đó. Một tín hiệu mới xuất hiện ở Tâm Điểm Dị Giới.',
       ],
       reward: { exp: 22000, gold: 15000, skillPoints: 4, items: [['sach_ky_nang', 3]] } },
 
-    { id: 'c5q9', name: 'Bình minh sau cánh cổng', npc: 'lao_su',
+    { id: 'c5q9', name: 'Bình minh sau cánh cổng', npc: 'truong_lang_5',
       start: [
-        'Hội trưởng Khải: Tâm Điểm vẫn còn Ma Thần Trắng Trơn. Chúng đang bảo vệ tàn tích cuối cùng.',
-        'Hội trưởng Khải: Hạ 15 con để chắc chắn Cổng SS không còn đe dọa thế giới.',
+        'Trưởng làng Vực: Tâm Điểm vẫn còn Ma Thần Trắng Trơn. Chúng đang bảo vệ tàn tích cuối cùng.',
+        'Trưởng làng Vực: Hạ 15 con để chắc chắn Cổng SS không còn đe dọa thế giới.',
       ],
       obj: { kill: { ma_than_trang_tron: 3 } },
       end: [
-        'Hội trưởng Khải: Lần này thì thật sự yên bình rồi. Tân Đô sẽ luôn mở cửa chào đón cậu.',
+        'Trưởng làng Vực: Lần này thì thật sự yên bình rồi. Tân Đô sẽ luôn mở cửa chào đón cậu.',
         '[Hệ thống] Hậu truyện hoàn thành. Cổng SS vẫn mở để thợ săn tiếp tục khám phá.',
       ],
       reward: { exp: 30000, gold: 20000, skillPoints: 6, items: [['sach_ky_nang_vo_dinh', 1], ['da_cuong_hoa_than_thoai', 8]] } },

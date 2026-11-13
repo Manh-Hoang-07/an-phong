@@ -5,7 +5,7 @@ const { fail, rand } = require('../util');
 const { countItem, dropLoot, pruneLoot } = require('../inventory');
 const { gainExp, gainGold } = require('../progress');
 const { currentQuest, questComplete, questActive, sideDropActive, sideDropNeed } = require('../quests');
-const { ensureWeekly, ensureDaily } = require('../periodic');
+const { ensureWeekly, ensureBoards } = require('../periodic');
 
 const lastKill = new Map(); // userId -> {t, boss:{monster:time}}
 
@@ -63,9 +63,13 @@ function killOne(p, a, ev, lk, now) {
       if (aq.progress >= aq.need) ev.push({ t: 'msg', text: 'Thử thách hoàn tất. Hãy quay về NPC ẩn ở Tân Đô.', color: '#ffd54f' });
     }
     // Tiến độ nhiệm vụ tuần và phụ tuyến
-    ensureWeekly(p);
-    p.weekly.kills++;
-    if (mon.boss) p.weekly.bosses++;
+    // Nhiệm vụ tuần tính cho bảng của làng nơi đang săn (xem periodic.js)
+    const huntVillage = G.villageOf(p.map);
+    if (huntVillage) {
+      const w = ensureWeekly(p, huntVillage);
+      w.kills++;
+      if (mon.boss) w.bosses++;
+    }
     for (const id in p.side.active) {
       const sq = G.sideById(id);
       if (!sq || !sq.obj.kill || !sq.obj.kill[a.monster]) continue;
@@ -160,16 +164,20 @@ function killOne(p, a, ev, lk, now) {
         }
       }
     }
-    ensureDaily(p);
-    for (const d of p.daily.list) {
+    // Nhiệm vụ ngày: tính cho mọi bảng (mỗi làng một bảng) có mục tiêu khớp con quái vừa hạ
+    ensureBoards(p);
+    const dailies = Object.values(p.dailyByMap || {}).flatMap(b => b.list || []);
+    for (const d of dailies) {
       if (d.claimed || d.type === 'collect' || d.target !== a.monster || d.have >= d.need) continue;
       d.have++;
       if (d.have === d.need) ev.push({ t: 'msg', text: `Nhiệm vụ ngày xong: hạ ${d.need} ${mon.name}. Về Bảng nhiệm vụ nhận thưởng.`, color: '#ffd54f' });
     }
-    const col = p.daily.list.find(d => d.type === 'collect' && !d.claimed);
-    if (col && !mon.passive && p.map !== 'lang' && p.map !== 'cong_do') {
-      const onGround = (p.loot || []).filter(l => l.inst.id === col.target).length;
-      if (countItem(p, col.target) + onGround < col.need && Math.random() < 0.35) dropLoot(p, { id: col.target, qty: 1, plus: 0 }, spot(), y, ev);
+    // Vật phẩm cần thu cho các bảng chưa nhận: rơi cho tới khi đủ tổng số cần của mọi bảng
+    const colNeed = dailies.filter(d => d.type === 'collect' && !d.claimed).reduce((s, d) => s + d.need, 0);
+    if (colNeed && !mon.passive && p.map !== 'lang' && p.map !== 'cong_do') {
+      const target = 'loi_nang_luong';
+      const onGround = (p.loot || []).filter(l => l.inst.id === target).length;
+      if (countItem(p, target) + onGround < colNeed && Math.random() < 0.35) dropLoot(p, { id: target, qty: 1, plus: 0 }, spot(), y, ev);
     }
     if (mon.boss) ev.push({ t: 'msg', text: `Bạn đã hạ ${mon.name}!`, color: '#ffab40' });
     if (questComplete(p)) ev.push({ t: 'msg', text: `Nhiệm vụ đã hoàn thành, quay về gặp ${G.NPCS[currentQuest(p).npc].name}.`, color: '#ffd54f' });

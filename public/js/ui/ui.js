@@ -14,7 +14,13 @@ const UI = (() => {
   const WEAPON_ICONS = Object.fromEntries(Object.entries(G.WEAPON_TYPES).map(([k, w]) => [k, w.icon]));
   const statText = (k, v) => `${G.statLabel(k)} +${v}${G.statUnit(k)}`;
   const qOf = (e) => (G.ITEMS[e.id] && G.ITEMS[e.id].slot ? (e.q || 1) : 1);
-  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙' };
+  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙', tram: '🌀', truong_lang_5: '🧑‍💼', truong_lang_6: '🧑‍💼' };
+  // NPC dịch vụ của từng làng (tho_ren_3, bang_nv_5...) dùng biểu tượng của NPC gốc
+  for (const id in G.NPCS) {
+    if (NPC_ICONS[id]) continue;
+    const base = id.replace(/_\d+$/, '');
+    if (G.NPCS[id].village && NPC_ICONS[base]) NPC_ICONS[id] = NPC_ICONS[base];
+  }
 
   // Trên điện thoại, đổi lời nhắc phím bấm thành nút tương ứng
   const isTouch = () => document.body.classList.contains('touch');
@@ -317,8 +323,9 @@ const UI = (() => {
     return h;
   }
 
-  function dailyLines(p) {
-    const d = p.daily;
+  // Bảng ngày của làng (mặc định: làng của vùng đang đứng). Mỗi làng một bảng riêng (p.dailyByMap).
+  function dailyLines(p, mapId) {
+    const d = (p.dailyByMap || {})[mapId || G.villageOf(p.map)];
     if (!d || !d.list || !d.list.length) return [];
     return d.list.map((x, i) => {
       const mon = G.MONSTERS[x.target], it = G.ITEMS[x.target];
@@ -464,7 +471,7 @@ const UI = (() => {
     if (!S.selected) return null;
     const p = App.player;
     if (S.selected.where === 'equip') { const e = p.equip[S.selected.key]; return e ? { entry: { ...e, qty: 1 }, where: 'equip', key: S.selected.key } : null; }
-    const list = S.selected.where === 'bag' ? p.bag : p.storage;
+    const list = S.selected.where === 'bag' ? p.bag : G.storageOf(p);   // kho của làng đang đứng
     const e = list.find(x => x.uid === Number(S.selected.key));
     return e ? { entry: e, where: S.selected.where, key: e.uid } : null;
   }
@@ -475,7 +482,7 @@ const UI = (() => {
     const el = e.target.closest('[data-tip]');
     if (!el) { hideTip(); return; }
     const where = el.dataset.tipwhere || 'bag';
-    const list = where === 'storage' ? App.player.storage : App.player.bag;
+    const list = where === 'storage' ? G.storageOf(App.player) : App.player.bag;
     const entry = list.find(x => x.uid === Number(el.dataset.tip));
     if (!entry) { hideTip(); return; }
     const tip = $('tooltip');

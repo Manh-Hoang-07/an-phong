@@ -31,6 +31,13 @@ function gainGold(p, amount, ev) {
   ev.push({ t: 'float', text: `+${fmt(amount)} xu`, color: '#ffd54f' });
 }
 
+// Kho riêng của làng (tạo nếu chưa có). mapId = id làng.
+function storageFor(p, mapId) {
+  if (!p.storageByMap || typeof p.storageByMap !== 'object') p.storageByMap = {};
+  if (!Array.isArray(p.storageByMap[mapId])) p.storageByMap[mapId] = [];
+  return p.storageByMap[mapId];
+}
+
 // Vũ khí đang cầm không đúng loại của class (đổi class, hoặc dữ liệu từ trước khi tách vũ khí theo class):
 // tháo ra cất vào túi; túi đầy thì cất vào kho; cả hai đầy vẫn cất vào túi (vượt giới hạn) để không mất đồ.
 function unequipWrongWeapon(p, ev) {
@@ -38,8 +45,10 @@ function unequipWrongWeapon(p, ev) {
   if (!w || !G.ITEMS[w.id] || G.canUseWeapon(p, G.ITEMS[w.id])) return false;
   p.equip.weapon = null;
   const item = { ...w, qty: 1 };
-  const toStorage = G.bagSize(p) - p.bag.length < 1 && Array.isArray(p.storage) && p.storage.length < G.STORAGE_SIZE;
-  (toStorage ? p.storage : p.bag).push(item);
+  // Túi đầy thì cất vào kho của làng gốc của bản đồ đang đứng
+  const kho = storageFor(p, G.villageOf(p.map) || G.START_MAP);
+  const toStorage = G.bagSize(p) - p.bag.length < 1 && kho.length < G.STORAGE_SIZE;
+  (toStorage ? kho : p.bag).push(item);
   const wt = G.classWeapon(p.school), wName = wt ? G.WEAPON_TYPES[wt].name : 'vũ khí luyện tập';
   if (ev) ev.push({ t: 'msg', text: `Đã tháo ${G.ITEMS[w.id].name} cất vào ${toStorage ? 'kho' : 'túi'}: class ${p.school ? G.SCHOOLS[p.school].name : 'hiện tại'} chỉ dùng ${wName}.`, color: '#ffb74d' });
   return true;
@@ -83,4 +92,4 @@ function clampHpMp(p) {
   if (p.mp != null) p.mp = Math.min(p.mp, st.maxMp);
 }
 
-module.exports = { gainExp, gainGold, setSchool, resetCost, clampHpMp, unequipWrongWeapon };
+module.exports = { gainExp, gainGold, setSchool, resetCost, clampHpMp, unequipWrongWeapon, storageFor };

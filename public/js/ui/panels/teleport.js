@@ -4,12 +4,12 @@
   const { G, esc, fmt } = UI._;
 
   function panelTeleport() {
-    const p = App.player, here = App.scene ? App.scene.mapId : p.map, fee = G.TELEPORT_FEE;
-    let html = '<p class="muted" style="margin-top:0">Phí mỗi lượt: <b>' + fmt(fee) + ' xu</b>, không phụ thuộc cấp. Chỉ tới được Tân Đô đã từng ghé. Đi bộ giữa các làng thì miễn phí. Bạn có <b>' + fmt(p.gold) + ' xu</b>.</p><div class="list">';
+    const p = App.player, here = App.scene ? App.scene.mapId : p.map, fee = G.TELEPORT_FEE;   // phí chuẩn; về Hiệp Hội miễn phí (G.teleportFee)
+    let html = '<p class="muted" style="margin-top:0">Phí mỗi lượt: <b>' + fmt(fee) + ' xu</b>, không phụ thuộc cấp. Về Hiệp Hội thì miễn phí. Chỉ tới được Tân Đô đã từng ghé. Đi bộ giữa các làng thì miễn phí. Bạn có <b>' + fmt(p.gold) + ' xu</b>.</p><div class="list">';
     for (const v of G.VILLAGES) {
-      const m = G.MAPS[v.id], visited = (p.villages || []).includes(v.id), isHere = v.id === here, canPay = p.gold >= fee;
+      const m = G.MAPS[v.id], visited = (p.villages || []).includes(v.id), isHere = v.id === here, vf = G.teleportFee(v.id), canPay = p.gold >= vf;
       const ok = visited && !isHere && canPay;
-      const sub = isHere ? 'Bạn đang ở đây' : visited ? (canPay ? 'Đã từng tới · ' + fmt(fee) + ' xu' : 'Không đủ xu (cần ' + fmt(fee) + ')') : 'Chưa từng tới: hãy đi bộ tới đó một lần';
+      const sub = isHere ? 'Bạn đang ở đây' : visited ? (canPay ? 'Đã từng tới · ' + (vf ? fmt(vf) + ' xu' : 'miễn phí') : 'Không đủ xu (cần ' + fmt(vf) + ')') : 'Chưa từng tới: hãy đi bộ tới đó một lần';
       html += '<div class="li gate-dest' + (visited ? '' : ' locked') + '">' +
         '<div class="ic">' + (isHere ? '📍' : visited ? '🌀' : '🔒') + '</div>' +
         '<div class="main"><b>' + esc(m.name) + '</b><small>' + esc(sub) + '</small></div>' +

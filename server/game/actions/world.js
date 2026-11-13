@@ -63,7 +63,7 @@ const actions = {
 
   // Trạm dịch chuyển: đi nhanh giữa các Tân Đô đã từng tới, phí cố định G.TELEPORT_FEE (không theo cấp).
   teleport(p, a, ev) {
-    if (!G.npcHere(p, p.map, 'tram')) fail('Phải đứng cạnh Trạm dịch chuyển.');
+    if (!G.npcByRole(p, p.map, 'teleport')) fail('Phải đứng cạnh Trạm dịch chuyển.');
     const to = String(a.to || '');
     const v = G.MAPS[to] && G.MAPS[to].village;
     if (!v) fail('Trạm chỉ đưa tới các Tân Đô.');
@@ -71,11 +71,13 @@ const actions = {
     if (!p.villages.includes(to)) fail('Bạn chưa từng tới Tân Đô này. Hãy đi bộ tới đó một lần trước.');
     const req = G.MAPS[to].require;
     if (req && !G.questDone(p, req)) fail('Chưa đủ điều kiện vào Tân Đô này.');
-    if (p.gold < G.TELEPORT_FEE) fail('Không đủ xu (cần ' + fmt(G.TELEPORT_FEE) + ' xu).');
+    // Về Hiệp Hội miễn phí: nhiệm vụ của Hội trưởng Khải và các phụ tuyến chỉ nhận / trả ở đó
+    const fee = G.teleportFee(to);
+    if (p.gold < fee) fail('Không đủ xu (cần ' + fmt(fee) + ' xu).');
     if (Number.isFinite(a.hp)) actions.save(p, { map: p.map, hp: a.hp, mp: a.mp, pets: a.pets });
-    p.gold -= G.TELEPORT_FEE;
+    p.gold -= fee;
     p.map = to; p.hiddenNpcActive = false; p.x = null; p.y = null; p.arrive = 'S';
-    ev.push({ t: 'msg', text: 'Dịch chuyển tới ' + G.MAPS[to].name + ' (-' + fmt(G.TELEPORT_FEE) + ' xu).', color: '#7fe3ff' });
+    ev.push({ t: 'msg', text: 'Dịch chuyển tới ' + G.MAPS[to].name + (fee ? ' (-' + fmt(fee) + ' xu).' : ' (miễn phí).'), color: '#7fe3ff' });
     ev.push({ t: 'map', map: p.map });
   },
 

@@ -4,11 +4,11 @@ const G = require('../../../shared');
 const { fail } = require('../util');
 const { countItem, addItem, removeItem, bagEntry, reforgeCost, salvageStones } = require('../inventory');
 const { clampHpMp } = require('../progress');
-const { onCurrentMapNpc } = require('../quests');
+const { roleHere } = require('../quests');
 
 const actions = {
   upgrade(p, a, ev) {
-    if (!onCurrentMapNpc(p, 'tho_ren')) fail('Hãy đến gặp Thợ rèn.');
+    if (!roleHere(p, 'smith')) fail('Hãy đến gặp Thợ rèn.');
     let target;
     if (a.slot) target = p.equip[a.slot];
     else target = bagEntry(p, a.uid);
@@ -39,7 +39,7 @@ const actions = {
 
   // Tẩy luyện: gieo lại toàn bộ dòng phụ (giữ nguyên số dòng)
   reforge(p, a, ev) {
-    if (!onCurrentMapNpc(p, 'tho_ren')) fail('Hãy đến gặp Thợ rèn.');
+    if (!roleHere(p, 'smith')) fail('Hãy đến gặp Thợ rèn.');
     const target = a.slot ? p.equip[a.slot] : bagEntry(p, a.uid);
     if (!target) fail('Không có trang bị.');
     const def = G.ITEMS[target.id];
@@ -58,7 +58,7 @@ const actions = {
 
   // Phân rã: đổi đồ không dùng lấy đá cường hóa
   salvage(p, a, ev) {
-    if (!onCurrentMapNpc(p, 'tho_ren')) fail('Hãy đến gặp Thợ rèn.');
+    if (!roleHere(p, 'smith')) fail('Hãy đến gặp Thợ rèn.');
     const e = bagEntry(p, a.uid);
     const def = G.ITEMS[e.id];
     if (!def.slot) fail('Chỉ phân rã được trang bị.');

@@ -10,8 +10,8 @@ const G = require('../../shared');
 const { GameError, fail } = require('./util');
 const { pruneLoot, reforgeCost, salvageStones } = require('./inventory');
 const { questComplete, currentQuest } = require('./quests');
-const { resetCost, unequipWrongWeapon } = require('./progress');
-const { ensureDaily } = require('./periodic');
+const { resetCost, unequipWrongWeapon, storageFor } = require('./progress');
+const { ensureBoards } = require('./periodic');
 
 // Mọi hành động: tên → hàm (p, a, ev, userId)
 const actions = Object.assign({},
@@ -27,7 +27,7 @@ const actions = Object.assign({},
 async function handle(userId, player, action) {
   const fn = actions[action && action.type];
   if (!fn) fail('Hành động không hợp lệ.');
-  ensureDaily(player);
+  ensureBoards(player);
   const ev = [];
   await fn(player, action, ev, userId);
   return ev;
@@ -40,6 +40,17 @@ function migrate(p) {
   if (p.rank === undefined && p.level) p.rank = G.rankOf(p.level);
   const base = G.newPlayer(p.name);
   for (const k in base) if (p[k] === undefined) p[k] = base[k];
+  // Kho và bảng nhiệm vụ ngày / tuần giờ riêng từng làng. Dữ liệu cũ (một kho, một bảng chung) chuyển về Hiệp Hội.
+  // Kho cũ được giữ nguyên dù vượt STORAGE_SIZE (chỉ không nhận thêm cho tới khi lấy bớt ra).
+  if (!p.storageByMap || typeof p.storageByMap !== 'object' || Array.isArray(p.storageByMap)) p.storageByMap = {};
+  if (!p.dailyByMap || typeof p.dailyByMap !== 'object' || Array.isArray(p.dailyByMap)) p.dailyByMap = {};
+  if (!p.weeklyByMap || typeof p.weeklyByMap !== 'object' || Array.isArray(p.weeklyByMap)) p.weeklyByMap = {};
+  if (p.storage !== undefined) {
+    if (Array.isArray(p.storage) && p.storage.length) storageFor(p, G.START_MAP).push(...p.storage);
+    delete p.storage;
+  }
+  if (p.daily !== undefined) { if (p.daily && !p.dailyByMap[G.START_MAP]) p.dailyByMap[G.START_MAP] = p.daily; delete p.daily; }
+  if (p.weekly !== undefined) { if (p.weekly && !p.weeklyByMap[G.START_MAP]) p.weeklyByMap[G.START_MAP] = p.weekly; delete p.weekly; }
   // Đổi tên từ phiên bản ninja cũ
   const OLD_SCHOOL = { phong_anh: 'kiem_si', hoa_lien: 'cung_thu', thuy_nguyet: 'phap_su', van_phap: 'toan_nang' };
   const OLD_ITEM = { phi_tieu_sat: 'cung_go', phi_tieu_lua: 'cung_go', phi_tieu_thach_quy: 'cung_thach_vuong',
@@ -54,7 +65,9 @@ function migrate(p) {
   if (p.school === 'tu_linh_thuat_su') { p.school = 'trieu_hoi_su'; p.advancement.unlocked.tu_linh_thuat_su = true; }
   const fixId = (e) => { if (e && OLD_ITEM[e.id]) e.id = OLD_ITEM[e.id]; return e; };
   p.bag = p.bag.map(fixId).filter(e => G.ITEMS[e.id]);
-  p.storage = p.storage.map(fixId).filter(e => G.ITEMS[e.id]);
+  for (const id of Object.keys(p.storageByMap)) {
+    p.storageByMap[id] = (Array.isArray(p.storageByMap[id]) ? p.storageByMap[id] : []).map(fixId).filter(e => e && G.ITEMS[e.id]);
+  }
   for (const s in p.equip) { fixId(p.equip[s]); if (p.equip[s] && !G.ITEMS[p.equip[s].id]) p.equip[s] = null; }
   for (const l of p.loot || []) fixId(l.inst);
   if (Array.isArray(p.loot)) p.loot = p.loot.filter(l => G.ITEMS[l.inst.id]);
@@ -62,7 +75,7 @@ function migrate(p) {
   for (const s of G.SLOTS) G.normalizeInst(p.equip[s]);
   unequipWrongWeapon(p, null);   // mỗi class chỉ cầm vũ khí của mình: vũ khí sai loại cất vào túi
   p.bag.forEach(G.normalizeInst);
-  p.storage.forEach(G.normalizeInst);
+  for (const id of Object.keys(p.storageByMap)) p.storageByMap[id].forEach(G.normalizeInst);
   if (!G.MAPS[p.map]) { p.map = G.START_MAP; p.x = null; p.y = null; }
   if (!Array.isArray(p.titles)) p.titles = [];
   if (!p.choices || typeof p.choices !== 'object' || Array.isArray(p.choices)) p.choices = {};
@@ -143,7 +156,16 @@ function migrate(p) {
     p.quest.step = idx >= 0 ? idx : G.QUESTS.length;
     p.quest.ver = G.QUEST_VERSION;
   }
-  ensureDaily(p);
+  // Nhiệm vụ đang làm dở từ trước khi có "nhận ở đâu trả ở đó": ghi bản đồ của NPC giao
+  const giverMap = (npcId) => (G.npcHere(p, p.map, npcId) ? p.map : (G.npcMaps(p, npcId)[0] || p.map));
+  const cq = G.QUESTS[p.quest.step];
+  if (p.quest.state === 'active' && cq && !p.quest.map) p.quest.map = giverMap(cq.npc);
+  if (p.quest.state !== 'active') p.quest.map = null;
+  for (const id of Object.keys(p.side.active)) {
+    const sq = G.sideById(id);
+    if (sq && !p.side.active[id].map) p.side.active[id].map = giverMap(sq.npc);
+  }
+  ensureBoards(p);
   if (!Array.isArray(p.redeemed)) p.redeemed = [];
   // Hệ thống điểm kỹ năng: người chơi cũ được trả điểm theo cấp, kỹ năng đang dùng được học sẵn cấp 1
   if (legacySkills || !p.skills || typeof p.skills !== 'object' || Array.isArray(p.skills)) {

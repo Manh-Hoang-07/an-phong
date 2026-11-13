@@ -41,7 +41,8 @@ Mở http://127.0.0.1:3100. Đăng ký luôn mở: bấm "Chưa có tài khoản
 |---|---|
 | `users` | tài khoản, lần đăng nhập cuối (`last_login`, `last_ip`), khóa (`banned`, `ban_reason`) |
 | `sessions` | phiên đăng nhập (lưu hash của token) kèm thời điểm tạo, IP, trình duyệt |
-| `players` | nhân vật (kiểu `JSON`, tra cứu được bằng `data->>'level'`) |
+| `players` | phần nóng của nhân vật (`core` JSON) + cột thật `level`, `exp`, `gold`, `map`, `school`, `rank` (chỉ index `level`) |
+| `player_data` | các phần còn lại của nhân vật, mỗi phần (section) một dòng: `bag`, `equip`, `storage`, `quest`, `skills`, `pets`... (xem `server/sections.js`) |
 | `auth_log` | nhật ký: `register`, `login`, `login_fail`, `login_banned`, `logout`, `password_reset`, `ban`, `unban`, `restore`. Giữ 90 ngày (`AUTH_LOG_DAYS`) |
 | `player_snapshots` | bản chụp nhân vật, cứ 30 phút chơi một bản, giữ 20 bản mới nhất mỗi tài khoản (`SNAPSHOT_KEEP`) |
 | `gift_codes`, `gift_redemptions` | mã quà tặng và ai đã dùng |
@@ -61,7 +62,7 @@ node server/tools/user.js restore <tên> <id>         # TẮT SERVER TRƯỚC kh
 Khóa tài khoản hay đổi mật khẩu bằng công cụ sẽ có hiệu lực với server đang chạy sau tối đa 60 giây.
 
 **Cách server ghi dữ liệu** (`server/cache.js`): nhân vật đang chơi và phiên đăng nhập được giữ trong bộ nhớ.
-Hạ quái và lưu vị trí được ghi gộp mỗi 4 giây (`FLUSH_MS`); mọi hành động khác (mua bán, nâng cấp, nhận quà, nhiệm vụ...) ghi ngay.
+Hạ quái và lưu vị trí được ghi trễ, mỗi nhân vật tối đa 6 giây một lần (`FLUSH_MS`); mọi hành động khác (mua bán, nâng cấp, nhận quà, nhiệm vụ...) ghi ngay. Mỗi lần ghi chỉ gửi những section có nội dung đổi. Server trả về cho client chỉ phần thay đổi (bản vá), không gửi lại cả nhân vật.
 Tắt server bình thường (`systemctl stop/restart`, Ctrl+C) thì phần còn chờ được ghi hết trước khi thoát; chỉ khi server sập đột ngột mới mất tối đa vài giây tiến trình đánh quái.
 Nếu sau này chạy nhiều tiến trình / nhiều máy, thay phần bên trong `server/cache.js` bằng Redis.
 - Server tự gộp toàn bộ code game và bản đồ thành một file, tự nén và gắn mã phiên bản (xem `server/static.js`). Sửa file trong `public/` hay `shared/` là có hiệu lực ngay khi tải lại trang, không cần build. Muốn gỡ lỗi từng file riêng thì chạy với `NO_BUNDLE=1`.

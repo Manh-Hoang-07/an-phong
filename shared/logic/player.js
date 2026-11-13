@@ -137,7 +137,7 @@
       hp: null, mp: null,
       map: NEW_PLAYER_MAP, x: null, y: null,
       equip: Object.fromEntries(SLOTS.map(sl => [sl, null])),
-      bag: [], storage: [], bagPlus: 0,
+      bag: [], storageByMap: {}, bagPlus: 0,   // storageByMap: kho riêng từng làng { mapId: [vật phẩm] }
       skillSlots: Array(SKILL_SLOTS).fill(null),
       careerSlots: Array(SKILL_SLOTS).fill(null),   // thanh kỹ năng khi bật chức nghiệp 2
       skills: {}, skillPoints: 0,
@@ -149,16 +149,21 @@
       pet: { hp: null, mp: null, sta: null },   // trạng thái thú cũ, migrate chuyển sang pets
       quest: { step: 0, state: 'none', progress: {}, ver: QUEST_VERSION },
       side: { active: {}, done: [] },
-      daily: null, weekly: null, shopDiscount: 0,
+      dailyByMap: {}, weeklyByMap: {}, shopDiscount: 0,   // bảng nhiệm vụ ngày / tuần riêng từng làng { mapId: ... }
       kills: {},
       nextUid: 1,
       created: Date.now(),
     };
   }
 
+  // Kho của làng (mảng, chỉ đọc nếu chưa có). mapId bỏ trống = bản đồ đang đứng.
+  function storageOf(player, mapId) {
+    return (player.storageByMap && player.storageByMap[mapId || player.map]) || [];
+  }
+
   function bagSize(player) {
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, canCareerAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, newPlayer, bagSize, BOOST_MAX_MS, boostLeft, expBoostMul });
+  Object.assign(G, { nextAwaken, awakenOf, canCareerAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

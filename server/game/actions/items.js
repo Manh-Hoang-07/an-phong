@@ -3,8 +3,8 @@
 const G = require('../../../shared');
 const { fail, fmt } = require('../util');
 const { bagFree, slotsNeeded, addItem, addInst, instName, bagEntry, qualityColor, pruneLoot } = require('../inventory');
-const { clampHpMp } = require('../progress');
-const { onCurrentMapNpc } = require('../quests');
+const { clampHpMp, storageFor } = require('../progress');
+const { onCurrentMapNpc, roleHere } = require('../quests');
 
 const lastPotion = new Map();
 
@@ -162,27 +162,30 @@ const actions = {
     ev.push({ t: 'msg', text: `Nhặt được ${instName(l.inst)}${def.slot ? ` [${G.QUALITY_NAMES[l.inst.q]}]` : ''}.`, color: qualityColor(def.slot ? l.inst.q : 1) });
   },
 
+  // Kho riêng từng làng: chỉ gửi / lấy được ở kho của làng đang đứng
   store(p, a) {
-    if (!onCurrentMapNpc(p, 'thu_kho')) fail('Hãy đến gặp Thủ kho.');
+    if (!roleHere(p, 'storage')) fail('Hãy đến gặp Quản kho của làng.');
+    const kho = storageFor(p, p.map);
     const e = bagEntry(p, a.uid);
     const def = G.ITEMS[e.id];
     if (def.stack) {
-      const s = p.storage.find(x => x.id === e.id);
+      const s = kho.find(x => x.id === e.id);
       if (s) s.qty += e.qty;
-      else { if (p.storage.length >= G.STORAGE_SIZE) fail('Kho đã đầy.'); p.storage.push({ ...e }); }
+      else { if (kho.length >= G.STORAGE_SIZE) fail('Kho của làng này đã đầy.'); kho.push({ ...e }); }
     } else {
-      if (p.storage.length >= G.STORAGE_SIZE) fail('Kho đã đầy.');
-      p.storage.push({ ...e });
+      if (kho.length >= G.STORAGE_SIZE) fail('Kho của làng này đã đầy.');
+      kho.push({ ...e });
     }
     p.bag.splice(p.bag.indexOf(e), 1);
   },
 
   retrieve(p, a) {
-    if (!onCurrentMapNpc(p, 'thu_kho')) fail('Hãy đến gặp Thủ kho.');
-    const e = p.storage.find(x => x.uid === Number(a.uid));
-    if (!e) fail('Không có trong kho.');
+    if (!roleHere(p, 'storage')) fail('Hãy đến gặp Quản kho của làng.');
+    const kho = storageFor(p, p.map);
+    const e = kho.find(x => x.uid === Number(a.uid));
+    if (!e) fail('Không có trong kho của làng này.');
     if (bagFree(p) < slotsNeeded(p, e.id, e.qty)) fail('Túi đã đầy.');
-    p.storage.splice(p.storage.indexOf(e), 1);
+    kho.splice(kho.indexOf(e), 1);
     if (G.ITEMS[e.id].stack) addItem(p, e.id, e.qty);
     else p.bag.push(e);
   },

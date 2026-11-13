@@ -122,7 +122,7 @@
   // Phần thưởng kinh nghiệm theo cấp; title = danh hiệu hiện ở bảng Nhân vật
   const sx = (level, k) => Math.round(G.expToNext(level) * k);
   SIDE_QUESTS.push(
-    // ---- Rèn đồ cổ (Thiết), mở sau c3q10: ở mọi Tân Đô có Thợ rèn
+    // ---- Rèn đồ cổ (Thiết), mở sau c3q10: tại Hiệp Hội, chỗ Thợ chế tác Thiết
     { id: 'p6-1', name: 'Lưỡi rèn thử lửa', npc: 'tho_ren', req: ['c3q10'],
       start: ['Thợ chế tác Thiết: Lò Rèn Cổ nung được rồi, nhưng tôi chưa biết thép nó rèn ra bền cỡ nào.', 'Thợ chế tác Thiết: Hạ 15 Người Tuyết quanh lò, để tôi thử độ bền của đồ rèn qua vết cắt của cậu.'],
       end: ['Thợ chế tác Thiết: Hay lắm. Thép này vừa dai vừa sắc. Cầm lấy ít đá cường hóa.'],

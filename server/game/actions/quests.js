@@ -4,7 +4,7 @@ const G = require('../../../shared');
 const { fail } = require('../util');
 const { bagFree, slotsNeeded, removeItem, giveItem } = require('../inventory');
 const { gainExp, gainGold } = require('../progress');
-const { currentQuest, questComplete, onCurrentMapNpc } = require('../quests');
+const { currentQuest, questComplete, onCurrentMapNpc, roleHere, giverMap, mustReturnTo } = require('../quests');
 const { ensureWeekly, ensureDaily, dailyDone } = require('../periodic');
 
 const actions = {
@@ -42,6 +42,7 @@ const actions = {
     if (p.level < need) fail(`Cần đạt cấp ${need} để nhận nhiệm vụ này (bạn đang cấp ${p.level}). Hãy luyện thêm rồi quay lại.`);
     p.quest.state = 'active';
     p.quest.progress = {};
+    p.quest.map = giverMap(p, q.npc);   // nhận ở đâu trả ở đó
     ev.push({ t: 'msg', text: `Nhận nhiệm vụ: ${q.name}`, color: '#ffd54f' });
   },
 
@@ -49,6 +50,8 @@ const actions = {
     const q = currentQuest(p);
     if (!q) fail('Không có nhiệm vụ.');
     if (!onCurrentMapNpc(p, q.npc)) fail('Hãy đến gặp người giao nhiệm vụ.');
+    const back = mustReturnTo(p, p.quest.map);
+    if (back) fail(back);
     if (!questComplete(p)) fail('Nhiệm vụ chưa xong.');
     // Nhiệm vụ có lời thoại để chọn: phải chọn một câu đáp hợp lệ
     let chosen = null;
@@ -70,6 +73,7 @@ const actions = {
     p.quest.step++;
     p.quest.state = 'none';
     p.quest.progress = {};
+    p.quest.map = null;
     ev.push({ t: 'msg', text: `Hoàn thành nhiệm vụ: ${q.name}`, color: '#ffd54f' });
     if (chosen) {
       p.choices[q.id] = chosen.id;
@@ -95,7 +99,7 @@ const actions = {
     if (!q) fail('Phụ tuyến không hợp lệ.');
     if (!G.sideAvailable(p, q.id)) fail('Chưa thể nhận phụ tuyến này.');
     if (!onCurrentMapNpc(p, q.npc)) fail('Hãy đến gặp người giao phụ tuyến.');
-    p.side.active[q.id] = { progress: {} };
+    p.side.active[q.id] = { progress: {}, map: giverMap(p, q.npc) };   // nhận ở đâu trả ở đó
     ev.push({ t: 'msg', text: `Nhận phụ tuyến: ${q.name}`, color: '#ffd54f' });
   },
 
@@ -105,6 +109,8 @@ const actions = {
     if (!G.sideActive(p, q.id)) fail('Bạn chưa nhận phụ tuyến này.');
     if (!G.sideReady(p, q.id)) fail('Phụ tuyến chưa hoàn thành.');
     if (!onCurrentMapNpc(p, q.npc)) fail('Hãy đến gặp người giao phụ tuyến.');
+    const back = mustReturnTo(p, p.side.active[q.id].map);
+    if (back) fail(back.replace('nhiệm vụ', 'phụ tuyến'));
     const r = q.reward || {};
     const items = r.items || [];
     const extra = (r.bagPlus || 0) * 10;
@@ -135,13 +141,12 @@ const actions = {
       ev.push({ t: 'msg', text: `[Hệ thống] Nhận nội tại: ${G.PERKS[r.perk].name}.`, color: '#ffc94a' });
     }
     for (const [id, n] of items) giveItem(p, id, n, ev);
-    if (r.unlockShop && G.ITEMS[r.unlockShop]) ev.push({ t: 'msg', text: `[Hệ thống] Mở bán ${G.ITEMS[r.unlockShop].name} tại Dược sư Lan.`, color: '#69f0ae' });
+    if (r.unlockShop && G.ITEMS[r.unlockShop]) ev.push({ t: 'msg', text: `[Hệ thống] Mở bán ${G.ITEMS[r.unlockShop].name} tại các tiệm thuốc.`, color: '#69f0ae' });
   },
 
   weekly_claim(p, a, ev) {
-    if (!onCurrentMapNpc(p, 'bang_nv')) fail('Hãy đến Bảng nhiệm vụ của Hiệp Hội.');
-    ensureWeekly(p);
-    const w = p.weekly, kind = a.kind, r = G.weeklyReward(p.level);
+    if (!roleHere(p, 'daily')) fail('Hãy đến Bảng nhiệm vụ của làng.');
+    const w = ensureWeekly(p, p.map), kind = a.kind, r = G.weeklyReward(p.level, p.map);
     if (kind === 'kills') {
       if (w.claimedKills) fail('Tuần này bạn đã nhận thưởng diệt quái rồi.');
       if (w.kills < G.WEEKLY_KILLS) fail(`Cần hạ ${G.WEEKLY_KILLS} quái (${w.kills}/${G.WEEKLY_KILLS}).`);
@@ -167,16 +172,15 @@ const actions = {
   },
 
   daily_claim(p, a, ev) {
-    if (!onCurrentMapNpc(p, 'bang_nv')) fail('Hãy đến Bảng nhiệm vụ của Hiệp Hội.');
-    ensureDaily(p);
-    const d = p.daily.list[Number(a.i)];
+    if (!roleHere(p, 'daily')) fail('Hãy đến Bảng nhiệm vụ của làng.');
+    const d = ensureDaily(p, p.map).list[Number(a.i)];
     if (!d) fail('Không có nhiệm vụ này.');
     if (d.claimed) fail('Đã nhận thưởng rồi.');
     if (!dailyDone(p, d)) fail('Nhiệm vụ chưa xong.');
     if (bagFree(p) < 1 && !p.bag.some(e => e.id === 'da_cuong_hoa')) fail('Túi đã đầy.');
     if (d.type === 'collect') removeItem(p, d.target, d.need);
     d.claimed = true;
-    const r = G.dailyReward(p.level);
+    const r = G.dailyReward(p.level, p.map);
     const mul = d.type === 'boss' ? 2 : 1;
     ev.push({ t: 'msg', text: 'Hoàn thành nhiệm vụ ngày.', color: '#ffd54f' });
     gainExp(p, r.exp * mul, ev);
@@ -185,14 +189,14 @@ const actions = {
   },
 
   daily_bonus(p, a, ev) {
-    if (!onCurrentMapNpc(p, 'bang_nv')) fail('Hãy đến Bảng nhiệm vụ của Hiệp Hội.');
-    ensureDaily(p);
-    if (!p.daily.list.length || !p.daily.list.every(d => d.claimed)) fail('Hãy hoàn thành cả 3 nhiệm vụ ngày.');
-    if (p.daily.bonus) fail('Hôm nay bạn đã nhận thưởng thêm rồi.');
+    if (!roleHere(p, 'daily')) fail('Hãy đến Bảng nhiệm vụ của làng.');
+    const board = ensureDaily(p, p.map);
+    if (!board.list.length || !board.list.every(d => d.claimed)) fail('Hãy hoàn thành cả 3 nhiệm vụ ngày.');
+    if (board.bonus) fail('Hôm nay bạn đã nhận thưởng thêm rồi.');
     const b = G.DAILY_BONUS;
     const need = 1 + b.items.length;
     if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô.`);
-    p.daily.bonus = true;
+    board.bonus = true;
     ev.push({ t: 'msg', text: '[Hệ thống] Hoàn thành toàn bộ nhiệm vụ ngày!', color: '#ffd54f' });
     giveItem(p, 'da_cuong_hoa', b.stones, ev);
     for (const [id, n] of b.items) giveItem(p, id, n, ev);

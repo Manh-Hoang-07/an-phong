@@ -73,7 +73,21 @@ const Net = (() => {
     const run = async () => {
       if (type === 'save') savePending = false;
       const data = await send(type, params);
-      if (data.player) App.setPlayer(data.player);
+      if (data.player) {
+        // Server gửi cả nhân vật (lỗi đã hoàn tác, gửi lại cùng mã yêu cầu)
+        App.rev = data.rev || 0;
+        App.setPlayer(data.player);
+      } else if (data.ok !== false && data.rev !== undefined) {
+        // Server chỉ gửi phần đổi. Lệch số thứ tự (lỡ mất bản vá, mở nhiều tab) thì tải lại cả nhân vật.
+        if (App.player && data.base === App.rev) {
+          App.rev = data.rev;
+          if (data.patch) App.applyPatch(data.patch);
+          data.player = App.player;   // các chỗ gọi cũ vẫn đọc được res.player.map, res.player.hp...
+        } else {
+          const me = await req('/api/me');
+          if (me && me.player) { App.rev = me.rev || 0; App.setPlayer(me.player); data.player = me.player; }
+        }
+      }
       if (data.ok === false && data.error && !opts.silent) { UI.log(data.error, '#ef5350'); Sound.play('error'); }
       // skipEvents: sự kiện client đã tự xử lý trước (ví dụ hồi máu ngay khi bấm bình)
       if (data.events) for (const ev of data.events) if (!(opts.skipEvents && opts.skipEvents.includes(ev.t))) App.onEvent(ev);
@@ -102,8 +116,11 @@ const Net = (() => {
     me: async () => {
       const early = window.__me;
       window.__me = null;
-      if (early) { const r = await early; if (r) return r; }
-      return req('/api/me');
+      let r = null;
+      if (early) r = await early;
+      if (!r) r = await req('/api/me');
+      if (r && r.player) App.rev = r.rev || 0;
+      return r;
     },
     login: (u, p) => req('/api/login', { username: u, password: p }),
     register: (u, p, c) => req('/api/register', { username: u, password: p, charName: c }),
@@ -122,8 +139,18 @@ App.recalcStats = function () {
   App.mp = Math.min(App.mp, App.stats.maxMp);
 };
 
-App.setPlayer = function (p) {
-  const oldPlayer = App.player, oldStats = App.stats;
+// Ghép bản vá { set, del } từ server vào nhân vật. Tạo object mới (bản sao nông) để mọi nơi so sánh / cache
+// theo App.player đều thấy là đã đổi; phần không đổi giữ nguyên tham chiếu.
+App.applyPatch = function (patch) {
+  const old = App.player;
+  const p = Object.assign({}, old);
+  for (const k of patch.del || []) delete p[k];
+  Object.assign(p, patch.set);
+  App.setPlayer(p, old);
+};
+
+App.setPlayer = function (p, prev) {
+  const oldPlayer = prev || App.player, oldStats = App.stats;
   const formChanged = !!oldPlayer && (!!oldPlayer.formActive !== !!p.formActive || oldPlayer.formChoice !== p.formChoice);
   const hpRatio = formChanged && oldStats?.maxHp ? App.hp / oldStats.maxHp : null;
   const mpRatio = formChanged && oldStats?.maxMp ? App.mp / oldStats.maxMp : null;

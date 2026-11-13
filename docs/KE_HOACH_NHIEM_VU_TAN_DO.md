@@ -476,3 +476,12 @@ Mỗi bước độc lập, làm xong là chơi thử được.
 ## 9. Còn cần bạn quyết
 
 Các câu trước đã chốt hết (phí, bộ trang bị mỗi 10 cấp, tên NPC, cốt truyện, Quận Thương Mại, quy tắc vật phẩm nhiệm vụ). **Hiện không còn câu hỏi mở.** Bước tiếp theo là bắt đầu làm theo thứ tự ở mục 7, bạn báo để tôi bắt đầu từ bước 1 (dựng lại mạng đường đi và các Tân Đô).
+
+## Cập nhật: NPC, kho và bảng nhiệm vụ theo làng
+
+Chi tiết xem `docs/KE_HOACH_NPC_THEO_MAP.md`. Điểm ảnh hưởng tới cốt truyện:
+
+- **Hội trưởng Khải chỉ ở Tân Đô I.** Ở Tân Đô V người giao là **Trưởng làng Vực** (c5q1, c5q3b, c5q7–c5q9), ở Tân Đô VI là **Trưởng Thịnh** (c6q1–c6q9, c7q1–c7q6, c7q9); lời thoại giữ nguyên nội dung, đoạn Khải tiết lộ bí mật ở c6q9 ghi rõ là chuyển lời Khải.
+- **c3q1** do **Thợ chế tác Phong** (Tân Đô II) giao; Thợ chế tác Thiết (Tân Đô I) vẫn giao c3q10, c3q11 và các phụ tuyến rèn.
+- **Nhận ở đâu trả ở đó**: nhiệm vụ chính và phụ tuyến ghi bản đồ lúc nhận (`quest.map`, `side.active[id].map`), trả sai bản đồ báo "Hãy quay về <bản đồ> để trả nhiệm vụ". Phụ tuyến của Khải, Thiết, Lan, Tư, Bảo vẫn nhận / trả ở Tân Đô I; trạm dịch chuyển **về Tân Đô I miễn phí**.
+- Mỗi làng có bảng nhiệm vụ ngày / tuần và kho riêng (30 ô).

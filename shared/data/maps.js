@@ -51,7 +51,7 @@
       portals: { '<': { to: 'b_en_pha', at: '>' }, '>': { to: 'tan_do_2', at: '<', require: 'c2q2' } } },
     tan_do_2: { name: 'Tân Đô II – Hải Cảng', theme: 'forest', require: 'c2q2', village: { cap: 20, n: 2 }, home: 'tan_do_2',
       spawns: {  },
-      npcs: { Y: 'ha_phong', V: 'vy', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', T: 'tram' },
+      npcs: { Y: 'ha_phong', V: 'vy', N: 'bang_nv_2', R: 'tho_ren_2', B: 'ba_thuoc_2', G: 'tap_hoa_2', K: 'thu_kho_2', T: 'tram_2' },
       gate: ')',
       portals: { '<': { to: 'd_lay_muc', at: '>' }, ')': { to: 'lang_chai', at: '<' }, '(': { to: 'tp_chim_t', at: '<', require: 'c2q7' }, ']': { to: 'chan_nui', at: '<', require: 'c2q12' } } },
     lang_chai: { name: 'Làng Chài Vùng Ven', theme: 'forest', require: 'c2q2', home: 'tan_do_2',
@@ -78,7 +78,7 @@
       portals: { '<': { to: 'tan_do_2', at: ']' }, '>': { to: 'tan_do_3', at: '<' } } },
     tan_do_3: { name: 'Tân Đô III – Lò Rèn Băng', theme: 'forest', require: 'c2q12', village: { cap: 30, n: 3 }, home: 'tan_do_3',
       spawns: {  },
-      npcs: { M: 'lu_khach', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', T: 'tram' },
+      npcs: { M: 'lu_khach', N: 'bang_nv_3', R: 'tho_ren_3', B: 'ba_thuoc_3', G: 'tap_hoa_3', K: 'thu_kho_3', T: 'tram_3' },
       gate: ')',
       portals: { '<': { to: 'chan_nui', at: '>' }, ')': { to: 'hem_nui', at: '<', require: 'c3q2' }, '(': { to: 'vac_da', at: '<', require: 'c4q1' } } },
     hem_nui: { name: 'Hẻm Núi Gió Hú', theme: 'cave', require: 'c3q2', home: 'tan_do_3',
@@ -114,7 +114,7 @@
       portals: { '<': { to: 'vac_da', at: '>' }, '>': { to: 'tan_do_4', at: '<', require: 'c4q2' } } },
     tan_do_4: { name: 'Tân Đô IV – Phù Đảo', theme: 'city', require: 'c4q2', village: { cap: 40, n: 4 }, home: 'tan_do_4',
       spawns: {  },
-      npcs: { M: 'lu_khach', V: 'vy', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', T: 'tram' },
+      npcs: { M: 'lu_khach', V: 'vy', N: 'bang_nv_4', R: 'tho_ren_4', B: 'ba_thuoc_4', G: 'tap_hoa_4', K: 'thu_kho_4', T: 'tram_4' },
       gate: ')',
       portals: { '<': { to: 'cong_khai_hoan', at: '>' }, ')': { to: 'quang_truong', at: '<', require: 'c4q2' }, '(': { to: 'thu_vien', at: '<', require: 'c4q3' }, ']': { to: 'tan_do_bt', at: '<', require: 'c4q8' } } },
     quang_truong: { name: 'Quảng Trường Ánh Sáng', theme: 'city', require: 'c4q2', home: 'tan_do_4',
@@ -137,7 +137,7 @@
     // ===== CHƯƠNG 5: CỔNG VĨNH HẰNG (cấp 41–50) · Tân Đô V – Bầu Trời Rách
     tan_do_bt: { name: 'Tân Đô V – Bầu Trời Rách', theme: 'redgate', require: 'c4q8', village: { cap: 50, n: 5 }, home: 'tan_do_bt',
       spawns: {  },
-      npcs: { L: 'lao_su', V: 'vy', Q: 'lam_suong', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', T: 'tram' },
+      npcs: { L: 'truong_lang_5', V: 'vy', Q: 'lam_suong', N: 'bang_nv_5', R: 'tho_ren_5', B: 'ba_thuoc_5', G: 'tap_hoa_5', K: 'thu_kho_5', T: 'tram_5' },
       gate: ')',
       portals: { '<': { to: 'tan_do_4', at: ']' }, ')': { to: 'cau_dan', at: '<', require: 'c5q1' }, '(': { to: 'cong_ss', at: '<', require: 'c5q6' } } },
     cau_dan: { name: 'Cầu Dẫn Lên Cổng Vĩnh Hằng', theme: 'redgate', require: 'c5q1', home: 'tan_do_bt',
@@ -146,7 +146,7 @@
       portals: { '<': { to: 'tan_do_bt', at: ')' }, '>': { to: 'sanh_cho', at: '<', require: 'c5q2' } } },
     sanh_cho: { name: 'Sảnh Chờ Không Gian', theme: 'redgate', require: 'c5q2', home: 'tan_do_bt',
       spawns: { a: 'quy_trang_den', b: 'sv_ky_sinh_hk' },
-      npcs: { V: 'vy', Q: 'lam_suong', M: 'lu_khach', R: 'tho_ren' },
+      npcs: { V: 'vy', Q: 'lam_suong', M: 'lu_khach' },
       portals: { '<': { to: 'cau_dan', at: '>' }, '>': { to: 'dinh_cong_vh', at: '<', require: 'c5q3' } } },
     dinh_cong_vh: { name: 'Đỉnh Cổng Vĩnh Hằng', theme: 'redgate', require: 'c5q3', home: 'tan_do_bt',
       spawns: { a: 'ky_si_hu_khong', b: 'sv_ky_sinh_hk', c: 'quy_trang_den', d: 'quai_hu_khong', z: 'kieu_deo_mat_na' },
@@ -164,7 +164,7 @@
       portals: { '<': { to: 'tan_do_bt', at: '(' }, '>': { to: 'tan_do_6', at: '<', require: 'c5q9' } } },
     tan_do_6: { name: 'Tân Đô VI – Thiên Đô', theme: 'redgate', require: 'c5q9', village: { cap: 70, n: 6 }, home: 'tan_do_6',
       spawns: {  },
-      npcs: { L: 'lao_su', V: 'vy', Q: 'lam_suong', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', T: 'tram' },
+      npcs: { L: 'truong_lang_6', V: 'vy', Q: 'lam_suong', N: 'bang_nv_6', R: 'tho_ren_6', B: 'ba_thuoc_6', G: 'tap_hoa_6', K: 'thu_kho_6', T: 'tram_6' },
       gate: ')',
       portals: { '<': { to: 'cong_ss', at: '>' }, ')': { to: 'thien_khoi_1', at: '<' }, '(': { to: 'long_mach_1', at: '<', require: 'c6q9' } } },
     thien_khoi_1: { name: 'Bãi Thiên Thạch', theme: 'redgate', require: 'c6q1', home: 'tan_do_6',
@@ -210,7 +210,7 @@
       portals: { '<': { to: 'long_mach_4', at: '>' } } },
     tan_do_7: { name: 'Tân Đô VII – Tinh Hà', theme: 'redgate', require: 'c7q9', village: { cap: 100, n: 7 }, home: 'tan_do_7',
       spawns: {  },
-      npcs: { X: 'minh_triet', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', T: 'tram', V: 'vy', Q: 'lam_suong', M: 'lu_khach' },
+      npcs: { X: 'minh_triet', N: 'bang_nv_7', R: 'tho_ren_7', B: 'ba_thuoc_7', G: 'tap_hoa_7', K: 'thu_kho_7', T: 'tram_7', V: 'vy', Q: 'lam_suong', M: 'lu_khach' },
       gate: ')',
       portals: { '<': { to: 'long_mach_3', at: ')' }, ')': { to: 'tinh_van_1', at: '<' }, '(': { to: 'than_mong_1', at: '<', require: 'c8q9' } } },
     tinh_van_1: { name: 'Bến Sao Rơi', theme: 'redgate', require: 'c8q1', home: 'tan_do_7',
@@ -280,5 +280,8 @@
   const VILLAGES = Object.keys(MAPS).filter(id => MAPS[id].village).map(id => ({ id, ...MAPS[id].village })).sort((a, b) => a.n - b.n);
   const TELEPORT_FEE = 300;   // phí Trạm dịch chuyển giữa các làng (cố định, không theo cấp)
 
-  Object.assign(G, { MAPS, NEW_PLAYER_MAP, VILLAGES, TELEPORT_FEE });
+  // Phí tới làng `to`: về Hiệp Hội (làng khởi đầu) miễn phí vì nhiệm vụ Hội trưởng Khải và phụ tuyến chỉ nhận / trả ở đó
+  const teleportFee = (to) => (to === G.START_MAP ? 0 : TELEPORT_FEE);
+
+  Object.assign(G, { MAPS, NEW_PLAYER_MAP, VILLAGES, TELEPORT_FEE, teleportFee });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);
