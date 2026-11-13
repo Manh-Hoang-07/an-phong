@@ -21,7 +21,8 @@ const actions = Object.assign({},
   require('./actions/items'),
   require('./actions/smith'),
   require('./actions/character'),
-  require('./actions/advancement')
+  require('./actions/advancement'),
+  require('./actions/pets')
 );
 
 async function handle(userId, player, action) {
@@ -94,7 +95,7 @@ function migrate(p) {
   if (!G.PET_SKILLS[p.mounts.skill]) p.mounts.skill = 'bite';
   if (!p.mounts.skills || typeof p.mounts.skills !== 'object' || Array.isArray(p.mounts.skills)) p.mounts.skills = {};
   for (const id of p.mounts.owned) if (!G.PET_SKILLS[p.mounts.skills[id]]) p.mounts.skills[id] = G.PET_SKILLS[p.mounts.skill] ? p.mounts.skill : 'bite';
-  const petStats = G.petStats(p);
+  if (!p.petGear || typeof p.petGear !== 'object' || Array.isArray(p.petGear)) p.petGear = {};
   if (!p.pets || typeof p.pets !== 'object' || Array.isArray(p.pets)) p.pets = {};
   if (!p.shadows || typeof p.shadows !== 'object' || Array.isArray(p.shadows)) p.shadows = { roster: [], active: [], enabled: false, nextId: 1 };
   if (!Array.isArray(p.shadows.roster)) p.shadows.roster = [];
@@ -115,23 +116,27 @@ function migrate(p) {
   if (legacyPetId && !p.pets[legacyPetId] && p.pet && typeof p.pet === 'object') p.pets[legacyPetId] = p.pet;
   for (const id of p.mounts.owned) {
     const state = p.pets[id] && typeof p.pets[id] === 'object' ? p.pets[id] : (p.pets[id] = {});
+    const petStats = G.companionStats(p, id);
     for (const [key, max] of [['hp', petStats.maxHp], ['mp', petStats.maxMp], ['sta', petStats.maxSta]]) {
       if (!Number.isFinite(state[key])) state[key] = max;
       state[key] = Math.max(0, Math.min(max, Math.round(state[key])));
     }
   }
-  p.pet = p.pets[p.mounts.active] || { hp: petStats.maxHp, mp: petStats.maxMp, sta: petStats.maxSta };
+  const activeStats = p.mounts.active ? G.companionStats(p, p.mounts.active) : { maxHp: 1, maxMp: 1, maxSta: 1 };
+  p.pet = p.pets[p.mounts.active] || { hp: activeStats.maxHp, mp: activeStats.maxMp, sta: activeStats.maxSta };
   // Linh thú của Triệu Hồi Sư: bổ sung cấp/kinh nghiệm riêng cho từng con.
-  // Bản cũ chỉ theo cấp nhân vật → migrate cho cấp bằng cấp nhân vật hiện tại để không yếu đi đột ngột.
+  // Bản cũ chỉ theo cấp nhân vật → người đã học Triệu Hồi Linh Thú từ trước được cấp bằng cấp nhân vật để không yếu đi đột ngột.
+  // Người chơi mới (hoặc chưa học th5) bắt đầu từ cấp 1, lên cấp bằng cách đánh quái.
   if (!p.summons || typeof p.summons !== 'object' || Array.isArray(p.summons)) p.summons = { enabled: false, states: {} };
   if (!p.summons.states || typeof p.summons.states !== 'object' || Array.isArray(p.summons.states)) p.summons.states = {};
   if (!p.summons.units || typeof p.summons.units !== 'object' || Array.isArray(p.summons.units)) p.summons.units = {};
   for (const id of Object.keys(G.SUMMONS)) {
     const u = p.summons.units[id] && typeof p.summons.units[id] === 'object' ? p.summons.units[id] : (p.summons.units[id] = {});
-    if (!Number.isFinite(u.lv) || u.lv < 1) u.lv = ownerLv;
+    if (!Number.isFinite(u.lv) || u.lv < 1) u.lv = (!p.summons.v && G.skillLevel(p, 'th5') > 0) ? ownerLv : 1;
     if (!Number.isFinite(u.exp) || u.exp < 0) u.exp = 0;
     if (!p.summons.states[id] || typeof p.summons.states[id] !== 'object') p.summons.states[id] = {};
   }
+  p.summons.v = 1;
   if (!p.unlocks || typeof p.unlocks !== 'object') p.unlocks = {};
   if (!Array.isArray(p.perks)) p.perks = [];
   p.perks = p.perks.filter(id => G.PERKS[id]);

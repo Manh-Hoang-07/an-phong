@@ -22,9 +22,11 @@ function grantCompanionExp(p, a, base, ev) {
     if (u && u.lv < ownerLv) {
       u.exp += Math.max(1, Math.round(base * (src === 'pet' ? 1 : 0.5)));
       let leveled = false;
+      const lvBefore = u.lv;
       while (u.lv < ownerLv && u.exp >= G.summonExpToNext(u.lv)) { u.exp -= G.summonExpToNext(u.lv); u.lv++; leveled = true; }
       if (u.lv >= ownerLv) u.exp = 0;
       if (leveled) {
+        for (const sk of G.SUMMON_SKILLS[id] || []) if (sk.lv > lvBefore && sk.lv <= u.lv) ev.push({ t: 'msg', text: `${G.SUMMONS[id].name} học được kỹ năng ${sk.icon} ${sk.name}!`, color: '#8be9ff' });
         const st = G.summonUnitStats(p, id), state = p.summons.states[id] || (p.summons.states[id] = {});
         state.hp = st.maxHp; state.mp = st.maxMp; state.sta = st.maxSta;
         ev.push({ t: 'msg', text: `${G.SUMMONS[id].name} lên cấp ${u.lv}! Hồi đầy sức mạnh.`, color: '#8be9ff' });

@@ -12,11 +12,5 @@
     atk: [[1, 9], [10, 48], [20, 95], [30, 150], [40, 200], [50, 290], [60, 330], [70, 390], [80, 435], [90, 480], [100, 530]],
     def: [[1, 5], [10, 40], [20, 76], [30, 122], [40, 185], [50, 270], [60, 390], [70, 460], [80, 530], [90, 615], [100, 700]],
   };
-  // Thú đồng hành (mã quà tặng): chưa có cấp riêng nên theo cấp chủ, nhưng chỉ số lấy từ đường cong thú (không từ chỉ số chủ)
-  function petStats(player) {
-    const lv = Math.max(1, player.level || 1);
-    return { maxHp: Math.round(G.interp(PET_CURVE.hp, lv)), maxMp: 28 + 5 * (lv - 1), maxSta: 80 + 2 * (lv - 1), atk: G.interp(PET_CURVE.atk, lv), def: Math.round(G.interp(PET_CURVE.def, lv)) };
-  }
-
-  Object.assign(G, { PET_CURVE, petStats });
+  Object.assign(G, { PET_CURVE });
 })(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

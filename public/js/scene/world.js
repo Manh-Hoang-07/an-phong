@@ -237,7 +237,7 @@ class WorldScene extends Phaser.Scene {
 
     // Hành động
     if (canAct) {
-      if (this.pressed('KeyP') || this.tpressed('pets')) UI.openPanel('mount');
+      if (this.pressed('KeyP') || this.tpressed('pets')) UI.openPanel(UI.petPanel());
       if (this.pressed('KeyY')) UI.hiddenChat();
       if (this.key('KeyJ') || App.touch.attack) this.basicAttack(time);
       for (let i = 0; i < 5; i++) if (this.pressed('Digit' + (i + 1)) || this.tpressed('s' + i)) this.useSkill(i, time);

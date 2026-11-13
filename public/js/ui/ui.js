@@ -7,8 +7,11 @@ const UI = (() => {
   const fmt = (n) => Number(Math.floor(n)).toLocaleString('vi-VN');
 
   const skIcon = (id) => (G.SKILLS[id] && G.SKILLS[id].icon) || '✨';
-  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi'], ['shadows', '☠ Bóng ma']];
-  const visibleTabs = () => MENU_TABS.filter(([k]) => k !== 'shadows' || App.player?.school === 'tu_linh_thuat_su' || (App.player?.school === 'trieu_hoi_su' && App.player?.advancement?.unlocked?.tu_linh_thuat_su));
+  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi'], ['companion', '🐕 Thú đồng hành'], ['shadows', '☠ Bóng ma']];
+  // Thú triệu hồi: chỉ khi đã học kỹ năng Triệu Hồi Linh Thú; Bóng ma: chỉ Tử Linh Thuật Sư; Thú đồng hành: ai cũng có tab
+  const hasSummon = () => G.skillLevel(App.player || {}, 'th5') > 0;
+  const visibleTabs = () => MENU_TABS.filter(([k]) => (k !== 'shadows' || App.player?.school === 'tu_linh_thuat_su' || (App.player?.school === 'trieu_hoi_su' && App.player?.advancement?.unlocked?.tu_linh_thuat_su)) && (k !== 'mount' || hasSummon()));
+  const petPanel = () => (hasSummon() ? 'mount' : 'companion');
   let lastMenuTab = 'bag';
   const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿' };
   const WEAPON_ICONS = Object.fromEntries(Object.entries(G.WEAPON_TYPES).map(([k, w]) => [k, w.icon]));
@@ -104,7 +107,7 @@ const UI = (() => {
     const hasForm = (p.awakenTier || 0) > 0;
     const summoned = Array.isArray(p.mounts?.summoned) ? p.mounts.summoned : (p.mounts?.active ? [p.mounts.active] : []);
     $('hud-pet').classList.toggle('hidden', !summoned.length);
-    const petStats = G.petStats(p), petStates = p.pets || {};
+    const petStates = p.pets || {};
     setHtml($('hud-pets-list'), summoned.map(id => {
       const def = G.MOUNTS[id];
       if (!def) return '';
@@ -113,7 +116,7 @@ const UI = (() => {
     }).join(''));
     if (summoned.length) {
       $('pet-skill-slot').textContent = `Mỗi thú tự dùng kỹ năng riêng · ${summoned.length} thú đang triệu hồi`;
-      tickPets(petStats, petStates, summoned);
+      tickPets((id) => G.companionStats(p, id), petStates, summoned);
     }
     document.querySelectorAll('.sk-form, .tb-form').forEach(el => {
       el.classList.toggle('hidden', !hasForm);
@@ -198,13 +201,14 @@ const UI = (() => {
   }
 
   let lastPetTick = 0;
-  function tickPets(stats, pets, ids) {
+  function tickPets(statsOf, pets, ids) {
     const now = performance.now();
     if (now - lastPetTick < 250) return;
     lastPetTick = now;
     for (const id of ids) {
       const pet = pets[id];
       if (!pet) continue;
+      const stats = statsOf(id);
       for (const [key, value, max] of [['hp', pet.hp, stats.maxHp], ['mp', pet.mp, stats.maxMp], ['sta', pet.sta, stats.maxSta]]) {
         const bar = $(`pet-${key}-${id}`), label = $(`pet-${key}-t-${id}`);
         if (!bar || !label) continue;
@@ -511,8 +515,8 @@ const UI = (() => {
       else if (k === 'hp' || k === 'mp') sc.usePotion(k);
       else if (k === 'form') sc.toggleForm(sc.time.now);
       else if (k === 'aws') sc.switchAwaken();
-      else if (k === 'mount') openPanel('mount');
-      else if (k === 'pets') openPanel('mount');
+      else if (k === 'mount') openPanel(petPanel());
+      else if (k === 'pets') openPanel(petPanel());
       else sc.useSkill(Number(k), sc.time.now);
     }));
   }
@@ -522,7 +526,7 @@ const UI = (() => {
 
   return {
     init, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questReady, hiddenChat,
-    openPanel, closePanel, itemIcon, itemEmoji, isOpen: () => !!panel,   // openNpc, upgradeResult: gắn trong ui/panels
+    openPanel, closePanel, itemIcon, itemEmoji, petPanel, isOpen: () => !!panel,   // openNpc, upgradeResult: gắn trong ui/panels
     _: lib,
   };
 })();

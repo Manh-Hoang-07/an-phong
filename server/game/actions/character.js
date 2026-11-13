@@ -126,7 +126,6 @@ const actions = {
 
   // Bật / thu hồi linh thú mặc định của Triệu Hồi Sư (kỹ năng th5)
   summon_toggle(p, a, ev) {
-    if (!['trieu_hoi_su', 'tu_linh_thuat_su', 'toan_nang'].includes(G.baseSchool(p.school))) fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
     if (!G.skillLevel(p, 'th5')) fail('Hãy học kỹ năng "Triệu Hồi Linh Thú" trước.');
     p.summons = p.summons || { enabled: false, states: {} };
     p.summons.units = p.summons.units || {};
@@ -137,7 +136,7 @@ const actions = {
 
   // Chọn linh thú sẽ gọi ra (mỗi lần chỉ 1 con); đang gọi thì đổi con ngay
   summon_pick(p, a, ev) {
-    if (!['trieu_hoi_su', 'tu_linh_thuat_su', 'toan_nang'].includes(G.baseSchool(p.school))) fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
+    if (!G.skillLevel(p, 'th5')) fail('Hãy học kỹ năng "Triệu Hồi Linh Thú" trước.');
     if (!G.SUMMONS[a.id]) fail('Không có linh thú này.');
     p.summons = p.summons || { enabled: false, states: {} };
     p.summons.units = p.summons.units || {};
@@ -244,12 +243,12 @@ const actions = {
       for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
       for (const id of newMounts) {
         p.mounts.owned.push(id);
-        const petStats = G.petStats(p);
+        const petStats = G.companionStats(p, id);
         p.pets[id] = { hp: petStats.maxHp, mp: petStats.maxMp, sta: petStats.maxSta };
         p.mounts.skills[id] = p.mounts.skill || 'bite';
         p.mounts.active = p.mounts.summoned[0] || null;
         ev.push({ t: 'mount_new', id });
-        ev.push({ t: 'msg', text: `[Hệ thống] Nhận thú triệu hồi: ${G.MOUNTS[id].icon} ${G.MOUNTS[id].name}! Mở Menu → Thú triệu hồi để gọi thú.`, color: '#ffc94a' });
+        ev.push({ t: 'msg', text: `[Hệ thống] Nhận thú triệu hồi: ${G.MOUNTS[id].icon} ${G.MOUNTS[id].name}! Mở Menu → Thú đồng hành để gọi thú.`, color: '#ffc94a' });
       }
     } catch (e) {
       // Không phát được quà (ví dụ túi đầy) thì trả lại lượt cho mã

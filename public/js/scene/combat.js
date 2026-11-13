@@ -132,7 +132,7 @@ WorldScene.mix(class WorldCombat {
     let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : extra.shadow
       ? { dmg: Math.max(1, Math.round((extra.shadowAtk || GameData.calcStats(App.player).atk * 0.13) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
       : extra.pet
-      ? { dmg: Math.max(1, Math.round((extra.petAtk || GameData.petStats(App.player).atk) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
+      ? { dmg: Math.max(1, Math.round((extra.petAtk || 100) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
       : this.calcDamage(mult, m);
     if (extra.basic && m.def.resist) dmg = Math.max(1, Math.round(dmg * (1 - m.def.resist)));
     if (m.shredUntil > now && !extra.reflect) dmg = Math.max(1, Math.round(dmg * (1 + (m.shred || 0))));   // Tên Phá Giáp: quái chịu thêm sát thương
@@ -206,8 +206,9 @@ WorldScene.mix(class WorldCombat {
     App.hp -= dmg;
     const companions = this.summonedPetIds();
     if (companions.length) {
-      const petDef = GameData.petStats(App.player), share = dmg * 0.18 / companions.length;
+      const share = dmg * 0.18 / companions.length;
       for (const id of companions) {
+        const petDef = GameData.companionStats(App.player, id);
         const petState = App.player.pets[id];
         if (!petState || petState.hp <= 0) continue;
         const petDamage = Math.max(1, Math.round(share * (1 - GameData.defReduce(petDef.def, App.player.level))));

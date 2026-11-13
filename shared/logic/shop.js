@@ -30,6 +30,7 @@
     if (n.shopKind === 'gear' && sideDone(player, 'p2-2')) add(['da_cuong_hoa_cao']);
     if (n.shopKind === 'gear') {
       add(['sach_mo_rong_thuong', 'sach_mo_rong_tuyet_ky', 'sach_tay_ky_nang']);
+      add(Object.keys(ITEMS).filter(id => ITEMS[id].kind === 'pet_gear'));
       if (player.school) {
         const mine = G.availableSkills(player).filter(id => !G.SKILLS[id].ult).sort((a, b) => G.SKILLS[a].level - G.SKILLS[b].level);
         add(mine.map(G.skillBookId));

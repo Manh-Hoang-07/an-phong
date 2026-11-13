@@ -5,6 +5,7 @@
  */
 (function (G) {
   'use strict';
+  const { SUMMONS, PET_CURVE } = G;
 
   function summonLevelStats(lv, skLv, sp) {
     const mul = 1 + 0.12 * ((skLv || 1) - 1), s = sp || {};
@@ -18,7 +19,12 @@
     return Math.max(1, Math.min(cap, (u && Number.isFinite(u.lv) ? Math.floor(u.lv) : 1)));
   }
   function summonUnitStats(player, id) {
-    return summonLevelStats(summonUnitLv(player, id), (player.skills && player.skills.th5) || 1, SUMMONS[id]);
+    return G.applyPetGear(summonLevelStats(summonUnitLv(player, id), (player.skills && player.skills.th5) || 1, SUMMONS[id]), player, id);
+  }
+  // Kỹ năng riêng của linh thú đã mở khóa theo cấp riêng (từ thấp tới cao)
+  function summonSkillsUnlocked(player, id) {
+    const lv = summonUnitLv(player, id);
+    return (G.SUMMON_SKILLS[id] || []).filter(sk => sk.lv <= lv);
   }
   // Giữ tên cũ cho nơi gọi chưa đổi: chỉ số của linh thú đang chọn
   function summonStats(player) { return summonUnitStats(player, summonChoice(player)); }
@@ -33,5 +39,5 @@
     return SUMMONS[c] ? c : Object.keys(SUMMONS)[0];
   }
 
-  Object.assign(G, { summonLevelStats, summonUnitLv, summonUnitStats, summonStats, summonExpToNext, shadowExpToNext, summonCount, summonChoice });
+  Object.assign(G, { summonLevelStats, summonUnitLv, summonUnitStats, summonSkillsUnlocked, summonStats, summonExpToNext, shadowExpToNext, summonCount, summonChoice });
 })(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

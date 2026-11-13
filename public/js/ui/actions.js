@@ -169,6 +169,8 @@
       }
       case 'rank_eval': await act('rank_eval'); break;
       case 'mount_set': await act('mount_set', { id: ds.id }); renderPanel(); break;
+      case 'pet_equip': await act('pet_equip', { pet: ds.pet, item: ds.item }); renderPanel(); break;
+      case 'pet_unequip': await act('pet_unequip', { pet: ds.pet, slot: ds.slot }); renderPanel(); break;
       case 'summon_pick': await act('summon_pick', { id: ds.id }); renderPanel(); break;
       case 'shadow_toggle': await act('shadow_toggle'); renderPanel(); break;
       case 'shadow_party': await act('shadow_party', { uid: Number(ds.uid) }); renderPanel(); break;

@@ -332,9 +332,10 @@ WorldScene.mix(class WorldPlayer {
       if (c.shadow) c.shadow.destroy();
       delete this.companionSprites[id];
     }
-    const ps = GameData.petStats(App.player), pets = App.player.pets || (App.player.pets = {});
+    const pets = App.player.pets || (App.player.pets = {});
     ids.forEach((id, index) => {
       if (this.companionSprites[id]) return;
+      const ps = GameData.companionStats(App.player, id);
       const def = this.companionDef(id), tex = PetSprites.textureKey(def.look);
       PetSprites.createAnims(this, def.look);
       if (!this.textures.exists(tex)) return;
@@ -351,7 +352,7 @@ WorldScene.mix(class WorldPlayer {
   companionUpdate(time, delta) {
     const ids = this.summonedPetIds();
     this.buildCompanions();
-    const ps = this.cachedCalc('petStats', () => GameData.petStats(App.player)), pets = App.player.pets || {};
+    const statsOf = (id) => this.cachedCalc('cp_' + id, () => GameData.companionStats(App.player, id)), pets = App.player.pets || {};
     if (time >= (this.nextPetTargetScan || 0)) {
       const pl = this.player;
       this.petTarget = this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive && Math.abs(m.sprite.y - pl.y) < 180 && Math.abs(m.sprite.x - pl.x) < 260)
@@ -360,9 +361,9 @@ WorldScene.mix(class WorldPlayer {
     }
     ids.forEach((id, index) => {
       const c = this.companionSprites[id];
-      if (c) this.updateCompanion(id, c, index, time, delta, ps, pets[id]);
+      if (c) this.updateCompanion(id, c, index, time, delta, statsOf(id), pets[id]);
     });
-    UI.tickPets(ps, pets, ids);
+    UI.tickPets(statsOf, pets, ids);
   }
   // Linh thú mặc định của Triệu Hồi Sư (kỹ năng th5): mỗi lần chỉ 1 con, con do người chơi chọn
   summonedSummonIds() {
@@ -444,8 +445,35 @@ WorldScene.mix(class WorldPlayer {
         attacking = true;
         const command = this.buffOn('rage', time);
         const classMul = this.hasPassive('trieu_hoi_su') ? 1.1 : 1;
-        if (time >= c.nextAttack && state.sta >= 4) {
-          state.sta -= 4; c.nextAttack = time + 1150 / ((def.aspd || 1) * (1 + (command?.speed || 0)));
+        // Kỹ năng riêng của linh thú (mở khóa theo cấp riêng): dùng kỹ năng mạnh nhất đang sẵn sàng, không có thì đánh thường
+        const unlocked = GameData.summonSkillsUnlocked(App.player, id);
+        c.cd = c.cd || {};
+        let cast = null;
+        if (time >= c.nextAttack) {
+          for (let i = unlocked.length - 1; i >= 0 && !cast; i--) {
+            const sk = unlocked[i];
+            if ((c.cd[sk.id] || 0) <= time && state.mp >= sk.mp && state.sta >= sk.sta && Math.abs(dx) <= sk.range) cast = sk;
+          }
+        }
+        const speed = (def.aspd || 1) * (1 + (command?.speed || 0));
+        if (cast) {
+          state.mp -= cast.mp; state.sta -= cast.sta;
+          c.cd[cast.id] = time + cast.cooldown / speed; c.nextAttack = time + 700 / speed;
+          const mult = cast.mult * def.atk * classMul * (1 + (command?.atk || 0));
+          const opts = { pet: true, petAtk: ss.atk, petName: def.name, dir: Math.sign(dx) || 1, slow: cast.slow };
+          this.damageMonster(target, mult, opts);
+          if (cast.radius) {
+            for (const m of this.monsters) {
+              if (m === target || !m.alive || m.def.passive) continue;
+              if (Math.hypot(m.sprite.x - target.sprite.x, m.sprite.y - target.sprite.y) <= cast.radius) this.damageMonster(m, mult * 0.8, { ...opts });
+            }
+            this.ringFx(target.sprite.x, target.sprite.y, 0x8be9ff, 2);
+          }
+          if (cast.heal) this.skillHeal(cast.heal);
+          c.lastCombat = time; c.attackUntil = time + 420;
+          this.floatText(sprite.x, sprite.y - 32, cast.name, '#8be9ff', 11);
+        } else if (time >= c.nextAttack && state.sta >= 4) {
+          state.sta -= 4; c.nextAttack = time + 1150 / speed;
           // Công lấy từ chỉ số riêng của linh thú (petAtk), không nhân chồng với công pet theo cấp nhân vật
           this.damageMonster(target, 0.82 * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petAtk: ss.atk, petName: def.name, dir: Math.sign(dx) || 1 });
           c.lastCombat = time; c.attackUntil = time + 320;
@@ -601,12 +629,12 @@ WorldScene.mix(class WorldPlayer {
         const useSkill = time >= c.nextAttack && state.mp >= skill.mp && state.sta >= skill.sta && Math.abs(dx) <= skill.range;
         if (useSkill) {
           state.mp -= skill.mp; state.sta -= skill.sta; c.nextAttack = time + skill.cooldown / (1 + (command?.speed || 0));
-          this.damageMonster(target, skill.mult * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
+          this.damageMonster(target, skill.mult * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petAtk: ps.atk, petName: def.name, dir: Math.sign(dx) || 1 });
           c.lastCombat = time; c.attackUntil = time + 420;
           this.floatText(sprite.x, sprite.y - 32, skill.name, '#8be9ff', 11);
         } else if (time >= c.nextAttack && state.sta >= 4) {
           state.sta -= 4; c.nextAttack = time + 1150 / (1 + (command?.speed || 0));
-          this.damageMonster(target, 0.82 * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petName: def.name, dir: Math.sign(dx) || 1 });
+          this.damageMonster(target, 0.82 * def.atk * classMul * (1 + (command?.atk || 0)), { pet: true, petAtk: ps.atk, petName: def.name, dir: Math.sign(dx) || 1 });
           c.lastCombat = time; c.attackUntil = time + 320;
         }
       }

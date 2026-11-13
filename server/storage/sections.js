@@ -25,7 +25,7 @@ const SECTION_KEYS = {
   storage: ['storageByMap'],                       // kho riêng từng làng { mapId: [...] }
   quest: ['quest', 'side'],
   skills: ['skills', 'skillSlots', 'skillPoints', 'skillExpand', 'skillBookVer'],
-  pets: ['mounts', 'pets', 'pet'],
+  pets: ['mounts', 'pets', 'pet', 'petGear'],
   summons: ['summons'],
   shadows: ['shadows'],
   // careerSlots / careerAwaken là dữ liệu cũ của cơ chế hai hình thái: vẫn khai báo để đọc được

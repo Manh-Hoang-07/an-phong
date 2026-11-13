@@ -55,6 +55,7 @@ require('./data/skills/perks');
 require('./data/items/potions');       // thuốc
 require('./data/items/materials');     // nguyên liệu, bùa tăng cường
 require('./data/items/books');         // sách kỹ năng / tuyệt kỹ / biến hình
+require('./data/items/pet-gear');      // trang bị cho thú (yên, dây cương, giáp, vòng cổ)
 require('./data/items/quest-items');   // vật phẩm nhiệm vụ
 require('./data/items/weapons');       // vũ khí viết tay
 require('./data/items/armor/mu');      // trang bị: mũ
@@ -104,6 +105,7 @@ require('./data/maps/index');
 require('./data/pets/mounts');        // thú đồng hành + kỹ năng thú
 require('./data/pets/summons');       // linh thú của Triệu Hồi Sư
 require('./data/pets/curve');         // đường cong chỉ số thú theo cấp
+require('./data/pets/gear');          // chỉ số thú đồng hành (cố định) + trang bị thú
 require('./data/pets/summon-stats');  // chỉ số linh thú đang gọi
 require('./data/pets/shadow');        // bóng ma của Tử Linh Thuật Sư
 

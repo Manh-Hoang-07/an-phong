@@ -22,8 +22,8 @@ const actions = {
     if (Number.isFinite(a.hp)) p.hp = Math.max(1, Math.min(st.maxHp, Math.round(a.hp)));
     if (Number.isFinite(a.mp)) p.mp = Math.max(0, Math.min(st.maxMp, Math.round(a.mp)));
     if (p.mounts && Array.isArray(p.mounts.summoned) && a.pets && typeof a.pets === 'object') {
-      const ps = G.petStats(p);
       for (const id of p.mounts.summoned) {
+        const ps = G.companionStats(p, id);
         const incoming = a.pets[id];
         if (!incoming || typeof incoming !== 'object') continue;
         if (!p.pets[id]) p.pets[id] = {};
