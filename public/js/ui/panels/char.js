@@ -26,8 +26,9 @@
     const perkHtml = perks.length ? '<div class="muted" style="margin:10px 0 4px;font-size:12px">NỘI TẠI CỐT TRUYỆN</div><div class="list">' +
       perks.map(id => { const pk = G.PERKS[id]; return `<div class="li"><div class="ic">${pk.icon}</div><div class="main"><b>${esc(pk.name)}</b><small>${esc(pk.desc)}</small></div></div>`; }).join('') + '</div>' : '';
     const left = '<table class="stat-table">' + rows.map(([a, b]) => `<tr><td class="muted">${a}</td><td>${esc(b)}</td></tr>`).join('') + '</table>' + perkHtml;
-    const unlockedForms = [['awaken1','Biến Hình I',p.awakenTier>=1],['evolution',G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]]||'Tiến Hóa',!!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]]],['awaken2','Biến Hình II',p.awakenTier>=2]].filter(x=>x[2]);
-    const formHtml = unlockedForms.length ? `<div class="li"><div class="main"><b>Hình thái: ${esc(unlockedForms.find(x=>x[0]===p.formChoice)?.[1]||unlockedForms[0][1])}</b><small>${p.formActive?'Đang biến hình':'Dạng thường'}</small></div>${unlockedForms.map(([key,label])=>`<button class="btn small" data-act="form_select" data-choice="${key}">${esc(label)}</button>`).join('')}</div>` : '';
+    // Chỉ còn Ấn thức tỉnh là hình thái bật/tắt. Chức nghiệp 2 là class thật: đổi bằng Sách Tiến Hóa ở NPC ẩn.
+    const unlockedForms = [['awaken1', 'Biến Hình I', p.awakenTier >= 1], ['awaken2', 'Biến Hình II', p.awakenTier >= 2]].filter(x => x[2]);
+    const formHtml = unlockedForms.length ? `<div class="li"><div class="main"><b>Hình thái: ${esc(unlockedForms.find(x => x[0] === p.formChoice)?.[1] || unlockedForms[0][1])}</b><small>${p.formActive ? 'Đang biến hình' : 'Dạng thường'}</small></div>${unlockedForms.map(([key, label]) => `<button class="btn small" data-act="form_select" data-choice="${key}">${esc(label)}</button>`).join('')}</div>` : '';
     const right = `<p>Điểm tiềm năng còn lại: <b class="gold">${p.freePoints}</b></p>${formHtml}<div class="list">` +
       pts.map(([k, n, d]) => `<div class="li"><div class="main"><b>${n}: ${p.points[k]}</b><small>${d}</small></div>
         <button class="btn small" data-act="add_stat" data-stat="${k}" data-n="1" ${p.freePoints ? '' : 'disabled'}>+1</button>

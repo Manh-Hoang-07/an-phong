@@ -181,7 +181,7 @@ WorldScene.mix(class WorldMonsters {
       s.body.setVelocity(0, d.fly ? 0 : s.body.velocity.y); this.drawMonsterBar(m); return;
     }
 
-    // Tầm đánh tính theo bề rộng khung hình GỐC (rw): ảnh đã cắt viền (tools/trim-mob-sheets.js) có khung hẹp hơn
+    // Tầm đánh tính theo bề rộng khung hình GỐC (rw): ảnh đã cắt viền có khung hẹp hơn
     const reach = (d.boss || d.leader ? 70 : 34) + ((m.sheet && Sprites.MOBS[m.sheet].rw) || s.width) * 0.3;
     // ---- Gồng đòn: đứng yên, nháy đỏ
     if (m.state === 'windup') {

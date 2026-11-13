@@ -7,11 +7,11 @@
  * và từng nhóm hành động người chơi gửi lên (actions/*.js).
  */
 const G = require('../../shared');
-const { GameError, fail } = require('./util');
-const { pruneLoot, reforgeCost, salvageStones } = require('./inventory');
-const { questComplete, currentQuest } = require('./quests');
-const { resetCost, unequipWrongWeapon, storageFor } = require('./progress');
-const { ensureBoards } = require('./periodic');
+const { GameError, fail } = require('./core/util');
+const { pruneLoot, reforgeCost, salvageStones } = require('./core/inventory');
+const { questComplete, currentQuest } = require('./core/quests');
+const { resetCost, unequipWrongWeapon, storageFor } = require('./core/progress');
+const { ensureBoards } = require('./core/periodic');
 
 // Mọi hành động: tên → hàm (p, a, ev, userId)
 const actions = Object.assign({},
@@ -186,22 +186,18 @@ function migrate(p) {
     }
   }
   if (!Number.isFinite(p.skillPoints)) p.skillPoints = 0;
-  // Toàn Năng Tinh Thông không còn là hình thái nhân chỉ số: Ấn II dùng chung, Tinh Thông chỉ mở khóa kỹ năng nhánh của mọi class
-  if (p.school === 'toan_nang') {
-    if (p.advancement?.unlocked?.toan_nang_tinh_thong && (p.awakenTier || 0) < 2) p.awakenTier = 2;
-    if (p.formChoice === 'evolution') { p.formChoice = p.awakenTier >= 2 ? 'awaken2' : 'awaken1'; p.formActive = false; }
+  // Dữ liệu cũ của cơ chế hai hình thái chức nghiệp: bỏ hẳn.
+  // Người chơi cũ đã mở chức nghiệp 2 thì p.school đổi sang id nhánh luôn, không còn chuyện bật/tắt.
+  if (p.careerSlots !== undefined) delete p.careerSlots;
+  if (p.careerAwaken !== undefined) delete p.careerAwaken;
+  if (p.formChoice === 'evolution') p.formChoice = p.awakenTier >= 2 ? 'awaken2' : 'awaken1';
+  if (p.formChoice !== 'awaken2') p.formChoice = 'awaken1';
+  if (p.school && !G.isEvolved(p.school) && p.advancement?.unlocked?.[G.evolutionOf(p.school)]) {
+    // Người chơi cũ đã mở khóa nhánh: chuyển hẳn sang chức nghiệp 2 (không còn quay lại chức nghiệp 1)
+    p.school = G.evolutionOf(p.school);
   }
   while (p.skillSlots.length < G.SKILL_SLOTS) p.skillSlots.push(null);
-  p.skillSlots = p.skillSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] ? id : null));
-  // Thanh kỹ năng chức nghiệp 2: chuyển kỹ năng nhánh đang nằm ở thanh chức nghiệp 1 (dữ liệu cũ) sang thanh riêng
-  if (!Array.isArray(p.careerSlots)) p.careerSlots = [];
-  while (p.careerSlots.length < G.SKILL_SLOTS) p.careerSlots.push(null);
-  p.careerSlots = p.careerSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] && G.slotKeyOf(p, id) === 'careerSlots' ? id : null));
-  p.skillSlots.forEach((id, i) => {
-    if (!id || G.slotKeyOf(p, id) !== 'careerSlots') return;
-    p.skillSlots[i] = null;
-    if (!p.careerSlots.includes(id) && !p.careerSlots[i]) p.careerSlots[i] = id;
-  });
+  p.skillSlots = p.skillSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] && G.availableSkills(p).includes(id) ? id : null));
   pruneLoot(p);
   return p;
 }

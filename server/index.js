@@ -12,9 +12,9 @@
 const http = require('http');
 const path = require('path');
 const zlib = require('zlib');
-const store = require('./db');
-const cache = require('./cache');
-const auth = require('./auth');
+const store = require('./storage/db');
+const cache = require('./storage/cache');
+const auth = require('./accounts/auth');
 const game = require('./game');
 const G = require('../shared');
 
@@ -23,7 +23,7 @@ const HOST = process.env.HOST || '127.0.0.1';
 const COOKIE_SECURE = process.env.COOKIE_SECURE === '1';
 const ROOT = path.join(__dirname, '..');
 
-const serveStatic = require('./static')(ROOT);
+const serveStatic = require('./http/static')(ROOT);
 
 // Nhân vật đang chơi được giữ trong bộ nhớ (server/cache.js).
 // Hành động nhỏ, lặp nhiều chỉ đánh dấu rồi ghi gộp vài giây một lần; còn lại ghi ngay.

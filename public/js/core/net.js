@@ -133,7 +133,7 @@ const Net = (() => {
 App.form = false;
 App.recalcStats = function () {
   App.form = !!App.player.formActive;
-  if (App.form && !(App.player.awakenTier > 0) && !(App.player.advancement?.unlocked?.[GameData.EVOLUTIONS[App.player.school]])) App.form = false;
+  if (App.form && !(App.player.awakenTier > 0)) App.form = false;
   App.stats = GameData.calcStats(App.player, { form: App.form });
   App.hp = Math.min(App.hp, App.stats.maxHp);
   App.mp = Math.min(App.mp, App.stats.maxMp);
@@ -173,19 +173,7 @@ App.setPlayer = function (p, prev) {
 App.onEvent = function (ev) {
   const sc = App.scene;
   switch (ev.t) {
-    case 'career_awaken': {
-      // Ấn thức tỉnh chồng lên chức nghiệp (Tử Linh): dựng lại hiệu ứng và bộ hình theo ấn
-      App.recalcStats();
-      if (sc?.formStop) { sc.formStop(); sc.formOn = false; sc.formDrainAcc = 0; }
-      if (sc?.formStart) sc.formStart();
-      if (ev.tier && sc?.awakenFx) sc.awakenFx(ev.tier);
-      UI.banner(ev.tier ? (ev.tier >= 2 ? 'TỬ LINH · ẤN THỨ HAI' : 'TỬ LINH · ẤN THỨ NHẤT') : 'TỬ LINH', 1200);
-      UI.refresh();
-      break;
-    }
     case 'form': App.form = !!ev.active;
-      // Ra/vào chức nghiệp 2: hiệu ứng tăng cường của bộ kỹ năng cũ mất theo (trừ Toàn Năng dùng chung một bộ)
-      if (ev.choice === 'evolution' && sc?.buffs && App.player?.school !== 'toan_nang') sc.buffs = {};
       if (sc?.refreshPlayerLook) sc.refreshPlayerLook(); if (sc?.formStart && ev.active) sc.formStart(); else if (sc?.formStop && !ev.active) sc.formStop(); App.recalcStats(); UI.refresh(); break;
     case 'msg': UI.log(ev.text, ev.color); break;
     case 'float': if (sc && sc.player) sc.floatText(sc.player.x, sc.player.y - 40, ev.text, ev.color); if (/xu$/.test(ev.text)) Sound.play('coin'); break;

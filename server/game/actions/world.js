@@ -1,7 +1,7 @@
 'use strict';
 /* Luật chơi phía server · Hành động: lưu vị trí, đổi bản đồ, chết. */
 const G = require('../../../shared');
-const { fail, fmt } = require('../util');
+const { fail, fmt } = require('../core/util');
 
 // Ghi nhận Tân Đô vừa tới (để mở Trạm dịch chuyển tới đó)
 function markVillage(p, ev) {
@@ -85,8 +85,8 @@ const actions = {
     const lose = Math.floor(G.expToNext(p.level) * 0.05);
     p.exp = Math.max(0, p.exp - lose);
     p.formActive = false;
-    // Hồi sinh ở chức nghiệp 1: bóng ma của nhánh 2 cũng được giải trừ
-    if (p.school !== 'toan_nang' && G.EVOLUTIONS[p.school] && p.shadows) p.shadows.enabled = false;
+    // Hồi sinh: bóng ma cũng được giải trừ
+    if (p.shadows) p.shadows.enabled = false;
     const st = G.calcStats(p, { form: false });
     p.hp = Math.round(st.maxHp * 0.5);
     p.mp = Math.round(st.maxMp * 0.5);

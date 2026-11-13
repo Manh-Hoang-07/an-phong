@@ -24,19 +24,14 @@ WorldScene.mix(class WorldSkills {
 
   useSkill(slot, time) {
     const p = App.player;
-    const careerOn = !!App.form && p.formChoice === 'evolution';
-    const id = GameData.slotsOf(p, careerOn)[slot];
+    const id = p.skillSlots[slot];
     if (!id) {
-      if (GameData.usesCareerBar(p, careerOn)) { UI.log('Ô kỹ năng chức nghiệp 2 trống. Mở bảng Kỹ năng (phím K) để học và gắn kỹ năng nhánh.', '#bdbdbd'); return; }
       UI.log(p.school ? 'Ô kỹ năng trống. Mở bảng Kỹ năng (phím K) để học và gắn kỹ năng.' : 'Chưa có kỹ năng. Đạt cấp 5 và thức tỉnh class ở Hội trưởng Khải.', '#bdbdbd');
       return;
     }
     const lv = GameData.skillLevel(p, id);
     if (!lv) return;
     const sk = GameData.skillAt(id, lv);
-    // Chức nghiệp 2 đang bật: chỉ dùng kỹ năng nhánh; tắt: chỉ dùng kỹ năng chức nghiệp 1
-    const blocked = GameData.skillFormBlock(p, sk, !!App.form && p.formChoice === 'evolution');
-    if (blocked) { if (time >= (this.formBlockMsgAt || 0)) { UI.log(blocked, '#c6a7ff'); this.formBlockMsgAt = time + 1200; } return; }
     if (time < (this.cooldowns[id] || 0)) return;
     const cost = Math.round(sk.mp * App.stats.costMul);
     if (App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }

@@ -1,11 +1,11 @@
 'use strict';
 /* Luật chơi phía server · Hành động: hạ quái (chống gian lận tốc độ hạ, trùm hồi sinh). */
 const G = require('../../../shared');
-const { fail, rand } = require('../util');
-const { countItem, dropLoot, pruneLoot } = require('../inventory');
-const { gainExp, gainGold } = require('../progress');
-const { currentQuest, questComplete, questActive, sideDropActive, sideDropNeed } = require('../quests');
-const { ensureWeekly, ensureBoards } = require('../periodic');
+const { fail, rand } = require('../core/util');
+const { countItem, dropLoot, pruneLoot } = require('../core/inventory');
+const { gainExp, gainGold } = require('../core/progress');
+const { currentQuest, questComplete, questActive, sideDropActive, sideDropNeed } = require('../core/quests');
+const { ensureWeekly, ensureBoards } = require('../core/periodic');
 
 const lastKill = new Map(); // userId -> {t, boss:{monster:time}}
 
@@ -92,8 +92,8 @@ function killOne(p, a, ev, lk, now) {
     // Thú/bóng đồng hành cũng ăn kinh nghiệm theo người kết liễu (chênh lệch cấp quái như người chơi)
     grantCompanionExp(p, a, Math.max(1, Math.round(G.monExp(mon) * expMul)), ev);
 
-    // Necromancer thu phục quái do chính người chơi kết liễu; không thay bóng cũ khi đủ chỗ.
-    if ((p.school === 'tu_linh_thuat_su' || (p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formActive && p.formChoice === 'evolution')) && a.source === 'player' && !mon.boss && !mon.leader && !mon.passive && !mon.finalBoss) {
+    // Tử Linh Thuật Sư thu phục quái do chính người chơi kết liễu; không thay bóng cũ khi đủ chỗ.
+    if (p.school === 'tu_linh_thuat_su' && a.source === 'player' && !mon.boss && !mon.leader && !mon.passive && !mon.finalBoss) {
       p.shadows = p.shadows || { roster: [], active: [], enabled: false, nextId: 1 };
       if (p.shadows.roster.length < G.SHADOW_ROSTER) {
         // Lưu luôn thông số quái lúc bị hạ để xem lại trong bảng Bóng Ma

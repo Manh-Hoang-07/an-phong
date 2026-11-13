@@ -1,0 +1,21 @@
+/*
+ * Quái Chương 10 – Sáng Thế (cấp 91–100).
+ *
+ * drops: [itemId, tỉ lệ 0..1, (tùy chọn) chỉ rơi khi đang làm nhiệm vụ]
+ * gear:  [tỉ lệ rơi 1 món trang bị, [danh sách món có thể rơi]]
+ */
+(function (G) {
+  'use strict';
+
+  const PART = {
+    tan_du_sang_the: { name: 'Hạt Giống Ánh Sáng', level: 91, hp: 6160, atk: 3095, def: 148, exp: 3035, gold: [1456, 2639], speed: 72, respawn: 8, look: 'shade', sprite: 'imp', tint: 0xfff0a0, drops: [['manh_ky_uc', 0.5, 'c10q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_sang_the', 'ao_sang_the', 'gang_tay_sang_the', 'dai_lung_sang_the', 'quan_sang_the', 'giay_sang_the', 'nhan_sang_the', 'day_chuyen_sang_the', 'ngoc_boi_sang_the', 'kiem_sang_the', 'cung_sang_the', 'truong_sang_the']] },
+    ca_ky_uc: { name: 'Cá Ký Ức', level: 93, hp: 6280, atk: 3185, def: 151, exp: 3105, gold: [1488, 2697], speed: 72, respawn: 8, look: 'shade', sprite: 'ff_sahuagin', tint: 0xa0e0ff, drops: [['manh_ky_uc', 0.5, 'c10q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_sang_the', 'ao_sang_the', 'gang_tay_sang_the', 'dai_lung_sang_the', 'quan_sang_the', 'giay_sang_the', 'nhan_sang_the', 'day_chuyen_sang_the', 'ngoc_boi_sang_the', 'kiem_sang_the', 'cung_sang_the', 'truong_sang_the']] },
+    thien_than_rong: { name: 'Thiên Thần Rỗng', level: 94, hp: 6340, atk: 3230, def: 153, exp: 3140, gold: [1504, 2726], speed: 72, respawn: 8, look: 'shade', sprite: 'swordsman', tint: 0xffffff, drops: [['manh_ky_uc', 0.45, 'c10q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_sang_the', 'ao_sang_the', 'gang_tay_sang_the', 'dai_lung_sang_the', 'quan_sang_the', 'giay_sang_the', 'nhan_sang_the', 'day_chuyen_sang_the', 'ngoc_boi_sang_the', 'kiem_sang_the', 'cung_sang_the', 'truong_sang_the']] },
+    ho_vuong_sang_the: { name: 'Người Gác Ngai', level: 95, hp: 6400, atk: 3275, def: 154, exp: 3175, gold: [1520, 2755], speed: 72, respawn: 30, look: 'nightborne', sprite: 'knight_silver', tint: 0xffe080, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_sang_the', 'ao_sang_the', 'gang_tay_sang_the', 'dai_lung_sang_the', 'quan_sang_the', 'giay_sang_the', 'nhan_sang_the', 'day_chuyen_sang_the', 'ngoc_boi_sang_the', 'kiem_sang_the', 'cung_sang_the', 'truong_sang_the']] },
+    ban_sao_so_7: { name: 'Bản Sao Số 7', level: 97, hp: 6520, atk: 3365, def: 158, exp: 3245, gold: [1552, 2813], speed: 72, respawn: 30, look: 'shade', sprite: 'hero_knight', tint: 0x90a0ff, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_sang_the', 'ao_sang_the', 'gang_tay_sang_the', 'dai_lung_sang_the', 'quan_sang_the', 'giay_sang_the', 'nhan_sang_the', 'day_chuyen_sang_the', 'ngoc_boi_sang_the', 'kiem_sang_the', 'cung_sang_the', 'truong_sang_the']] },
+    thu_linh_khoi_nguyen: { name: 'Thủ Lĩnh Khởi Nguyên', level: 98, hp: 6580, atk: 3410, def: 159, exp: 3280, gold: [1568, 2842], speed: 72, respawn: 90, look: 'shade', sprite: 'king', tint: 0xffd060, leader: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_sang_the', 'ao_sang_the', 'gang_tay_sang_the', 'dai_lung_sang_the', 'quan_sang_the', 'giay_sang_the', 'nhan_sang_the', 'day_chuyen_sang_the', 'ngoc_boi_sang_the', 'kiem_sang_the', 'cung_sang_the', 'truong_sang_the']] },
+    tru_mong_sang_the: { name: 'Trụ Mộng Sáng Thế · Lăng', level: 100, hp: 6700, atk: 5950, def: 243, exp: 3349, gold: [60000, 100000], speed: 60, respawn: 300, look: 'beast', sprite: 'king', tint: 0xffe8a0, boss: true, drops: [['loi_tinh_van', 1], ['da_cuong_hoa_than_thoai', 5]], gear: [1, ['mu_sang_the', 'ao_sang_the', 'gang_tay_sang_the', 'dai_lung_sang_the', 'quan_sang_the', 'giay_sang_the', 'nhan_sang_the', 'day_chuyen_sang_the', 'ngoc_boi_sang_the', 'kiem_sang_the', 'cung_sang_the', 'truong_sang_the']] },
+  };
+
+  (G.MONSTER_PARTS = G.MONSTER_PARTS || {})[10] = PART;
+})(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

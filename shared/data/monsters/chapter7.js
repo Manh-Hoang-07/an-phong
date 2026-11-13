@@ -1,0 +1,21 @@
+/*
+ * Quái Chương 7 – Long Mạch (cấp 61–70).
+ *
+ * drops: [itemId, tỉ lệ 0..1, (tùy chọn) chỉ rơi khi đang làm nhiệm vụ]
+ * gear:  [tỉ lệ rơi 1 món trang bị, [danh sách món có thể rơi]]
+ */
+(function (G) {
+  'use strict';
+
+  const PART = {
+    tan_du_long_mach: { name: 'Rắn Mạch Ngọc', level: 61, hp: 4275, atk: 1750, def: 100, exp: 1953, gold: [976, 1769], speed: 72, respawn: 8, look: 'shade', sprite: 'worm', tint: 0x6fe0c0, drops: [['manh_ngoc_mach', 0.5, 'c7q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_long_mach', 'ao_long_mach', 'gang_tay_long_mach', 'dai_lung_long_mach', 'quan_long_mach', 'giay_long_mach', 'nhan_long_mach', 'day_chuyen_long_mach', 'ngoc_boi_long_mach', 'kiem_long_mach', 'cung_long_mach', 'truong_long_mach']] },
+    rua_da_mach: { name: 'Rùa Đá Mạch', level: 63, hp: 4425, atk: 1850, def: 103, exp: 2027, gold: [1008, 1827], speed: 72, respawn: 8, look: 'shade', sprite: 'rock_golem', tint: 0x7fe0b8, drops: [['manh_ngoc_mach', 0.5, 'c7q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_long_mach', 'ao_long_mach', 'gang_tay_long_mach', 'dai_lung_long_mach', 'quan_long_mach', 'giay_long_mach', 'nhan_long_mach', 'day_chuyen_long_mach', 'ngoc_boi_long_mach', 'kiem_long_mach', 'cung_long_mach', 'truong_long_mach']] },
+    linh_thuy_mach: { name: 'Linh Thủy Mạch', level: 64, hp: 4500, atk: 1900, def: 105, exp: 2063, gold: [1024, 1856], speed: 72, respawn: 8, look: 'shade', sprite: 'ff_slime', tint: 0x5fd0e8, drops: [['manh_ngoc_mach', 0.45, 'c7q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_long_mach', 'ao_long_mach', 'gang_tay_long_mach', 'dai_lung_long_mach', 'quan_long_mach', 'giay_long_mach', 'nhan_long_mach', 'day_chuyen_long_mach', 'ngoc_boi_long_mach', 'kiem_long_mach', 'cung_long_mach', 'truong_long_mach']] },
+    ho_vuong_long_mach: { name: 'Hộ Mạch Giáp Vảy', level: 65, hp: 4575, atk: 1950, def: 106, exp: 2100, gold: [1040, 1885], speed: 72, respawn: 30, look: 'nightborne', sprite: 'axe_demon', tint: 0x9fffd0, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_long_mach', 'ao_long_mach', 'gang_tay_long_mach', 'dai_lung_long_mach', 'quan_long_mach', 'giay_long_mach', 'nhan_long_mach', 'day_chuyen_long_mach', 'ngoc_boi_long_mach', 'kiem_long_mach', 'cung_long_mach', 'truong_long_mach']] },
+    rong_con_mat_me: { name: 'Rồng Con Mất Mẹ', level: 67, hp: 4725, atk: 2050, def: 110, exp: 2173, gold: [1072, 1943], speed: 72, respawn: 30, look: 'shade', sprite: 'dragon', tint: 0xa0ffe0, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_long_mach', 'ao_long_mach', 'gang_tay_long_mach', 'dai_lung_long_mach', 'quan_long_mach', 'giay_long_mach', 'nhan_long_mach', 'day_chuyen_long_mach', 'ngoc_boi_long_mach', 'kiem_long_mach', 'cung_long_mach', 'truong_long_mach']] },
+    thu_linh_mach_vo: { name: 'Thủ Lĩnh Mạch Vỡ', level: 68, hp: 4800, atk: 2100, def: 111, exp: 2210, gold: [1088, 1972], speed: 72, respawn: 90, look: 'shade', sprite: 'hydra', tint: 0x70e0c0, leader: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_long_mach', 'ao_long_mach', 'gang_tay_long_mach', 'dai_lung_long_mach', 'quan_long_mach', 'giay_long_mach', 'nhan_long_mach', 'day_chuyen_long_mach', 'ngoc_boi_long_mach', 'kiem_long_mach', 'cung_long_mach', 'truong_long_mach']] },
+    tru_mong_long_mach: { name: 'Trụ Mộng Long Mạch · Diệp Tâm', level: 70, hp: 4950, atk: 3740, def: 171, exp: 2283, gold: [24000, 40000], speed: 60, respawn: 300, look: 'hydra', sprite: 'witch', tint: 0x8ff0d0, boss: true, drops: [['loi_tinh_van', 1], ['da_cuong_hoa_than_thoai', 5]], gear: [1, ['mu_long_mach', 'ao_long_mach', 'gang_tay_long_mach', 'dai_lung_long_mach', 'quan_long_mach', 'giay_long_mach', 'nhan_long_mach', 'day_chuyen_long_mach', 'ngoc_boi_long_mach', 'kiem_long_mach', 'cung_long_mach', 'truong_long_mach']] },
+  };
+
+  (G.MONSTER_PARTS = G.MONSTER_PARTS || {})[7] = PART;
+})(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

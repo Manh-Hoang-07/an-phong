@@ -32,8 +32,8 @@ Mở http://127.0.0.1:3100. Đăng ký luôn mở: bấm "Chưa có tài khoản
 
 - Muốn điện thoại cùng wifi vào chơi: chạy `HOST=0.0.0.0 npm start` (trên Windows PowerShell: `$env:HOST='0.0.0.0'; npm start`) rồi mở `http://<IP máy tính>:3100` trên điện thoại.
 - Dữ liệu nằm trong **một** database PostgreSQL. Sao lưu: `npm run backup` (dùng `pg_dump`, file `.dump` trong `backups/`; phục hồi bằng `pg_restore --clean --no-owner -d anphong backups/anphong-....dump`).
-- Quên mật khẩu: `node server/tools/reset-password.js <tên đăng nhập> <mật khẩu mới>`.
-- Tra cứu / khóa tài khoản, khôi phục nhân vật: `node server/tools/user.js` (xem mục *Database* bên dưới).
+- Quên mật khẩu: `node server/tools/ops/reset-password.js <tên đăng nhập> <mật khẩu mới>`.
+- Tra cứu / khóa tài khoản, khôi phục nhân vật: `node server/tools/ops/user.js` (xem mục *Database* bên dưới).
 
 ### Database
 
@@ -42,21 +42,21 @@ Mở http://127.0.0.1:3100. Đăng ký luôn mở: bấm "Chưa có tài khoản
 | `users` | tài khoản, lần đăng nhập cuối (`last_login`, `last_ip`), khóa (`banned`, `ban_reason`) |
 | `sessions` | phiên đăng nhập (lưu hash của token) kèm thời điểm tạo, IP, trình duyệt |
 | `players` | phần nóng của nhân vật (`core` JSON) + cột thật `level`, `exp`, `gold`, `map`, `school`, `rank` (chỉ index `level`) |
-| `player_data` | các phần còn lại của nhân vật, mỗi phần (section) một dòng: `bag`, `equip`, `storage`, `quest`, `skills`, `pets`... (xem `server/sections.js`) |
+| `player_data` | các phần còn lại của nhân vật, mỗi phần (section) một dòng: `bag`, `equip`, `storage`, `quest`, `skills`, `pets`... (xem `server/storage/sections.js`) |
 | `auth_log` | nhật ký: `register`, `login`, `login_fail`, `login_banned`, `logout`, `password_reset`, `ban`, `unban`, `restore`. Giữ 90 ngày (`AUTH_LOG_DAYS`) |
 | `player_snapshots` | bản chụp nhân vật, cứ 30 phút chơi một bản, giữ 20 bản mới nhất mỗi tài khoản (`SNAPSHOT_KEEP`) |
 | `gift_codes`, `gift_redemptions` | mã quà tặng và ai đã dùng |
 | `schema_migrations` | bước nâng cấp cấu trúc đã chạy |
 
-Cấu trúc bảng tự nâng cấp khi server khởi động (danh sách `MIGRATIONS` trong `server/db.js`). Muốn đổi cấu trúc thì **thêm** bước mới vào cuối danh sách, không sửa bước cũ.
+Cấu trúc bảng tự nâng cấp khi server khởi động (danh sách `MIGRATIONS` trong `server/storage/db.js`). Muốn đổi cấu trúc thì **thêm** bước mới vào cuối danh sách, không sửa bước cũ.
 
 ```bash
-node server/tools/user.js info <tên>                 # thông tin + nhật ký gần nhất
-node server/tools/user.js log <tên> 100              # 100 dòng nhật ký
-node server/tools/user.js ban <tên> "gian lận"       # khóa + đăng xuất mọi phiên
-node server/tools/user.js unban <tên>
-node server/tools/user.js snapshots <tên>            # danh sách bản chụp
-node server/tools/user.js restore <tên> <id>         # TẮT SERVER TRƯỚC khi khôi phục
+node server/tools/ops/user.js info <tên>                 # thông tin + nhật ký gần nhất
+node server/tools/ops/user.js log <tên> 100              # 100 dòng nhật ký
+node server/tools/ops/user.js ban <tên> "gian lận"       # khóa + đăng xuất mọi phiên
+node server/tools/ops/user.js unban <tên>
+node server/tools/ops/user.js snapshots <tên>            # danh sách bản chụp
+node server/tools/ops/user.js restore <tên> <id>         # TẮT SERVER TRƯỚC khi khôi phục
 ```
 
 Khóa tài khoản hay đổi mật khẩu bằng công cụ sẽ có hiệu lực với server đang chạy sau tối đa 60 giây.
@@ -180,15 +180,18 @@ shared/                 Dữ liệu + luật tính toán dùng chung cho server 
   logic/                Hàm tính toán: player.js (calcStats...), items.js, skills.js, monsters.js, quests.js, shop.js
   maps/                 Bố cục ô của từng bản đồ (*.txt)
 server/
-  index.js              Máy chủ HTTP, đăng nhập, API
-  db.js                 PostgreSQL: kết nối, migration, truy vấn
-  cache.js              Phiên đăng nhập + nhân vật đang chơi trong bộ nhớ, ghi gộp
-  auth.js codes.js backup.js static.js
+  index.js              Máy chủ HTTP, đăng nhập, API (điểm khởi động)
+  http/                 static.js (phục vụ file tĩnh, nén, cache)
+  storage/              db.js (PostgreSQL: kết nối, migration, truy vấn), cache.js (phiên + nhân vật trong RAM, ghi gộp), sections.js
+  accounts/             auth.js (đăng ký/đăng nhập/phiên), codes.js (mã quà)
   game/                 Luật chơi phía server
     index.js            handle() + migrate() (sửa save cũ)
-    inventory.js progress.js quests.js periodic.js util.js
-    actions/            Từng nhóm hành động: world, combat, quests, items, smith, character
-  tools/                reset-password.js, user.js (tra cứu / khóa / khôi phục), giftcode.js
+    core/               util.js inventory.js progress.js quests.js periodic.js (hàm dùng chung)
+    actions/            Từng nhóm hành động: world, combat, quests, items, smith, character, advancement
+  tools/
+    ops/                Vận hành: backup.js, giftcode.js, reset-password.js, user.js
+    check/              Kiểm tra dữ liệu: check-maps, check-mob-sprites, check-quests, check-shared-order (+ jump-sim.js)
+    gen/                Sinh dữ liệu: gen-maps.js, snapshot-data.js
 public/
   index.html            Nạp các file JS theo đúng thứ tự (có chú thích từng nhóm)
   js/core/              sound.js, net.js, main.js (khởi động)
@@ -275,7 +278,7 @@ sudo systemctl daemon-reload && sudo systemctl restart anphong
 **Sao lưu tự động mỗi ngày lúc 3 giờ sáng.** Chạy `sudo crontab -u anphong -e` rồi thêm dòng:
 
 ```
-0 3 * * * cd /opt/anphong && BACKUP_DIR=/var/backups/anphong /usr/bin/node --env-file=/etc/anphong.env server/backup.js
+0 3 * * * cd /opt/anphong && BACKUP_DIR=/var/backups/anphong /usr/bin/node --env-file=/etc/anphong.env server/tools/ops/backup.js
 ```
 
 **Cập nhật game về sau:** chép mã mới lên, rồi chạy:

@@ -1,0 +1,21 @@
+/*
+ * Quái Chương 6 – Thiên Khôi (cấp 51–60).
+ *
+ * drops: [itemId, tỉ lệ 0..1, (tùy chọn) chỉ rơi khi đang làm nhiệm vụ]
+ * gear:  [tỉ lệ rơi 1 món trang bị, [danh sách món có thể rơi]]
+ */
+(function (G) {
+  'use strict';
+
+  const PART = {
+    tan_du_thien_khoi: { name: 'Quỷ Tro', level: 51, hp: 3750, atk: 1250, def: 84, exp: 1583, gold: [816, 1479], speed: 72, respawn: 8, look: 'shade', sprite: 'imp', tint: 0xff9a60, drops: [['manh_khoi', 0.5, 'c6q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_thien_khoi', 'ao_thien_khoi', 'gang_tay_thien_khoi', 'dai_lung_thien_khoi', 'quan_thien_khoi', 'giay_thien_khoi', 'nhan_thien_khoi', 'day_chuyen_thien_khoi', 'ngoc_boi_thien_khoi', 'kiem_thien_khoi', 'cung_thien_khoi', 'truong_thien_khoi']] },
+    bo_thien_thach: { name: 'Bọ Thiên Thạch', level: 52, hp: 3800, atk: 1300, def: 86, exp: 1620, gold: [832, 1508], speed: 72, respawn: 8, look: 'shade', sprite: 'fire_worm', tint: 0xffb070, drops: [['manh_khoi', 0.5, 'c6q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_thien_khoi', 'ao_thien_khoi', 'gang_tay_thien_khoi', 'dai_lung_thien_khoi', 'quan_thien_khoi', 'giay_thien_khoi', 'nhan_thien_khoi', 'day_chuyen_thien_khoi', 'ngoc_boi_thien_khoi', 'kiem_thien_khoi', 'cung_thien_khoi', 'truong_thien_khoi']] },
+    soi_lua_khoi: { name: 'Sói Lửa Khôi', level: 54, hp: 3900, atk: 1400, def: 89, exp: 1694, gold: [864, 1566], speed: 72, respawn: 8, look: 'shade', sprite: 'skull_wolf', tint: 0xff9a60, drops: [['manh_khoi', 0.45, 'c6q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_thien_khoi', 'ao_thien_khoi', 'gang_tay_thien_khoi', 'dai_lung_thien_khoi', 'quan_thien_khoi', 'giay_thien_khoi', 'nhan_thien_khoi', 'day_chuyen_thien_khoi', 'ngoc_boi_thien_khoi', 'kiem_thien_khoi', 'cung_thien_khoi', 'truong_thien_khoi']] },
+    ho_vuong_thien_khoi: { name: 'Hộ Vệ Khôi Đỏ', level: 55, hp: 3950, atk: 1450, def: 90, exp: 1732, gold: [880, 1595], speed: 72, respawn: 30, look: 'nightborne', sprite: 'knight_silver', tint: 0xff8a70, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_thien_khoi', 'ao_thien_khoi', 'gang_tay_thien_khoi', 'dai_lung_thien_khoi', 'quan_thien_khoi', 'giay_thien_khoi', 'nhan_thien_khoi', 'day_chuyen_thien_khoi', 'ngoc_boi_thien_khoi', 'kiem_thien_khoi', 'cung_thien_khoi', 'truong_thien_khoi']] },
+    tho_mo_chay: { name: 'Thợ Mỏ Cháy', level: 57, hp: 4050, atk: 1550, def: 94, exp: 1805, gold: [912, 1653], speed: 72, respawn: 30, look: 'shade', sprite: 'cyclops', tint: 0xff8a50, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_thien_khoi', 'ao_thien_khoi', 'gang_tay_thien_khoi', 'dai_lung_thien_khoi', 'quan_thien_khoi', 'giay_thien_khoi', 'nhan_thien_khoi', 'day_chuyen_thien_khoi', 'ngoc_boi_thien_khoi', 'kiem_thien_khoi', 'cung_thien_khoi', 'truong_thien_khoi']] },
+    thu_linh_khoi_tan: { name: 'Thủ Lĩnh Khôi Tàn', level: 58, hp: 4100, atk: 1600, def: 95, exp: 1842, gold: [928, 1682], speed: 72, respawn: 90, look: 'shade', sprite: 'rock_golem', tint: 0xff7a40, leader: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_thien_khoi', 'ao_thien_khoi', 'gang_tay_thien_khoi', 'dai_lung_thien_khoi', 'quan_thien_khoi', 'giay_thien_khoi', 'nhan_thien_khoi', 'day_chuyen_thien_khoi', 'ngoc_boi_thien_khoi', 'kiem_thien_khoi', 'cung_thien_khoi', 'truong_thien_khoi']] },
+    tru_mong_thien_khoi: { name: 'Trụ Mộng Thiên Khôi · Triệu Cương', level: 60, hp: 4200, atk: 2890, def: 147, exp: 1916, gold: [12000, 20000], speed: 60, respawn: 300, look: 'beast', sprite: 'warrior', tint: 0xff7a50, boss: true, drops: [['loi_tinh_van', 1], ['da_cuong_hoa_than_thoai', 5]], gear: [1, ['mu_thien_khoi', 'ao_thien_khoi', 'gang_tay_thien_khoi', 'dai_lung_thien_khoi', 'quan_thien_khoi', 'giay_thien_khoi', 'nhan_thien_khoi', 'day_chuyen_thien_khoi', 'ngoc_boi_thien_khoi', 'kiem_thien_khoi', 'cung_thien_khoi', 'truong_thien_khoi']] },
+  };
+
+  (G.MONSTER_PARTS = G.MONSTER_PARTS || {})[6] = PART;
+})(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

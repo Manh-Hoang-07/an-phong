@@ -7,6 +7,11 @@
   function panelCode({ confirm }) {
     if (confirm) {
       const sc = G.SCHOOLS[confirm], p = App.player;
+      // Chỉ class đặc biệt mở bằng mật mã. Chức nghiệp 2 đi đường Sách Tiến Hóa Chức Nghiệp ở NPC ẩn.
+      if (!sc || !sc.special || sc.evolved) confirm = null;
+    }
+    if (confirm) {
+      const sc = G.SCHOOLS[confirm], p = App.player;
       return ['Lữ khách bí ẩn', `<div class="dialog"><div class="face">🧙</div><div class="text" style="flex:1">
         <p>Con đường của <b>${sc.icon} ${esc(sc.name)}</b>: ${esc(sc.desc)}</p>
         ${p.school ? `<p class="bad">Bạn sẽ rời class ${esc(G.SCHOOLS[p.school].name)}. Điểm kỹ năng đã cộng được trả lại toàn bộ.</p>` : ''}

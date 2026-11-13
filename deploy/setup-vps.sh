@@ -197,7 +197,7 @@ fi
 step "Sao lưu tự động 3 giờ sáng mỗi ngày"
 cat > /etc/cron.d/anphong-backup <<EOF
 # Sao lưu database game, giữ 14 bản mới nhất trong $BACKUP_DIR
-0 3 * * * $APP_USER cd $APP_DIR && BACKUP_DIR=$BACKUP_DIR PG_DUMP=$PG_BIN/pg_dump $(command -v node) --env-file=$ENV_FILE server/backup.js >> $BACKUP_DIR/backup.log 2>&1
+0 3 * * * $APP_USER cd $APP_DIR && BACKUP_DIR=$BACKUP_DIR PG_DUMP=$PG_BIN/pg_dump $(command -v node) --env-file=$ENV_FILE server/tools/ops/backup.js >> $BACKUP_DIR/backup.log 2>&1
 EOF
 chmod 644 /etc/cron.d/anphong-backup
 
@@ -218,7 +218,7 @@ echo "================================================================"
 echo " XONG."
 echo "   Mã nguồn:   $APP_DIR"
 echo "   Database:   $DB_NAME (user $DB_USER, mật khẩu trong $ENV_FILE)"
-echo "   Sao lưu:    $BACKUP_DIR (thử ngay: sudo -u $APP_USER env -C $APP_DIR node --env-file=$ENV_FILE server/backup.js)"
+echo "   Sao lưu:    $BACKUP_DIR (thử ngay: sudo -u $APP_USER env -C $APP_DIR node --env-file=$ENV_FILE server/tools/ops/backup.js)"
 echo "   Log game:   journalctl -u anphong -f"
 if [[ $WITH_NGINX -eq 1 ]]; then
   if [[ -n "$DOMAIN" ]]; then

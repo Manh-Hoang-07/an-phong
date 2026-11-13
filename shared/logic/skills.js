@@ -1,5 +1,9 @@
 /*
- * Thông số kỹ năng theo cấp, kỹ năng được học.
+ * Kỹ năng: thông số theo cấp, kỹ năng được học, ô kỹ năng.
+ *
+ * Mô hình một class duy nhất: p.school là class HIỆN TẠI (class nền hoặc chức nghiệp 2).
+ * Người chơi chỉ dùng kỹ năng của chính class đó — không còn hai thanh kỹ năng, không còn
+ * cơ chế bật/tắt chức nghiệp 2. Ngoại lệ duy nhất: Toàn Năng dùng được kỹ năng của mọi class.
  */
 (function (G) {
   'use strict';
@@ -24,73 +28,66 @@
     s.lv = lv;
     return s;
   }
-  // Kỹ năng class được học
-  // Các class mà người chơi được tính là (Triệu Hồi Sư đã tiến hóa vẫn có kỹ năng Tử Linh và ngược lại)
+
+  // Các class mà người chơi được tính là, xét theo DÒNG class.
+  // Chức nghiệp 2 là bước tiến của cùng một dòng nên vẫn dùng tuyệt kỹ của dòng đó
+  // (dữ liệu không có tuyệt kỹ riêng cho từng nhánh, trừ Tử Linh Thuật Sư có bộ nl*).
+  // Kỹ năng THƯỜNG thì không theo hàm này: xem availableSkills.
   function schoolsOf(player) {
-    if (!player.school) return [];
-    if (player.school === 'tu_linh_thuat_su') return ['tu_linh_thuat_su', 'trieu_hoi_su'];
-    if (player.school === 'trieu_hoi_su' && player.advancement?.unlocked?.tu_linh_thuat_su) return ['trieu_hoi_su', 'tu_linh_thuat_su'];
-    return [player.school];
+    const school = player.school;
+    if (!school) return [];
+    const base = G.baseSchool(school);
+    if (base !== school) return [base, school];
+    if (school === 'trieu_hoi_su') return ['trieu_hoi_su'];
+    return [school];
   }
+
   // Tuyệt kỹ này có hợp với class của người chơi không (Toàn Năng: mọi tuyệt kỹ)
   function ultFits(player, s) {
     if (!s || !s.ult || !player.school) return false;
-    if (player.school === 'toan_nang' || s.ultAny) return true;
+    if (G.baseSchool(player.school) === 'toan_nang' || s.ultAny) return true;
     const list = s.ultSchools || [s.school];
     return schoolsOf(player).some(x => list.includes(x));
   }
+
+  // Kỹ năng người chơi học được. Mỗi class chỉ dùng bộ kỹ năng của chính nó.
+  //
+  // Kỹ năng nhánh (có evolutionKey) khai báo school = class NỀN nhưng chỉ thuộc về nhánh:
+  //   - class nền KHÔNG thấy kỹ năng nhánh
+  //   - chức nghiệp 2 chỉ thấy kỹ năng có evolutionKey đúng bằng id nhánh mình
+  // Ngoại lệ: Tử Linh Thuật Sư giữ lại bộ triệu hồi của Triệu Hồi Sư (cùng một cây linh thú),
+  // nên nó thấy cả kỹ năng school = trieu_hoi_su.
   function availableSkills(player) {
-    if (!player.school) return [];
+    const school = player.school;
+    if (!school) return [];
+    const isToanNang = G.baseSchool(school) === 'toan_nang';
     return Object.keys(SKILLS).filter(id => {
       const s = SKILLS[id];
       if (s.ult) return ultFits(player, s);
-      // Kỹ năng chức nghiệp 2: cần mở nhánh tiến hóa tương ứng. Toàn Năng Tinh Thông mở khóa kỹ năng nhánh của MỌI class.
-      if (s.evolutionKey && !(player.school === 'toan_nang' ? player.advancement?.unlocked?.toan_nang_tinh_thong : player.advancement?.unlocked?.[s.evolutionKey])) return false;
-      if (s.type === 'shadow_toggle' && player.school !== 'trieu_hoi_su' && player.school !== 'tu_linh_thuat_su') return false;
-      if (player.school === 'toan_nang') return true;
-      if (player.school === 'tu_linh_thuat_su') return s.school === 'trieu_hoi_su' || s.school === 'tu_linh_thuat_su';
-      if (player.school === 'trieu_hoi_su' && player.advancement?.unlocked?.tu_linh_thuat_su) return s.school === 'trieu_hoi_su' || s.school === 'tu_linh_thuat_su';
-      return s.school === player.school;
+      if (isToanNang) return true;   // Toàn Năng: mọi kỹ năng thường của mọi class
+      if (s.type === 'shadow_toggle' && school !== 'trieu_hoi_su' && school !== 'tu_linh_thuat_su') return false;
+      if (s.evolutionKey) return s.evolutionKey === school;
+      if (school === 'tu_linh_thuat_su') return s.school === 'tu_linh_thuat_su' || s.school === 'trieu_hoi_su';
+      return s.school === school;
     });
   }
+
   // Ô tuyệt kỹ của người chơi (Toàn Năng có thêm 1 ô) và ô kỹ năng thường
-  const ultSlotsOf = (player) => G.ULT_SLOTS.filter(i => i !== G.ULT_EXTRA_SLOT || player.school === 'toan_nang');
-  const normalSlotsOf = (player) => [0, 1, 2, 3].concat(player.school === 'toan_nang' ? [G.EXTRA_SLOT] : []);
+  const ultSlotsOf = (player) => G.ULT_SLOTS.filter(i => i !== G.ULT_EXTRA_SLOT || G.baseSchool(player.school) === 'toan_nang');
+  const normalSlotsOf = (player) => [0, 1, 2, 3].concat(G.baseSchool(player.school) === 'toan_nang' ? [G.EXTRA_SLOT] : []);
   const isUltSlot = (i) => G.ULT_SLOTS.includes(i);
   const ultKeyLabel = (i) => ['R', 'X', 'Z'][G.ULT_SLOTS.indexOf(i)] || '?';
+
   // Tuyệt kỹ đặc trưng của class (sách Tuyệt Kỹ Chức Nghiệp dạy tuyệt kỹ này)
   function signatureUlt(player) {
-    const home = player.school === 'trieu_hoi_su' && player.advancement?.unlocked?.tu_linh_thuat_su ? 'tu_linh_thuat_su' : player.school;
-    return Object.keys(SKILLS).find(id => SKILLS[id].ult && !id.startsWith('ul') && (SKILLS[id].ultSchools || [SKILLS[id].school]).includes(home)) || null;
+    const list = schoolsOf(player);
+    return Object.keys(SKILLS).find(id => SKILLS[id].ult && !id.startsWith('ul') && (SKILLS[id].ultSchools || [SKILLS[id].school]).some(x => list.includes(x))) || null;
   }
+
   function skillLevel(player, id) { return (player.skills && player.skills[id]) || 0; }
-  // Kỹ năng nhánh chức nghiệp 2 (tiến hóa): có evolutionKey, hoặc kỹ năng Tử Linh Thuật Sư
-  const isCareerSkill = (s) => !!(s && (s.evolutionKey || s.school === 'tu_linh_thuat_su'));
-  // Kỹ năng có dùng được ở hình thái hiện tại không (careerOn: đang bật chức nghiệp 2). Trả về lý do khi KHÔNG dùng được.
-  // - Kỹ năng chức nghiệp 2 chỉ dùng khi đang bật chức nghiệp 2.
-  // - Đang bật chức nghiệp 2 thì mọi kỹ năng chức nghiệp 1 bị khóa. Ngoại lệ: Toàn Năng (Tinh Thông không có bộ kỹ năng riêng).
-  // Tuyệt kỹ không thuộc nhánh chức nghiệp 2: dùng được ở cả hai hình thái và gắn được vào cả hai thanh
-  const isSharedUlt = (s) => !!(s && s.ult && !isCareerSkill(s));
-  function skillFormBlock(player, s, careerOn) {
-    if (isSharedUlt(s)) return null;
-    if (isCareerSkill(s)) return careerOn ? null : 'Cần bật chức nghiệp 2 để dùng kỹ năng nhánh này.';
-    if (careerOn && player.school !== 'toan_nang') return 'Đang ở chức nghiệp 2: kỹ năng chức nghiệp 1 không dùng được.';
-    return null;
-  }
 
-  // Thanh kỹ năng theo hình thái: chức nghiệp 2 có thanh riêng (careerSlots), trống nếu chưa học kỹ năng nhánh.
-  // Toàn Năng giữ một thanh chung (Tinh Thông không có bộ kỹ năng riêng).
-  const usesCareerBar = (player, careerOn) => !!careerOn && player.school !== 'toan_nang';
-  const EMPTY_BAR = Object.freeze(Array(G.SKILL_SLOTS).fill(null));
-  function slotsOf(player, careerOn) {
-    return usesCareerBar(player, careerOn) ? (Array.isArray(player.careerSlots) ? player.careerSlots : EMPTY_BAR) : player.skillSlots;
-  }
-  // Tên thanh chứa một kỹ năng: kỹ năng nhánh → careerSlots, còn lại → skillSlots
-  function slotKeyOf(player, id) {
-    return player.school !== 'toan_nang' && isCareerSkill(SKILLS[id]) ? 'careerSlots' : 'skillSlots';
-  }
-  // Đang bật chức nghiệp 2 (theo dữ liệu nhân vật phía server)
-  const careerActive = (player) => !!player.formActive && player.formChoice === 'evolution';
+  // Chỉ còn MỘT thanh kỹ năng. Giữ hàm để chỗ gọi cũ không vỡ, nhưng luôn trả về skillSlots.
+  const slotsOf = (player) => player.skillSlots;
 
-  Object.assign(G, { skillAt, schoolsOf, ultFits, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, availableSkills, skillLevel, isCareerSkill, skillFormBlock, isSharedUlt, usesCareerBar, slotsOf, slotKeyOf, careerActive });
+  Object.assign(G, { skillAt, schoolsOf, ultFits, availableSkills, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, skillLevel, slotsOf });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

@@ -187,7 +187,7 @@ const MapLooks = {
   },
 };
 
-// Các bộ nền vector HD của Craftpix (freebies) – mỗi bộ đủ 4 lớp, tạo bằng server/tools/bg-normalize.js:
+// Các bộ nền vector HD của Craftpix (freebies) – mỗi bộ đủ 4 lớp:
 //   uw1..4  dưới nước: phế tích / rạn san hô / hang có bộ xương + tinh thể / nước sâu
 //   hal1..4 halloween: nhà ma xanh lá / rừng nhện đỏ / nghĩa địa trăng khuyết / phòng lò sưởi
 //   fai1..4 cổ tích: rừng tre thác nước / rừng tím bướm / cây chết trên nước xanh / rừng nấm
@@ -195,7 +195,7 @@ const MapLooks = {
 ['uw1', 'uw2', 'uw3', 'uw4', 'hal1', 'hal2', 'hal3', 'hal4', 'fai1', 'fai2', 'fai3', 'fai4', 'bch1', 'bch2', 'bch3', 'bch4']
   .forEach((p) => { MapLooks.PACKS[p] = { layers: ['sky', 'far', 'mid', 'near'], ext: 'png' }; });
 
-// Craftpix freebies đợt 2 (xem chú thích trong server/tools/bg-normalize.js):
+// Craftpix freebies đợt 2:
 //   win1..4  Winter Holiday: rừng thông tuyết ngày / làng tuyết ngày / làng tuyết đêm núi / cây Giáng sinh đêm
 //   cfr1..4  Cartoon Forest: rừng xanh / rừng huyền ảo đom đóm / rừng nắng / rừng thu đèn lồng + nấm sáng
 //   des1..4  Desert: hẻm đá tím / ốc đảo xương rồng / cồn cát xương hóa thạch / cồn cát xương rồng

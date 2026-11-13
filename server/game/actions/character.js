@@ -1,11 +1,11 @@
 'use strict';
 /* Luật chơi phía server · Hành động nhân vật: chọn class, cộng điểm, kỹ năng, thức tỉnh, mật mã. */
 const G = require('../../../shared');
-const codes = require('../../codes');
-const { fail, fmt } = require('../util');
-const { bagFree, slotsNeeded, giveItem } = require('../inventory');
-const { gainGold, gainExp, setSchool, resetCost } = require('../progress');
-const { questActive, onCurrentMapNpc } = require('../quests');
+const codes = require('../../accounts/codes');
+const { fail, fmt } = require('../core/util');
+const { bagFree, slotsNeeded, giveItem } = require('../core/inventory');
+const { gainGold, gainExp, setSchool, resetCost } = require('../core/progress');
+const { questActive, onCurrentMapNpc } = require('../core/quests');
 
 const redeemTries = new Map();
 
@@ -16,7 +16,10 @@ const actions = {
     if (!questActive(p, 'q6')) fail('Hãy nhận nhiệm vụ "Thức tỉnh lần hai" từ Hội trưởng Khải.');
     const sc = G.SCHOOLS[a.school];
     if (!sc) fail('Class không hợp lệ.');
-    if (sc.special && !p.unlocks[a.school]) fail('Class này chỉ thức tỉnh được bằng mật mã.');
+    // Bảng chọn chỉ có class nền: class đặc biệt (Toàn Năng) mở bằng mật mã,
+    // chức nghiệp 2 chỉ mở bằng Sách Tiến Hóa Chức Nghiệp ở NPC ẩn.
+    if (sc.special) fail('Class này không chọn được ở đây. Hãy tìm NPC ẩn hoặc dùng mật mã.');
+    if (sc.evolved) fail('Chức nghiệp 2 chỉ mở bằng Sách Tiến Hóa Chức Nghiệp từ NPC ẩn.');
     setSchool(p, a.school, ev);
   },
 
@@ -31,21 +34,16 @@ const actions = {
   set_skill(p, a) {
     const slot = Number(a.slot);
     if (!Number.isInteger(slot) || slot < 0 || slot >= G.SKILL_SLOTS) fail('Ô kỹ năng không hợp lệ.');
-    if ((slot === G.EXTRA_SLOT || slot === G.ULT_EXTRA_SLOT) && p.school !== 'toan_nang') fail('Ô này chỉ dành cho Toàn Năng.');
-    // Mỗi hình thái có thanh riêng: a.bar = 'career' sửa thanh chức nghiệp 2, còn lại sửa thanh chức nghiệp 1
-    if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
-    if (!a.skill) { (a.bar === 'career' ? p.careerSlots : p.skillSlots)[slot] = null; return; }
+    if ((slot === G.EXTRA_SLOT || slot === G.ULT_EXTRA_SLOT) && G.baseSchool(p.school) !== 'toan_nang') fail('Ô này chỉ dành cho Toàn Năng.');
+    if (!a.skill) { p.skillSlots[slot] = null; return; }
     const sk = G.SKILLS[a.skill];
     if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
     if (!G.skillLevel(p, a.skill)) fail('Hãy học kỹ năng này trước.');
     if (sk.ult && !G.isUltSlot(slot)) fail('Tuyệt kỹ chỉ đặt được ở ô tuyệt kỹ.');
     if (!sk.ult && G.isUltSlot(slot)) fail('Ô tuyệt kỹ chỉ dành cho tuyệt kỹ.');
-    // Tuyệt kỹ dùng chung hai chức nghiệp: gắn vào thanh người chơi chọn (a.bar = 'career' → thanh chức nghiệp 2)
-    const key = G.isSharedUlt(sk) && p.school !== 'toan_nang' && a.bar === 'career' ? 'careerSlots' : G.slotKeyOf(p, a.skill);
-    const bar = p[key];
-    const other = bar.indexOf(a.skill);
-    if (other >= 0) bar[other] = null;
-    bar[slot] = a.skill;
+    const other = p.skillSlots.indexOf(a.skill);
+    if (other >= 0) p.skillSlots[other] = null;
+    p.skillSlots[slot] = a.skill;
   },
 
   // Học hoặc nâng cấp kỹ năng bằng điểm kỹ năng
@@ -62,10 +60,8 @@ const actions = {
     if (lv === 0) {
       // Học lần đầu thì tự đặt vào ô trống
       const slots = sk.ult ? G.ultSlotsOf(p) : G.normalSlotsOf(p);
-      if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
-      const bar = p[G.slotKeyOf(p, a.skill)];
-      const free = slots.find(i => !bar[i]);
-      if (free !== undefined) bar[free] = a.skill;
+      const free = slots.find(i => !p.skillSlots[i]);
+      if (free !== undefined) p.skillSlots[free] = a.skill;
       ev.push({ t: 'msg', text: `Đã học ${sk.name}.`, color: '#4fc3f7' });
     } else {
       const milestone = (lv + 1 === 5 && sk.t5) || (lv + 1 === 10 && sk.t10);
@@ -87,23 +83,20 @@ const actions = {
     p.skillPoints += spent;
     p.skills = Object.fromEntries(ults.map(id => [id, 1]));
     p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
-    p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
     for (const id of ults.filter(id => G.availableSkills(p).includes(id))) {
-      const bar = p[G.slotKeyOf(p, id)];
-      const free = G.ultSlotsOf(p).find(i => !bar[i]);
-      if (free !== undefined) bar[free] = id;
+      const free = G.ultSlotsOf(p).find(i => !p.skillSlots[i]);
+      if (free !== undefined) p.skillSlots[free] = id;
     }
     ev.push({ t: 'msg', text: `Đã tẩy điểm kỹ năng, nhận lại ${spent} điểm (-${fmt(cost)} xu).`, color: '#ffd54f' });
   },
 
-  // Thức tỉnh class đặc biệt ở Lữ khách bí ẩn (đổi được cả khi đã có class khác)
+  // Thức tỉnh class đặc biệt ở Lữ khách bí ẩn (chỉ class mở bằng mật mã, không phải chức nghiệp 2)
   awaken_special(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lu_khach')) fail('Hãy đến gặp Lữ khách bí ẩn.');
     const sc = G.SCHOOLS[a.school];
     if (!sc || !sc.special) fail('Class này chưa mở khóa.');
-    if (a.school === 'tu_linh_thuat_su') {
-      fail('Tiến hóa bằng Sách Tiến Hóa Chức Nghiệp từ NPC ẩn.');
-    } else if (!p.unlocks[a.school]) fail('Bạn chưa mở khóa class này.');
+    if (sc.evolved) fail('Chức nghiệp 2 chỉ mở bằng Sách Tiến Hóa Chức Nghiệp từ NPC ẩn.');
+    if (!p.unlocks[a.school]) fail('Bạn chưa mở khóa class này.');
     if (p.school === a.school) fail('Bạn đã là ' + sc.name + ' rồi.');
     if (p.level < 5) fail('Cần đạt cấp 5.');
     setSchool(p, a.school, ev);
@@ -137,11 +130,10 @@ const actions = {
 
   // Bật / thu hồi linh thú mặc định của Triệu Hồi Sư (kỹ năng th5)
   summon_toggle(p, a, ev) {
-    if (p.school !== 'trieu_hoi_su' && p.school !== 'tu_linh_thuat_su' && p.school !== 'toan_nang') fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
+    if (!['trieu_hoi_su', 'tu_linh_thuat_su', 'toan_nang'].includes(G.baseSchool(p.school))) fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
     if (!G.skillLevel(p, 'th5')) fail('Hãy học kỹ năng "Triệu Hồi Linh Thú" trước.');
     p.summons = p.summons || { enabled: false, states: {} };
     p.summons.units = p.summons.units || {};
-    if (!p.summons.enabled && G.usesCareerBar(p, G.careerActive(p))) fail('Đang ở chức nghiệp 2: không gọi được linh thú.');
     p.summons.enabled = !p.summons.enabled;
     const cid = G.summonChoice(p), clv = G.summonUnitLv(p, cid);
     ev.push({ t: 'msg', text: p.summons.enabled ? `Đã gọi ${G.SUMMONS[cid].name} (cấp ${clv}).` : 'Đã thu hồi linh thú.', color: '#8be9ff' });
@@ -149,7 +141,7 @@ const actions = {
 
   // Chọn linh thú sẽ gọi ra (mỗi lần chỉ 1 con); đang gọi thì đổi con ngay
   summon_pick(p, a, ev) {
-    if (p.school !== 'trieu_hoi_su' && p.school !== 'tu_linh_thuat_su' && p.school !== 'toan_nang') fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
+    if (!['trieu_hoi_su', 'tu_linh_thuat_su', 'toan_nang'].includes(G.baseSchool(p.school))) fail('Chỉ Triệu Hồi Sư mới gọi được linh thú.');
     if (!G.SUMMONS[a.id]) fail('Không có linh thú này.');
     p.summons = p.summons || { enabled: false, states: {} };
     p.summons.units = p.summons.units || {};
@@ -159,7 +151,7 @@ const actions = {
   },
 
   shadow_toggle(p, a, ev) {
-    if (p.school !== 'tu_linh_thuat_su' && !(p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formActive && p.formChoice === 'evolution')) fail('Chỉ Tử Linh Thuật Sư đang biến hình mới điều khiển được bóng ma.');
+    if (p.school !== 'tu_linh_thuat_su') fail('Chỉ Tử Linh Thuật Sư mới điều khiển được bóng ma.');
     p.shadows = p.shadows || { roster: [], active: [], enabled: false, nextId: 1 };
     if (!p.shadows.enabled) {
       p.shadows.enabled = true;
@@ -172,7 +164,7 @@ const actions = {
   },
 
   shadow_party(p, a, ev) {
-    if (p.school !== 'tu_linh_thuat_su' && !(p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formChoice === 'evolution')) fail('Chỉ Tử Linh Thuật Sư mới quản lý được bóng ma.');
+    if (p.school !== 'tu_linh_thuat_su') fail('Chỉ Tử Linh Thuật Sư mới quản lý được bóng ma.');
     const uid = Number(a.uid);
     const soul = p.shadows?.roster?.find(x => x.uid === uid);
     if (!soul) fail('Không tìm thấy bóng ma này.');
@@ -186,7 +178,7 @@ const actions = {
   },
 
   shadow_release(p, a, ev) {
-    if (p.school !== 'tu_linh_thuat_su' && !(p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su && p.formChoice === 'evolution')) fail('Chỉ Tử Linh Thuật Sư mới giải phóng được bóng ma.');
+    if (p.school !== 'tu_linh_thuat_su') fail('Chỉ Tử Linh Thuật Sư mới giải phóng được bóng ma.');
     const uid = Number(a.uid);
     const i = p.shadows?.roster?.findIndex(x => x.uid === uid) ?? -1;
     if (i < 0) fail('Không tìm thấy bóng ma này.');
@@ -241,9 +233,14 @@ const actions = {
       p.redeemed.push(key);
       ev.push({ t: 'msg', text: '[Hệ thống] Mật mã hợp lệ.', color: '#ffd54f' });
       if (r.unlockClass && G.SCHOOLS[r.unlockClass]) {
-        p.unlocks[r.unlockClass] = true;
-        ev.push({ t: 'unlock', school: r.unlockClass });
-        ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa class đặc biệt: ${G.SCHOOLS[r.unlockClass].name}.`, color: '#ffc94a' });
+        // Chức nghiệp 2 không mở bằng mã: chỉ qua Sách Tiến Hóa Chức Nghiệp ở NPC ẩn
+        if (G.SCHOOLS[r.unlockClass].evolved) {
+          ev.push({ t: 'msg', text: `[Hệ thống] Mã này có class ${G.SCHOOLS[r.unlockClass].name} nhưng chức nghiệp 2 chỉ mở bằng Sách Tiến Hóa Chức Nghiệp.`, color: '#ff8a80' });
+        } else {
+          p.unlocks[r.unlockClass] = true;
+          ev.push({ t: 'unlock', school: r.unlockClass });
+          ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa class đặc biệt: ${G.SCHOOLS[r.unlockClass].name}.`, color: '#ffc94a' });
+        }
       }
       if (r.gold) gainGold(p, Math.max(0, Math.floor(r.gold)), ev);
       if (r.exp) gainExp(p, Math.max(0, Math.floor(r.exp)), ev);

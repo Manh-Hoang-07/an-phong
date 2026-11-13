@@ -123,7 +123,7 @@ const MapScenes = {
  *   tree    bộ ảnh thay cây '&'      ceil  bộ ảnh nhũ đá treo trần '^' ('none' = bỏ, vd. map ngoài trời)      floor  bộ ảnh vật mọc trên nền '^' ('none' = bỏ)
  *   bits    bộ ảnh rải trên mặt đất (thay cỏ/sỏi vẽ code)      tint  nhân màu lên cảnh trí để hợp tông nền      sway  false = không lay
  * Bộ ảnh có sẵn (public/assets/props, MapProps.SETS): cactus, pine, palm, hands (tay trồi từ mộ), stal (nhũ đá rêu treo), vine (dây xoắn ngọc), rock (đá nhỏ).
- * Thêm bộ mới: sửa SETS trong server/tools/props-extract.js rồi chạy lại. */
+ * Thêm bộ mới: sửa map_props_data.js. */
 const MapDecor = {
   rung: { tile: 'earth' },
   // Ngoài trời / tuyết / sa mạc / biển

@@ -3,3 +3,4 @@ backups/
 .env
 assets_raw/
 *.log
+.perch/tmp/

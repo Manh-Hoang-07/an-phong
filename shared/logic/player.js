@@ -3,7 +3,7 @@
  */
 (function (G) {
   'use strict';
-  const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats } = G;
+  const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats, baseSchool } = G;
 
   function nextAwaken(player) {
     const next = (player.awakenTier || 0) + 1;
@@ -14,18 +14,18 @@
     return (t >= 1 && t <= AWAKENS.length) ? AWAKENS[t - 1] : null;
   }
 
-  // Ấn thức tỉnh đi theo NGƯỜI chơi, không theo nghề: mọi class đã mở chức nghiệp 2 và có ít nhất Ấn I đều chồng được Ấn lên chức nghiệp 2.
-  // (Toàn Năng không có thanh kỹ năng nhánh riêng nên bật Ấn ngay ở dạng thường.)
-  function canCareerAwaken(player) {
-    const evo = G.EVOLUTIONS[player.school];
-    return player.school !== 'toan_nang' && !!evo && !!player.advancement?.unlocked?.[evo] && (player.awakenTier || 0) >= 1;
-  }
+  // Ấn thức tỉnh đi theo NGƯỜI chơi, không theo nghề: chức nghiệp 1 hay chức nghiệp 2 đều dùng chung Ấn I / Ấn II.
+  function canAwaken(player) { return (player.awakenTier || 0) >= 1; }
 
+  // Nội tại: chức nghiệp 2 giữ nội tại của class nền, trừ nhánh có nội tại riêng (Tử Linh Thuật Sư).
+  // Toàn Năng có cả 3 nội tại.
   function passivesOf(player) {
-    if (!player.school) return [];
-    if (player.school === 'toan_nang') return Object.keys(PASSIVES);
-    if (player.school === 'trieu_hoi_su' && player.formActive && player.advancement?.unlocked?.tu_linh_thuat_su) return ['tu_linh_thuat_su'];
-    return PASSIVES[player.school] ? [player.school] : [];
+    const school = player.school;
+    if (!school) return [];
+    if (baseSchool(school) === 'toan_nang') return Object.keys(PASSIVES);
+    if (PASSIVES[school]) return [school];
+    const base = baseSchool(school);
+    return PASSIVES[base] ? [base] : [];
   }
 
   function perksOf(player) { return (player.perks || []).filter(id => PERKS[id]); }
@@ -36,12 +36,12 @@
     if (def.slot === 'weapon') return canUseWeapon(player, def);
     return true;
   }
-  // Mỗi class chỉ dùng đúng loại vũ khí của mình (SCHOOLS[...].weapon).
+  // Mỗi class chỉ dùng đúng loại vũ khí của mình (SCHOOLS[...].weapon). Chức nghiệp 2 dùng chung vũ khí class nền.
   // Ngoại lệ: Toàn Năng dùng Thần Binh và mọi vũ khí của class khác (cầm vũ khí class nào thì hiện hình class đó).
   // Chưa chọn class: chỉ dùng vũ khí luyện tập (không thuộc class nào).
   function canUseWeapon(player, def) {
     if (!player.school) return !def.school;
-    if (player.school === 'toan_nang') return true;
+    if (baseSchool(player.school) === 'toan_nang') return true;
     return def.wtype === G.classWeapon(player.school);
   }
 
@@ -56,10 +56,13 @@
       const s = instStats(normalizeInst(it)).all;
       for (const k in s) eq[k] = (eq[k] || 0) + s[k];
     }
-    // Chỉ số gốc theo đường cong RIÊNG của từng class: [cơ bản, mỗi cấp] (chưa chọn class dùng NOVICE_CURVE)
+    // Chỉ số gốc theo đường cong RIÊNG của từng class: [cơ bản, mỗi cấp] (chưa chọn class dùng NOVICE_CURVE).
+    // Chức nghiệp 2 không khai báo curve riêng: lấy đường cong class nền rồi nhân EVOLUTION_MUL (×1.3).
     const sc = player.school && SCHOOLS[player.school];
-    const cv = (sc && sc.curve) || G.NOVICE_CURVE;
-    const lvl = (a) => a[0] + a[1] * (lv - 1);
+    const base = sc && sc.base && SCHOOLS[sc.base];
+    const cv = (sc && sc.curve) || (base && base.curve) || G.NOVICE_CURVE;
+    const evoMul = sc && sc.evolved ? G.EVOLUTION_MUL : 1;
+    const lvl = (a) => (a[0] + a[1] * (lv - 1)) * evoMul;
     let hp = lvl(cv.hp) + p.vit * 10 + eq.hp;
     let mp = lvl(cv.mp) + p.spi * 6 + eq.mp;
     let atk = lvl(cv.atk) + p.str * 2 + eq.atk;
@@ -84,12 +87,11 @@
     // bonus speed nhân (sat_thu: speed: 1.15 — nhân trực tiếp vào base speed)
     const scSpeed = sc && sc.bonus && sc.bonus.speed ? sc.bonus.speed : 1;
     hp *= perkMul.hp; mp *= perkMul.mp; atk *= perkMul.atk; def *= perkMul.def;
-    // Thức tỉnh: chỉ nhân thêm khi ĐANG BIẾN HÌNH (opts.form, do client bật/tắt). Server tính không có opts → chỉ số thường.
-    // Tử Linh Thuật Sư: ấn thức tỉnh chồng lên chức nghiệp 2 (careerAwaken = bậc ấn đang bật, 0 = tắt)
-    const aw = !opts.form ? null : player.formChoice !== 'evolution'
-      ? (player.formChoice === 'awaken1' ? AWAKENS[0] : player.formChoice === 'awaken2' ? AWAKENS[1] : awakenOf(player))
-      : (player.careerAwaken ? AWAKENS[player.careerAwaken - 1] || null : null);
-    let formSta = 1;   // hệ số thể lực của hình thái đang bật (theo hệ số năng lượng của ấn / hình thái)
+    // Thức tỉnh (biến hình): chỉ nhân thêm khi ĐANG BIẾN HÌNH (opts.form, do client bật/tắt).
+    // Đi theo người chơi, không theo nghề: chức nghiệp 1 hay chức nghiệp 2 đều dùng chung Ấn I / Ấn II.
+    // Server tính không có opts → chỉ số thường.
+    const aw = !opts.form ? null : player.formChoice === 'awaken2' ? AWAKENS[1] : AWAKENS[0];
+    let formSta = 1;   // hệ số thể lực của ấn đang bật (theo hệ số năng lượng của ấn)
     const applyMul = (m) => {
       if (!m) return;
       formSta *= m.mp || 1;
@@ -98,7 +100,7 @@
       if (m.atk) atk *= m.atk;
       if (m.def) def *= m.def;
     };
-    // Chức nghiệp 2 KHÔNG nhân chỉ số: sức mạnh của nó nằm ở bộ kỹ năng riêng (xem SKILLS, evolutionKey). Chỉ Ấn thức tỉnh (dùng chung mọi class) mới nhân chỉ số.
+    // Chức nghiệp 2 đã cộng 30% vào đường cong nền ở trên (evoMul); ở đây chỉ còn hệ số của Ấn thức tỉnh.
     if (aw) applyMul(aw.mul);
     crit += perkAdd.crit;
     const w = player.equip.weapon;
@@ -131,7 +133,7 @@
       name,
       level: 1, exp: 0, gold: 50,
       school: null,
-      awakenTier: 0, formChoice: 'awaken1', formActive: false, careerAwaken: 0, hiddenNpcActive: false, villages: ['lang'], titles: [], choices: {},
+      awakenTier: 0, formChoice: 'awaken1', formActive: false, hiddenNpcActive: false, villages: ['lang'], titles: [], choices: {},
       advancement: { quest: null, done: {}, unlocked: {} },
       points: { str: 5, vit: 5, agi: 5, spi: 5 }, freePoints: 0,
       hp: null, mp: null,
@@ -139,7 +141,6 @@
       equip: Object.fromEntries(SLOTS.map(sl => [sl, null])),
       bag: [], storageByMap: {}, bagPlus: 0,   // storageByMap: kho riêng từng làng { mapId: [vật phẩm] }
       skillSlots: Array(SKILL_SLOTS).fill(null),
-      careerSlots: Array(SKILL_SLOTS).fill(null),   // thanh kỹ năng khi bật chức nghiệp 2
       skills: {}, skillPoints: 0,
       unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
       mounts: { owned: [], active: null, summoned: [], skill: 'bite', skills: {} },   // giữ active / skill để đọc dữ liệu client cũ
@@ -165,5 +166,5 @@
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, canCareerAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
+  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

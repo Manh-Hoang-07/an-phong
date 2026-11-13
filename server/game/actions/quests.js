@@ -1,11 +1,11 @@
 'use strict';
 /* Luật chơi phía server · Hành động: nói chuyện NPC, nhiệm vụ chính / phụ / ngày / tuần. */
 const G = require('../../../shared');
-const { fail } = require('../util');
-const { bagFree, slotsNeeded, removeItem, giveItem } = require('../inventory');
-const { gainExp, gainGold } = require('../progress');
-const { currentQuest, questComplete, onCurrentMapNpc, roleHere, giverMap, mustReturnTo } = require('../quests');
-const { ensureWeekly, ensureDaily, dailyDone } = require('../periodic');
+const { fail } = require('../core/util');
+const { bagFree, slotsNeeded, removeItem, giveItem } = require('../core/inventory');
+const { gainExp, gainGold } = require('../core/progress');
+const { currentQuest, questComplete, onCurrentMapNpc, roleHere, giverMap, mustReturnTo } = require('../core/quests');
+const { ensureWeekly, ensureDaily, dailyDone } = require('../core/periodic');
 
 const actions = {
   talk(p, a, ev) {

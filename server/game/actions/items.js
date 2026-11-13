@@ -1,10 +1,10 @@
 'use strict';
 /* Luật chơi phía server · Hành động: mua bán, mặc / tháo trang bị, dùng thuốc, nhặt đồ, kho. */
 const G = require('../../../shared');
-const { fail, fmt } = require('../util');
-const { bagFree, slotsNeeded, addItem, addInst, instName, bagEntry, qualityColor, pruneLoot } = require('../inventory');
-const { clampHpMp, storageFor } = require('../progress');
-const { onCurrentMapNpc, roleHere } = require('../quests');
+const { fail, fmt } = require('../core/util');
+const { bagFree, slotsNeeded, addItem, addInst, instName, bagEntry, qualityColor, pruneLoot } = require('../core/inventory');
+const { clampHpMp, storageFor, setSchool } = require('../core/progress');
+const { onCurrentMapNpc, roleHere } = require('../core/quests');
 
 const lastPotion = new Map();
 
@@ -81,17 +81,28 @@ const actions = {
     if (!e) fail('Hết ' + (G.ITEMS[a.item]?.name || 'vật phẩm') + '.');
     const def = G.ITEMS[e.id];
     if (def.kind === 'transform_book') {
-      const id=def.transform;
-      if (id==='awaken1' && (p.awakenTier>=1 || p.level<20 || !p.advancement.done.awaken1)) fail('Sách này chưa thể sử dụng.');
-      if (id==='awaken2' && (p.awakenTier>=2 || p.level<45 || !p.advancement.done.awaken2)) fail('Sách này chưa thể sử dụng.');
-      if (id==='evolution') { const evo=G.EVOLUTIONS[p.school]; if (p.school==='toan_nang' || !evo || p.level<25 || !p.advancement.done.evolution || p.advancement.unlocked[evo]) fail('Sách này chưa thể sử dụng với class/cấp hiện tại.'); p.advancement.unlocked[evo]=true; }
-      if(id==='awaken1') p.awakenTier=1;
-      // Ấn II dùng chung mọi class. Toàn Năng đọc sách này thì có thêm Tinh Thông: mở khóa kỹ năng chức nghiệp 2 của MỌI class (không nhân chỉ số)
-      if(id==='awaken2') { p.awakenTier=2; if(p.school==='toan_nang') p.advancement.unlocked.toan_nang_tinh_thong=true; }
-      e.qty--; if(e.qty<=0) p.bag.splice(p.bag.indexOf(e),1);
-      p.formChoice=id==='awaken1'?'awaken1':id==='awaken2'?'awaken2':'evolution';
-      const label=id==='evolution'?G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]]:id==='awaken1'?'Biến Hình I':p.school==='toan_nang'?'Biến Hình II và Toàn Năng Tinh Thông (mở mọi kỹ năng chức nghiệp 2)':'Biến Hình II';
-      ev.push({t:'msg',text:`[Hệ thống] Đã mở khóa hình thái ${label}. Có thể bật/tắt bằng nút biến hình.`,color:'#ffd54f'});
+      const id = def.transform;
+      if (id === 'awaken1' && (p.awakenTier >= 1 || p.level < 20 || !p.advancement.done.awaken1)) fail('Sách này chưa thể sử dụng.');
+      if (id === 'awaken2' && (p.awakenTier >= 2 || p.level < 45 || !p.advancement.done.awaken2)) fail('Sách này chưa thể sử dụng.');
+      if (id === 'evolution') {
+        // Đọc sách này là ĐỔI HẲN sang chức nghiệp 2: p.school thành id nhánh, không có đường quay lại.
+        const evo = G.evolutionOf(p.school);
+        if (!evo) fail('Class hiện tại không có chức nghiệp 2.');
+        if (G.isEvolved(p.school)) fail('Bạn đã ở chức nghiệp 2 rồi.');
+        if (p.level < 25 || !p.advancement.done.evolution) fail('Sách này chưa thể sử dụng với class/cấp hiện tại.');
+        e.qty--;
+        if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+        p.advancement.unlocked[evo] = true;   // dữ liệu cũ vẫn đọc được
+        setSchool(p, evo, ev);   // setSchool tự báo "Tiến hóa thành ..."
+        return;
+      }
+      if (id === 'awaken1') p.awakenTier = 1;
+      if (id === 'awaken2') p.awakenTier = 2;
+      e.qty--;
+      if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+      p.formChoice = id === 'awaken2' ? 'awaken2' : 'awaken1';
+      const label = id === 'awaken1' ? 'Biến Hình I' : 'Biến Hình II';
+      ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa ${label}. Bật/tắt bằng nút biến hình (⚡).`, color: '#ffd54f' });
       return;
     }
     if (def.kind === 'ult_book') {
@@ -106,10 +117,8 @@ const actions = {
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
       p.skills[id] = 1;
-      if (!Array.isArray(p.careerSlots)) p.careerSlots = Array(G.SKILL_SLOTS).fill(null);
-      const bar = p[G.slotKeyOf(p, id)];
-      const free = G.ultSlotsOf(p).find(i => !bar[i]);
-      if (free !== undefined) bar[free] = id;
+      const free = G.ultSlotsOf(p).find(i => !p.skillSlots[i]);
+      if (free !== undefined) p.skillSlots[free] = id;
       ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách Tuyệt Kỹ: đã học ${sk.name}.`, color: '#ffd54f' });
       return;
     }

@@ -83,7 +83,6 @@
         <div class="sk sk-ult" data-k="6"><span class="key">X</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-ult sk-extra hidden" data-k="7"><span class="key">Z</span><span class="ico"></span><div class="cd"></div></div>
         <div class="sk sk-form hidden" data-k="form" title="Biến hình (thức tỉnh): bấm lần nữa để trở lại dạng thường"><span class="key">T</span><span class="ico">⚡<small>Biến hình</small></span></div>
-        <div class="sk sk-career hidden" data-k="career" title="Bật/tắt hình thái chức nghiệp tiến hóa"><span class="key">V</span><span class="ico">✦<small>Tiến hóa</small></span></div>
         <div class="sk sk-aws hidden" data-k="aws" title="Đổi giữa Biến hình Ấn I và Ấn II (chỉ đổi được khi đang ở dạng thường)"><span class="key">G</span><span class="ico">⇄<small>Đổi ấn</small></span></div>
         <div class="sk pot" data-k="hp"><span class="key">Q</span><span class="ico">❤</span><span class="cnt" id="pot-hp"></span></div>
         <div class="sk pot" data-k="mp"><span class="key">E</span><span class="ico">💧</span><span class="cnt" id="pot-mp"></span></div>
@@ -112,7 +111,6 @@
         <button data-t="ult2" class="tb tb-skill tb-ult2"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="ult3" class="tb tb-skill tb-ult3 hidden"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="form" class="tb tb-skill tb-form hidden"><span class="ico">⚡<small>Biến</small></span></button>
-        <button data-t="career" class="tb tb-skill tb-career hidden" title="Bật/tắt hình thái chức nghiệp"><span class="ico">✦<small>Tiến hóa</small></span></button>
         <button data-t="aws" class="tb tb-skill tb-aws hidden" title="Đổi giữa Ấn I và Ấn II"><span class="ico">⇄<small>Đổi ấn</small></span></button>
         <button data-t="hp" class="tb tb-pot tb-hp">🧪<b id="tpot-hp"></b></button>
         <button data-t="mp" class="tb tb-pot tb-mp">💧<b id="tpot-mp"></b></button>
@@ -132,18 +130,105 @@
   </div>
 
   <script src="/lib/phaser.min.js"></script>
-  <!-- Dữ liệu game dùng chung (giữ đúng thứ tự như shared/index.js) -->
+  <!-- Dữ liệu game dùng chung. Thứ tự phải khớp shared/index.js — kiểm tra: node server/tools/check-shared-order.js -->
   <script src="/shared/core.js"></script>
-  <script src="/shared/data/classes.js"></script>
-  <script src="/shared/data/skills.js"></script>
-  <script src="/shared/data/items.js"></script>
+  <!-- Class: mỗi chủ đề một file; schools.js phải nạp trước vì skills / items đọc tên class -->
+  <script src="/shared/data/classes/schools.js"></script>
+  <script src="/shared/data/classes/evolutions.js"></script>
+  <script src="/shared/data/classes/awakens.js"></script>
+  <script src="/shared/data/classes/weapons.js"></script>
+  <script src="/shared/data/classes/passives.js"></script>
+  <script src="/shared/data/classes/stamina.js"></script>
+  <script src="/shared/data/classes/index.js"></script>
+  <!-- Kỹ năng: mỗi class một file; skills/index.js gộp lại; ult/ là tuyệt kỹ; perks.js là nội tại -->
+  <script src="/shared/data/skills/classes/kiem-si.js"></script>
+  <script src="/shared/data/skills/classes/cung-thu.js"></script>
+  <script src="/shared/data/skills/classes/phap-su.js"></script>
+  <script src="/shared/data/skills/classes/toan-nang.js"></script>
+  <script src="/shared/data/skills/classes/sat-thu.js"></script>
+  <script src="/shared/data/skills/classes/tanker.js"></script>
+  <script src="/shared/data/skills/classes/tri-lieu-su.js"></script>
+  <script src="/shared/data/skills/classes/trieu-hoi-su.js"></script>
+  <script src="/shared/data/skills/evolution/evo-kiem-thanh.js"></script>
+  <script src="/shared/data/skills/evolution/evo-than-xa.js"></script>
+  <script src="/shared/data/skills/evolution/evo-dai-phap-su.js"></script>
+  <script src="/shared/data/skills/evolution/evo-anh-vuong.js"></script>
+  <script src="/shared/data/skills/evolution/evo-ho-ve.js"></script>
+  <script src="/shared/data/skills/evolution/evo-thanh-linh.js"></script>
+  <script src="/shared/data/skills/ult/ult-can-chien.js"></script>
+  <script src="/shared/data/skills/ult/ult-tam-xa.js"></script>
+  <script src="/shared/data/skills/ult/ult-ho-tro.js"></script>
+  <script src="/shared/data/skills/ult/ult-dac-biet.js"></script>
+  <script src="/shared/data/skills/index.js"></script>
+  <script src="/shared/data/skills/perks.js"></script>
+  <!-- Vật phẩm: mỗi file một nhóm; items/index.js gộp lại rồi sinh vũ khí + sách tuyệt kỹ -->
+  <script src="/shared/data/items/potions.js"></script>
+  <script src="/shared/data/items/materials.js"></script>
+  <script src="/shared/data/items/books.js"></script>
+  <script src="/shared/data/items/quest-items.js"></script>
+  <script src="/shared/data/items/weapons.js"></script>
+  <script src="/shared/data/items/armor/mu.js"></script>
+  <script src="/shared/data/items/armor/ao.js"></script>
+  <script src="/shared/data/items/armor/quan.js"></script>
+  <script src="/shared/data/items/armor/giay.js"></script>
+  <script src="/shared/data/items/armor/gang_tay.js"></script>
+  <script src="/shared/data/items/armor/dai_lung.js"></script>
+  <script src="/shared/data/items/armor/nhan.js"></script>
+  <script src="/shared/data/items/armor/day_chuyen.js"></script>
+  <script src="/shared/data/items/armor/ngoc_boi.js"></script>
+  <script src="/shared/data/items/index.js"></script>
+  <script src="/shared/data/items/sets.js"></script>
   <script src="/shared/data/equipment.js"></script>
-  <script src="/shared/data/monsters.js"></script>
-  <script src="/shared/data/npcs.js"></script>
-  <script src="/shared/data/maps.js"></script>
-  <script src="/shared/data/mounts.js"></script>
+  <!-- Quái: mỗi chương một file; monsters/index.js gộp lại; grades.js là hệ số theo hạng -->
+  <script src="/shared/data/monsters/chapter1.js"></script>
+  <script src="/shared/data/monsters/chapter2.js"></script>
+  <script src="/shared/data/monsters/chapter3.js"></script>
+  <script src="/shared/data/monsters/chapter4.js"></script>
+  <script src="/shared/data/monsters/chapter5.js"></script>
+  <script src="/shared/data/monsters/chapter6.js"></script>
+  <script src="/shared/data/monsters/chapter7.js"></script>
+  <script src="/shared/data/monsters/chapter8.js"></script>
+  <script src="/shared/data/monsters/chapter9.js"></script>
+  <script src="/shared/data/monsters/chapter10.js"></script>
+  <script src="/shared/data/monsters/index.js"></script>
+  <script src="/shared/data/monsters/grades.js"></script>
+  <!-- NPC: story (cốt truyện) → services (dịch vụ Tân Đô I) → villages (nhân bản ra từng làng) -->
+  <script src="/shared/data/npcs/story.js"></script>
+  <script src="/shared/data/npcs/services.js"></script>
+  <script src="/shared/data/npcs/villages.js"></script>
+  <script src="/shared/data/npcs/index.js"></script>
+  <!-- Bản đồ: mỗi chương một file; maps/index.js gộp lại và giữ hằng số làng / phí dịch chuyển -->
+  <script src="/shared/data/maps/chapter1.js"></script>
+  <script src="/shared/data/maps/chapter2.js"></script>
+  <script src="/shared/data/maps/chapter3.js"></script>
+  <script src="/shared/data/maps/chapter4.js"></script>
+  <script src="/shared/data/maps/chapter5.js"></script>
+  <script src="/shared/data/maps/chapter6.js"></script>
+  <script src="/shared/data/maps/chapter7.js"></script>
+  <script src="/shared/data/maps/chapter8.js"></script>
+  <script src="/shared/data/maps/chapter9.js"></script>
+  <script src="/shared/data/maps/chapter10.js"></script>
+  <script src="/shared/data/maps/index.js"></script>
+  <!-- Thú cưỡi / linh thú / bóng ma: dữ liệu loài trước, công thức sau -->
+  <script src="/shared/data/pets/mounts.js"></script>
+  <script src="/shared/data/pets/summons.js"></script>
+  <script src="/shared/data/pets/curve.js"></script>
+  <script src="/shared/data/pets/summon-stats.js"></script>
+  <script src="/shared/data/pets/shadow.js"></script>
+  <!-- Nhiệm vụ chính tuyến: mỗi chương một file, quests/index.js gộp lại ĐÚNG THỨ TỰ cốt truyện -->
+  <script src="/shared/data/quests/helpers.js"></script>
   <script src="/shared/data/quests/chapter1.js"></script>
+  <script src="/shared/data/quests/chapter2.js"></script>
+  <script src="/shared/data/quests/chapter3.js"></script>
+  <script src="/shared/data/quests/chapter4.js"></script>
+  <script src="/shared/data/quests/chapter5.js"></script>
+  <script src="/shared/data/quests/hau-truyen.js"></script>
   <script src="/shared/data/quests/chapter6.js"></script>
+  <script src="/shared/data/quests/chapter7.js"></script>
+  <script src="/shared/data/quests/chapter8.js"></script>
+  <script src="/shared/data/quests/chapter9.js"></script>
+  <script src="/shared/data/quests/chapter10.js"></script>
+  <script src="/shared/data/quests/index.js"></script>
   <script src="/shared/data/quests/side.js"></script>
   <script src="/shared/data/quests/legacy.js"></script>
   <script src="/shared/data/quests/periodic.js"></script>

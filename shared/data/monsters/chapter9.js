@@ -1,0 +1,21 @@
+/*
+ * Quái Chương 9 – Thần Mộng (cấp 81–90).
+ *
+ * drops: [itemId, tỉ lệ 0..1, (tùy chọn) chỉ rơi khi đang làm nhiệm vụ]
+ * gear:  [tỉ lệ rơi 1 món trang bị, [danh sách món có thể rơi]]
+ */
+(function (G) {
+  'use strict';
+
+  const PART = {
+    tan_du_than_mong: { name: 'Bướm Mộng', level: 81, hp: 5560, atk: 2690, def: 132, exp: 2680, gold: [1296, 2349], speed: 72, respawn: 8, look: 'shade', sprite: 'ff_bat', tint: 0xffb0e0, drops: [['canh_buom_mong', 0.5, 'c9q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_than_mong', 'ao_than_mong', 'gang_tay_than_mong', 'dai_lung_than_mong', 'quan_than_mong', 'giay_than_mong', 'nhan_than_mong', 'day_chuyen_than_mong', 'ngoc_boi_than_mong', 'kiem_than_mong', 'cung_than_mong', 'truong_than_mong']] },
+    bong_guong: { name: 'Bóng Gương', level: 83, hp: 5680, atk: 2770, def: 135, exp: 2751, gold: [1328, 2407], speed: 72, respawn: 8, look: 'shade', sprite: 'nightborne', tint: 0xe0c0ff, drops: [['canh_buom_mong', 0.5, 'c9q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_than_mong', 'ao_than_mong', 'gang_tay_than_mong', 'dai_lung_than_mong', 'quan_than_mong', 'giay_than_mong', 'nhan_than_mong', 'day_chuyen_than_mong', 'ngoc_boi_than_mong', 'kiem_than_mong', 'cung_than_mong', 'truong_than_mong']] },
+    hoa_ao_an_thit: { name: 'Hoa Ảo Ăn Thịt', level: 84, hp: 5740, atk: 2810, def: 137, exp: 2787, gold: [1344, 2436], speed: 72, respawn: 8, look: 'shade', sprite: 'ff_slime', tint: 0xff90d0, drops: [['canh_buom_mong', 0.45, 'c9q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_than_mong', 'ao_than_mong', 'gang_tay_than_mong', 'dai_lung_than_mong', 'quan_than_mong', 'giay_than_mong', 'nhan_than_mong', 'day_chuyen_than_mong', 'ngoc_boi_than_mong', 'kiem_than_mong', 'cung_than_mong', 'truong_than_mong']] },
+    ho_vuong_than_mong: { name: 'Nghệ Nhân Gương', level: 85, hp: 5800, atk: 2850, def: 138, exp: 2823, gold: [1360, 2465], speed: 72, respawn: 30, look: 'nightborne', sprite: 'samurai', tint: 0xf0b0ff, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_than_mong', 'ao_than_mong', 'gang_tay_than_mong', 'dai_lung_than_mong', 'quan_than_mong', 'giay_than_mong', 'nhan_than_mong', 'day_chuyen_than_mong', 'ngoc_boi_than_mong', 'kiem_than_mong', 'cung_than_mong', 'truong_than_mong']] },
+    quan_gia_giac_mo: { name: 'Quản Gia Giấc Mơ', level: 87, hp: 5920, atk: 2930, def: 142, exp: 2894, gold: [1392, 2523], speed: 72, respawn: 30, look: 'shade', sprite: 'witch', tint: 0xffc0e8, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_than_mong', 'ao_than_mong', 'gang_tay_than_mong', 'dai_lung_than_mong', 'quan_than_mong', 'giay_than_mong', 'nhan_than_mong', 'day_chuyen_than_mong', 'ngoc_boi_than_mong', 'kiem_than_mong', 'cung_than_mong', 'truong_than_mong']] },
+    thu_linh_me_cung: { name: 'Thủ Lĩnh Mê Cung', level: 88, hp: 5980, atk: 2970, def: 143, exp: 2929, gold: [1408, 2552], speed: 72, respawn: 90, look: 'shade', sprite: 'ronin', tint: 0xe0a0ff, leader: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_than_mong', 'ao_than_mong', 'gang_tay_than_mong', 'dai_lung_than_mong', 'quan_than_mong', 'giay_than_mong', 'nhan_than_mong', 'day_chuyen_than_mong', 'ngoc_boi_than_mong', 'kiem_than_mong', 'cung_than_mong', 'truong_than_mong']] },
+    tru_mong_than_mong: { name: 'Trụ Mộng Thần Mộng · Mộng Điệp', level: 90, hp: 6100, atk: 5185, def: 219, exp: 3000, gold: [48000, 80000], speed: 60, respawn: 300, look: 'reaper', sprite: 'huntress', tint: 0xffb0e8, boss: true, drops: [['loi_tinh_van', 1], ['da_cuong_hoa_than_thoai', 5]], gear: [1, ['mu_than_mong', 'ao_than_mong', 'gang_tay_than_mong', 'dai_lung_than_mong', 'quan_than_mong', 'giay_than_mong', 'nhan_than_mong', 'day_chuyen_than_mong', 'ngoc_boi_than_mong', 'kiem_than_mong', 'cung_than_mong', 'truong_than_mong']] },
+  };
+
+  (G.MONSTER_PARTS = G.MONSTER_PARTS || {})[9] = PART;
+})(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

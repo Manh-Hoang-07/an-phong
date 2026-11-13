@@ -60,7 +60,7 @@
 
   for (const [id, base, accent] of [['kiem_thanh','kiem_si',0xffd54f],['than_xa','cung_thu',0x42f5bb],
     ['dai_phap_su','phap_su',0x72c8ff],['anh_vuong','sat_thu',0xc75aff],['ho_ve_bat_khuat','tanker',0x8bdcff],
-    ['thanh_linh','tri_lieu_su',0x9dffd0],['toan_nang_tinh_thong','toan_nang',0xffe782]]) HUNTERS[id] = { ...HUNTERS[base], accent, eye: accent };
+    ['thanh_linh','tri_lieu_su',0x9dffd0]]) HUNTERS[id] = { ...HUNTERS[base], accent, eye: accent };
 
   // Thân người dùng chung cho nhân vật và NPC. Texture 40x60, chân chạm đáy khung.
   function drawHunter(g, pal, frame, opt = {}) {
@@ -279,7 +279,7 @@
     }
   }
 
-  // NPC có ảnh riêng (public/assets/npcs/<id>.png, nguồn CSAF Hearthhands, xem server/tools/npc-images.js): chiều cao hiển thị (px logic).
+  // NPC có ảnh riêng (public/assets/npcs/<id>.png, nguồn CSAF Hearthhands): chiều cao hiển thị (px logic).
   // Không tải được ảnh thì make() bên dưới vẽ lại bằng code như cũ.
   const NPC_IMAGES = { lao_su: 62, tap_hoa: 62, thu_kho: 64 };
 

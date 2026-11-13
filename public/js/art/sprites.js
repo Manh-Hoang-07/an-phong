@@ -16,7 +16,7 @@ const Sprites = (() => {
       anims: { idle: [10, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [6, 16], hit: [3, 12], death: [10, 12] } },
     phap_su: { fw: 231, fh: 190, cx: 110, fy: 141, s: 0.68, combo: ['attack1', 'attack2'],
       anims: { idle: [6, 8], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [8, 18], attack2: [8, 18], hit: [4, 12], death: [7, 10] } },
-    // Toàn Năng: Halberd Warrior (Engvee, vẽ tay HD, cầm kích; ba đường: đâm quét thấp / bổ từ trên xuống / đâm thẳng). Tool: server/tools/engvee-halberd.js
+    // Toàn Năng: Halberd Warrior (Engvee, vẽ tay HD, cầm kích; ba đường: đâm quét thấp / bổ từ trên xuống / đâm thẳng).
     toan_nang: { fw: 311, fh: 199, cx: 156, fy: 195, s: 0.452, hd: true, combo: ['attack1', 'attack2', 'attack3'],
       anims: { idle: [6, 10], run: [12, 16], jump: [3, 10], fall: [3, 10], attack1: [8, 20], attack2: [8, 20], attack3: [8, 20], hit: [6, 12], death: [8, 10] } },
     // ---- 3 class mới
@@ -35,15 +35,15 @@ const Sprites = (() => {
     // Tử Linh Thuật Sư: Necromancer (áo choàng đen, đầu lâu, trượng đỏ)
     tu_linh_thuat_su: { fw: 184, fh: 222, cx: 72, fy: 210, hd: true, s: 0.6, combo: ['attack1', 'attack2'],
       anims: { idle: [8, 10], run: [8, 14], jump: [2, 8], fall: [2, 8], attack1: [13, 18], attack2: [17, 18], hit: [5, 12], death: [9, 10] } },
-    // ---- Dạng tiến hóa (GameData.EVOLUTIONS). Dạng không có bộ hình riêng mượn hình class gốc (EVO_ALIAS).
+    // ---- Chức nghiệp 2 (GameData.EVOLUTIONS). Nhánh không có bộ hình riêng mượn hình class gốc (EVO_ALIAS).
     // Kiếm Thánh: Female Hero (nữ hiệp sĩ, vệt kiếm sáng)
     kiem_thanh: { fw: 260, fh: 245, cx: 130, fy: 237, s: 0.27, hd: true, combo: ['attack1'],
       anims: { idle: [8, 10], run: [8, 14], jump: [4, 10], fall: [3, 10], attack1: [9, 18], hit: [5, 12], death: [8, 10] } },
   };
-  // Dạng không có bộ hình riêng: [bộ hình mượn, màu phủ]. 'none' = chưa chọn class (thợ săn tập sự, mượn hình Kiếm Sĩ màu nhạt)
+  // Nhánh không có bộ hình riêng: [bộ hình mượn, màu phủ]. 'none' = chưa chọn class (thợ săn tập sự, mượn hình Kiếm Sĩ màu nhạt)
   const EVO_ALIAS = {
     than_xa: ['cung_thu', 0x9dffd4], anh_vuong: ['sat_thu', 0xd7a6ff], thanh_linh: ['tri_lieu_su', 0xfff1b8],
-    toan_nang_tinh_thong: ['toan_nang', 0xffd36a], ho_ve_bat_khuat: ['tanker', 0xb4ccff], dai_phap_su: ['phap_su', 0xa8dcff],
+    ho_ve_bat_khuat: ['tanker', 0xb4ccff], dai_phap_su: ['phap_su', 0xa8dcff],
     none: ['kiem_si', 0xcfc3ae],
   };
   // Bộ hình + màu riêng cho một class / dạng tiến hóa
@@ -53,12 +53,12 @@ const Sprites = (() => {
     const owner = wtype && GameData.weaponOwners ? GameData.weaponOwners(wtype).find(s => s !== 'toan_nang') : null;
     return owner && CHARS[owner] ? owner : null;
   };
-  // Các bộ hình nhân vật cần cho class: hình class + hình dạng tiến hóa (+ hình class theo vũ khí đang cầm của Toàn Năng)
+  // Các bộ hình nhân vật cần cho class: hình class hiện tại + hình class theo vũ khí đang cầm của Toàn Năng.
+  // Chức nghiệp 2 là class thật (p.school = id nhánh) nên hình của nó lấy thẳng theo id.
   const charsFor = (school) => {
     const out = [lookOf(CHARS[school] ? school : 'none').sheet];
-    const evo = GameData.EVOLUTIONS && GameData.EVOLUTIONS[school];
-    if (evo && CHARS[lookOf(evo).sheet]) out.push(lookOf(evo).sheet);
-    const w = school === 'toan_nang' && typeof App !== 'undefined' && App.player?.equip?.weapon;
+    const base = GameData.baseSchool ? GameData.baseSchool(school) : school;
+    const w = base === 'toan_nang' && typeof App !== 'undefined' && App.player?.equip?.weapon;
     const byWeapon = w && GameData.ITEMS[w.id] ? weaponClass(GameData.ITEMS[w.id].wtype) : null;
     if (byWeapon) out.push(byWeapon);
     return out;
@@ -86,7 +86,7 @@ const Sprites = (() => {
       anims: { idle: [10, 10], run: [10, 12], attack: [10, 14], hit: [6, 12], death: [10, 10] } },
     dragon: { fw: 454, fh: 249, cx: 207, fy: 229, hd: true, s: 0.5, bw: 70, bh: 85,
       anims: { idle: [8, 8], run: [8, 10], attack: [8, 12], hit: [6, 12], death: [8, 8] } },
-    // Engvee "FREE 2D Sideview Skeleton" (HD, chuyển bằng server/tools/engvee-skeleton.js); thay bộ "reaper" cũ (Người Gác Lưu Trữ)
+    // Engvee "FREE 2D Sideview Skeleton" (HD); thay bộ "reaper" cũ (Người Gác Lưu Trữ)
     skeleton_knight: { fw: 361, fh: 364, rw: 82, cx: 122, fy: 355, hd: true, s: 0.356, bw: 30, bh: 64,
       anims: { idle: [8, 8], run: [10, 14], attack: [9, 16], hit: [5, 12], death: [8, 10] } },
     nightborne: { fw: 160, fh: 146, cx: 74, fy: 114, hd: true, s: 0.85, bw: 30, bh: 46,
@@ -101,10 +101,10 @@ const Sprites = (() => {
       anims: { idle: [8, 10], run: [8, 14], attack: [8, 16], hit: [3, 12], death: [7, 10] } },
     ronin: { fw: 252, fh: 164, rw: 126, cx: 132, fy: 162, hd: true, s: 0.675, bw: 28, bh: 50,
       anims: { idle: [10, 10], run: [8, 14], attack: [7, 18], hit: [3, 12], death: [11, 12] } },
-    // ---- Gói itch.io (sinh bằng server/tools/mob-sheets.js; nguồn: public/assets/CREDITS.txt)
+    // ---- Gói itch.io (nguồn: public/assets/CREDITS.txt)
     warrior: { fw: 174, fh: 126, rw: 194, cx: 87, fy: 125, s: 0.691, bw: 30, bh: 52,
       anims: { idle: [6, 10], run: [8, 12], attack: [4, 16], hit: [3, 12], death: [9, 10] } },
-    // Volva Studio "Dark Fantasy Enemy #1" (384px, chuyển bằng server/tools/geravolva-spearman.js); thay bản LuizMelo cũ
+    // Volva Studio "Dark Fantasy Enemy #1" (384px); thay bản LuizMelo cũ
     spearman: { fw: 259, fh: 118, rw: 154, cx: 118, fy: 113, hd: true, s: 0.55, bw: 30, bh: 52,
       anims: { idle: [6, 6], run: [6, 10], attack: [5, 14], hit: [4, 12], death: [8, 10] } },
     knight_silver: { fw: 218, fh: 102, rw: 139, cx: 109, fy: 100, hd: true, s: 0.7105, bw: 30, bh: 50,
@@ -123,7 +123,7 @@ const Sprites = (() => {
       anims: { idle: [8, 10], run: [8, 12], attack: [5, 16], hit: [3, 12], death: [8, 10] } },
     king: { fw: 179, fh: 84, rw: 193, cx: 89.5, fy: 83, s: 0.732, bw: 30, bh: 55,
       anims: { idle: [6, 10], run: [8, 12], attack: [6, 16], hit: [4, 12], death: [11, 10] } },
-    // Engvee "FREE 2D Sideview Spider" (HD, chuyển bằng server/tools/engvee-spider.js)
+    // Engvee "FREE 2D Sideview Spider" (HD)
     spider: { fw: 203, fh: 144, rw: 32, cx: 101, fy: 125, hd: true, s: 0.448, bw: 40, bh: 28,
       anims: { idle: [8, 10], run: [8, 14], attack: [8, 16], hit: [5, 12], death: [8, 10] } },
     worm: { fw: 128, fh: 92, rw: 34, cx: 64, fy: 80, hd: true, s: 0.7143, bw: 26, bh: 37,
@@ -153,7 +153,7 @@ const Sprites = (() => {
       anims: { idle: [6, 8], run: [6, 12], attack: [18, 18], hit: [2, 12], death: [1, 10] } },
     cultist: { fw: 156, fh: 178, rw: 202, cx: 78, fy: 177, s: 0.38, bw: 30, bh: 55,
       anims: { idle: [5, 10], run: [6, 12], attack: [5, 16], hit: [4, 12], death: [6, 10] } },
-    // ---- Free Foes (Robert Pinero; tool: server/tools/free-foes.js; xem public/assets/CREDITS.txt)
+    // ---- Free Foes (Robert Pinero; xem public/assets/CREDITS.txt)
     ff_bat: { fw: 150, fh: 147, rw: 87, cx: 75, cy: 58, fly: true, hd: true, s: 0.379, bw: 40, bh: 32, faceLeft: true,
       anims: { idle: [4, 7], run: [4, 12], attack: [3, 16], hit: [3, 12], death: [6, 9] } },
     ff_crab: { fw: 144, fh: 74, rw: 32, cx: 72, fy: 72, hd: true, s: 0.493, bw: 40, bh: 28, faceLeft: true,

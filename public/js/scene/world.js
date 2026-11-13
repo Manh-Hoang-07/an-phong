@@ -243,9 +243,8 @@ class WorldScene extends Phaser.Scene {
       for (let i = 0; i < 5; i++) if (this.pressed('Digit' + (i + 1)) || this.tpressed('s' + i)) this.useSkill(i, time);
       if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOTS[0], time);
       if (this.pressed('KeyX') || this.tpressed('ult2')) this.useSkill(GameData.ULT_SLOTS[1], time);
-      if (this.pressed('KeyZ') || this.tpressed('ult3')) { if (App.player.school === 'toan_nang') this.useSkill(GameData.ULT_SLOTS[2], time); }
+      if (this.pressed('KeyZ') || this.tpressed('ult3')) { if (GameData.baseSchool(App.player.school) === 'toan_nang') this.useSkill(GameData.ULT_SLOTS[2], time); }
       if (this.pressed('KeyT') || this.tpressed('form')) this.toggleForm(time);
-      if (this.pressed('KeyV') || this.tpressed('career')) Net.action('career_toggle');
       if (this.pressed('KeyG') || this.tpressed('aws')) this.switchAwaken();
       if (this.pressed('KeyQ') || this.tpressed('hp')) this.usePotion('hp');
       if (this.pressed('KeyE') || this.tpressed('mp')) this.usePotion('mp');

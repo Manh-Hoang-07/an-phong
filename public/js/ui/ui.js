@@ -94,12 +94,11 @@ const UI = (() => {
     const pts = (p.freePoints || 0) + (p.skillPoints || 0);
     badge.textContent = pts;
     badge.classList.toggle('hidden', !pts);
-    const tn = p.school === 'toan_nang';
+    const tn = G.baseSchool(p.school) === 'toan_nang';
     document.querySelectorAll('.sk-extra, .tb-s4, .tb-ult3').forEach(el => el.classList.toggle('hidden', !tn));
-    // Nút biến hình: chỉ hiện khi đã có ấn thức tỉnh; sáng lên khi đang biến hình
+    // Nút biến hình: chỉ hiện khi đã có Ấn thức tỉnh; sáng lên khi đang biến hình
     const awk = G.awakenOf(p);
-    const hasForm = (p.awakenTier > 0) || !!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]];
-    const hasCareer = !!p.advancement?.unlocked?.[G.EVOLUTIONS[p.school]] && p.school !== 'toan_nang';
+    const hasForm = (p.awakenTier || 0) > 0;
     const summoned = Array.isArray(p.mounts?.summoned) ? p.mounts.summoned : (p.mounts?.active ? [p.mounts.active] : []);
     $('hud-pet').classList.toggle('hidden', !summoned.length);
     const petStats = G.petStats(p), petStates = p.pets || {};
@@ -115,7 +114,7 @@ const UI = (() => {
     }
     document.querySelectorAll('.sk-form, .tb-form').forEach(el => {
       el.classList.toggle('hidden', !hasForm);
-      el.classList.toggle('active', !!App.form && (p.formChoice !== 'evolution' || !!p.careerAwaken));   // nút biến hình chỉ sáng khi đang thức tỉnh
+      el.classList.toggle('active', !!App.form);   // nút biến hình chỉ sáng khi đang thức tỉnh
       if (hasForm) el.style.setProperty('--form', '#' + (awk?.aura || G.SCHOOLS[p.school]?.color || 0xb46bff).toString(16).padStart(6, '0'));
     });
     // Có cả Ấn I và Ấn II: hiện nút đổi ấn và ghi rõ ấn đang chọn trên nút biến hình
@@ -123,17 +122,11 @@ const UI = (() => {
     const pick = App.awakenPick === 'awaken1' ? 1 : 2;
     document.querySelectorAll('.sk-aws, .tb-aws').forEach(el => el.classList.toggle('hidden', !both));
     document.querySelectorAll('.sk-form .ico small, .tb-form .ico small').forEach(el => { el.textContent = both ? (pick === 1 ? 'Ấn I' : 'Ấn II') : (el.closest('.tb-form') ? 'Biến' : 'Biến hình'); });
-    const careerName = G.EVOLUTION_NAMES[G.EVOLUTIONS[p.school]] || 'Tiến hóa';
-    const careerShort = careerName.split(' ')[0];
-    document.querySelectorAll('.sk-career, .tb-career').forEach(el => {
-      el.classList.toggle('hidden', !hasCareer);
-      el.classList.toggle('active', !!p.formActive && p.formChoice === 'evolution');
-      const ico = el.querySelector('.ico');
-      if (ico) setHtml(ico, `${p.school === 'trieu_hoi_su' ? '☠' : '✦'}<small>${esc(careerShort)}</small>`);
-    });
+    // Nút chức nghiệp 2 (V) đã bỏ: chức nghiệp 2 giờ là class thật, không bật/tắt
+    document.querySelectorAll('.sk-career, .tb-career').forEach(el => el.classList.add('hidden'));
 
-    // thanh kỹ năng (chức nghiệp 2 đang bật → thay bằng thanh chức nghiệp 2, ô chưa có để trống)
-    const bar = G.slotsOf(p, !!App.form && p.formChoice === 'evolution');
+    // thanh kỹ năng: một thanh duy nhất
+    const bar = p.skillSlots || [];
     document.querySelectorAll('#skillbar .sk').forEach(el => {
       const k = el.dataset.k;
       if (!/^\d$/.test(k)) return;
@@ -182,7 +175,7 @@ const UI = (() => {
     // Nút đánh thường mờ đi khi không đủ thể lực
     const noAtk = !!App.staLocked || (scene.attackStaminaCost && sta < scene.attackStaminaCost());
     for (const el of [document.querySelector('#skillbar .sk[data-k="atk"]'), document.querySelector('#touch .tb-attack')]) if (el) el.classList.toggle('nosta', noAtk);
-    const bar = G.slotsOf(p, !!App.form && p.formChoice === 'evolution');
+    const bar = p.skillSlots || [];
     for (let i = 0; i < G.SKILL_SLOTS; i++) {
       const id = bar[i];
       const left = id ? (scene.cooldowns[id] || 0) - time : 0;
@@ -190,8 +183,6 @@ const UI = (() => {
       const skNow = id && G.skillLevel(p, id) ? G.skillAt(id, G.skillLevel(p, id)) : null;
       const noMp = !!skNow && App.mp < Math.round(skNow.mp * st.costMul);
       const noSta = !!skNow && (!!App.staLocked || sta < (skNow.ult ? G.STAMINA.ult : G.STAMINA.skill));
-      // Khóa theo hình thái (chức nghiệp 1 / chức nghiệp 2): ô mờ hẳn đi
-      const formLock = !!skNow && !!G.skillFormBlock(p, skNow, !!App.form && p.formChoice === 'evolution');
       const ui = G.ULT_SLOTS.indexOf(i);
       const touchCls = ui >= 0 ? ['tb-ult', 'tb-ult2', 'tb-ult3'][ui] : 'tb-s' + i;
       for (const el of [document.querySelector(`#skillbar .sk[data-k="${i}"]`), document.querySelector(`#touch .${touchCls}`)]) {
@@ -199,7 +190,6 @@ const UI = (() => {
         el.querySelector('.cd').style.height = h;
         el.classList.toggle('nomp', noMp);
         el.classList.toggle('nosta', noSta);
-        el.classList.toggle('formlock', formLock);
       }
     }
   }
@@ -517,7 +507,6 @@ const UI = (() => {
       if (k === 'atk') sc.basicAttack(sc.time.now);
       else if (k === 'hp' || k === 'mp') sc.usePotion(k);
       else if (k === 'form') sc.toggleForm(sc.time.now);
-      else if (k === 'career') Net.action('career_toggle');
       else if (k === 'aws') sc.switchAwaken();
       else if (k === 'mount') openPanel('mount');
       else if (k === 'pets') openPanel('mount');

@@ -35,29 +35,23 @@
     if (!p.school) {
       return ['Kỹ năng', `<p>Bạn chưa thức tỉnh class. Đạt cấp 5 rồi gặp <b>Hội trưởng Khải</b> để chọn class.</p>
         <p>Điểm kỹ năng đang có: <b class="gold">${p.skillPoints}</b> (mỗi lần lên cấp được 1 điểm, giữ lại để dùng sau khi thức tỉnh).</p>
-        <div class="schools">` + Object.entries(G.SCHOOLS).filter(([id, s]) => !s.special || p.unlocks[id])
+        <div class="schools">` + Object.entries(G.SCHOOLS).filter(([, s]) => !s.special && !s.evolved)
         .map(([, s]) => `<div class="school-card"><h3>${s.icon} ${esc(s.name)}</h3><p>${esc(s.desc)}</p></div>`).join('') + '</div>'];
     }
-    const tn = p.school === 'toan_nang';
+    const tn = G.baseSchool(p.school) === 'toan_nang';
     const slots = G.normalSlotsOf(p).concat(G.ultSlotsOf(p));
     let html = `<div class="row" style="justify-content:space-between;margin-bottom:8px">
       <div>Điểm kỹ năng: <b class="gold" style="font-size:16px">${p.skillPoints}</b></div>
       <div class="muted" style="font-size:12px">Mỗi cấp +1 điểm · Tẩy điểm ở Hội trưởng Khải</div></div>`;
-    // Thanh kỹ năng hiện tại. Đã mở chức nghiệp 2 (trừ Toàn Năng) thì có thêm thanh riêng, tự thay khi bật chức nghiệp 2
-    const evo = G.EVOLUTIONS[p.school];
-    const hasCareerBar = !tn && !!evo && !!p.advancement?.unlocked?.[evo];
-    const careerOn = !!App.form && p.formChoice === 'evolution';
-    const barHtml = (bar, key) => '<div class="skill-slots">' + slots.map(i => {
-      const id = bar[i];
+    // Một thanh kỹ năng duy nhất: class hiện tại (chức nghiệp 1 hay chức nghiệp 2) dùng đúng thanh này
+    const barHtml = '<div class="skill-slots">' + slots.map(i => {
+      const id = p.skillSlots[i];
       const sk = id && G.SKILLS[id];
       return `<div class="sslot ${G.isUltSlot(i) ? 'ult' : ''}"><span class="k">${slotLabel(i)}</span>` +
-        (sk ? `<span class="ic">${sk.icon}</span><small>${esc(sk.name)}</small><button class="x" data-act="clear_slot" data-slot="${i}" data-bar="${key}" title="Gỡ">✕</button>`
+        (sk ? `<span class="ic">${sk.icon}</span><small>${esc(sk.name)}</small><button class="x" data-act="clear_slot" data-slot="${i}" title="Gỡ">✕</button>`
           : `<small class="muted">${G.isUltSlot(i) ? 'Tuyệt kỹ' : 'Trống'}</small>`) + '</div>';
     }).join('') + '</div>';
-    if (hasCareerBar) {
-      html += `<div class="muted" style="margin:4px 0;font-size:12px">THANH CHỨC NGHIỆP 1 · ${esc(G.SCHOOLS[p.school].name)}${careerOn ? '' : ' (đang dùng)'}</div>` + barHtml(p.skillSlots, 'main');
-      html += `<div class="muted" style="margin:8px 0 4px;font-size:12px">THANH CHỨC NGHIỆP 2 · ${esc(G.EVOLUTION_NAMES[evo] || '')}${careerOn ? ' (đang dùng)' : ''}</div>` + barHtml(p.careerSlots || [], 'career');
-    } else html += barHtml(p.skillSlots, 'main');
+    html += barHtml;
     // Nội tại
     const passives = G.passivesOf(p);
     if (passives.length) {
@@ -94,13 +88,10 @@
       const canUp = !locked && lv < G.SKILL_MAX && p.skillPoints > 0;
       const upBtn = lv >= G.SKILL_MAX ? '<span class="gold" style="font-size:12px">TỐI ĐA</span>'
         : `<button class="btn small ${canUp ? 'primary' : ''}" data-act="learn_skill" data-skill="${id}" ${canUp ? '' : 'disabled'}>${lv ? '+1 cấp' : 'Học'}</button>`;
-      // Nút gắn vào ô. Tuyệt kỹ dùng chung hai chức nghiệp thì có thêm nhóm nút cho thanh chức nghiệp 2
-      const slotGroup = (key, bar) => (base.ult ? G.ultSlotsOf(p) : G.normalSlotsOf(p))
-        .map(i => { const on = (bar || [])[i] === id; return `<button class="btn small slotbtn ${on ? 'on' : ''}" data-act="set_skill" data-slot="${i}" data-skill="${id}" data-bar="${key}" ${on ? 'disabled' : ''}>${slotLabel(i)}</button>`; }).join('');
-      const shared = G.isSharedUlt(base) && hasCareerBar;
-      const slotBtns = !lv ? '' : shared
-        ? `<span class="muted" style="font-size:11px">Nghề 1</span>${slotGroup('main', p.skillSlots)}<span class="muted" style="font-size:11px;margin-left:6px">Nghề 2</span>${slotGroup('career', p.careerSlots)}`
-        : slotGroup('main', p[G.slotKeyOf(p, id)]);
+      // Nút gắn vào ô (một thanh duy nhất)
+      const slotGroup = () => (base.ult ? G.ultSlotsOf(p) : G.normalSlotsOf(p))
+        .map(i => { const on = p.skillSlots[i] === id; return `<button class="btn small slotbtn ${on ? 'on' : ''}" data-act="set_skill" data-slot="${i}" data-skill="${id}" ${on ? 'disabled' : ''}>${slotLabel(i)}</button>`; }).join('');
+      const slotBtns = !lv ? '' : slotGroup();
       const ms = [[5, base.t5], [10, base.t10]].filter(([, t]) => t)
         .map(([m, t]) => `<span class="${lv >= m ? 'okc' : 'muted'}">${lv >= m ? '✓' : '◇'} Cấp ${m}: ${esc(t)}</span>`).join('<br>');
       html += `<div class="li skill-li ${locked ? 'locked' : ''} ${base.ult ? 'is-ult' : ''}">

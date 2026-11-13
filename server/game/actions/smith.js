@@ -1,10 +1,10 @@
 'use strict';
 /* Luật chơi phía server · Hành động thợ rèn: nâng cấp, tẩy luyện, phân rã. */
 const G = require('../../../shared');
-const { fail } = require('../util');
-const { countItem, addItem, removeItem, bagEntry, reforgeCost, salvageStones } = require('../inventory');
-const { clampHpMp } = require('../progress');
-const { roleHere } = require('../quests');
+const { fail } = require('../core/util');
+const { countItem, addItem, removeItem, bagEntry, reforgeCost, salvageStones } = require('../core/inventory');
+const { clampHpMp } = require('../core/progress');
+const { roleHere } = require('../core/quests');
 
 const actions = {
   upgrade(p, a, ev) {

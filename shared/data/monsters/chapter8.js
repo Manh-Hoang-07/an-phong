@@ -1,0 +1,21 @@
+/*
+ * Quái Chương 8 – Tinh Vân (cấp 71–80).
+ *
+ * drops: [itemId, tỉ lệ 0..1, (tùy chọn) chỉ rơi khi đang làm nhiệm vụ]
+ * gear:  [tỉ lệ rơi 1 món trang bị, [danh sách món có thể rơi]]
+ */
+(function (G) {
+  'use strict';
+
+  const PART = {
+    tan_du_tinh_van: { name: 'Sao Băng Sống', level: 71, hp: 5005, atk: 2245, def: 116, exp: 2319, gold: [1136, 2059], speed: 72, respawn: 8, look: 'shade', sprite: 'eye', tint: 0xd0a0ff, drops: [['manh_tinh_van', 0.5, 'c8q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_tinh_van', 'ao_tinh_van', 'gang_tay_tinh_van', 'dai_lung_tinh_van', 'quan_tinh_van', 'giay_tinh_van', 'nhan_tinh_van', 'day_chuyen_tinh_van', 'ngoc_boi_tinh_van', 'kiem_tinh_van', 'cung_tinh_van', 'truong_tinh_van']] },
+    nhen_tinh_van: { name: 'Nhện Tinh Vân', level: 73, hp: 5115, atk: 2335, def: 119, exp: 2392, gold: [1168, 2117], speed: 72, respawn: 8, look: 'shade', sprite: 'spider', tint: 0xc090ff, drops: [['manh_tinh_van', 0.5, 'c8q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_tinh_van', 'ao_tinh_van', 'gang_tay_tinh_van', 'dai_lung_tinh_van', 'quan_tinh_van', 'giay_tinh_van', 'nhan_tinh_van', 'day_chuyen_tinh_van', 'ngoc_boi_tinh_van', 'kiem_tinh_van', 'cung_tinh_van', 'truong_tinh_van']] },
+    tho_quan_trac_meo: { name: 'Thợ Quan Trắc Méo', level: 74, hp: 5170, atk: 2380, def: 121, exp: 2428, gold: [1184, 2146], speed: 72, respawn: 8, look: 'shade', sprite: 'cultist', tint: 0xa0b0ff, drops: [['manh_tinh_van', 0.45, 'c8q3'], ['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_tinh_van', 'ao_tinh_van', 'gang_tay_tinh_van', 'dai_lung_tinh_van', 'quan_tinh_van', 'giay_tinh_van', 'nhan_tinh_van', 'day_chuyen_tinh_van', 'ngoc_boi_tinh_van', 'kiem_tinh_van', 'cung_tinh_van', 'truong_tinh_van']] },
+    ho_vuong_tinh_van: { name: 'Kỵ Sĩ Sao Tím', level: 75, hp: 5225, atk: 2425, def: 122, exp: 2464, gold: [1200, 2175], speed: 72, respawn: 30, look: 'nightborne', sprite: 'knight_silver', tint: 0xc0a0ff, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_tinh_van', 'ao_tinh_van', 'gang_tay_tinh_van', 'dai_lung_tinh_van', 'quan_tinh_van', 'giay_tinh_van', 'nhan_tinh_van', 'day_chuyen_tinh_van', 'ngoc_boi_tinh_van', 'kiem_tinh_van', 'cung_tinh_van', 'truong_tinh_van']] },
+    may_do_dien: { name: 'Máy Đo Điên', level: 77, hp: 5335, atk: 2515, def: 126, exp: 2536, gold: [1232, 2233], speed: 72, respawn: 30, look: 'shade', sprite: 'mimic', tint: 0x9ad0ff, elite: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_tinh_van', 'ao_tinh_van', 'gang_tay_tinh_van', 'dai_lung_tinh_van', 'quan_tinh_van', 'giay_tinh_van', 'nhan_tinh_van', 'day_chuyen_tinh_van', 'ngoc_boi_tinh_van', 'kiem_tinh_van', 'cung_tinh_van', 'truong_tinh_van']] },
+    thu_linh_vanh_dai: { name: 'Thủ Lĩnh Vành Đai', level: 78, hp: 5390, atk: 2560, def: 127, exp: 2572, gold: [1248, 2262], speed: 72, respawn: 90, look: 'shade', sprite: 'reaper_boss', tint: 0xb090ff, leader: true, drops: [['binh_mau_than_thoai', 0.2], ['binh_nl_than_thoai', 0.15], ['loi_tinh_van', 0.12]], gear: [0.12, ['mu_tinh_van', 'ao_tinh_van', 'gang_tay_tinh_van', 'dai_lung_tinh_van', 'quan_tinh_van', 'giay_tinh_van', 'nhan_tinh_van', 'day_chuyen_tinh_van', 'ngoc_boi_tinh_van', 'kiem_tinh_van', 'cung_tinh_van', 'truong_tinh_van']] },
+    tru_mong_tinh_van: { name: 'Trụ Mộng Tinh Vân · Quan Tinh', level: 80, hp: 5500, atk: 4505, def: 195, exp: 2644, gold: [36000, 60000], speed: 60, respawn: 300, look: 'dragon', sprite: 'evil_wizard', tint: 0xa0a0ff, boss: true, drops: [['loi_tinh_van', 1], ['da_cuong_hoa_than_thoai', 5]], gear: [1, ['mu_tinh_van', 'ao_tinh_van', 'gang_tay_tinh_van', 'dai_lung_tinh_van', 'quan_tinh_van', 'giay_tinh_van', 'nhan_tinh_van', 'day_chuyen_tinh_van', 'ngoc_boi_tinh_van', 'kiem_tinh_van', 'cung_tinh_van', 'truong_tinh_van']] },
+  };
+
+  (G.MONSTER_PARTS = G.MONSTER_PARTS || {})[8] = PART;
+})(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);
