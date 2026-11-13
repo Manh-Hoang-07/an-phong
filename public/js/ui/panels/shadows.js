@@ -2,16 +2,14 @@
 /* UI · Bộ sưu tập bóng ma của Tử Linh Thuật Sư. */
 (() => {
   const { G, esc, S, fmt } = UI._;
-  // Chỉ số bóng ma theo cấp hiện tại (tăng dần khi bóng lên cấp, kẹp tối đa bằng cấp chủ)
+  // Chỉ số bóng ma theo cấp hiện tại (= chỉ số quái lúc thu phục, chỉ tăng khi bóng lên cấp)
   function statLine(soul, p) {
     const s = G.shadowStats(soul, p) || {};
-    const trueLv = G.shadowTrueLv(soul), capped = trueLv > (p.level || 1);
     const parts = [`Cấp ${s.level ?? '?'}`, s.gradeLabel && s.gradeLabel !== 'thường' ? s.gradeLabel : null,
       `❤ ${fmt(s.hp ?? 0)}`, `⚔ ${fmt(s.atk ?? 0)}`, `🛡 ${fmt(s.def ?? 0)}`, s.speed ? `👟 ${s.speed}` : null].filter(Boolean);
     const where = s.map && G.MAPS[s.map] ? ` · thu ở ${G.MAPS[s.map].name}` : '';
     const when = s.at ? ` · ${new Date(s.at).toLocaleDateString('vi-VN')}` : '';
-    const lock = capped ? ` · cấp thật ${trueLv}, mở dần khi bạn lên cấp` : '';
-    return `<small>${esc(parts.join(' · '))}${esc(where + when + lock)}</small>`;
+    return `<small>${esc(parts.join(' · '))}${esc(where + when)}</small>`;
   }
   function panelShadows() {
     const p = App.player, data = p.shadows || { roster: [], active: [], enabled: false };
