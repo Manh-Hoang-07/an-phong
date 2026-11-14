@@ -363,12 +363,16 @@
     ScreenRot.update();
     if (!game || !game.scale) return;
     View.calc();
+    // refresh()/setGameSize() dùng kích thước khung cha đã đo từ trước; iOS hay không phát (hoặc phát trễ) sự kiện resize
+    // của Phaser → canvas kẹt ở kích thước cũ, nhỏ giữa màn hình. Đo lại khung cha ngay tại đây.
+    if (game.scale.getParentBounds) game.scale.getParentBounds();
     if (game.scale.width !== View.pw || game.scale.height !== View.ph) game.scale.setGameSize(View.pw, View.ph);
     else game.scale.refresh();
   }
   // Điện thoại: thanh địa chỉ ẩn/hiện, xoay màn hình... không phải lúc nào cũng phát sự kiện resize của window
   if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(fitGame, 50));
-  window.addEventListener('resize', () => setTimeout(fitGame, 50));
+  window.addEventListener('resize', () => { setTimeout(fitGame, 50); setTimeout(fitGame, 400); });
+  window.addEventListener('pageshow', () => setTimeout(fitGame, 100));
   // iOS (nhất là khi chạy như ứng dụng) đôi khi báo kích thước mới chậm sau khi xoay → đo lại thêm lần nữa
   window.addEventListener('orientationchange', () => { setTimeout(fitGame, 120); setTimeout(fitGame, 500); });
 
