@@ -19,7 +19,7 @@
       portals: { '<': { to: 'vac_da', at: '>' }, '>': { to: 'tan_do_4', at: '<', require: 'c4q2' } } },
     tan_do_4: { name: 'Tân Đô IV – Phù Đảo', theme: 'city', require: 'c4q2', village: { cap: 40, n: 4 }, home: 'tan_do_4',
       spawns: {  },
-      npcs: { M: 'lu_khach', V: 'vy', N: 'bang_nv_4', R: 'tho_ren_4', B: 'ba_thuoc_4', G: 'tap_hoa_4', K: 'thu_kho_4', T: 'tram_4' },
+      npcs: { M: 'lu_khach', V: 'vy', N: 'bang_nv_4', R: 'tho_ren_4', B: 'ba_thuoc_4', G: 'tap_hoa_4', K: 'thu_kho_4', T: 'tram_4', C: 'cho_4'},
       gate: ')',
       portals: { '<': { to: 'cong_khai_hoan', at: '>' }, ')': { to: 'quang_truong', at: '<', require: 'c4q2' }, '(': { to: 'thu_vien', at: '<', require: 'c4q3' }, ']': { to: 'tan_do_bt', at: '<', require: 'c4q8' } } },
     quang_truong: { name: 'Quảng Trường Ánh Sáng', theme: 'city', require: 'c4q2', home: 'tan_do_4',

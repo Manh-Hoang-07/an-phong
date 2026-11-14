@@ -288,22 +288,7 @@
       b.addEventListener('lostpointercapture', up);
     });
 
-    // Nút ẩn/hiện kỹ năng (nhớ lựa chọn trên máy này)
-    const tbtns = $('tbtns'), tgl = $('tb-toggle');
-    const setSkills = (open) => {
-      tbtns.classList.toggle('collapsed', !open);
-      tgl.setAttribute('aria-expanded', String(open));
-      try { localStorage.setItem('skillsOpen', open ? '1' : '0'); } catch { /* bỏ qua */ }
-    };
-    let skillsOpen = true;
-    try { skillsOpen = localStorage.getItem('skillsOpen') !== '0'; } catch { /* bỏ qua */ }
-    setSkills(skillsOpen);
-    tgl.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      firstTouch();
-      setSkills(tbtns.classList.contains('collapsed'));
-    });
-
+    // Thanh kỹ năng cảm ứng luôn hiện (không còn nút ẩn/hiện): nút thú đã bỏ, các nút còn lại dồn sát nút đánh.
     // Cụm mũi tên ◀ ▲ ▶: ngón đặt lên nút nào thì bắt đúng nút đó (trình duyệt tự xác định nút bị chạm,
     // nên đúng cả khi khung game bị xoay / thu phóng). Mỗi ngón độc lập → bấm 2 nút cùng lúc bằng 2 ngón.
     // Ngón đang giữ trượt sang nút khác thì đổi theo nút đó; trượt ra khoảng trống thì thả.

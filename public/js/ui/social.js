@@ -75,26 +75,52 @@ const Social = (() => {
       const had = !!party;
       party = null;
       if (had) UI.log('[Đội] Bạn không còn ở trong đội.', '#a5d6a7');
-      closeWin('party-win');
     } else {
       if (!party) UI.log('[Đội] Bạn đã vào đội. Chat đội: gõ /p <nội dung>.', '#a5d6a7');
       party = m;
       for (const x of m.members) if (x.id) mates.add(x.id);
     }
     renderParty();
-    if ($('party-win') && !$('party-win').classList.contains('hidden')) renderPartyWin();
+    if (UI.panelIs('party')) UI._.renderPanel();
   }
 
   function renderPartyWin() {
-    const w = $('party-win');
-    if (!party) { w.classList.add('hidden'); return; }
-    const me = Realtime.myId, iLead = party.leader === me;
-    w.innerHTML = `<div class="sw-box"><div class="sw-head"><b>Đội nhóm (${party.members.length}/5)</b><button class="x" data-close>✕</button></div>
-      <div class="sw-body">${party.members.map((m) => `<div class="row"><span>${m.id === party.leader ? '★ ' : ''}${esc(m.name)} <small>Lv.${m.lv || '?'} · ${esc(className(m.sc))}${m.on ? '' : ' · mất kết nối'}</small></span>
-        ${iLead && m.id && m.id !== me ? `<span><button class="btn small ghost" data-lead="${m.id}">Nhường</button> <button class="btn small ghost" data-kick="${m.id}">Đuổi</button></span>` : ''}</div>`).join('')}
-        <p class="note">Chia kinh nghiệm: đồng đội đứng gần nhận 50% kinh nghiệm + tiến độ nhiệm vụ khi bạn hạ quái; người tự hạ nhận thêm 10% mỗi đồng đội có mặt. Bấm vào người chơi khác để mời.</p>
-        <button class="btn" data-leave>Rời đội</button></div></div>`;
-    w.classList.remove('hidden');
+    // Hội nhóm giờ là một tab trong bảng (cùng chỗ với Túi đồ / Nhân vật), không còn cửa sổ nổi riêng
+    UI.openPanel('party', { force: true });
+  }
+
+  // Tab Hội nhóm: đội đang có, danh sách người chơi cùng bản đồ để mời, và phần giao dịch
+  function panelParty() {
+    const me = Realtime.myId;
+    const rows = [];
+    if (party) {
+      const iLead = party.leader === me;
+      rows.push(`<div class="pg-head"><b>Đội của bạn</b><small>${party.members.length}/5 thành viên</small></div>`);
+      rows.push('<div class="pg-list">' + party.members.map((m) => `<div class="pg-row">
+        <span class="pg-name">${m.id === party.leader ? '<b title="Trưởng đội">★</b> ' : ''}${esc(m.name)}
+          <small>Lv.${m.lv || '?'} · ${esc(className(m.sc))}${m.on ? '' : ' · mất kết nối'}${m.dead ? ' · đã gục' : ''}</small></span>
+        <span class="pg-hp"><i style="width:${m.on ? m.hp : 0}%"></i></span>
+        ${iLead && m.id && m.id !== me ? `<span class="pg-btns"><button class="btn small ghost" data-act="p_lead" data-lead="${m.id}">Nhường</button><button class="btn small ghost" data-act="p_kick" data-kick="${m.id}">Đuổi</button></span>` : ''}
+      </div>`).join('') + '</div>');
+      rows.push('<button class="btn ghost" data-act="p_leave">Rời đội</button>');
+    } else {
+      rows.push(`<div class="pg-empty"><span>👥</span><b>Bạn chưa ở trong đội nào</b>
+        <small>Bấm vào một người chơi khác trong bản đồ để mời vào đội, hoặc chọn người bên dưới.</small></div>`);
+    }
+    // Người chơi cùng bản đồ (Realtime) — mời vào đội / giao dịch ngay trong tab
+    const others = App.scene && App.scene.remotes ? [...App.scene.remotes.values()] : [];
+    if (others.length) {
+      rows.push(`<div class="pg-head"><b>Cùng bản đồ</b><small>${others.length} người</small></div>`);
+      rows.push('<div class="pg-list">' + others.map((r) => {
+        const mate = isMate(r.id);
+        return `<div class="pg-row"><span class="pg-name">${esc(r.name)}<small>Lv.${r.lv} · ${esc(className(r.sc))}${mate ? ' · đồng đội' : ''}</small></span>
+          <span class="pg-btns">${mate ? '' : `<button class="btn small" data-act="p_invite" data-pinv="${r.id}">Mời</button>`}
+          <button class="btn small ghost" data-act="t_invite" data-tinv="${r.id}">Giao dịch</button></span></div>`;
+      }).join('') + '</div>');
+    }
+    rows.push(`<p class="note">Chia kinh nghiệm: đồng đội đứng gần nhận 50% kinh nghiệm và tiến độ nhiệm vụ khi bạn hạ quái;
+      người tự hạ nhận thêm 10% mỗi đồng đội có mặt. Chat đội: gõ <b>/p nội dung</b>.</p>`);
+    return ['Hội nhóm', `<div class="pg-wrap">${rows.join('')}</div>`];
   }
 
   // ------------------------------------------------------------ Menu bấm vào người chơi khác
@@ -164,6 +190,7 @@ const Social = (() => {
   const SLOT_OPTS = [['', 'Mọi loại'], ['stack', 'Vật phẩm thường'], ...G.SLOTS.map((s) => [s, G.SLOT_NAMES[s] || s])];
 
   function openMarket() {
+    // Chợ là NPC trên bản đồ; mở bảng chợ ở đây chỉ khi đang đứng trong làng (server vẫn kiểm tra lại)
     $('market-win').classList.remove('hidden');
     market.tab = 'buy';
     browse(0);
@@ -304,7 +331,7 @@ const Social = (() => {
 
   // ------------------------------------------------------------ Khởi tạo
   function init() {
-    for (const id of ['party-win', 'player-menu', 'trade-win', 'market-win']) {
+    for (const id of ['player-menu', 'trade-win', 'market-win']) {
       const w = $(id);
       w.addEventListener('click', onClick);
       w.addEventListener('mouseover', (e) => tipFor(e.target));
@@ -317,8 +344,7 @@ const Social = (() => {
       });
     }
     $('party-hud').addEventListener('click', onClick);
-    $('btn-market').addEventListener('click', openMarket);
-    $('btn-party').addEventListener('click', () => { if (party) renderPartyWin(); else UI.log('Bạn chưa có đội. Bấm vào người chơi khác để mời vào đội.', '#80deea'); });
+    // Chợ mở từ NPC chợ trên bản đồ (xem ui/panels/npc.js), không còn nút trên HUD.
     // Mở bảng khác (túi, nhân vật...) thì khung chợ / giao dịch không che
   }
 
@@ -336,6 +362,16 @@ const Social = (() => {
     }
   }
 
-  return { init, onMessage, onMarket, playerMenu, isMate, openMarket, get party() { return party; } };
+  // ------------------------------------------------------------ Hành động đội nhóm (gọi từ tab Hội nhóm)
+  function invite(id) { send({ t: 'party_inv', to: Number(id) }); }
+  function tradeInvite(id) { send({ t: 'trade_inv', to: Number(id) }); }
+  function leave() { send({ t: 'party_leave' }); }
+  function lead(id) { send({ t: 'party_lead', id: Number(id) }); }
+  function kick(id) { send({ t: 'party_kick', id: Number(id) }); }
+
+  Object.assign(UI._, { panelParty, invite, tradeInvite, leave, lead, kick });
+  Object.assign(UI._.PANELS, { party: panelParty });
+
+  return { init, onMessage, onMarket, playerMenu, isMate, openMarket, panelParty, invite, tradeInvite, leave, lead, kick, get party() { return party; } };
 })();
 window.Social = Social;

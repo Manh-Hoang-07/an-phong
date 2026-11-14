@@ -280,6 +280,21 @@
       rect(g, 0x3fd0ff, 16.8, 33.6, 6.4, 1.6, 0.8);
     },
   };
+  // Chợ người chơi: người bán hàng có sạp gỗ nhỏ và túi tiền
+  NPCS.cho = {
+    coat: 0x8a6a2f, inner: 0xf0e2c0, accent: 0xffd166, hair: 0x4a3320,
+    skin: 0xe8bd95, skin2: 0xc69169, pants: 0x4a3a22, boot: 0x2c2418, long: false, longHair: false,
+    prop: (g) => {  // sạp gỗ + món hàng + túi tiền
+      rrect(g, 0x6f4a2a, 25.4, 27, 9.6, 3, 1.2);
+      rect(g, 0x8a5f38, 26, 27.4, 8.4, 1.2, 0.9);
+      line(g, 0x5b3a29, 26.4, 30, 26.4, 38, 1.6);
+      line(g, 0x5b3a29, 34, 30, 34, 38, 1.6);
+      ell(g, 0xe04040, 28.4, 26, 1.6, 1.6, 0.95);      // quả / món hàng
+      ell(g, 0x6ff0a6, 31.6, 25.6, 1.5, 1.5, 0.95);
+      rrect(g, 0xc98a3a, 15.6, 32.4, 5.4, 5.4, 2);
+      rect(g, 0xffd166, 17.4, 32.4, 1.6, 1.4, 0.9);
+    },
+  };
 
   // NPC dịch vụ của làng II–VII (xem shared/data/npcs.js): cùng dáng và đạo cụ với NPC gốc nhưng đổi tông màu áo / phụ kiện
   // theo làng, không vẽ tay từng người. Hình ảnh riêng (NPC_IMAGES) chỉ có cho NPC gốc ở Hiệp Hội; các làng khác dùng hình vẽ code.
@@ -320,11 +335,11 @@
     lang_hinh: 'lang_hinh',
     // trưởng làng thay Hội trưởng Khải giao nhiệm vụ
     truong_lang_5: 'lao_su', truong_lang_6: 'lao_su',
-    // dịch vụ ở Hiệp Hội và các làng (bảng nhiệm vụ / trạm dùng chung hình gốc)
-    bang_nv: 'bang_nv', tram: 'tram',
+    // dịch vụ ở Hiệp Hội và các làng (bảng nhiệm vụ / trạm / chợ dùng chung hình gốc)
+    bang_nv: 'bang_nv', tram: 'tram', cho: 'cho',
     ha_phong: 'ha_phong', minh_triet: 'minh_triet', lu_khach: 'lu_khach',
   };
-  for (let n = 2; n <= 7; n++) { NPC_LOOK['bang_nv_' + n] = 'bang_nv'; NPC_LOOK['tram_' + n] = 'tram'; }
+  for (let n = 2; n <= 7; n++) { NPC_LOOK['bang_nv_' + n] = 'bang_nv'; NPC_LOOK['tram_' + n] = 'tram'; NPC_LOOK['cho_' + n] = 'cho'; }
 
   // Bảng màu cho các NPC chỉ có look (không khai báo bảng màu riêng)
   const LOOK_PALETTE = {

@@ -33,6 +33,9 @@
       greet: 'À, cậu đến rồi. Xin lỗi, tôi đã quên ăn trưa. Tôi đang đo xem năm Vùng rơi xuống theo quy luật nào. Cậu có muốn nhìn bản vẽ không?' },
     thu_kho: { name: 'Quản kho Bảo', role: 'storage', color: 0x3b4a5a,
       greet: 'Kho của Hiệp Hội, khóa ba lớp. Gửi gì cũng giữ nguyên vẹn.' },
+    // Chợ người chơi: một NPC đứng ở làng, không phải nút trên HUD của người chơi
+    cho: { name: 'Chợ người chơi', role: 'market', color: 0x8a6a2f,
+      greet: 'Chợ của thợ săn. Ai có đồ thừa thì treo lên, ai cần thì mua. Ta giữ tin 48 giờ, thu 5% khi bán được.' },
     lu_khach: { name: 'Lữ khách bí ẩn', role: 'mystic', color: 0x3a2a55,
       greet: 'Cậu cũng nghe thấy giọng nói của Hệ thống, phải không? Nó không chọn ngẫu nhiên đâu. Nếu cậu biết mật mã, ta sẽ chỉ cho cậu một con đường khác.',
       // Lữ khách đi cùng cậu qua Chương 4: ở Tân Đô I trước và sau, giữa chừng đứng ở nơi nhiệm vụ cần

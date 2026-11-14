@@ -35,6 +35,12 @@
         if (ds.panel === 'code') S.codeMsg = '';
         if (ds.panel === 'code') setTimeout(() => { const i = $('code-input'); if (i) i.focus(); }, 50);
         break;
+      case 'open_market': closePanel(); Social.openMarket(); break;
+      case 'p_invite': Social.invite(ds.pinv); break;
+      case 't_invite': Social.tradeInvite(ds.tinv); break;
+      case 'p_leave': Social.leave(); break;
+      case 'p_lead': Social.lead(ds.lead); break;
+      case 'p_kick': Social.kick(ds.kick); break;
       case 'tab': openPanel(ds.tab, { force: true }); break;
       case 'daily_claim': await act('daily_claim', { i: Number(ds.i) }); break;
       case 'daily_bonus': await act('daily_bonus'); break;

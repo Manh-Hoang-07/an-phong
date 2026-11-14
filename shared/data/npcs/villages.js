@@ -29,6 +29,8 @@
     NPCS[`bang_nv_${n}`] = { ...NPCS.bang_nv, name: `Bảng nhiệm vụ ${VILLAGE_NAME[n]}`, look: 'bang_nv', village: n,
       greet: `Bảng nhiệm vụ của Tân Đô ${VILLAGE_NAME[n]}. Mỗi ngày có 3 việc mới, làm mới lúc 0 giờ.` };
     NPCS[`tram_${n}`] = { ...NPCS.tram, look: 'tram', village: n };
+    NPCS[`cho_${n}`] = { ...NPCS.cho, name: `Chợ ${VILLAGE_NAME[n]}`, look: 'cho', village: n,
+      greet: `Chợ của Tân Đô ${VILLAGE_NAME[n]}. Treo đồ thừa lên đây, người cần sẽ tìm thấy.` };
   }
   // Trưởng làng thay Hội trưởng Khải giao nhiệm vụ cốt truyện ở làng V, VI (Khải chỉ ở Hiệp Hội)
   NPCS.truong_lang_5 = { name: 'Trưởng làng Vực', role: 'quest', color: 0x6a2b3a,

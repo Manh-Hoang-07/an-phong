@@ -11,7 +11,7 @@
   const PART = {
     tan_do_bt: { name: 'Tân Đô V – Bầu Trời Rách', theme: 'redgate', require: 'c4q8', village: { cap: 50, n: 5 }, home: 'tan_do_bt',
       spawns: {  },
-      npcs: { L: 'truong_lang_5', V: 'vy', Q: 'lam_suong', N: 'bang_nv_5', R: 'tho_ren_5', B: 'ba_thuoc_5', G: 'tap_hoa_5', K: 'thu_kho_5', T: 'tram_5' },
+      npcs: { L: 'truong_lang_5', V: 'vy', Q: 'lam_suong', N: 'bang_nv_5', R: 'tho_ren_5', B: 'ba_thuoc_5', G: 'tap_hoa_5', K: 'thu_kho_5', T: 'tram_5', C: 'cho_5' },
       gate: ')',
       portals: { '<': { to: 'tan_do_4', at: ']' }, ')': { to: 'cau_dan', at: '<', require: 'c5q1' }, '(': { to: 'cong_ss', at: '<', require: 'c5q6' } } },
     cau_dan: { name: 'Cầu Dẫn Lên Cổng Vĩnh Hằng', theme: 'redgate', require: 'c5q1', home: 'tan_do_bt',

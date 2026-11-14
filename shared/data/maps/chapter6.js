@@ -15,7 +15,7 @@
       portals: { '<': { to: 'tan_do_bt', at: '(' }, '>': { to: 'tan_do_6', at: '<', require: 'c5q9' } } },
     tan_do_6: { name: 'Tân Đô VI – Thiên Đô', theme: 'redgate', require: 'c5q9', village: { cap: 70, n: 6 }, home: 'tan_do_6',
       spawns: {  },
-      npcs: { L: 'truong_lang_6', V: 'vy', Q: 'lam_suong', N: 'bang_nv_6', R: 'tho_ren_6', B: 'ba_thuoc_6', G: 'tap_hoa_6', K: 'thu_kho_6', T: 'tram_6' },
+      npcs: { L: 'truong_lang_6', V: 'vy', Q: 'lam_suong', N: 'bang_nv_6', R: 'tho_ren_6', B: 'ba_thuoc_6', G: 'tap_hoa_6', K: 'thu_kho_6', T: 'tram_6', C: 'cho_6'},
       gate: ')',
       portals: { '<': { to: 'cong_ss', at: '>' }, ')': { to: 'thien_khoi_1', at: '<' }, '(': { to: 'long_mach_1', at: '<', require: 'c6q9' } } },
     thien_khoi_1: { name: 'Bãi Thiên Thạch', theme: 'redgate', require: 'c6q1', home: 'tan_do_6',

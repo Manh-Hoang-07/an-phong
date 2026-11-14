@@ -114,7 +114,7 @@ WorldScene.mix(class WorldSkills {
         const curGuard = this.buffOn('guard', time);
         if (curGuard && curGuard.reduce > sk.reduce) { this.floatText(pl.x, pl.y - 70, 'Đang có thủ thế mạnh hơn', '#bdbdbd', 12); break; }
         // Kỹ năng thủ có thể kèm buff tấn công / chí mạng / tốc đánh (cộng dồn qua buffTotals vì cùng nằm trong this.buffs)
-        this.buffs.guard = { until: time + sk.duration * 1000, reduce: sk.reduce, reflect: sk.reflect || 0,
+        this.buffs.guard = { until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id, reduce: sk.reduce, reflect: sk.reflect || 0,
           atk: sk.atkBuff || 0, crit: sk.critBuff || 0, speed: sk.speedBuff || 0 };
         this.ringFx(pl.x, pl.y, 0xffb36b);
         break;
@@ -122,7 +122,7 @@ WorldScene.mix(class WorldSkills {
       case 'manashield': {
         const curShield = this.buffOn('manashield', time);
         if (curShield && curShield.absorb > sk.absorb) { this.floatText(pl.x, pl.y - 70, 'Đang có khiên mạnh hơn', '#bdbdbd', 12); break; }
-        this.buffs.manashield = { until: time + sk.duration * 1000, absorb: sk.absorb };
+        this.buffs.manashield = { until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id, absorb: sk.absorb };
         this.ringFx(pl.x, pl.y, 0x8fb4ff);
         break;
       }
@@ -131,7 +131,8 @@ WorldScene.mix(class WorldSkills {
         // Buff tấn công theo % của kỹ năng, không nhân sức mạnh kỹ năng / SPI
         const prev = this.buffs[sk.buff], nextAtk = sk.atkBuff || 0;
         if (!(prev && time < prev.until && (prev.atk || 0) > nextAtk))
-        this.buffs[sk.buff] = { until: time + sk.duration * 1000, atk: nextAtk, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0, exec: sk.exec || null };
+        this.buffs[sk.buff] = { until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id,
+          atk: nextAtk, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0, exec: sk.exec || null };
         for (let k = 0; k < (sk.ult ? 10 : 6); k++) {
           const ghost = this.add.image(pl.x, pl.y, pl.texture.key).setTint(this.accent()).setAlpha(0.6).setDepth(3);
           this.tweens.add({ targets: ghost, x: pl.x + Phaser.Math.Between(-70, 70), y: pl.y + Phaser.Math.Between(-20, 10), alpha: 0, duration: 520, onComplete: () => ghost.destroy() });

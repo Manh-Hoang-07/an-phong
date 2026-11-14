@@ -32,7 +32,7 @@
       portals: { '<': { to: 'long_mach_4', at: '>' } } },
     tan_do_7: { name: 'Tân Đô VII – Tinh Hà', theme: 'redgate', require: 'c7q9', village: { cap: 100, n: 7 }, home: 'tan_do_7',
       spawns: {  },
-      npcs: { X: 'minh_triet', N: 'bang_nv_7', R: 'tho_ren_7', B: 'ba_thuoc_7', G: 'tap_hoa_7', K: 'thu_kho_7', T: 'tram_7', V: 'vy', Q: 'lam_suong', M: 'lu_khach' },
+      npcs: { X: 'minh_triet', N: 'bang_nv_7', R: 'tho_ren_7', B: 'ba_thuoc_7', G: 'tap_hoa_7', K: 'thu_kho_7', T: 'tram_7', V: 'vy', Q: 'lam_suong', M: 'lu_khach', C: 'cho_7'},
       gate: ')',
       portals: { '<': { to: 'long_mach_3', at: ')' }, ')': { to: 'tinh_van_1', at: '<' }, '(': { to: 'than_mong_1', at: '<', require: 'c8q9' } } },
   };

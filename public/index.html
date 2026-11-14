@@ -52,26 +52,28 @@
     <div id="game"></div>
 
     <div id="hud" class="hidden">
-      <div id="hud-char">
-        <div class="hud-top">
-          <div class="hud-ava"><span id="h-ava">👤</span><b id="h-rank" class="rank">E</b><b id="h-level" class="level-badge">1</b></div>
+      <!-- Thẻ nhân vật và ô thú xếp dọc, sát nhau (không đặt toạ độ tuyệt đối cho từng ô) -->
+      <div id="hud-left">
+        <div id="hud-char">
+          <div class="hud-top">
+            <div class="hud-ava"><span id="h-ava">👤</span><b id="h-rank" class="rank">E</b><b id="h-level" class="level-badge">1</b></div>
+          </div>
+          <div class="bar hp"><div id="h-hp"></div><span id="h-hp-t"></span></div>
+          <div class="bar mp"><div id="h-mp"></div><span id="h-mp-t"></span></div>
+          <div class="bar sta" id="h-sta-bar" title="Thể lực: đánh và dùng kỹ năng đều tốn, tự hồi khi ngừng đánh"><div id="h-sta"></div><span id="h-sta-t"></span></div>
+          <div class="bar exp"><div id="h-exp"></div><span id="h-exp-t"></span></div>
         </div>
-        <div class="bar hp"><div id="h-hp"></div><span id="h-hp-t"></span></div>
-        <div class="bar mp"><div id="h-mp"></div><span id="h-mp-t"></span></div>
-        <div class="bar sta" id="h-sta-bar" title="Thể lực: đánh và dùng kỹ năng đều tốn, tự hồi khi ngừng đánh"><div id="h-sta"></div><span id="h-sta-t"></span></div>
-        <div class="bar exp"><div id="h-exp"></div><span id="h-exp-t"></span></div>
+        <div id="hud-pet" class="hidden"><div id="hud-pets-list"></div></div>
       </div>
-      <div id="hud-pet" class="hidden"><div id="hud-pets-list"></div><div id="pet-skill-slot"></div></div>
       <div id="hud-right">
-        <div id="h-map"></div>
-        <div class="menu">
-          <button id="btn-map" title="Bản đồ (M)">🗺️</button>
-          <button id="btn-chat" title="Chat (phím /)">💬</button>
-          <button id="btn-party" title="Đội nhóm">👥</button>
-          <button id="btn-market" title="Chợ người chơi (ở trong làng)">🛒</button>
-          <button id="tb-hidden-chat" title="Chat lệnh với NPC ẩn" class="hidden">💬</button>
-          <button id="btn-config" title="Cấu hình âm thanh, đồ họa (O)">⚙️</button>
-          <button id="btn-menu" title="Menu (I / C / K / L)">☰<b id="h-points" class="badge hidden"></b></button>
+        <div class="hud-row">
+          <!-- Thanh hiệu ứng: cùng hàng với nút bản đồ / chat / menu; màn hẹp thì xuống hàng dưới, không đè thanh máu -->
+          <div id="buffbar" class="hidden"></div>
+          <div class="menu">
+            <button id="btn-map" title="Bản đồ (M)">🗺️</button>
+            <button id="btn-chat" title="Chat (phím /)">💬</button>
+            <button id="btn-menu" title="Menu (I / C / K / L)">☰<b id="h-points" class="badge hidden"></b></button>
+          </div>
         </div>
         <div id="quest-track"></div>
       </div>
@@ -96,7 +98,6 @@
         <div class="sk sk-aws hidden" data-k="aws" title="Đổi giữa Biến hình Ấn I và Ấn II (chỉ đổi được khi đang ở dạng thường)"><span class="key">G</span><span class="ico">⇄<small>Đổi ấn</small></span></div>
         <div class="sk pot" data-k="hp"><span class="key">Q</span><span class="ico">❤</span><span class="cnt" id="pot-hp"></span></div>
         <div class="sk pot" data-k="mp"><span class="key">E</span><span class="ico">💧</span><span class="cnt" id="pot-mp"></span></div>
-        <div class="sk" data-k="pets" title="Thú triệu hồi"><span class="key">P</span><span class="ico">🐾</span></div>
       </div>
       <div id="hint"></div>
     </div>
@@ -110,7 +111,6 @@
         <div class="tb tb-arrow" data-arrow="right" aria-label="Sang phải"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></div>
       </div>
       <div id="tbtns">
-        <button id="tb-toggle" class="tb tb-toggle" aria-label="Ẩn/hiện kỹ năng" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
         <button data-t="attack" class="tb tb-attack"><span class="ico" id="tb-atk-ico">⚔</span><div class="cd"></div></button>
         <button data-t="s0" class="tb tb-skill tb-s0"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="s1" class="tb tb-skill tb-s1"><span class="ico"></span><div class="cd"></div></button>
@@ -124,7 +124,6 @@
         <button data-t="aws" class="tb tb-skill tb-aws hidden" title="Đổi giữa Ấn I và Ấn II"><span class="ico">⇄<small>Đổi ấn</small></span></button>
         <button data-t="hp" class="tb tb-pot tb-hp">🧪<b id="tpot-hp"></b></button>
         <button data-t="mp" class="tb tb-pot tb-mp">💧<b id="tpot-mp"></b></button>
-        <button data-t="pets" class="tb tb-pets" aria-label="Thú triệu hồi">🐾</button>
       </div>
       <button id="tb-talk" data-t="interact" class="tb tb-talk hidden">💬 <span></span></button>
     </div>
@@ -136,7 +135,6 @@
       </div>
     </div>
     <div id="tooltip" class="hidden"></div>
-    <div id="party-win" class="swin hidden"></div>
     <div id="player-menu" class="swin hidden"></div>
     <div id="trade-win" class="swin hidden"></div>
     <div id="market-win" class="swin hidden"></div>

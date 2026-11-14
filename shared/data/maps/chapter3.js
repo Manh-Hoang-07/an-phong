@@ -15,7 +15,7 @@
       portals: { '<': { to: 'tan_do_2', at: ']' }, '>': { to: 'tan_do_3', at: '<' } } },
     tan_do_3: { name: 'Tân Đô III – Lò Rèn Băng', theme: 'forest', require: 'c2q12', village: { cap: 30, n: 3 }, home: 'tan_do_3',
       spawns: {  },
-      npcs: { M: 'lu_khach', N: 'bang_nv_3', R: 'tho_ren_3', B: 'ba_thuoc_3', G: 'tap_hoa_3', K: 'thu_kho_3', T: 'tram_3' },
+      npcs: { M: 'lu_khach', N: 'bang_nv_3', R: 'tho_ren_3', B: 'ba_thuoc_3', G: 'tap_hoa_3', K: 'thu_kho_3', T: 'tram_3', C: 'cho_3'},
       gate: ')',
       portals: { '<': { to: 'chan_nui', at: '>' }, ')': { to: 'hem_nui', at: '<', require: 'c3q2' }, '(': { to: 'vac_da', at: '<', require: 'c4q1' } } },
     hem_nui: { name: 'Hẻm Núi Gió Hú', theme: 'cave', require: 'c3q2', home: 'tan_do_3',

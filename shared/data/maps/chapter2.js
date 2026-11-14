@@ -19,7 +19,7 @@
       portals: { '<': { to: 'b_en_pha', at: '>' }, '>': { to: 'tan_do_2', at: '<', require: 'c2q2' } } },
     tan_do_2: { name: 'Tân Đô II – Hải Cảng', theme: 'forest', require: 'c2q2', village: { cap: 20, n: 2 }, home: 'tan_do_2',
       spawns: {  },
-      npcs: { Y: 'ha_phong', V: 'vy', N: 'bang_nv_2', R: 'tho_ren_2', B: 'ba_thuoc_2', G: 'tap_hoa_2', K: 'thu_kho_2', T: 'tram_2' },
+      npcs: { Y: 'ha_phong', V: 'vy', N: 'bang_nv_2', R: 'tho_ren_2', B: 'ba_thuoc_2', G: 'tap_hoa_2', K: 'thu_kho_2', T: 'tram_2', C: 'cho_2'},
       gate: ')',
       portals: { '<': { to: 'd_lay_muc', at: '>' }, ')': { to: 'lang_chai', at: '<' }, '(': { to: 'tp_chim_t', at: '<', require: 'c2q7' }, ']': { to: 'chan_nui', at: '<', require: 'c2q12' } } },
     lang_chai: { name: 'Làng Chài Vùng Ven', theme: 'forest', require: 'c2q2', home: 'tan_do_2',

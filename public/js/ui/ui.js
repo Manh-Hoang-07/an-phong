@@ -7,18 +7,81 @@ const UI = (() => {
   const fmt = (n) => Number(Math.floor(n)).toLocaleString('vi-VN');
 
   const skIcon = (id) => (G.SKILLS[id] && G.SKILLS[id].icon) || '✨';
-  // Túi đồ và Trang bị là hai bảng riêng. Cấu hình (âm thanh, đồ họa) mở bằng nút ⚙️ trên HUD.
-  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['equip', '🛡 Trang bị'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi'], ['companion', '🐕 Thú đồng hành'], ['shadows', '☠ Bóng ma']];
+  // Túi đồ và Trang bị là hai bảng riêng. Hội nhóm và Cấu hình là tab trong cùng bảng (không còn nút riêng trên HUD).
+  const MENU_TABS = [['bag', '🎒 Túi đồ'], ['equip', '🛡 Trang bị'], ['char', '🥋 Nhân vật'], ['skills', '✨ Kỹ năng'], ['quest', '📜 Nhiệm vụ'], ['mount', '🐾 Thú triệu hồi'], ['companion', '🐕 Thú đồng hành'], ['shadows', '☠ Bóng ma'], ['party', '👥 Hội nhóm'], ['config', '⚙️ Cấu hình']];
   // Thú triệu hồi: chỉ khi đã học kỹ năng Triệu Hồi Linh Thú; Bóng ma: chỉ Tử Linh Thuật Sư; Thú đồng hành: ai cũng có tab
   const hasSummon = () => G.skillLevel(App.player || {}, 'th5') > 0;
   const visibleTabs = () => MENU_TABS.filter(([k]) => (k !== 'shadows' || App.player?.school === 'tu_linh_thuat_su' || (App.player?.school === 'trieu_hoi_su' && App.player?.advancement?.unlocked?.tu_linh_thuat_su)) && (k !== 'mount' || hasSummon()));
   const petPanel = () => (hasSummon() ? 'mount' : 'companion');
+  // Ảnh thú cho ô thông tin: lấy khung hình đầy đủ nhất của sprite đã nạp trong cảnh, cắt sát hình rồi thu nhỏ.
+  // Nhiều sprite có khung trống hoặc khung chỉ thấy một phần con vật ở đầu/cuối hoạt ảnh → phải so mọi khung
+  // và chọn khung có phần hình lớn nhất.
+  // LƯU Ý: lần vẽ HUD đầu tiên chạy trước khi cảnh nạp xong sprite thú, nên KHÔNG cache kết quả rỗng —
+  // cache rỗng thì ảnh không bao giờ hiện lại. Chưa có ảnh thì lần vẽ sau thử lại (xem petImgTries bên dưới).
+  const petImgCache = {};
+  let petImgTries = 0;
+  function frameCrop(src, fr) {
+    const fw = fr.width || src.width, fh = fr.height || src.height;
+    const cv = document.createElement('canvas');
+    cv.width = fw; cv.height = fh;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(src, fr.cutX || 0, fr.cutY || 0, fw, fh, 0, 0, fw, fh);
+    const data = ctx.getImageData(0, 0, fw, fh).data;
+    let solid = 0, x0 = fw, y0 = fh, x1 = -1, y1 = -1;
+    for (let y = 0; y < fh; y++) {
+      for (let x = 0; x < fw; x++) {
+        if (data[(y * fw + x) * 4 + 3] > 40) {
+          solid++;
+          if (x < x0) x0 = x;
+          if (y < y0) y0 = y;
+          if (x > x1) x1 = x;
+          if (y > y1) y1 = y;
+        }
+      }
+    }
+    if (x1 < 0 || solid < 40) return null;
+    const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+    const out = document.createElement('canvas');
+    out.width = cw; out.height = ch;
+    out.getContext('2d').drawImage(cv, x0, y0, cw, ch, 0, 0, cw, ch);
+    return { area: cw * ch, solid, canvas: out };
+  }
+  // Trả về { url, w, h } khi có ảnh, null khi chưa lấy được (để lần sau thử lại)
+  function petImage(look) {
+    if (!look) return null;
+    if (petImgCache[look]) return petImgCache[look];
+    try {
+      const sc = App.scene;
+      const key = typeof PetSprites !== 'undefined' ? PetSprites.textureKey(look) : '';
+      if (!sc || !key || !sc.textures.exists(key)) return null;
+      const tex = sc.textures.get(key);
+      const src = tex.getSourceImage();
+      const names = tex.getFrameNames(false);
+      const frames = names.length ? names.map(n => tex.get(n)) : [tex.get(0)];
+      let best = null;
+      for (const fr of frames) {
+        const c = frameCrop(src, fr);
+        if (!c) continue;
+        if (!best || c.area > best.area) best = c;
+      }
+      if (!best) return null;
+      const out = { url: best.canvas.toDataURL('image/png'), w: best.canvas.width, h: best.canvas.height };
+      petImgCache[look] = out;
+      return out;
+    } catch (e) { return null; }
+  }
+  // Ảnh thú vẽ trong khung tròn. Dùng contain: thấy trọn con vật (sprite sói nằm ngang, cover sẽ cắt mất đầu/đuôi).
+  function petAvaStyle(look) {
+    const img = petImage(look);
+    if (!img) return '';
+    return `background-image:url('${esc(img.url)}');background-size:contain`;
+  }
   let lastMenuTab = 'bag';
   const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿' };
   const WEAPON_ICONS = Object.fromEntries(Object.entries(G.WEAPON_TYPES).map(([k, w]) => [k, w.icon]));
   const statText = (k, v) => `${G.statLabel(k)} +${v}${G.statUnit(k)}`;
   const qOf = (e) => (G.ITEMS[e.id] && G.ITEMS[e.id].slot ? (e.q || 1) : 1);
-  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙', tram: '🌀', truong_lang_5: '🧑‍💼', truong_lang_6: '🧑‍💼' };
+  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙', tram: '🌀', cho: '🛒', truong_lang_5: '🧑‍💼', truong_lang_6: '🧑‍💼' };
   // NPC dịch vụ của từng làng (tho_ren_3, bang_nv_5...) dùng biểu tượng của NPC gốc
   for (const id in G.NPCS) {
     if (NPC_ICONS[id]) continue;
@@ -89,7 +152,6 @@ const UI = (() => {
     if (!p) return;
     const st = App.stats;
     const sc = p.school && G.SCHOOLS[p.school];
-    $('tb-hidden-chat').classList.toggle('hidden', p.map !== 'lang');
     $('h-level').textContent = p.level;
     $('h-rank').textContent = G.playerRank(p);
     $('h-ava').textContent = sc ? sc.icon : '👤';
@@ -113,13 +175,17 @@ const UI = (() => {
     setHtml($('hud-pets-list'), summoned.map(id => {
       const def = G.MOUNTS[id];
       if (!def) return '';
-      const skill = G.PET_SKILLS[p.mounts?.skills?.[id] || p.mounts?.skill] || G.PET_SKILLS.bite;
-      return `<div class="pet-hud-unit"><b>${def.icon} ${esc(def.name)} <small>${skill.icon} ${esc(skill.name)}</small></b><div class="bar hp"><div id="pet-hp-${id}"></div><span id="pet-hp-t-${id}"></span></div><div class="bar mp"><div id="pet-mp-${id}"></div><span id="pet-mp-t-${id}"></span></div><div class="bar sta"><div id="pet-sta-${id}"></div><span id="pet-sta-t-${id}"></span></div></div>`;
+      // Ô thú giống thẻ nhân vật: chỉ ảnh thú + ba thanh HP/MP/thể lực, không ghi tên thú hay tên kỹ năng
+      return `<div class="pet-hud-unit">
+        <div class="pet-ava" id="pet-ava-${esc(id)}" title="${esc(def.name)}" style="${petAvaStyle(def.look)}"></div>
+        <div class="pet-bars">
+          <div class="bar hp"><div id="pet-hp-${esc(id)}"></div><span id="pet-hp-t-${esc(id)}"></span></div>
+          <div class="bar mp"><div id="pet-mp-${esc(id)}"></div><span id="pet-mp-t-${esc(id)}"></span></div>
+          <div class="bar sta"><div id="pet-sta-${esc(id)}"></div><span id="pet-sta-t-${esc(id)}"></span></div>
+        </div>
+      </div>`;
     }).join(''));
-    if (summoned.length) {
-      $('pet-skill-slot').textContent = `Mỗi thú tự dùng kỹ năng riêng · ${summoned.length} thú đang triệu hồi`;
-      tickPets((id) => G.companionStats(p, id), petStates, summoned);
-    }
+    if (summoned.length) tickPets((id) => G.companionStats(p, id), petStates, summoned, true);
     document.querySelectorAll('.sk-form, .tb-form').forEach(el => {
       el.classList.toggle('hidden', !hasForm);
       el.classList.toggle('active', !!App.form);   // nút biến hình chỉ sáng khi đang thức tỉnh
@@ -201,16 +267,76 @@ const UI = (() => {
         el.classList.toggle('nosta', noSta);
       }
     }
+    tickBuffs(time, scene);
+  }
+
+  // ------------------------------------------------------------ Hiệu ứng đang dùng (buff kỹ năng)
+  // Ninja School kiểu: mỗi hiệu ứng một ô, có biểu tượng, đếm ngược giây và vạch thời gian chạy dần.
+  // Chỉ đọc trạng thái buff trong cảnh (scene.buffs) — không quyết định gì về luật chơi.
+  const BUFF_LOOK = {
+    guard: ['🛡', 'Thủ thế'], manashield: ['💠', 'Khiên năng lượng'],
+    eagle: ['🦅', 'Mắt Ưng'], rage: ['🔥', 'Cuồng Nộ'], frenzy: ['⚡', 'Cuồng Bạo'],
+    grace: ['🌿', 'Ân Sủng'], cleanse: ['✨', 'Thanh Tẩy'], balance: ['⚖', 'Cân Bằng'],
+    resonance: ['🔮', 'Cộng Hưởng'], awaken: ['🌟', 'Thức Tỉnh'],
+    swordheart: ['🗡', 'Kiếm Ý Hộ Thân'], truesword: ['⚔', 'Chân Kiếm Thức Tỉnh'],
+    clones: ['👥', 'Ảnh Phân Thân'], bloodlust: ['🩸', 'Sát Ý Dâng Trào'],
+    resolve: ['🛡', 'Ý Chí Hộ Vệ'], declare: ['📢', 'Tuyên Chiến'], blessing: ['🙏', 'Phước Lành'],
+  };
+  let lastBuffSig = '';
+  function tickBuffs(time, scene) {
+    const box = $('buffbar');
+    if (!box) return;
+    const buffs = (scene && scene.buffs) || {};
+    const live = [];
+    for (const k in buffs) {
+      const b = buffs[k];
+      if (!b || time >= b.until) continue;
+      live.push([k, b]);
+    }
+    if (!live.length) {
+      if (lastBuffSig !== '') { lastBuffSig = ''; box.innerHTML = ''; box.classList.add('hidden'); }
+      return;
+    }
+    // Vẽ lại chỉ khi danh sách đổi; còn lại chỉ cập nhật số giây và vạch thời gian
+    const sig = live.map(([k]) => k).join(',');
+    if (sig !== lastBuffSig) {
+      lastBuffSig = sig;
+      box.innerHTML = live.map(([k]) => {
+        const [icon, name] = BUFF_LOOK[k] || ['✨', GameData.SKILLS[k] ? GameData.SKILLS[k].name : k];
+        return `<div class="bf" data-bf="${esc(k)}" title="${esc(name)}"><span class="bf-ic">${icon}</span><span class="bf-t"></span><i class="bf-p"></i></div>`;
+      }).join('');
+      box.classList.remove('hidden');
+    }
+    for (const [k, b] of live) {
+      const el = box.querySelector(`[data-bf="${k}"]`);
+      if (!el) continue;
+      const left = Math.max(0, b.until - time);
+      const secs = Math.ceil(left / 1000);
+      const t = el.querySelector('.bf-t');
+      if (t.textContent !== String(secs)) t.textContent = secs;
+      const dur = b.dur || (b.until - time) || 1;
+      el.querySelector('.bf-p').style.width = Math.max(0, Math.min(100, left / dur * 100)) + '%';
+      el.classList.toggle('soon', left <= 3000);
+    }
   }
 
   let lastPetTick = 0;
-  function tickPets(statsOf, pets, ids) {
+  // force = true: điền ngay (lúc vẽ lại HUD), không chờ nhịp 250ms của vòng lặp cảnh
+  function tickPets(statsOf, pets, ids, force = false) {
     const now = performance.now();
-    if (now - lastPetTick < 250) return;
+    if (!force && now - lastPetTick < 250) return;
     lastPetTick = now;
     for (const id of ids) {
       const pet = pets[id];
       if (!pet) continue;
+      // Ảnh thú: lần vẽ đầu có thể chạy trước khi sprite nạp xong → thử lại ở mỗi nhịp cho tới khi có ảnh
+      const ava = $(`pet-ava-${id}`);
+      if (ava && !ava.style.backgroundImage) {
+        const def = G.MOUNTS[id];
+        const st = def ? petAvaStyle(def.look) : '';
+        if (st) ava.setAttribute('style', st);
+        else if (++petImgTries > 40) ava.style.backgroundImage = 'none';   // 10 giây vẫn không có thì thôi
+      }
       const stats = statsOf(id);
       for (const [key, value, max] of [['hp', pet.hp, stats.maxHp], ['mp', pet.mp, stats.maxMp], ['sta', pet.sta, stats.maxSta]]) {
         const bar = $(`pet-${key}-${id}`), label = $(`pet-${key}-t-${id}`);
@@ -219,7 +345,7 @@ const UI = (() => {
         label.textContent = `${fmt(Math.max(0, value))}/${fmt(max)}`;
       }
       const staLabel = $(`pet-sta-t-${id}`);
-      if (staLabel) staLabel.textContent = `${fmt(Math.max(0, pet.sta))}/${fmt(stats.maxSta)} thể lực`;
+      if (staLabel) staLabel.textContent = `${fmt(Math.max(0, pet.sta))}/${fmt(stats.maxSta)}`;
     }
   }
 
@@ -251,11 +377,9 @@ const UI = (() => {
     if (t.classList.contains('hidden') === show) t.classList.toggle('hidden', !show);
     if (show && t.lastChild.textContent !== npcName) t.lastChild.textContent = npcName;
   }
-  // Tên bản đồ + số người chơi đang ở bản đồ (từ Realtime)
-  let mapName = '', mapCount = 0;
-  function showMap() { $('h-map').textContent = mapName + (mapCount > 1 ? ` · ${mapCount} người` : ''); }
-  function setMap(name) { mapName = name; mapCount = 0; showMap(); }
-  function setMapCount(n) { if (n !== mapCount) { mapCount = n; showMap(); } }
+  // Tên bản đồ đã bỏ khỏi giao diện chính (banner lúc vào bản đồ là đủ). Giữ hàm rỗng để nơi gọi không phải sửa.
+  function setMap() { /* không hiện tên map trên HUD nữa */ }
+  function setMapCount() { /* số người trong map cũng không hiện nữa */ }
   function setAttackIcon(ico) { $('sk-atk-ico').textContent = ico; $('tb-atk-ico').textContent = ico; }
 
   // ------------------------------------------------------------ Nhiệm vụ
@@ -414,6 +538,13 @@ const UI = (() => {
     const detail = body.querySelector('.bag-side');
     if (detail) detail.scrollTop = detailScroll;
     body.querySelectorAll('.bag-main, .bag-side, .eq-wrap').forEach((el, i) => { if (colScroll[i]) el.scrollTop = colScroll[i]; });
+    // Dải tab lướt ngang: đưa tab đang chọn vào tầm nhìn (màn hẹp không còn cảnh chỉ thấy nửa tên tab)
+    const tabsEl = body.querySelector('.tabs');
+    const activeTab = tabsEl && tabsEl.querySelector('.tab.active');
+    if (activeTab) {
+      const left = activeTab.offsetLeft - (tabsEl.clientWidth - activeTab.offsetWidth) / 2;
+      tabsEl.scrollLeft = Math.max(0, left);
+    }
   }
 
   function act(type, params) { return Net.action(type, params); }
@@ -546,12 +677,9 @@ const UI = (() => {
     $('panel-body').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'code-input') { e.preventDefault(); lib.onClick({ target: document.querySelector('[data-act="redeem"]') }); } });
     $('btn-menu').addEventListener('click', () => openPanel(lastMenuTab));
     $('btn-map').addEventListener('click', () => openPanel('map'));
-    const cfg = $('btn-config');
-    if (cfg) cfg.addEventListener('click', () => openPanel('config'));
     $('panel-body').addEventListener('mouseover', showTip);
     $('panel-body').addEventListener('mouseleave', hideTip);
     $('panel-close').addEventListener('click', closePanel);
-    $('tb-hidden-chat').addEventListener('click', hiddenChat);
     $('panel').addEventListener('click', (e) => { if (e.target.id === 'panel') closePanel(); });
     document.querySelectorAll('#skillbar .sk').forEach(b => b.addEventListener('click', () => {
       const k = b.dataset.k, sc = App.scene;
@@ -561,17 +689,16 @@ const UI = (() => {
       else if (k === 'form') sc.toggleForm(sc.time.now);
       else if (k === 'aws') sc.switchAwaken();
       else if (k === 'mount') openPanel(petPanel());
-      else if (k === 'pets') openPanel(petPanel());
       else sc.useSkill(Number(k), sc.time.now);
     }));
   }
 
   // Dùng nội bộ cho các file ui/panels/*.js và ui/actions.js (không gọi từ ngoài UI)
-  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, itemEmoji, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
+  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, itemEmoji, refresh, tick, tickPets, tickBuffs, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
 
   return {
     init, refresh, tick, tickPets, log, banner, hint, setMap, setMapCount, setAttackIcon, questReady, hiddenChat,
-    openPanel, closePanel, itemIcon, itemEmoji, petPanel, isOpen: () => !!panel,   // openNpc, upgradeResult: gắn trong ui/panels
+    openPanel, closePanel, itemIcon, itemEmoji, petPanel, isOpen: () => !!panel, panelIs: (name) => !!panel && panel.name === name,   // openNpc, upgradeResult: gắn trong ui/panels
     _: lib,
   };
 })();

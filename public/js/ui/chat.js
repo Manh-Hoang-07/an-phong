@@ -27,7 +27,7 @@ const Chat = (() => {
   }
 
   function help() {
-    log('Chat: /t <nội dung> = kênh Thế giới, /m = kênh Map, /ds = người trong map, /chan <tên> và /bochan <tên> = chặn / bỏ chặn.', '#80deea', 14000);
+    log('Chat: /t <nội dung> = kênh Thế giới, /m = kênh Map, /p = kênh Đội, /ds = người trong map, /npc = nói chuyện với NPC ẩn, /chan <tên> và /bochan <tên> = chặn / bỏ chặn.', '#80deea', 14000);
   }
 
   function submit(raw) {
@@ -50,6 +50,7 @@ const Chat = (() => {
         case 't': return send('world', arg);
         case 'p': return send('party', arg);
         case 'm': return send('map', arg);
+        case 'npc': return hiddenChatPrompt();
         default: log('Lệnh không có. Gõ /help để xem danh sách.'); return;
       }
     }
@@ -58,6 +59,14 @@ const Chat = (() => {
   function send(channel, text) {
     if (!text.trim()) return;
     if (!Realtime.send({ t: 'chat', ch: channel, text })) log('Chưa kết nối chat, thử lại sau giây lát.', '#ffb74d');
+  }
+
+  // NPC ẩn: trước đây có nút 💬 riêng trên HUD, giờ gõ /npc trong ô chat (một nút chat duy nhất)
+  function hiddenChatPrompt() {
+    if (App.player?.map !== 'lang') { log('Không có hồi đáp.', '#bdbdbd'); return; }
+    const text = window.prompt('Chat NPC ẩn tại Tân Đô. Nhập "npc an" (hoặc "ncp an"):', 'npc an');
+    if (text == null) return;
+    Net.action('hidden_chat', { text }).then((r) => { if (r && r.ok && App.scene?.addHiddenNpc) App.scene.addHiddenNpc(); });
   }
 
   function init() {
