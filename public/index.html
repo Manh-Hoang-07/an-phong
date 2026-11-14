@@ -66,6 +66,9 @@
         <div id="h-map"></div>
         <div class="menu">
           <button id="btn-map" title="Bản đồ (M)">🗺️</button>
+          <button id="btn-chat" title="Chat (phím /)">💬</button>
+          <button id="btn-party" title="Đội nhóm">👥</button>
+          <button id="btn-market" title="Chợ người chơi (ở trong làng)">🛒</button>
           <button id="tb-hidden-chat" title="Chat lệnh với NPC ẩn" class="hidden">💬</button>
           <button id="btn-config" title="Cấu hình âm thanh, đồ họa (O)">⚙️</button>
           <button id="btn-menu" title="Menu (I / C / K / L)">☰<b id="h-points" class="badge hidden"></b></button>
@@ -73,6 +76,12 @@
         <div id="quest-track"></div>
       </div>
       <div id="log"></div>
+      <div id="party-hud" class="hidden"></div>
+      <div id="social-toasts"></div>
+      <form id="chat-bar" class="hidden" autocomplete="off">
+        <button type="button" id="chat-ch" title="Đổi kênh chat">Map</button>
+        <input id="chat-input" maxlength="100" placeholder="Nói gì đó... (/ds, /t, /chan tên)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send">
+      </form>
       <div id="skillbar">
         <div class="sk" data-k="atk"><span class="key">J</span><span class="ico" id="sk-atk-ico">⚔</span><div class="cd"></div></div>
         <div class="sk" data-k="0"><span class="key">1</span><span class="ico"></span><div class="cd"></div></div>
@@ -127,6 +136,10 @@
       </div>
     </div>
     <div id="tooltip" class="hidden"></div>
+    <div id="party-win" class="swin hidden"></div>
+    <div id="player-menu" class="swin hidden"></div>
+    <div id="trade-win" class="swin hidden"></div>
+    <div id="market-win" class="swin hidden"></div>
     <div id="banner" class="hidden"></div>
   </div>
 
@@ -244,6 +257,7 @@
   <!-- Lõi: âm thanh, kết nối server -->
   <script src="/js/core/sound.js"></script>
   <script src="/js/core/net.js"></script>
+  <script src="/js/core/realtime.js"></script>
   <!-- Hình ảnh: bút vẽ + từng nhóm hình vẽ bằng code, hiệu ứng, bộ sprite -->
   <script src="/js/art/art.js"></script>
   <script src="/js/art/characters.js"></script>
@@ -278,6 +292,8 @@
   <script src="/js/ui/panels/companion.js"></script>
   <script src="/js/ui/panels/shadows.js"></script>
   <script src="/js/ui/actions.js"></script>
+  <script src="/js/ui/chat.js"></script>
+  <script src="/js/ui/social.js"></script>
   <!-- Cảnh chơi: khung WorldScene + các phần gắn thêm method -->
   <script src="/js/scene/world.js"></script>
   <script src="/js/scene/map_props_data.js"></script>
@@ -291,6 +307,7 @@
   <script src="/js/scene/skills.js"></script>
   <script src="/js/scene/loot.js"></script>
   <script src="/js/scene/juice.js"></script>
+  <script src="/js/scene/remote.js"></script>
   <!-- Khởi động game -->
   <script src="/js/core/main.js"></script>
 </body>

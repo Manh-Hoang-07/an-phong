@@ -223,15 +223,15 @@ const UI = (() => {
     }
   }
 
-  function log(text, color = '#e0e0e0') {
+  function log(text, color = '#e0e0e0', ms = 7000) {
     const box = $('log');
     const d = document.createElement('div');
     d.textContent = keyText(text);
     d.style.color = color;
     box.appendChild(d);
-    while (box.children.length > 7) box.removeChild(box.firstChild);
-    setTimeout(() => d.classList.add('old'), 7000);
-    setTimeout(() => d.remove(), 8200);
+    while (box.children.length > 8) box.removeChild(box.firstChild);
+    setTimeout(() => d.classList.add('old'), ms);
+    setTimeout(() => d.remove(), ms + 1200);
   }
 
   let bannerTimer = null;
@@ -251,7 +251,11 @@ const UI = (() => {
     if (t.classList.contains('hidden') === show) t.classList.toggle('hidden', !show);
     if (show && t.lastChild.textContent !== npcName) t.lastChild.textContent = npcName;
   }
-  function setMap(name) { $('h-map').textContent = name; }
+  // Tên bản đồ + số người chơi đang ở bản đồ (từ Realtime)
+  let mapName = '', mapCount = 0;
+  function showMap() { $('h-map').textContent = mapName + (mapCount > 1 ? ` · ${mapCount} người` : ''); }
+  function setMap(name) { mapName = name; mapCount = 0; showMap(); }
+  function setMapCount(n) { if (n !== mapCount) { mapCount = n; showMap(); } }
   function setAttackIcon(ico) { $('sk-atk-ico').textContent = ico; $('tb-atk-ico').textContent = ico; }
 
   // ------------------------------------------------------------ Nhiệm vụ
@@ -566,7 +570,7 @@ const UI = (() => {
   const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, itemEmoji, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
 
   return {
-    init, refresh, tick, tickPets, log, banner, hint, setMap, setAttackIcon, questReady, hiddenChat,
+    init, refresh, tick, tickPets, log, banner, hint, setMap, setMapCount, setAttackIcon, questReady, hiddenChat,
     openPanel, closePanel, itemIcon, itemEmoji, petPanel, isOpen: () => !!panel,   // openNpc, upgradeResult: gắn trong ui/panels
     _: lib,
   };

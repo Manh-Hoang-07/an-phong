@@ -103,6 +103,7 @@ class WorldScene extends Phaser.Scene {
     this.buildMonsters();
     this.buildShadows();
     this.setupJuice();
+    this.buildRemotes();
     this.loots = new Map();
     for (const l of App.player.loot || []) if (l.map === this.mapId) this.addLoot(l, false);
 
@@ -164,11 +165,16 @@ class WorldScene extends Phaser.Scene {
     this.staminaTick(time, delta);
     this.formTick(time, delta);
     if (!this.dead) this.updatePlayer(time, delta);
-    for (const m of this.monsters) if (m.alive && this.mobActive(m)) this.updateMonster(m, time);
+    for (const m of this.monsters) {
+      if (!m.alive) continue;
+      if (m.net) this.updateNetMonster(m, time, delta);
+      else if (this.mobActive(m)) this.updateMonster(m, time);
+    }
     this.updateMobShadows();
     this.updateProjectiles(time, delta);
     this.updateEnemyShots(delta);
     this.updateLoot(time);
+    this.updateRemotes(time, delta);
 
     // Rơi khỏi bản đồ
     if (this.player.y > this.worldH + 100 && !this.dead) {

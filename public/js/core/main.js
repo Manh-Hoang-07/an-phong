@@ -117,10 +117,14 @@
     $('game-wrap').classList.remove('hidden');
     $('hud').classList.remove('hidden');
     UI.init();
+    if (window.Chat) Chat.init();
+    if (window.Social) Social.init();
+    if (window.Realtime) Realtime.start();
     setupKeyboard();
     setupTouch();
     ScreenRot.update();
 
+    if (window.Realtime) await Realtime.ready(2500);   // có kết nối thì quái do server quản lý
     View.calc();
     game = new Phaser.Game({
       type: new URLSearchParams(location.search).has('canvas') ? Phaser.CANVAS : Phaser.AUTO,   // ?canvas=1 : dùng khi kiểm thử máy không có WebGL
@@ -156,6 +160,7 @@
     window.addEventListener('pagehide', Net.saveOnExit);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') Net.saveOnExit(); });
     App.logout = async () => {
+      if (window.Realtime) Realtime.stop();
       Net.saveOnExit();
       await Net.logout();
       location.reload();
@@ -170,6 +175,7 @@
       if (typing(e)) return;
       if (gameKeys.has(e.code)) e.preventDefault();
       if (e.code === 'Escape') { UI.closePanel(); return; }
+      if (e.code === 'Slash' && !e.repeat && !App.panelOpen && window.Chat) { e.preventDefault(); Chat.open(); return; }
       const panels = { KeyI: 'bag', KeyB: 'bag', KeyC: 'char', KeyK: 'skills', KeyL: 'quest', KeyM: 'map', KeyO: 'config' };
       if (panels[e.code] && !e.repeat) { UI.openPanel(panels[e.code]); return; }
       if (App.panelOpen) return;

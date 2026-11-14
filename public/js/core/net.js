@@ -99,6 +99,17 @@ const Net = (() => {
     return p;
   }
 
+  // Bản vá nhân vật do SERVER đẩy xuống qua WebSocket (giao dịch, chợ, thưởng): cùng luật số thứ tự với phản hồi HTTP
+  async function pushPatch(m) {
+    if (!App.player) return;
+    if (m.base === App.rev && m.patch) { App.rev = m.rev; App.applyPatch(m.patch); }
+    else if (m.base !== App.rev) {
+      const me = await req('/api/me');
+      if (me && me.player) { App.rev = me.rev || 0; App.setPlayer(me.player); }
+    }
+    for (const ev of m.ev || []) App.onEvent(ev);
+  }
+
   // Lưu khi đóng tab
   function saveOnExit() {
     if (!App.player || !App.scene || !App.scene.player) return;
@@ -125,7 +136,7 @@ const Net = (() => {
     login: (u, p) => req('/api/login', { username: u, password: p }),
     register: (u, p, c) => req('/api/register', { username: u, password: p, charName: c }),
     logout: () => req('/api/logout', {}),
-    action, saveOnExit,
+    action, saveOnExit, pushPatch,
   };
 })();
 
@@ -222,6 +233,7 @@ App.onEvent = function (ev) {
       Sound.play('levelup');
       break;
     }
+    case 'market': if (window.Social) Social.onMarket(ev); break;
     case 'loot': if (sc && sc.addLoot) sc.addLoot(ev.loot, true); break;
     case 'picked': Sound.play('pickup'); if (sc && sc.removeLoot) { sc.removeLoot(ev.lid, true); sc.lastLootError = null; } break;
   }

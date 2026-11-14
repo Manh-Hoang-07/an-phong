@@ -35,6 +35,11 @@ Mở http://127.0.0.1:3100. Đăng ký luôn mở: bấm "Chưa có tài khoản
 - Quên mật khẩu: `node server/tools/ops/reset-password.js <tên đăng nhập> <mật khẩu mới>`.
 - Tra cứu / khóa tài khoản, khôi phục nhân vật: `node server/tools/ops/user.js` (xem mục *Database* bên dưới).
 
+### Nhiều người chơi cùng thấy nhau
+
+Người chơi cùng bản đồ thấy nhau (WebSocket tại `/ws`) và chat bằng phím `/` hoặc nút 💬 (`/help` để xem lệnh). Quái do server quản lý (cùng một con quái, cùng máu cho mọi người trong map; ai góp từ 10% máu trở lên đều nhận thưởng). Không nối được WebSocket thì game tự chạy chế độ riêng lẻ như trước. Có đội nhóm (chia kinh nghiệm), giao dịch trực tiếp giữa hai người và chợ người chơi trong làng (bấm vào người chơi khác để mời; nút 👥 và 🛒 trên thanh menu).
+Khi chạy sau Nginx, dùng `deploy/nginx-anphong.conf` mới (có khối `location /ws`). Thiết kế và tiến độ: `docs/KE_HOACH_DA_NGUOI_CHOI.md`.
+
 ### Database
 
 | Bảng | Nội dung |

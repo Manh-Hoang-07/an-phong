@@ -137,8 +137,7 @@ WorldScene.mix(class WorldCombat {
     if (extra.basic && m.def.resist) dmg = Math.max(1, Math.round(dmg * (1 - m.def.resist)));
     if (m.shredUntil > now && !extra.reflect) dmg = Math.max(1, Math.round(dmg * (1 + (m.shred || 0))));   // Tên Phá Giáp: quái chịu thêm sát thương
     if (extra.shred) { m.shred = extra.shred; m.shredUntil = now + 6000; }
-    m.hp -= dmg;
-    m.aggro = true;
+    if (!m.net) { m.hp -= dmg; m.aggro = true; }
     if (!extra.pet && App.stats.lifesteal && !m.def.passive && !this.dead) {
       App.hp = Math.min(App.stats.maxHp, App.hp + dmg * App.stats.lifesteal / 100);
     }
@@ -146,6 +145,16 @@ WorldScene.mix(class WorldCombat {
     if (!extra.pet && extra.basic && !m.def.passive && !this.dead && this.hasPassive('kiem_si') && this.time.now > (this.healTick || 0)) {
       this.healTick = this.time.now + 120;
       App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * 0.005);
+    }
+    // Quái do server quản lý: gửi đòn lên server, máu và hiệu ứng trúng đòn tới theo gói `mhit` (xem onMobNet)
+    if (m.net) {
+      const sp = m.sprite;
+      Realtime.send({
+        t: 'hit', u: m.uid, d: dmg, c: crit ? 1 : 0, src: m.lastHitSource, dir: extra.dir || Math.sign(sp.x - this.player.x) || 1,
+        slow: extra.slow || 0, freeze: extra.freeze || 0, knock: extra.knock || 90,
+      });
+      this.damageChain(m, extra);
+      return;
     }
     const s = m.sprite;
     this.floatText(s.x + Phaser.Math.Between(-8, 8), this.monsterTop(m) - 4, (crit ? '💥' : '') + dmg, crit ? '#ffd740' : '#ffffff', crit ? 20 : 15);
@@ -160,14 +169,7 @@ WorldScene.mix(class WorldCombat {
     }
     if (extra.slow) m.slowUntil = this.time.now + extra.slow * 1000;
     // Hồn Nổ Dây Chuyền: mỗi quái trúng gây thêm vụ nổ nhỏ lên quái bên cạnh (tối đa chainBudget.n lần mỗi lần dùng)
-    if (extra.chain && !extra.isChain) {
-      const budget = extra.chainBudget || (extra.chainBudget = { n: 6 });
-      for (const o of this.monsters) {
-        if (budget.n <= 0) break;
-        if (o === m || !o.alive || o.def.passive) continue;
-        if (Math.hypot(o.sprite.x - s.x, o.sprite.y - s.y) <= (extra.chainRadius || 150)) { budget.n--; this.damageMonster(o, extra.chain, { isChain: true }); }
-      }
-    }
+    this.damageChain(m, extra);
     if (extra.freeze) {
       // Thủ lĩnh / trùm không bị đóng băng: đổi thành làm chậm cùng thời gian
       if (m.def.boss || m.def.leader || m.def.finalBoss) m.slowUntil = Math.max(m.slowUntil || 0, this.time.now + extra.freeze * 1000);
@@ -183,6 +185,18 @@ WorldScene.mix(class WorldCombat {
     }
     if (m.hp <= 0) this.killMonster(m);
     else this.drawMonsterBar(m);
+  }
+
+  // Hồn Nổ Dây Chuyền: mỗi quái trúng gây thêm vụ nổ nhỏ lên quái bên cạnh (tối đa chainBudget.n lần mỗi lần dùng)
+  damageChain(m, extra) {
+    if (!extra.chain || extra.isChain) return;
+    const s = m.sprite;
+    const budget = extra.chainBudget || (extra.chainBudget = { n: 6 });
+    for (const o of this.monsters) {
+      if (budget.n <= 0) break;
+      if (o === m || !o.alive || o.def.passive) continue;
+      if (Math.hypot(o.sprite.x - s.x, o.sprite.y - s.y) <= (extra.chainRadius || 150)) { budget.n--; this.damageMonster(o, extra.chain, { isChain: true }); }
+    }
   }
 
   hurtPlayer(atk, dir, push = 260, mon = null) {

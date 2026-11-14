@@ -22,7 +22,8 @@ const actions = Object.assign({},
   require('./actions/smith'),
   require('./actions/character'),
   require('./actions/advancement'),
-  require('./actions/pets')
+  require('./actions/pets'),
+  require('./actions/market')
 );
 
 async function handle(userId, player, action) {
@@ -221,4 +222,6 @@ function migrate(p) {
   return p;
 }
 
-module.exports = { handle, migrate, GameError, questComplete, currentQuest, reforgeCost, salvageStones, resetCost };
+const market = require('./actions/market');
+
+module.exports = { handle, migrate, settleMarket: market.settleUnpaid, GameError, questComplete, currentQuest, reforgeCost, salvageStones, resetCost };

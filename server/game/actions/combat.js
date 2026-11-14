@@ -6,6 +6,7 @@ const { countItem, dropLoot, pruneLoot } = require('../core/inventory');
 const { gainExp, gainGold } = require('../core/progress');
 const { currentQuest, questComplete, questActive, sideDropActive, sideDropNeed } = require('../core/quests');
 const { ensureWeekly, ensureBoards } = require('../core/periodic');
+const claims = require('../../realtime/claims');
 
 const lastKill = new Map(); // userId -> {t, boss:{monster:time}}
 
@@ -89,13 +90,15 @@ function killOne(p, a, ev, lk, now) {
     const st = G.calcStats(p, { form: !!p.formActive });
     // exp gốc đã được chia cho hệ số hạng quái; nhân lại hệ số (tinh anh x10, thủ lĩnh x100, boss x200)
     // Bùa nhân đôi kinh nghiệm (p.boosts.exp) nhân thêm x2
-    gainExp(p, Math.max(1, Math.round(G.monExp(mon) * expMul * (1 + st.expfind / 100) * G.expBoostMul(p, now))), ev);
-    gainGold(p, Math.round(rand(mon.gold[0], mon.gold[1]) * (1 + st.goldfind / 100)), ev);
+    // Đội nhóm: người tự hạ được cộng thêm kinh nghiệm (a.bonus); đồng đội đứng gần chỉ nhận một nửa kinh nghiệm + tiến độ nhiệm vụ (a.party)
+    const partyMul = a.party ? 0.5 : (a.bonus > 1 && a.bonus <= 1.5 ? a.bonus : 1);
+    gainExp(p, Math.max(1, Math.round(G.monExp(mon) * expMul * partyMul * (1 + st.expfind / 100) * G.expBoostMul(p, now))), ev);
+    if (!a.party) gainGold(p, Math.round(rand(mon.gold[0], mon.gold[1]) * (1 + st.goldfind / 100)), ev);
     // Thú/bóng đồng hành cũng ăn kinh nghiệm theo người kết liễu (chênh lệch cấp quái như người chơi)
-    grantCompanionExp(p, a, Math.max(1, Math.round(G.monExp(mon) * expMul)), ev);
+    if (!a.party) grantCompanionExp(p, a, Math.max(1, Math.round(G.monExp(mon) * expMul)), ev);
 
     // Tử Linh Thuật Sư thu phục quái do chính người chơi kết liễu; không thay bóng cũ khi đủ chỗ.
-    if (p.school === 'tu_linh_thuat_su' && a.source === 'player' && !mon.boss && !mon.leader && !mon.passive && !mon.finalBoss) {
+    if (!a.party && p.school === 'tu_linh_thuat_su' && a.source === 'player' && !mon.boss && !mon.leader && !mon.passive && !mon.finalBoss) {
       p.shadows = p.shadows || { roster: [], active: [], enabled: false, nextId: 1 };
       if (p.shadows.roster.length < G.SHADOW_ROSTER) {
         // Lưu luôn thông số quái lúc bị hạ để xem lại trong bảng Bóng Ma
@@ -117,7 +120,7 @@ function killOne(p, a, ev, lk, now) {
     // Bỏ đồ đã hết hạn trước khi đếm "đồ còn nằm trên đất". Trước đây đồ hết hạn chỉ bị dọn khi có món khác rơi ra,
     // nên mấy món nhiệm vụ đã biến mất từ lâu vẫn được tính là "chưa nhặt" → server không cho rơi thêm.
     pruneLoot(p);
-    for (const [item, chance, onlyQuest, onlySide] of mon.drops) {
+    for (const [item, chance, onlyQuest, onlySide] of (a.party ? [] : mon.drops)) {
       if (onlyQuest && !questActive(p, onlyQuest)) continue;
       if (onlySide && !sideDropActive(p, onlySide)) continue;
       const need = onlyQuest ? (currentQuest(p).obj.collect?.[item] || 0) : onlySide ? sideDropNeed(p, onlySide, item) : 0;
@@ -136,7 +139,7 @@ function killOne(p, a, ev, lk, now) {
       }
       if (Math.random() < chance) dropLoot(p, { id: item, qty: 1, plus: 0 }, spot(), y, ev);
     }
-    if (mon.gear) {
+    if (mon.gear && !a.party) {
       const [chance, list, extra] = mon.gear;
       const table = mon.boss ? 'boss' : 'normal';
       const drops = (Math.random() < chance ? 1 : 0) + (extra && Math.random() < extra ? 1 : 0);
@@ -176,7 +179,7 @@ function killOne(p, a, ev, lk, now) {
     }
     // Vật phẩm cần thu cho các bảng chưa nhận: rơi cho tới khi đủ tổng số cần của mọi bảng
     const colNeed = dailies.filter(d => d.type === 'collect' && !d.claimed).reduce((s, d) => s + d.need, 0);
-    if (colNeed && !mon.passive && p.map !== 'lang' && p.map !== 'cong_do') {
+    if (colNeed && !a.party && !mon.passive && p.map !== 'lang' && p.map !== 'cong_do') {
       const target = 'loi_nang_luong';
       const onGround = (p.loot || []).filter(l => l.inst.id === target).length;
       if (countItem(p, target) + onGround < colNeed && Math.random() < 0.35) dropLoot(p, { id: target, qty: 1, plus: 0 }, spot(), y, ev);
@@ -200,7 +203,14 @@ const actions = {
     if (now - lk.t < 90) fail('Quá nhanh.');
     lk.t = now;
     lastKill.set(userId, lk);
-    for (const k of list) killOne(p, k, ev, lk, now);
+    // Đang kết nối realtime: quái do server quản lý, chỉ nhận thưởng khi có phiếu do server cấp (realtime/claims.js).
+    // Vị trí, loại quái, nguồn hạ lấy từ phiếu, không tin số liệu client gửi.
+    const managed = claims.isOnline(userId);
+    for (const k of list) {
+      if (!managed) { killOne(p, k, ev, lk, now); continue; }
+      const c = claims.take(userId, k && k.kid);
+      if (c) killOne(p, { monster: c.monster, x: c.x, y: c.y, source: c.source, party: !!c.party, bonus: c.bonus }, ev, lk, now);
+    }
   },
 };
 

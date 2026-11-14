@@ -92,6 +92,9 @@ async function getPlayer(userId) {
   return pending;
 }
 
+// Nhân vật đang xử lý một hành động dở dang (begin chưa end)
+function isBusy(userId) { const e = players.get(userId); return !!(e && e.busy > 0); }
+
 function getRev(userId) { const e = players.get(userId); return e ? e.rev : 0; }
 
 // Đánh dấu đang xử lý hành động: lượt ghi định kỳ không ghi trạng thái dở dang.
@@ -251,5 +254,5 @@ function stop() { for (const t of timers) clearInterval(t); timers = []; }
 module.exports = {
   configure, start, stop,
   getSession, dropSession, dropUserSessions,
-  getPlayer, getRev, begin, end, commit, rollback, markDirty, saveNow, flushAll,
+  getPlayer, getRev, isBusy, begin, end, commit, rollback, markDirty, saveNow, flushAll,
 };

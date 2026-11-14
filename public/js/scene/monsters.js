@@ -4,6 +4,11 @@ WorldScene.mix(class WorldMonsters {
   // ------------------------------------------------------------------ Quái
   buildMonsters() {
     this.mGroup = this.physics.add.group();
+    // Đang có kết nối realtime: quái do SERVER quản lý (server/realtime/mobs.js), client chỉ vẽ theo gói server gửi (netSpawn).
+    // Không có kết nối thì chơi chế độ riêng lẻ như cũ (quái chạy ngay trên máy).
+    this.netMobs = !!Realtime.online;
+    this.netByUid = new Map();
+    if (this.netMobs) return;
     for (const ch in this.meta.spawns) {
       const id = this.meta.spawns[ch];
       this.forEachCell((c2, r, c) => { if (c2 === ch) this.spawnMonster(id, r, c); });
@@ -15,8 +20,14 @@ WorldScene.mix(class WorldMonsters {
   spawnMonster(id, r, c) {
     const def = GameData.MONSTERS[id];
     const x = c * T + T / 2;
+    const y = def.fly ? r * T + T / 2 : this.groundY(r, c);
+    return this.makeMonster(id, x, y);
+  }
+
+  makeMonster(id, x, y) {
+    const def = GameData.MONSTERS[id];
+    const c = Math.floor(x / T);
     const fly = !!def.fly;
-    const y = fly ? r * T + T / 2 : this.groundY(r, c);
     const sheet = Sprites.hasMob(this, def) ? Sprites.mobOf(def) : null;
     const s = this.physics.add.sprite(x, y, sheet ? `mb_${sheet}_idle` : Sprites.codeTex(def.look)).setOrigin(0.5, 1).setDepth(3);
     this.mGroup.add(s);
@@ -31,13 +42,13 @@ WorldScene.mix(class WorldMonsters {
     // Phân biệt hạng quái (tinh anh/thủ lĩnh/boss): to hơn và màu riêng theo hệ số
     const grade = GameData.monGrade(def);
     if (grade.scale !== 1) s.setScale(s.scaleX * grade.scale, s.scaleY * grade.scale);
-    const span = fly ? [x - 220, x + 220] : this.spanAt(Math.floor(y / T), c);
-    for (const pt of this.portals) {
+    const span = fly || this.netMobs ? [x - 220, x + 220] : this.spanAt(Math.floor(y / T), c);
+    if (!this.netMobs) for (const pt of this.portals) {
       if (pt.x < span[0] - 160 || pt.x > span[1] + 160) continue;
       if (pt.x <= x) span[0] = Math.max(span[0], pt.x + 160);
       else span[1] = Math.min(span[1], pt.x - 160);
     }
-    if (span[0] > span[1]) span[0] = span[1] = x;
+    if (!this.netMobs && span[0] > span[1]) span[0] = span[1] = x;
     const m = {
       id, def, sprite: s, sheet, baseTint: Sprites.tintOf(def), baseScale: s.scaleX, hp: GameData.monHp(def), maxHp: GameData.monHp(def), homeX: x, homeY: y, span,
       dir: Math.random() < 0.5 ? -1 : 1, aggro: false, nextAttack: 0, nextTurn: 0, slowUntil: 0, freezeUntil: 0,
@@ -82,7 +93,8 @@ WorldScene.mix(class WorldMonsters {
     if (show) m.bar.setPosition(s.x, top);
   }
 
-  killMonster(m) {
+  // Hiệu ứng chết (dùng cho cả quái chạy riêng lẻ và quái do server quản lý)
+  killFx(m) {
     m.alive = false;
     Sound.play(m.def.boss ? 'boom' : 'kill');
     m.hp = 0;
@@ -108,11 +120,16 @@ WorldScene.mix(class WorldMonsters {
     else this.tweens.add({ targets: s, alpha: 0, duration: 300 });
     if (m.def.boss) { this.cameras.main.shake(400, 0.012); this.slowMo(0.3, 900); }
     if (m.def.leader) { this.cameras.main.shake(250, 0.008); this.slowMo(0.4, 600); }
+    if (m.def.boss) this.hitstop(120);
+    if (m.def.leader) this.hitstop(60);
+  }
+
+  killMonster(m) {
+    this.killFx(m);
+    const s = m.sprite;
     const dropY = m.def.fly ? this.groundY(Math.floor(s.y / T), Math.floor(s.x / T)) : s.y;
     this.pendingKills.push({ monster: m.id, x: Math.round(s.x), y: Math.round(dropY), source: m.lastHitSource || 'player' });
     if (!this.killFlush) this.killFlush = this.time.delayedCall(120, () => this.flushKills());
-    if (m.def.boss) this.hitstop(120);
-    if (m.def.leader) this.hitstop(60);
     if (m.minion) { this.time.delayedCall(400, () => { m.label.destroy(); m.bar.destroy(); s.destroy(); this.monsters.splice(this.monsters.indexOf(m), 1); }); }
     else this.time.delayedCall(m.def.respawn * 1000, () => this.respawnMonster(m));
   }
@@ -138,6 +155,175 @@ WorldScene.mix(class WorldMonsters {
     m.label.setVisible(true);
     this.tweens.add({ targets: s, alpha: 1, duration: 400 });
     this.drawMonsterBar(m);
+  }
+
+  // ------------------------------------------------------------------ Quái do server quản lý
+  netSpawn(info, fade = false) {
+    const m = this.makeMonster(info.id, info.x, info.y);
+    m.sprite.body.setAllowGravity(false);   // vị trí do server quyết định, không rơi theo trọng lực của máy mình
+    m.net = true; m.uid = info.u; m.hp = info.hp; m.maxHp = info.mh; m.minion = !!info.mn;
+    m.tx = info.x; m.ty = info.y; m.f = info.f; m.st = info.st || 0; m.fl = info.fl || 0; m.moving = false;
+    m.state = this.netState(m.st); m.aggro = false;
+    this.netByUid.set(m.uid, m);
+    if (!info.al) this.netHide(m);
+    else if (fade) { m.sprite.setAlpha(0); this.tweens.add({ targets: m.sprite, alpha: 1, duration: 400 }); }
+    this.drawMonsterBar(m);
+    return m;
+  }
+
+  netState(st) { return st === 1 ? 'windup' : st === 2 ? 'lunge' : 'move'; }
+
+  netHide(m) {
+    m.alive = false;
+    m.sprite.setVisible(false); m.sprite.body.enable = false;
+    m.label.setVisible(false); m.bar.clear(); m._barFrac = -2;
+  }
+
+  netRemove(m) {
+    if (!m) return;
+    m.label.destroy(); m.bar.destroy(); m.sprite.destroy();
+    const i = this.monsters.indexOf(m);
+    if (i >= 0) this.monsters.splice(i, 1);
+    this.netByUid.delete(m.uid);
+  }
+
+  netClear() {
+    for (const m of [...this.monsters]) this.netRemove(m);
+    this.netByUid.clear();
+  }
+
+  // Tin về quái từ server (xem server/realtime/mobs.js)
+  onMobNet(ev) {
+    const m = this.netByUid.get(ev.u);
+    switch (ev.t) {
+      case 'mobs':
+        this.netClear();
+        for (const info of ev.list) this.netSpawn(info);
+        break;
+      case 'msnap':
+        for (const [u, x, y, f, st, fl] of ev.p) {
+          const mm = this.netByUid.get(u);
+          if (mm) { mm.tx = x; mm.ty = y; mm.f = f; mm.st = st; mm.fl = fl; }
+        }
+        break;
+      case 'mhit': if (m && m.alive) this.netHitFx(m, ev); break;
+      case 'mhp': if (m) { m.hp = ev.hp; m.maxHp = ev.mh; } break;
+      case 'mdie': if (m && m.alive) this.netDie(m, ev); break;
+      case 'mresp': this.netRespawn(ev.m); break;
+      case 'mspawn': if (!this.netByUid.has(ev.m.u)) this.netSpawn(ev.m, true); break;
+      case 'mdel': this.netRemove(m); break;
+      case 'mact':
+        if (!m || !m.alive) break;
+        if (ev.a === 'slam') this.bossSlam(m);
+        else if (ev.a === 'special') this.bossSpecial(m, this.time.now);
+        else if (ev.a === 'enrage') this.netEnrage(m);
+        break;
+    }
+  }
+
+  // Đòn đánh (của mình hoặc người khác) đã được server tính: cập nhật máu và hiệu ứng
+  netHitFx(m, ev) {
+    m.hp = ev.hp;
+    const s = m.sprite, crit = !!ev.c, mine = ev.by === Realtime.myId;
+    this.floatText(s.x + Phaser.Math.Between(-8, 8), this.monsterTop(m) - 4, (crit ? '💥' : '') + ev.d, crit ? '#ffd740' : mine ? '#ffffff' : '#b0bec5', crit ? 20 : 15);
+    m.flashUntil = this.time.now + 80;
+    this.hitFx(s.x, s.body.center.y, crit, ev.dir || 1);
+    if (m.sheet && m.state === 'move' && ev.hp > 0) { m.hitUntil = this.time.now + 220; s.play(`mb_${m.sheet}_hit`, true); }
+    if (mine) Sound.play(crit ? 'crit' : 'hit');
+    this.drawMonsterBar(m);
+  }
+
+  netDie(m, ev) {
+    m.hp = 0;
+    if (ev.fled) {
+      UI.banner(`${m.def.name} bỏ chạy!`, 1600);
+      this.floatText(m.sprite.x, this.monsterTop(m), 'Bỏ chạy!', '#ffd54f', 16);
+    }
+    this.killFx(m);
+    // Mình là người hạ hoặc góp sức: đổi phiếu nhận thưởng (đã được server ghi nhận)
+    const me = Realtime.myId;
+    if (ev.kid && (ev.by === me || (ev.as && ev.as.includes(me)))) {
+      this.pendingKills.push({ kid: ev.kid });
+      if (!this.killFlush) this.killFlush = this.time.delayedCall(120, () => this.flushKills());
+    }
+    if (m.minion) this.time.delayedCall(400, () => this.netRemove(m));
+  }
+
+  netRespawn(info) {
+    const m = this.netByUid.get(info.u);
+    if (!m) { this.netSpawn(info, true); return; }
+    const s = m.sprite;
+    m.hp = info.hp; m.maxHp = info.mh; m.alive = true; m.aggro = false; m.slowUntil = 0; m.freezeUntil = 0; m.state = 'move'; m.st = 0; m.fl = 0;
+    m.enraged = false; m.fled = false; m.nextSpecial = 0; m.moonStage = 1; m.wave = null;
+    m.baseTint = Sprites.tintOf(m.def);
+    m.tx = info.x; m.ty = info.y; m.f = info.f;
+    s.setPosition(info.x, info.y).setAlpha(0).setScale(m.baseScale).setAngle(0).setVisible(true);
+    if (m.sheet) s.play(`mb_${m.sheet}_idle`);
+    s.body.enable = true; s.body.reset(info.x, info.y);
+    m.label.setVisible(true);
+    this.tweens.add({ targets: s, alpha: 1, duration: 400 });
+    this.drawMonsterBar(m);
+  }
+
+  netEnrage(m) {
+    m.enraged = true;
+    UI.banner(`${m.def.name} nổi giận!`, 1800);
+    Sound.play('roar');
+    this.cameras.main.shake(500, 0.014);
+    this.cameras.main.flash(250, 255, 60, 60);
+  }
+
+  // Quái do server quản lý: chỉ nội suy vị trí theo gói server, vẽ trạng thái, và tự kiểm tra mình có bị đòn lao tới trúng không
+  updateNetMonster(m, time, delta) {
+    const s = m.sprite, d = m.def, pl = this.player;
+    m.frameT += 1;
+    const animRate = d.fly ? 8 : 14;
+    if (!m.sheet) s.setTexture(Sprites.codeTex(d.look, Math.floor(m.frameT / animRate) % 2));
+    m.freezeUntil = (m.fl & 2) ? time + 250 : 0;
+    m.slowUntil = (m.fl & 1) ? time + 250 : 0;
+    m.enraged = !!(m.fl & 4);
+    const next = this.netState(m.st);
+    if (next !== m.state) {
+      m.state = next;
+      if (next === 'windup') this.netWindupFx(m, time);
+      else if (next === 'lunge') m.lungeHit = false;
+    }
+    // Nội suy vị trí
+    const px = s.x, py = s.y;
+    if (Math.abs(m.tx - s.x) + Math.abs(m.ty - s.y) > 400) s.setPosition(m.tx, m.ty);
+    else { const k = 1 - Math.exp(-delta / 70); s.setPosition(s.x + (m.tx - s.x) * k, s.y + (m.ty - s.y) * k); }
+    m.moving = Math.abs(s.x - px) > 0.25 || (d.fly && Math.abs(s.y - py) > 0.25);
+    s.setFlipX(d.look === 'mushroom' ? false : m.f < 0);
+    // Tô màu theo trạng thái (cùng quy tắc với updateMonster)
+    if (time < (m.flashUntil || 0)) s.setTintFill(0xffffff);
+    else if (time < m.freezeUntil) s.setTint(0x9ad7ff);
+    else if (m.state === 'windup') { if (Math.floor(time / 70) % 2) s.setTintFill(0xff4d4d); else this.baseTint(m); }
+    else if (m.enraged) s.setTint(0xff9a9a);
+    else if (time < m.slowUntil) s.setTint(0x9fc5e8);
+    else this.baseTint(m);
+    if (m.sheet) this.mobAnim(m, time);
+    if (m.wave) this.updateBossWave(m, time);
+    // Đòn lao tới: tự kiểm tra trên máy mình, trúng mình thì mình nhận sát thương
+    if (m.state === 'lunge' && !m.lungeHit && !this.dead && d.atk > 0) {
+      const b1 = this.mBounds(m), b2 = this.pBounds();
+      Phaser.Geom.Rectangle.Inflate(b1, -4, -4);
+      if (Phaser.Geom.Intersects.RectangleToRectangle(b1, b2)) {
+        m.lungeHit = true;
+        this.hurtPlayer(Math.round(d.atk * (m.enraged ? 1.25 : 1)), Math.sign(pl.x - s.x) || 1, 260, m);
+      }
+    }
+    this.drawMonsterBar(m);
+  }
+
+  netWindupFx(m, time) {
+    const s = m.sprite, d = m.def;
+    this.tweens.add({ targets: s, scaleY: m.baseScale * 0.9, scaleX: m.baseScale * 1.06, duration: 120, yoyo: true });
+    if (m.sheet) {
+      const [n] = Sprites.MOBS[m.sheet].anims.attack;
+      const total = (d.boss || d.leader ? 600 : 380) + (d.boss || d.leader ? 320 : 240);
+      s.play({ key: `mb_${m.sheet}_attack`, frameRate: n / (total / 1000) }, false);
+    }
+    if (d.boss || d.leader) Sound.play('warn');
   }
 
   // Quái: đi tuần → phát hiện người chơi → đuổi → GỒNG (báo trước, đứng lại nháy đỏ) → LAO TỚI đánh → nghỉ
@@ -272,7 +458,7 @@ WorldScene.mix(class WorldMonsters {
   mobAnim(m, time) {
     const s = m.sprite;
     if (m.state !== 'move' || time < (m.hitUntil || 0)) return;
-    const moving = Math.abs(s.body.velocity.x) > 8 || (m.def.fly && Math.abs(s.body.velocity.y) > 8);
+    const moving = m.net ? m.moving : Math.abs(s.body.velocity.x) > 8 || (m.def.fly && Math.abs(s.body.velocity.y) > 8);
     s.play(`mb_${m.sheet}_${moving ? 'run' : 'idle'}`, true);
   }
 

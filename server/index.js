@@ -16,6 +16,7 @@ const store = require('./storage/db');
 const cache = require('./storage/cache');
 const auth = require('./accounts/auth');
 const game = require('./game');
+const realtime = require('./realtime');
 const G = require('../shared');
 
 const PORT = Number(process.env.PORT) || 3100;
@@ -30,12 +31,15 @@ const serveStatic = require('./http/static')(ROOT);
 const DEFERRED_SAVE = new Set(['kill', 'kills', 'save']);
 const getPlayer = (userId) => cache.getPlayer(userId);
 
-function securityHeaders(res) {
+function securityHeaders(res, host) {
+  // WebSocket cùng nguồn: Safari cũ không coi ws(s) là 'self' nên khai báo rõ theo Host
+  const h = /^[\w.\-:\[\]]{1,100}$/.test(host || '') ? host : '';
+  const ws = h ? ` ws://${h} wss://${h}` : '';
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'same-origin');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; media-src 'self' data: blob:; connect-src 'self'");
+    "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; media-src 'self' data: blob:; connect-src 'self'" + ws);
 }
 
 // Trả JSON; dữ liệu từ 1KB trở lên được nén gzip (dữ liệu nhân vật thường 1–10KB, nén còn khoảng 1/5).
@@ -218,7 +222,7 @@ async function api(req, res, url) {
 }
 
 const server = http.createServer((req, res) => {
-  securityHeaders(res);
+  securityHeaders(res, req.headers.host);
   const [url, query = ''] = (req.url || '/').split('?');
   if (url.startsWith('/api/')) {
     api(req, res, url).catch((e) => { console.error(e); send(res, 500, { error: 'Lỗi server.' }); });
@@ -228,6 +232,8 @@ const server = http.createServer((req, res) => {
     res.writeHead(405); res.end();
   }
 });
+
+realtime.attach(server);
 
 async function maintenance() {
   const r = await store.maintenance();
@@ -242,6 +248,10 @@ async function start() {
   cache.start();
   await maintenance();
   setInterval(() => maintenance().catch((e) => console.error('Dọn dữ liệu lỗi:', e.message)), 3600 * 1000).unref();
+  // Chợ: thử lại việc chuyển tiền cho người bán nếu lần trước lỗi
+  const settle = () => game.settleMarket().catch((e) => console.error('Chợ lỗi:', e.message));
+  settle();
+  setInterval(settle, 60 * 1000).unref();
   server.listen(PORT, HOST, () => {
     console.log(`Thức Tỉnh đang chạy tại http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
     console.log(`Dữ liệu lưu trong PostgreSQL: ${store.DB_INFO}`);
@@ -255,6 +265,7 @@ async function shutdown(sig) {
   stopping = true;
   console.log(`Nhận ${sig}, đang lưu dữ liệu trước khi tắt...`);
   setTimeout(() => { console.error('Quá 10 giây, buộc tắt.'); process.exit(1); }, 10000).unref();
+  realtime.close();
   server.close();
   cache.stop();
   try {

@@ -18,6 +18,7 @@
   "dependencies": {
     "@fontsource/be-vietnam-pro": "5.2.5",
     "pg": "^8.16.3",
-    "phaser": "3.90.0"
+    "phaser": "3.90.0",
+    "ws": "^8.23.0"
   }
 }

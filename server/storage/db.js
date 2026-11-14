@@ -205,6 +205,40 @@ const MIGRATIONS = [
   // 5. Dữ liệu nhân vật đã nằm hết trong core + player_data, bỏ cột JSON cũ (không còn đường đọc dữ liệu kiểu cũ).
   //    Muốn quay lại bản trước: khôi phục từ file `npm run backup`.
   `ALTER TABLE players DROP COLUMN IF EXISTS data;`,
+
+  // 6. Giao dịch giữa người chơi: nhật ký giao dịch trực tiếp + chợ (tin đăng bán giữ món đồ trong DB).
+  `
+  CREATE TABLE IF NOT EXISTS trade_log (
+    id BIGSERIAL PRIMARY KEY,
+    at BIGINT NOT NULL,
+    user_a BIGINT NOT NULL,
+    user_b BIGINT NOT NULL,
+    detail JSONB NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS trade_log_a_idx ON trade_log (user_a, at DESC);
+  CREATE INDEX IF NOT EXISTS trade_log_b_idx ON trade_log (user_b, at DESC);
+
+  CREATE TABLE IF NOT EXISTS market_listings (
+    id BIGSERIAL PRIMARY KEY,
+    seller_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    seller_name TEXT NOT NULL,
+    inst JSONB NOT NULL,
+    item_id TEXT NOT NULL,
+    item_name TEXT NOT NULL,
+    slot TEXT,
+    level INTEGER NOT NULL DEFAULT 1,
+    qty INTEGER NOT NULL DEFAULT 1,
+    price BIGINT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    created BIGINT NOT NULL,
+    expires BIGINT NOT NULL,
+    buyer_id BIGINT,
+    sold_at BIGINT,
+    paid BOOLEAN NOT NULL DEFAULT FALSE      -- đã chuyển tiền cho người bán chưa (status = sold)
+  );
+  CREATE INDEX IF NOT EXISTS market_status_price_idx ON market_listings (status, price);
+  CREATE INDEX IF NOT EXISTS market_seller_idx ON market_listings (seller_id, status);
+  `,
 ];
 
 /*
@@ -311,6 +345,8 @@ const AUTH_LOG_DAYS = Number(process.env.AUTH_LOG_DAYS) || 90;
 module.exports = {
   DB_INFO,
   init,
+  query,
+  tx,
   close: () => Promise.all([pool.end(), lazyPool.end()]),
 
   async countUsers() {
