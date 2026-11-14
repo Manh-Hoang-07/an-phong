@@ -21,7 +21,8 @@ class WorldScene extends Phaser.Scene {
     }
     this.load.on('loaderror', () => { /* thiếu ảnh thì dùng hình vẽ bằng code */ });
     // Ảnh NPC (nếu có): nạp trước Art.makeAll; make() thấy texture đã có thì không vẽ code đè lên
-    const npcV = window.BUILD ? '?v=' + BUILD.assets : '';
+    const assetV = window.BUILD ? '?v=' + BUILD.assets : '';
+    const npcV = assetV;
     for (const id of Object.keys(Art._.NPC_IMAGES || {})) if (!this.textures.exists('npc_' + id)) this.load.image('npc_' + id, `/assets/npcs/${id}.png` + npcV);
     // Chỉ tải hình cần ngay: class của mình + quái trên bản đồ này. Phần còn lại tải ngầm sau khi vào game.
     Sprites.preload(this, Sprites.needed(this.mapId, App.player.school || 'none'));
@@ -30,12 +31,12 @@ class WorldScene extends Phaser.Scene {
     const look = MapLooks.get(this.mapId, GameData.MAPS[this.mapId].theme);
     for (const d of MapLooks.needs(look)) {
       const key = `bgimg_${d.pack}_${d.layer}`;
-      if (!this.textures.exists(key)) this.load.image(key, `/assets/bg/${d.pack}/${d.layer}.${MapLooks.PACKS[d.pack].ext}`);
+      if (!this.textures.exists(key)) this.load.image(key, `/assets/bg/${d.pack}/${d.layer}.${MapLooks.PACKS[d.pack].ext}` + assetV);
     }
     // Cảnh trí ảnh của map (MapDecor): nạp các bộ tree / ceil / floor / bits được khai báo
     for (const set of MapLooks.propSets(look)) for (let i = 1; i <= MapProps.SETS[set].n; i++) {
       const key = `prop_${set}_${i}`;
-      if (!this.textures.exists(key)) this.load.image(key, `/assets/props/${set}/${i}.png`);
+      if (!this.textures.exists(key)) this.load.image(key, `/assets/props/${set}/${i}.png` + assetV);
     }
     this.load.on('progress', (v) => Loading.set(0.2 + v * 0.7));
   }

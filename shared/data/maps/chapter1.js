@@ -9,7 +9,8 @@
   'use strict';
 
   const PART = {
-    cong_do: { name: 'Cổng đỏ chưa phân hạng', theme: 'redgate', home: 'lang',
+    // Cổng đặc biệt: chết thì hồi sinh ngay tại cổng (respawn: true), không đẩy về làng.
+    cong_do: { name: 'Cổng đỏ chưa phân hạng', theme: 'redgate', home: 'lang', respawn: true,
       spawns: { r: 'bong_do' },
       npcs: { H: 'he_thong' },
       portals: { '>': { to: 'lang', at: 'S', require: 'q0' } } },

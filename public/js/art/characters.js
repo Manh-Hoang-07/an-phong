@@ -256,6 +256,31 @@
     },
   };
 
+  // Bảng nhiệm vụ và Trạm dịch chuyển: hai NPC dịch vụ còn lại, dùng chung cho mọi làng.
+  // Cùng dáng thợ săn với các NPC khác, chỉ khác đạo cụ, nên không phải vẽ tay từng người.
+  NPCS.bang_nv = {
+    coat: 0x3b4a5a, inner: 0x4a5a6a, accent: 0xffd166, hair: 0x2a2a30,
+    skin: 0xe8bd95, skin2: 0xc69169, pants: 0x2e3a46, boot: 0x222a33, long: false, longHair: false,
+    prop: (g) => {  // bảng gỗ + mẩu giấy
+      rrect(g, 0x6f4a2a, 26.6, 24, 8.4, 12, 1.2);
+      rect(g, 0x8a5f38, 27.2, 25, 7.2, 10, 0.9);
+      rect(g, 0xe8e2d0, 28, 26.4, 5.6, 1.2, 0.95);
+      rect(g, 0xe8e2d0, 28, 28.8, 5.6, 1.2, 0.95);
+      rect(g, 0xe8e2d0, 28, 31.2, 3.6, 1.2, 0.95);
+      rect(g, 0xffd166, 17.4, 3.2, 5.2, 1.6, 0.9);
+    },
+  };
+  NPCS.tram = {
+    coat: 0x2f5a6a, inner: 0x3fd0ff, accent: 0x7fe3ff, hair: 0x1f2a33,
+    skin: 0xe8bd95, skin2: 0xc69169, pants: 0x243642, boot: 0x1a2730, long: true, longHair: true,
+    prop: (g) => {  // vòng sáng dịch chuyển
+      ell(g, 0x7fe3ff, 30, 30, 4.6, 4.6, 0.35);
+      ell(g, 0x3fd0ff, 30, 30, 2.8, 2.8, 0.6);
+      ell(g, 0xbff2ff, 30, 30, 1.2, 1.2, 0.95);
+      rect(g, 0x3fd0ff, 16.8, 33.6, 6.4, 1.6, 0.8);
+    },
+  };
+
   // NPC dịch vụ của làng II–VII (xem shared/data/npcs.js): cùng dáng và đạo cụ với NPC gốc nhưng đổi tông màu áo / phụ kiện
   // theo làng, không vẽ tay từng người. Hình ảnh riêng (NPC_IMAGES) chỉ có cho NPC gốc ở Hiệp Hội; các làng khác dùng hình vẽ code.
   function hueShift(color, deg) {
@@ -283,14 +308,71 @@
   // Không tải được ảnh thì make() bên dưới vẽ lại bằng code như cũ.
   const NPC_IMAGES = { lao_su: 62, tap_hoa: 62, thu_kho: 64 };
 
+  // Hình dùng chung: NPC không có bảng màu riêng thì mượn dáng + đạo cụ của một NPC mẫu.
+  // Nhiều NPC khác tên nhưng cùng vai trò (hội trưởng các làng, thợ rèn, dược sư, chủ tiệm...) dùng chung một hình.
+  const NPC_LOOK = {
+    // cốt truyện
+    npc_an: 'lu_khach', he_thong: 'tram', vy: 'vy', lam_suong: 'vy',
+    tho_san_1: 'tho_san', tho_san_2: 'tho_san', tho_san_3: 'tho_san', tho_san_4: 'tho_san', tho_san_5: 'tho_san',
+    hat_mach_1: 'hat_mach', hat_mach_2: 'hat_mach', hat_mach_3: 'hat_mach',
+    tro_ly_1: 'tro_ly', tro_ly_2: 'tro_ly', tro_ly_3: 'tro_ly', tro_ly_4: 'tro_ly',
+    cua_sang_1: 'cua_sang', cua_sang_2: 'cua_sang', cua_sang_3: 'cua_sang',
+    lang_hinh: 'lang_hinh',
+    // trưởng làng thay Hội trưởng Khải giao nhiệm vụ
+    truong_lang_5: 'lao_su', truong_lang_6: 'lao_su',
+    // dịch vụ ở Hiệp Hội và các làng (bảng nhiệm vụ / trạm dùng chung hình gốc)
+    bang_nv: 'bang_nv', tram: 'tram',
+    ha_phong: 'ha_phong', minh_triet: 'minh_triet', lu_khach: 'lu_khach',
+  };
+  for (let n = 2; n <= 7; n++) { NPC_LOOK['bang_nv_' + n] = 'bang_nv'; NPC_LOOK['tram_' + n] = 'tram'; }
+
+  // Bảng màu cho các NPC chỉ có look (không khai báo bảng màu riêng)
+  const LOOK_PALETTE = {
+    vy: { coat: 0x7a2b4a, inner: 0x2b1a22, accent: 0xff7a9a, hair: 0x8a1f2f, skin: 0xf1c9a3, skin2: 0xd39a72,
+      pants: 0x3a1a24, boot: 0x241016, long: true, longHair: true,
+      prop: (g) => { rrect(g, 0x9aa3b8, 26.6, 26, 2.2, 14, 1); rect(g, 0x6f7a90, 25.6, 25, 4.2, 2, 0.95); } },
+    tho_san: { coat: 0x6a6a7a, inner: 0x8a8a9a, accent: 0xc0c0d0, hair: 0x2a2a30, skin: 0xd9a279, skin2: 0xb47e57,
+      pants: 0x4a4a56, boot: 0x2a2a33, long: false, longHair: false,
+      prop: (g) => { rect(g, 0x8a8a9a, 27, 28, 6, 1.6, 0.9); rect(g, 0x8a8a9a, 27, 31, 6, 1.6, 0.9); } },
+    hat_mach: { coat: 0x6a8a9a, inner: 0xa0d0e0, accent: 0x7fe3ff, hair: 0x3a4a55, skin: 0xe8bd95, skin2: 0xc69169,
+      pants: 0x3a4a55, boot: 0x2a3a44, long: false, longHair: false,
+      prop: (g) => { ell(g, 0x7fe3ff, 30, 30, 3.4, 3.4, 0.5); ell(g, 0xbff2ff, 30, 30, 1.4, 1.4, 0.9); } },
+    tro_ly: { coat: 0x6a8a9a, inner: 0xe8eef2, accent: 0x9fd4e8, hair: 0x2b2b33, skin: 0xeec6a2, skin2: 0xcf9a74,
+      pants: 0x3a4a55, boot: 0x2a3a44, long: true, longHair: false,
+      prop: (g) => { rect(g, 0xe8e2d0, 27, 26, 7, 9, 0.95); rect(g, 0x9fd4e8, 27.6, 27, 5.8, 1.2, 0.9); } },
+    cua_sang: { coat: 0xfff0a0, inner: 0xffffff, accent: 0xffd166, hair: 0xffe8a0, skin: 0xfff4d0, skin2: 0xf0d8a8,
+      pants: 0xf0e0a0, boot: 0xd8c880, long: true, longHair: true,
+      prop: (g) => { ell(g, 0xfff0a0, 30, 30, 5, 5, 0.35); ell(g, 0xffffff, 30, 30, 2.4, 2.4, 0.8); } },
+    lang_hinh: { coat: 0xffe8a0, inner: 0x3a2a1a, accent: 0xffd060, hair: 0xd8c27a, skin: 0xf0e0c0, skin2: 0xd0c0a0,
+      pants: 0x4a3a2a, boot: 0x2a2018, long: true, longHair: true,
+      prop: (g) => { rect(g, 0xffd060, 27, 24, 2, 16, 0.9); ell(g, 0xfff0a0, 28, 23, 2.6, 2.6, 0.9); } },
+    ha_phong: { coat: 0x2f6b8a, inner: 0x8ab0c0, accent: 0x7fd8ff, hair: 0x4a4a52, skin: 0xd9a279, skin2: 0xb47e57,
+      pants: 0x24404f, boot: 0x1a2c36, long: false, longHair: false,
+      prop: (g) => { line(g, 0x8a6d55, 28, 26, 28, 38, 2); rect(g, 0x8a6d55, 26.6, 24.4, 3, 2, 0.95); } },
+    minh_triet: { coat: 0x5a3a8a, inner: 0xe8e0f0, accent: 0xb08aff, hair: 0x9a9ca6, skin: 0xeec6a2, skin2: 0xcf9a74,
+      pants: 0x3a2a55, boot: 0x2a1f3a, long: true, longHair: false,
+      prop: (g) => { rect(g, 0x1a1a22, 15.4, 10, 4, 3.6, 0.95); rect(g, 0xcfd8e3, 15.8, 10.4, 3.2, 2.8, 0.9);
+        rect(g, 0x1a1a22, 20.6, 10, 4, 3.6, 0.95); rect(g, 0xcfd8e3, 21, 10.4, 3.2, 2.8, 0.9); } },
+    lu_khach: { coat: 0x3a2a55, inner: 0x1a1224, accent: 0xb46bff, hair: 0x1a1224, skin: 0xd8b8a0, skin2: 0xb89680,
+      pants: 0x241a33, boot: 0x140e1c, long: true, longHair: true,
+      prop: (g) => { tri(g, 0x2a1a3a, 20, 1.4, 4.4, 9, 35.6, 9); tri(g, 0x1a1224, 20, 3, 7, 9, 33, 9); } },
+  };
+
   function npcs(scene) {
     for (const id in NPCS) {
       const pal = NPCS[id];
       make(scene, 'npc_' + id, 40, 60, (g) => drawHunter(g, pal, 'idle', { prop: pal.prop }));
     }
+    // NPC chỉ có look: vẽ một lần dưới khoá gốc, các id khác trỏ về cùng hình đó
+    for (const id in NPC_LOOK) {
+      if (NPCS[id]) continue;
+      const base = NPC_LOOK[id], pal = LOOK_PALETTE[base] || NPCS[base];
+      if (!pal) continue;
+      make(scene, 'npc_' + id, 40, 60, (g) => drawHunter(g, pal, 'idle', { prop: pal.prop }));
+    }
     for (const id in NPC_IMAGES) Art.registerImage(scene, 'npc_' + id, NPC_IMAGES[id]);
   }
 
-  Object.assign(Art._, { HUNTERS, drawHunter, hunters, NPCS, NPC_IMAGES, npcs });
+  Object.assign(Art._, { HUNTERS, drawHunter, hunters, NPCS, NPC_IMAGES, NPC_LOOK, npcs });
   Object.assign(Art, { HUNTERS, drawHunter });
 })();

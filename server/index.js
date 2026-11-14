@@ -138,7 +138,10 @@ async function api(req, res, url) {
     if (!(await auth.registerOpen())) return send(res, 403, { error: 'Đã đóng đăng ký tài khoản mới.' });
     const [cred, err] = validCredentials(body);
     if (err) return send(res, 400, { error: err });
-    const charName = String(body.charName || cred.username).trim().slice(0, 16) || cred.username;
+    // Tên nhân vật do người chơi tự nhập. KHÔNG lặng lẽ thay bằng tên đăng nhập: người chơi sẽ vào game
+    // với một cái tên họ chưa hề đặt (ví dụ tên đăng nhập là "123456") mà không biết vì sao.
+    const charName = String(body.charName || '').trim().slice(0, 16);
+    if (!charName) return send(res, 400, { error: 'Hãy nhập tên nhân vật.' });
     const ctx = clientCtx(req);
     const s = auth.newSession(null, ctx);
     const userId = await store.registerUser(cred.username, await auth.hashPassword(cred.password), G.newPlayer(charName), s);

@@ -90,11 +90,20 @@ const actions = {
     const st = G.calcStats(p, { form: false });
     p.hp = Math.round(st.maxHp * 0.5);
     p.mp = Math.round(st.maxMp * 0.5);
+    p.hiddenNpcActive = false;
+    // Hồi sinh tại chỗ ở cổng đặc biệt (respawn: true, ví dụ Cổng đỏ): chết là đứng dậy ngay trong cổng,
+    // không bị đẩy về làng — nếu không sẽ phải đi lại cả đường và có map không có lối quay lại.
+    const cur = G.MAPS[p.map];
+    if (cur && cur.respawn) {
+      p.x = null; p.y = null; p.arrive = 'S';
+      ev.push({ t: 'msg', text: `Bạn đã bị đánh bại, mất ${fmt(lose)} kinh nghiệm. Hồi sinh tại ${cur.name}.`, color: '#ef5350' });
+      ev.push({ t: 'map', map: p.map });
+      return;
+    }
     // hồi sinh ở làng gần nhất (nếu đã từng tới), không thì về Tân Đô I
-    const home = G.MAPS[p.map] && G.MAPS[p.map].home;
+    const home = cur && cur.home;
     p.map = home && p.villages.includes(home) ? home : G.START_MAP;
     p.x = null; p.y = null; p.arrive = 'S';
-    p.hiddenNpcActive = false;
     ev.push({ t: 'msg', text: `Bạn đã bị đánh bại, mất ${fmt(lose)} kinh nghiệm. Hồi sinh ở làng.`, color: '#ef5350' });
     ev.push({ t: 'map', map: p.map });
   },

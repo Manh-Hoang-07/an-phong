@@ -81,8 +81,17 @@
       $('lf-error').textContent = '';
       $('lf-submit').disabled = true;
       const u = $('lf-user').value.trim(), p = $('lf-pass').value;
+      // Tên nhân vật là bắt buộc khi đăng ký: không lặng lẽ lấy tên đăng nhập thay thế,
+      // vì người chơi sẽ vào game với một cái tên mình chưa hề nhập.
+      const charName = $('lf-char').value.trim();
+      if (mode === 'register' && !charName) {
+        $('lf-submit').disabled = false;
+        $('lf-error').textContent = 'Hãy nhập tên nhân vật.';
+        $('lf-char').focus();
+        return;
+      }
       const r = mode === 'register'
-        ? await Net.register(u, p, $('lf-char').value.trim() || u)
+        ? await Net.register(u, p, charName)
         : await Net.login(u, p);
       $('lf-submit').disabled = false;
       if (!r.ok) { $('lf-error').textContent = r.error || 'Có lỗi xảy ra.'; return; }
