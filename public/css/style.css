@@ -910,6 +910,9 @@ body.touch .tb-talk { bottom: 300px; }
 }
 .bag-main { min-width: 0; }
 .bag-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.bag-wallet.wallet-ngoc { color: #b388ff; background: linear-gradient(180deg, rgba(179,136,255,.14), rgba(179,136,255,.04)); border-color: rgba(179,136,255,.35); }
+.ngoc, .bag-side-head small.ngoc { color: #b388ff; }
+.warn-line { margin: 0; color: #ff8a80; font-size: 12px; }
 .bag-wallet {
   padding: 6px 12px; border-radius: 9px; font-size: 13px; color: var(--gold);
   background: linear-gradient(180deg, rgba(231,182,107,.13), rgba(231,182,107,.04));

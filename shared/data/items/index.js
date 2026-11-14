@@ -72,14 +72,17 @@
     return wt && TIER_WEAPONS[suf] ? TIER_WEAPONS[suf][wt] || null : null;
   }
 
-  // Mỗi tuyệt kỹ có một cuốn sách riêng: sach_tk_<id>. Không bán ở cửa hàng.
-  //  - Tuyệt kỹ class (kể cả tuyệt kỹ cũ): chỉ có qua mã quà tặng (npm run giftcode -- add --item sach_tk_<id> 1)
-  //  - Tuyệt kỹ dùng chung (ultAny, yếu hơn): nhận từ chuỗi nhiệm vụ Khảo hạch Tuyệt Kỹ của Hội trưởng Khải
+  // Mỗi tuyệt kỹ có một cuốn sách riêng: sach_tk_<id>. Không bán bằng xu.
+  //  - Tuyệt kỹ class (kể cả tuyệt kỹ cũ): mua ở Lầu Trân Bảo bằng Linh Ngọc (giá theo cấp) hoặc nhận qua mã quà tặng
+  //  - Tuyệt kỹ dùng chung (ultAny, yếu hơn): nhận từ chuỗi nhiệm vụ Khảo hạch Tuyệt Kỹ của Hội trưởng Khải, không bán
+  // Giá Linh Ngọc của sách tuyệt kỹ theo sức mạnh (cấp): 20 → 50, 30 → 90, 35 → 110, 38 → 120
+  const ngocPriceOfUlt = (level) => Math.round((4 * level - 30) / 5) * 5;
   for (const [sid, sk] of Object.entries(G.SKILLS)) {
     if (!sk.ult) continue;
     const who = sk.ultAny ? 'mọi class' : (sk.ultSchools || [sk.school]).map(x => G.SCHOOLS[x]?.name || x).join(', ');
     ITEMS[G.ultBookId(sid)] = { name: `Sách Tuyệt Kỹ: ${sk.name}`, kind: 'ult_book', skill: sid, level: sk.level, stack: true, price: 0,
-      desc: `Đọc để học tuyệt kỹ ${sk.name}. Dành cho: ${who}. Cần cấp ${sk.level}. ${sk.ultAny ? 'Nhận từ nhiệm vụ Khảo hạch Tuyệt Kỹ.' : 'Chỉ có qua mã quà tặng.'}` };
+      desc: `Đọc để học tuyệt kỹ ${sk.name}. Dành cho: ${who}. Cần cấp ${sk.level}. ${sk.ultAny ? 'Nhận từ nhiệm vụ Khảo hạch Tuyệt Kỹ.' : 'Mua ở Lầu Trân Bảo hoặc nhận qua mật mã.'}` };
+    if (!sk.ultAny) { ITEMS[G.ultBookId(sid)].priceNgoc = ngocPriceOfUlt(sk.level); ITEMS[G.ultBookId(sid)].ngocGroup = 'ult'; }
   }
 
   // Kỹ năng thường học bằng sách riêng sach_kn_<id> (bán ở tiệm tạp hóa theo class, hoặc rơi / thưởng nhiệm vụ)
@@ -90,5 +93,5 @@
       desc: `Đọc để học kỹ năng ${sk.name}. Dành cho: ${who}. Cần cấp ${sk.level}.` };
   }
 
-  Object.assign(G, { ITEMS, WEAPON_TIERS, TIER_WEAPONS, WEAPON_TIER_OF, classTierWeapon });
+  Object.assign(G, { ITEMS, ngocPriceOfUlt, WEAPON_TIERS, TIER_WEAPONS, WEAPON_TIER_OF, classTierWeapon });
 })(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

@@ -13,18 +13,21 @@ const G = require('../../../shared');
 const { fail } = require('../core/util');
 const { giveItem, bagFree, slotsNeeded } = require('../core/inventory');
 
+const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 const MILESTONES = {
-  awaken1: { level: 20, item: 'sach_bien_hinh_1', name: 'Biến Hình I', need: 20 },
   evolution: { level: 25, item: 'sach_tien_hoa_chuc_nghiep', name: 'Tiến Hóa Chức Nghiệp', need: 25 },
-  awaken2: { level: 45, item: 'sach_bien_hinh_2', name: 'Biến Hình II', need: 45 },
 };
+// Ấn thức tỉnh 1–5: mốc cấp lấy từ G.AWAKENS (20 / 40 / 60 / 80 / 100); hạ số quái bằng đúng cấp yêu cầu
+G.AWAKENS.forEach((aw) => {
+  MILESTONES['awaken' + aw.tier] = { level: aw.level, item: 'sach_bien_hinh_' + aw.tier, name: 'Biến Hình ' + ROMAN[aw.tier - 1], need: aw.level, tier: aw.tier };
+});
 
 function hidden(p) {
   if (p.map !== 'lang' || !p.hiddenNpcActive) fail('Không có hồi đáp. Hãy ở Tân Đô và chat "ncp an".');
 }
 
 // Bậc Ấn đang chọn có mở khóa chưa
-const awakenOk = (p, choice) => (p.awakenTier || 0) >= (choice === 'awaken2' ? 2 : 1);
+const awakenOk = (p, choice) => { const t = G.awakenTierOf(choice); return t >= 1 && (p.awakenTier || 0) >= t; };
 
 module.exports = {
   hidden_chat(p, a, ev) {
@@ -41,6 +44,9 @@ module.exports = {
     if (a.milestone === 'evolution' && G.isEvolved(p.school)) fail('Bạn đã ở chức nghiệp 2 rồi.');
     if (p.level < ms.level) fail(`Cần đạt cấp ${ms.level} mới nhận được thử thách này.`);
     if (p.advancement.done[a.milestone]) fail('Thử thách này đã hoàn thành rồi.');
+    // Ấn phải mở lần lượt: muốn làm Ấn N thì đã dùng Sách Biến Hình của Ấn N-1
+    if (ms.tier > 1 && (p.awakenTier || 0) < ms.tier - 1) fail(`Hãy mở khóa Biến Hình ${ROMAN[ms.tier - 2]} trước.`);
+    if (ms.tier && (p.awakenTier || 0) >= ms.tier) fail('Bạn đã mở khóa ấn này rồi.');
     if (p.advancement.quest) fail('Hãy hoàn thành thử thách đang nhận trước.');
     p.advancement.quest = { id: a.milestone, progress: 0, need: ms.need };
     ev.push({ t: 'msg', text: `${ms.name}: hạ ${ms.need} quái bất kỳ rồi quay lại đây.`, color: '#c6a7ff' });
@@ -58,10 +64,10 @@ module.exports = {
     ev.push({ t: 'msg', text: `Hoàn thành thử thách. Nhận ${G.ITEMS[ms.item].name}; hãy mở Túi đồ để sử dụng.`, color: '#ffd54f' });
   },
 
-  // Chọn Ấn I hay Ấn II (chỉ đổi được khi đang ở dạng thường)
+  // Chọn một trong các Ấn đã mở (chỉ đổi được khi đang ở dạng thường)
   form_select(p, a, ev) {
     const choice = a.choice;
-    if (!['awaken1', 'awaken2'].includes(choice)) fail('Hình thái không hợp lệ.');
+    if (!G.awakenTierOf(choice)) fail('Hình thái không hợp lệ.');
     if (!awakenOk(p, choice)) fail('Ấn này chưa được mở khóa.');
     const old = G.calcStats(p, { form: !!p.formActive });
     const hr = p.hp / old.maxHp, mr = p.mp / old.maxMp;
@@ -75,7 +81,7 @@ module.exports = {
 
   // Bật / tắt Ấn thức tỉnh đang chọn
   form_toggle(p, a, ev) {
-    const c = p.formChoice === 'awaken2' ? 'awaken2' : 'awaken1';
+    const c = G.awakenTierOf(p.formChoice) ? p.formChoice : 'awaken1';
     if (!awakenOk(p, c)) fail('Ấn này chưa được mở khóa.');
     const old = G.calcStats(p, { form: !!p.formActive });
     const hr = p.hp / old.maxHp, mr = p.mp / old.maxMp;

@@ -62,7 +62,7 @@ function migrate(p) {
   if (!p.advancement.done) p.advancement.done = {};
   if (!p.advancement.unlocked) p.advancement.unlocked = {};
   p.hiddenNpcActive = false; // lần nạp lại hoặc đổi map đều cần gọi NPC lại
-  if (!p.formChoice) p.formChoice = p.awakenTier >= 2 ? 'awaken2' : 'awaken1';
+  if (!p.formChoice) p.formChoice = 'awaken' + Math.max(1, Math.min(G.AWAKENS.length, p.awakenTier || 1));
   // Dữ liệu Necromancer cũ được giữ làm nhánh tiến hóa thay vì đổi class nền.
   if (p.school === 'tu_linh_thuat_su') { p.school = 'trieu_hoi_su'; p.advancement.unlocked.tu_linh_thuat_su = true; }
   const fixId = (e) => { if (e && OLD_ITEM[e.id]) e.id = OLD_ITEM[e.id]; return e; };
@@ -196,8 +196,9 @@ function migrate(p) {
   // Người chơi cũ đã mở chức nghiệp 2 thì p.school đổi sang id nhánh luôn, không còn chuyện bật/tắt.
   if (p.careerSlots !== undefined) delete p.careerSlots;
   if (p.careerAwaken !== undefined) delete p.careerAwaken;
-  if (p.formChoice === 'evolution') p.formChoice = p.awakenTier >= 2 ? 'awaken2' : 'awaken1';
-  if (p.formChoice !== 'awaken2') p.formChoice = 'awaken1';
+  // Hình thái chọn phải là một ấn hợp lệ và đã mở; không thì về ấn cao nhất đang có (tối thiểu ấn 1)
+  { const t = G.awakenTierOf(p.formChoice);
+    if (!t || t > (p.awakenTier || 0)) p.formChoice = 'awaken' + Math.max(1, p.awakenTier || 1); }
   if (p.school && !G.isEvolved(p.school) && p.advancement?.unlocked?.[G.evolutionOf(p.school)]) {
     // Người chơi cũ đã mở khóa nhánh: chuyển hẳn sang chức nghiệp 2 (không còn quay lại chức nghiệp 1)
     p.school = G.evolutionOf(p.school);

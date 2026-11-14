@@ -29,14 +29,37 @@
     if (n.shopKind === 'gear' && sideDone(player, 'p2-1')) add(['binh_mau_vua', 'binh_nl_vua']);
     if (n.shopKind === 'gear' && sideDone(player, 'p2-2')) add(['da_cuong_hoa_cao']);
     if (n.shopKind === 'gear') {
-      add(['sach_mo_rong_thuong', 'sach_mo_rong_tuyet_ky', 'sach_tay_ky_nang']);
       add(Object.keys(ITEMS).filter(id => ITEMS[id].kind === 'pet_gear'));
       if (player.school) {
         const mine = G.availableSkills(player).filter(id => !G.SKILLS[id].ult).sort((a, b) => G.SKILLS[a].level - G.SKILLS[b].level);
         add(mine.map(G.skillBookId));
       }
     }
-    return capByVillage(player, list);
+    // Món bán bằng Linh Ngọc không bao giờ lọt vào quầy xu
+    return capByVillage(player, list).filter(id => !(ITEMS[id].priceNgoc > 0));
+  }
+
+  // ===== Lầu Trân Bảo: bán bằng Linh Ngọc =====
+  const NGOC_GROUPS = [['util', 'Tiện ích'], ['book', 'Sách'], ['ult', 'Tuyệt kỹ']];
+  const ngocRank = (id) => Math.max(0, NGOC_GROUPS.findIndex(g => g[0] === ITEMS[id].ngocGroup));
+  // Hàng bán bằng ngọc: món trong n.shop có priceNgoc + mọi sách tuyệt kỹ class (không lọc theo class, không gồm tuyệt kỹ chung ultAny)
+  function ngocShopItems(player, npcId) {
+    const n = NPCS[npcId];
+    if (!n || !n.ngocShop) return [];
+    const list = (n.shop || []).filter(id => ITEMS[id] && ITEMS[id].priceNgoc > 0);
+    for (const sid of Object.keys(G.SKILLS)) {
+      const sk = G.SKILLS[sid];
+      const id = G.ultBookId(sid);
+      if (sk.ult && !sk.ultAny && ITEMS[id] && ITEMS[id].priceNgoc > 0 && !list.includes(id)) list.push(id);
+    }
+    const lv = (id) => ITEMS[id].level || 0;
+    return list.sort((a, b) => ngocRank(a) - ngocRank(b) || lv(a) - lv(b) || ITEMS[a].name.localeCompare(ITEMS[b].name, 'vi'));
+  }
+  // Giá ngọc không chịu giảm giá khách quen (chỉ giảm giá xu)
+  function ngocPrice(def, qty = 1) { return def.priceNgoc * qty; }
+  function ngocShopGroups(player, npcId) {
+    const ids = ngocShopItems(player, npcId);
+    return NGOC_GROUPS.map(([key, label]) => ({ key, label, ids: ids.filter(id => (ITEMS[id].ngocGroup || 'util') === key) })).filter(g => g.ids.length);
   }
   // Cửa hàng chỉ bán trong trần của Tân Đô đang đứng (cap = cấp trang bị cao nhất; thuốc và đá theo bậc làng), không xét cấp người chơi
   const TIER_OF = { nho: 1, vua: 2, lon: 3, dac: 4, than_thoai: 5, trung: 2, cao: 3 };
@@ -60,5 +83,5 @@
     return Math.max(1, Math.round(def.price * qty * (1 - (player.shopDiscount || 0))));
   }
 
-  Object.assign(G, { shopItems, shopPrice });
+  Object.assign(G, { shopItems, shopPrice, ngocShopItems, ngocPrice, ngocShopGroups });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

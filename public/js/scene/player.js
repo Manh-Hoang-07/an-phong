@@ -9,9 +9,8 @@ WorldScene.mix(class WorldPlayer {
   // p.school đã là id nhánh nên hình nhân vật tự đổi theo, không bật/tắt gì.
   inAwakenForm() { return !!App.form; }
   activeAwaken() {
-    const choice = App.player?.formChoice;
-    if (choice === 'awaken2') return GameData.AWAKENS[1] || null;
-    return GameData.AWAKENS[0] || null;
+    const t = GameData.awakenTierOf(App.player?.formChoice) || 1;
+    return GameData.AWAKENS[t - 1] || null;
   }
 
   buildPlayer() {
@@ -74,8 +73,8 @@ WorldScene.mix(class WorldPlayer {
 
   // Tên hoạt ảnh nhân vật: đang biến hình (formTier) thì dùng bộ hình biến hình chf<ấn>_..., không thì ch_...
   charAnim(a) { return `${this.formTier ? 'chf' + this.formTier : 'ch'}_${this.sheetId}_${a}`; }
-  // Biến hình thì nhân vật to hơn: ấn 1 ×1.15, ấn 2 ×1.25
-  formGrow() { return this.formTier ? (this.formTier >= 2 ? 1.25 : 1.15) : 1; }
+  // Biến hình thì nhân vật to hơn theo ấn: ×1.15, 1.25, 1.3, 1.35, 1.4
+  formGrow() { return this.formTier ? ([1.15, 1.25, 1.3, 1.35, 1.4][this.formTier - 1] || 1.4) : 1; }
   // Đổi sang / trở về bộ hình biến hình và vừa lại kích thước
   applyFormLook() {
     const aw = App.form ? this.activeAwaken() : null;
@@ -668,7 +667,7 @@ WorldScene.mix(class WorldPlayer {
   // và thể lực (ấn 1: 1, ấn 2: 2); MP và thể lực không tự hồi. Cạn một trong hai thì tự trở lại dạng thường.
   toggleForm(time) {
     const aw = this.activeAwaken();
-    const unlocked = App.player.formChoice === 'awaken2' ? App.player.awakenTier >= 2 : App.player.awakenTier >= 1;
+    const unlocked = (GameData.awakenTierOf(App.player.formChoice) || 1) <= (App.player.awakenTier || 0);
     if (!unlocked) { UI.log('Ấn thức tỉnh chưa được mở khóa. Hãy hoàn thành nhiệm vụ NPC ẩn và dùng sách tương ứng.', '#bdbdbd'); return; }
     if (App.form) { this.endForm(); return; }
     if (time < (this.formReadyAt || 0)) return;
@@ -686,21 +685,22 @@ WorldScene.mix(class WorldPlayer {
     if (aw) this.awakenFx(aw.tier);
     this.formStart();
     Net.action('form_toggle');
-    UI.banner(aw?.tier >= 2 ? 'BIẾN HÌNH · ẤN THỨ HAI' : 'BIẾN HÌNH · ẤN THỨ NHẤT', 1400);
+    UI.banner('BIẾN HÌNH · ẤN THỨ ' + (['NHẤT', 'HAI', 'BA', 'TƯ', 'NĂM'][(aw?.tier || 1) - 1]), 1400);
     UI.refresh();
   }
-  // Đổi giữa Ấn I và Ấn II (khi đã học cả hai). Chỉ đổi được lúc đang ở dạng thường.
+  // Đổi vòng qua các Ấn đã mở (Ấn I → II → ... → ấn cao nhất → Ấn I). Chỉ đổi được lúc đang ở dạng thường.
   switchAwaken() {
     const p = App.player;
     if ((p.awakenTier || 0) < 2) return;
     if (App.form) { UI.log('Hãy trở lại dạng thường trước khi đổi ấn.', '#ffca28'); return; }
     if (this.formSwitching) return;
-    const choice = App.awakenPick === 'awaken1' ? 'awaken2' : 'awaken1';
+    const cur = GameData.awakenTierOf(App.awakenPick) || 1;
+    const choice = 'awaken' + (cur % p.awakenTier + 1);
     this.formSwitching = true;
     Net.action('form_select', { choice }).then(() => {
       this.formSwitching = false;
       App.awakenPick = choice;
-      UI.log(choice === 'awaken1' ? 'Đã chọn Biến hình · Ấn I.' : 'Đã chọn Biến hình · Ấn II.', '#ffe082');
+      UI.log('Đã chọn Biến hình · Ấn ' + ['I', 'II', 'III', 'IV', 'V'][GameData.awakenTierOf(choice) - 1] + '.', '#ffe082');
       UI.refresh();
     }).catch(() => { this.formSwitching = false; });
   }
@@ -812,7 +812,7 @@ WorldScene.mix(class WorldPlayer {
   awakenFx(tier) {
     const pl = this.player;
     if (!pl) return;
-    const col = tier >= 2 ? 0xff80ab : 0xffe082;
+    const col = (GameData.AWAKENS[(tier || 1) - 1] || GameData.AWAKENS[0]).tint;
     // Vụ nổ ring
     for (let i = 0; i < 3; i++) {
       const ring = this.add.graphics().setDepth(8);

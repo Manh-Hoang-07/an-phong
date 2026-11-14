@@ -138,6 +138,7 @@
       <div class="bag-main">
         <div class="bag-head">
           <div class="bag-wallet">🪙 <b>${fmt(p.gold)}</b> xu</div>
+          <div class="bag-wallet wallet-ngoc">💎 <b>${fmt(p.linhNgoc || 0)}</b> ngọc</div>
           <div class="bag-cap"><span>${used}/${size} ô</span><div class="bag-cap-track"><i style="width:${pct}%"></i></div></div>
         </div>
         ${grid}

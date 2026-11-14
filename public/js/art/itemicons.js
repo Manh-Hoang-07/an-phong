@@ -203,6 +203,9 @@ const ItemArt = (() => {
     sach_ky_nang: () => book('#3b78d8', circ(32, 32, 6, '#f2d98a', 1.6)), sach_ky_nang_vo_dinh: () => book('#2a2236', `<ellipse cx="32" cy="32" rx="10" ry="6" fill="#e8c86a" stroke="${OUT}" stroke-width="1.4"/><circle cx="32" cy="32" r="3" fill="#2a2236"/>`),
     sach_tuyet_ky: () => book('#b8323c', `<path d="M32 22 l3 7 7.6.7-5.8 5 1.8 7.6-6.6-4-6.6 4 1.8-7.6-5.8-5 7.6-.7z" fill="#ffd24a" stroke="${OUT}" stroke-width="1.2"/>`),
     sach_bien_hinh_1: () => book('#3da05a', path('M24 36 Q32 20 40 36 Q32 32 24 36Z', '#f2d98a', 1.4)), sach_bien_hinh_2: () => book('#2a8d9e', path('M22 38 Q32 16 42 38 Q32 32 22 38Z', '#f2d98a', 1.4) + circ(32, 24, 3, '#ffffff', 1)),
+    sach_bien_hinh_3: () => book('#2f7fd0', path('M22 38 Q32 14 42 38 Q32 32 22 38Z', '#bfe9ff', 1.4) + circ(28, 24, 2.4, '#ffffff', 1) + circ(36, 24, 2.4, '#ffffff', 1)),
+    sach_bien_hinh_4: () => book('#c23b3b', path('M22 38 Q32 12 42 38 Q32 32 22 38Z', '#ffd0a0', 1.4) + circ(26, 25, 2.2, '#ffffff', 1) + circ(32, 21, 2.2, '#ffffff', 1) + circ(38, 25, 2.2, '#ffffff', 1)),
+    sach_bien_hinh_5: () => book('#8e44ad', path('M22 38 Q32 10 42 38 Q32 32 22 38Z', '#f5e1ff', 1.4) + path('M32 16 l2.2 5 5.4.5-4 3.6 1.2 5.3-4.8-2.8-4.8 2.8 1.2-5.3-4-3.6 5.4-.5z', '#ffd24a', 1)),
     sach_tien_hoa_chuc_nghiep: () => book('#c8402a', path('M22 38 L32 18 L42 38 L32 33Z', '#ffd24a', 1.4)),
     bua_x2_kinh_nghiem: () => path('M18 4 H46 V60 H18 Z', '#f6e8a8', 2.2) + rect(18, 4, 28, 8, '#c8402a', 2) + `<text x="32" y="42" text-anchor="middle" font-size="20" font-weight="900" fill="#c8402a" font-family="Arial,sans-serif">x2</text>` + line(22, 50, 42, 50, '#c8402a', 2),
     // nhiệm vụ

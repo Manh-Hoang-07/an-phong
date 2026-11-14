@@ -70,7 +70,7 @@
     </div>`;
 
     // ---------- Hình thái thức tỉnh
-    const forms = [['awaken1', 'Biến Hình I', p.awakenTier >= 1], ['awaken2', 'Biến Hình II', p.awakenTier >= 2]].filter(x => x[2]);
+    const forms = G.AWAKENS.map(a => ['awaken' + a.tier, 'Biến Hình ' + ['I', 'II', 'III', 'IV', 'V'][a.tier - 1], (p.awakenTier || 0) >= a.tier]).filter(x => x[2]);
     const formHtml = forms.length ? `<div class="ch-group"><div class="ch-group-h">Hình thái</div>
       <div class="ch-forms">
         <div class="ch-form-state"><b>${esc(forms.find(x => x[0] === p.formChoice)?.[1] || forms[0][1])}</b>

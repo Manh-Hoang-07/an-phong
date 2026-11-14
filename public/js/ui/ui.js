@@ -81,7 +81,7 @@ const UI = (() => {
   const WEAPON_ICONS = Object.fromEntries(Object.entries(G.WEAPON_TYPES).map(([k, w]) => [k, w.icon]));
   const statText = (k, v) => `${G.statLabel(k)} +${v}${G.statUnit(k)}`;
   const qOf = (e) => (G.ITEMS[e.id] && G.ITEMS[e.id].slot ? (e.q || 1) : 1);
-  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙', tram: '🌀', cho: '🛒', truong_lang_5: '🧑‍💼', truong_lang_6: '🧑‍💼' };
+  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', tran_bao: '💎', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙', tram: '🌀', cho: '🛒', truong_lang_5: '🧑‍💼', truong_lang_6: '🧑‍💼' };
   // NPC dịch vụ của từng làng (tho_ren_3, bang_nv_5...) dùng biểu tượng của NPC gốc
   for (const id in G.NPCS) {
     if (NPC_ICONS[id]) continue;
@@ -191,11 +191,11 @@ const UI = (() => {
       el.classList.toggle('active', !!App.form);   // nút biến hình chỉ sáng khi đang thức tỉnh
       if (hasForm) el.style.setProperty('--form', '#' + (awk?.aura || G.SCHOOLS[p.school]?.color || 0xb46bff).toString(16).padStart(6, '0'));
     });
-    // Có cả Ấn I và Ấn II: hiện nút đổi ấn và ghi rõ ấn đang chọn trên nút biến hình
+    // Có từ hai Ấn trở lên: hiện nút đổi ấn và ghi rõ ấn đang chọn trên nút biến hình
     const both = (p.awakenTier || 0) >= 2;
-    const pick = App.awakenPick === 'awaken1' ? 1 : 2;
+    const pick = Math.min(p.awakenTier || 1, G.awakenTierOf(App.awakenPick) || 1);
     document.querySelectorAll('.sk-aws, .tb-aws').forEach(el => el.classList.toggle('hidden', !both));
-    document.querySelectorAll('.sk-form .ico small, .tb-form .ico small').forEach(el => { el.textContent = both ? (pick === 1 ? 'Ấn I' : 'Ấn II') : (el.closest('.tb-form') ? 'Biến' : 'Biến hình'); });
+    document.querySelectorAll('.sk-form .ico small, .tb-form .ico small').forEach(el => { el.textContent = both ? ('Ấn ' + ['I', 'II', 'III', 'IV', 'V'][pick - 1]) : (el.closest('.tb-form') ? 'Biến' : 'Biến hình'); });
     // Nút chức nghiệp 2 (V) đã bỏ: chức nghiệp 2 giờ là class thật, không bật/tắt
     document.querySelectorAll('.sk-career, .tb-career').forEach(el => el.classList.add('hidden'));
 

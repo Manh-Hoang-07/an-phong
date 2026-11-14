@@ -16,7 +16,7 @@
       portals: { '>': { to: 'lang', at: 'S', require: 'q0' } } },
     lang: { name: 'Tân Đô – Khu Hiệp Hội', theme: 'city', village: { cap: 10, n: 1 }, home: 'lang',
       spawns: { d: 'hinh_nhan' },
-      npcs: { L: 'lao_su', V: 'vy', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', M: 'lu_khach', T: 'tram', C: 'cho'},
+      npcs: { L: 'lao_su', V: 'vy', N: 'bang_nv', R: 'tho_ren', B: 'ba_thuoc', G: 'tap_hoa', K: 'thu_kho', M: 'lu_khach', T: 'tram', C: 'cho', J: 'tran_bao'},
       gate: '>',
       portals: { '>': { to: 'rung', at: '<' }, ')': { to: 'kho_bac', at: '<', require: 'c3q6' }, '[': { to: 'quan_thuong_mai', at: '<', require: 'c3q5' }, '(': { to: 'ham_ngam', at: '<', require: 'q4' } } },
     ham_ngam: { name: 'Hầm Ngầm Tàu Điện', theme: 'cave', require: 'q4', home: 'lang',

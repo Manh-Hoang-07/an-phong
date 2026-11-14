@@ -32,6 +32,16 @@ function gainGold(p, amount, ev) {
   ev.push({ t: 'float', text: `+${fmt(amount)} xu`, color: '#ffd54f' });
 }
 
+// Nguồn DUY NHẤT sinh ra Linh Ngọc. src dùng để đối soát: 'code:<MÃ>' hôm nay, 'topup:<ORDER>' sau này.
+function grantNgoc(p, amount, src, ev) {
+  const n = Math.max(0, Math.floor(Number(amount) || 0));
+  if (!n) return 0;
+  p.linhNgoc = (p.linhNgoc || 0) + n;
+  p.ngocLog = (Array.isArray(p.ngocLog) ? p.ngocLog : []).concat([{ t: Date.now(), n, src }]).slice(-50);
+  if (ev) ev.push({ t: 'msg', text: `[Hệ thống] Nhận ${fmt(n)} Linh Ngọc.`, color: '#b388ff' });
+  return n;
+}
+
 // Kho riêng của làng (tạo nếu chưa có). mapId = id làng.
 function storageFor(p, mapId) {
   if (!p.storageByMap || typeof p.storageByMap !== 'object') p.storageByMap = {};
@@ -117,4 +127,4 @@ function clampHpMp(p) {
   if (p.mp != null) p.mp = Math.min(p.mp, st.maxMp);
 }
 
-module.exports = { learnNewSkill, gainExp, gainGold, setSchool, resetCost, clampHpMp, unequipWrongWeapon, storageFor };
+module.exports = { learnNewSkill, gainExp, gainGold, grantNgoc, setSchool, resetCost, clampHpMp, unequipWrongWeapon, storageFor };

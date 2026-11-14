@@ -20,6 +20,10 @@
         'binh_mau_lon', 'binh_nl_lon', 'binh_mau_dac', 'binh_nl_dac',
         'binh_mau_than_thoai', 'binh_nl_than_thoai',
         'da_cuong_hoa', 'da_cuong_hoa_trung', 'da_cuong_hoa_cao', 'da_cuong_hoa_than_thoai'] },
+    // Chỉ bán bằng Linh Ngọc (xem ngocShopItems trong shared/logic/shop.js); sách tuyệt kỹ tự sinh từ G.SKILLS. Chỉ đứng ở Tân Đô I.
+    tran_bao: { name: 'Lầu Trân Bảo', role: 'shop', color: 0x8a6a2f, ngocShop: true,
+      greet: 'Xu mua được đồ thường. Ngọc thì mua được thứ người ta không bán cho ai.',
+      shop: ['bua_x2_kinh_nghiem', 'sach_ky_nang', 'sach_tay_ky_nang', 'sach_mo_rong_thuong', 'sach_mo_rong_tuyet_ky'] },
     tap_hoa: { name: 'Chủ tiệm Tư', role: 'shop', color: 0x6b4fa0,
       greet: 'Trang bị cho thợ săn mới vào nghề đây! Bán gì cũng mua, giá hữu nghị.',
       // gearShop: tự bày đủ mọi bộ trang bị thường (xem shopItems trong shared/logic/shop.js)

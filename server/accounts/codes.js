@@ -3,7 +3,7 @@
  * Mã quà tặng, lưu trong PostgreSQL (bảng gift_codes + gift_redemptions).
  *
  * Mỗi mã: { code, note, rewards, maxUses, expires }
- *   rewards: { unlockClass: 'toan_nang', gold: 1000, skillPoints: 2, items: [["da_cuong_hoa", 5]] }
+ *   rewards: { unlockClass: 'toan_nang', gold: 1000, linhNgoc: 100, skillPoints: 2, items: [["da_cuong_hoa", 5]] }
  *   maxUses: giới hạn tổng số lượt (null = không giới hạn)
  *   expires: mốc thời gian hết hạn (null = không hết hạn)
  *

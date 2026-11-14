@@ -15,7 +15,7 @@
  * chỉ đổi khi gửi / lấy đồ hoặc hạ quái nên không cần tách thêm dòng riêng cho từng làng.
  */
 const SECTION_KEYS = {
-  core: ['name', 'created', 'level', 'exp', 'gold', 'rank', 'school', 'hp', 'mp', 'map', 'x', 'y',
+  core: ['name', 'created', 'level', 'exp', 'gold', 'linhNgoc', 'rank', 'school', 'hp', 'mp', 'map', 'x', 'y',
     'points', 'freePoints', 'shopDiscount'],
   kills: ['kills'],                                   // đổi mỗi lần hạ quái
   daily: ['dailyByMap', 'weeklyByMap'],               // bảng ngày / tuần riêng từng làng (đổi khi hạ quái)

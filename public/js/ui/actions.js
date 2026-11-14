@@ -31,6 +31,7 @@
       case 'form_select': { const r=await act('form_select',{choice:ds.choice}); if(r.ok) { if(App.scene?.refreshPlayerLook) App.scene.refreshPlayerLook(); renderPanel(); } break; }
       case 'open':
         if (ds.panel === 'npc_lu') { openNpc('lu_khach'); break; }
+        if (ds.panel === 'npc_an') { openNpc('npc_an'); break; }
         openPanel(ds.panel, { npc: ds.npc, force: true });
         if (ds.panel === 'code') S.codeMsg = '';
         if (ds.panel === 'code') setTimeout(() => { const i = $('code-input'); if (i) i.focus(); }, 50);
@@ -127,6 +128,17 @@
         break;
       }
       case 'buy': await act('buy', { npc: ds.npc, item: ds.item, qty: Number(ds.qty) }); break;
+      // Lầu Trân Bảo (Linh Ngọc). Sách tuyệt kỹ không hợp class: bấm lần đầu để hỏi xác nhận, lần hai mới mua.
+      case 'buy_ngoc': case 'buy_ngoc_many': {
+        const d = G.ITEMS[ds.item], pl = App.player;
+        const unfit = d && d.kind === 'ult_book' && d.skill && pl.school && G.SKILLS[d.skill] && !G.ultFits(pl, G.SKILLS[d.skill]);
+        if (unfit && S.confirmNgoc !== ds.item) { S.confirmNgoc = ds.item; renderPanel(); break; }
+        S.confirmNgoc = null;
+        const inp = el.closest('.shop-qty')?.querySelector('input');
+        const qty = a === 'buy_ngoc_many' ? Math.max(1, Math.min(Number(inp?.max) || 99, Math.floor(Number(inp?.value) || 1))) : Number(ds.qty) || 1;
+        await act('buy_ngoc', { npc: ds.npc, item: ds.item, qty });
+        break;
+      }
       // Cửa hàng dạng ô: đổi tab Mua/Bán, đổi nhóm hàng, mua/bán theo số lượng nhập
       case 'shop_tab': S.shopTab = ds.tab; S.selected = null; S.detailOpen = null; renderPanel(); break;
       case 'shop_group': S.shopGroup = ds.key; S.selected = null; renderPanel(); break;

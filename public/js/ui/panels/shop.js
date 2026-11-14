@@ -11,10 +11,16 @@
     const out = box.querySelector('[data-total]');
     const n = Math.max(1, Math.min(Number(e.target.max) || 99, Math.floor(Number(e.target.value) || 1)));
     S.shopQty = n;   // nhớ số đã gõ, bảng vẽ lại (server trả lời, tự lưu) không bị mất
-    if (out) out.textContent = fmt(n * Number(out.dataset.total)) + ' xu';
-    const btn = box.querySelector('[data-act="buy_many"]');
-    if (btn) btn.disabled = n * Number(out.dataset.total) > App.player.gold;
+    const ngoc = out && out.dataset.cur === 'ngoc';
+    if (out) out.textContent = fmt(n * Number(out.dataset.total)) + (ngoc ? ' 💎' : ' xu');
+    const btn = box.querySelector('[data-act="buy_many"],[data-act="buy_ngoc_many"]');
+    if (btn) btn.disabled = n * Number(out.dataset.total) > (ngoc ? (App.player.linhNgoc || 0) : App.player.gold);
   });
+
+  // Đang mở Lầu Trân Bảo (bán bằng Linh Ngọc): đặt ở đầu panelShop, các hàm vẽ bên dưới đọc cờ này
+  let ngocMode = false;
+  // Sách tuyệt kỹ không hợp class người chơi → nhãn cảnh báo + hỏi xác nhận trước khi mua
+  const unfitUlt = (p, id) => { const d = G.ITEMS[id]; return !!(d && d.kind === 'ult_book' && d.skill && p.school && G.SKILLS[d.skill] && !G.ultFits(p, G.SKILLS[d.skill])); };
 
   const kindName = (d) => d.slot ? (G.SLOT_NAMES[d.slot] || 'Trang bị')
     : d.kind === 'potion' ? 'Thuốc'
@@ -44,12 +50,13 @@
   // Ô chọn số lượng + nút mua/bán nhiều
   function qtyBox(act, max, unit, attrs, label, canFn) {
     const def = Math.max(1, Math.min(max, S.shopQty || 10));
+    const ngoc = act === 'buy_ngoc_many';
     return `<div class="shop-qty">
       <div class="shop-qty-row">
         <button class="btn small" data-act="shop_step" data-d="-1">−</button>
         <input type="number" min="1" max="${max}" value="${def}" inputmode="numeric">
         <button class="btn small" data-act="shop_step" data-d="1">+</button>
-        <span class="shop-qty-total">= <b class="gold" data-total="${unit}">${fmt(unit * def)} xu</b></span>
+        <span class="shop-qty-total">= <b class="${ngoc ? 'ngoc' : 'gold'}" data-total="${unit}" data-cur="${ngoc ? 'ngoc' : 'xu'}">${fmt(unit * def)} ${ngoc ? '💎' : 'xu'}</b></span>
       </div>
       <button class="btn act-btn wide" data-act="${act}" ${attrs} ${canFn(def) ? '' : 'disabled'}>${label}</button>
     </div>`;
@@ -60,7 +67,12 @@
     const p = App.player, d = G.ITEMS[entry.id];
     const btns = [];
     if (!opts.noDetail) btns.push('<button class="btn act-btn wide" data-act="open_detail">🔍 Xem chi tiết</button>');
-    if (where === 'shop') {
+    if (where === 'shop' && ngocMode) {
+      const price = G.ngocPrice(d), have = p.linhNgoc || 0;
+      const warn = unfitUlt(p, entry.id) ? '<p class="warn-line">⚠ Không hợp class của bạn. Bấm mua lần nữa để xác nhận.</p>' : '';
+      btns.push(warn + `<button class="btn act-btn primary" data-act="buy_ngoc" data-npc="${npc}" data-item="${entry.id}" data-qty="1" ${have >= price ? '' : 'disabled'}>${S.confirmNgoc === entry.id ? '✔ Xác nhận mua' : '💎 Mua 1'}</button>`);
+      if (d.stack) btns.push(qtyBox('buy_ngoc_many', 99, price, `data-npc="${npc}" data-item="${entry.id}"`, '💎 Mua nhiều', n => have >= G.ngocPrice(d, n)));
+    } else if (where === 'shop') {
       const price = G.shopPrice(p, d);
       btns.push(`<button class="btn act-btn primary" data-act="buy" data-npc="${npc}" data-item="${entry.id}" data-qty="1" ${p.gold >= price ? '' : 'disabled'}>🛒 Mua 1</button>`);
       if (d.stack) btns.push(qtyBox('buy_many', 99, price, `data-npc="${npc}" data-item="${entry.id}"`, '🛒 Mua nhiều', n => p.gold >= G.shopPrice(p, d, n)));
@@ -79,6 +91,9 @@
   // Phần đầu cột bên: biểu tượng, tên, loại · cấp · giá
   function sideHead(entry, where) {
     const p = App.player, d = G.ITEMS[entry.id], q = qOf(entry);
+    const priceLine = where === 'shop' && ngocMode
+      ? `<small class="ngoc">Giá: ${fmt(G.ngocPrice(d))} 💎${d.stack ? ' / cái' : ''}</small>
+        ${unfitUlt(p, entry.id) ? '<small class="warn-line">⚠ Không hợp class của bạn</small>' : ''}` : null;
     const price = where === 'shop' ? G.shopPrice(p, d) : G.sellPrice(entry);
     const discount = where === 'shop' && p.shopDiscount ? `<s class="muted">${fmt(d.price)}</s> ` : '';
     const sub = [kindName(d), d.slot ? G.QUALITY_NAMES[q] : '', d.level ? 'Cấp ' + d.level : '', entry.qty > 1 ? '×' + entry.qty : '']
@@ -87,7 +102,7 @@
         <span class="bag-side-ic">${itemIcon(entry.id)}</span>
         <div><b class="q${q}">${esc(d.name)}${entry.plus ? ' +' + entry.plus : ''}</b>
         <small>${esc(sub)}</small>
-        <small class="gold">${where === 'shop' ? 'Giá mua' : 'Giá bán'}: ${discount}${fmt(price)} xu${d.stack || entry.qty > 1 ? ' / cái' : ''}</small></div>
+        ${priceLine !== null ? priceLine : `<small class="gold">${where === 'shop' ? 'Giá mua' : 'Giá bán'}: ${discount}${fmt(price)} xu${d.stack || entry.qty > 1 ? ' / cái' : ''}</small>`}</div>
       </div>`;
   }
 
@@ -113,6 +128,8 @@
   // ---------- Cửa hàng
   function panelShop({ npc }) {
     const n = G.NPCS[npc], p = App.player;
+    ngocMode = !!n.ngocShop;
+    if (ngocMode) return panelNgocShop(npc, n, p);
     const tab = S.shopTab === 'sell' ? 'sell' : 'buy';
     const discount = Math.round((p.shopDiscount || 0) * 100);
     const tabs = `<div class="tabs">
@@ -178,6 +195,38 @@
       <div class="bag-side">${side}</div>
     </div>`;
     const modal = sel && S.detailOpen === `${S.selected.where}:${S.selected.key}` ? detailModal(npc, sel, where) : '';
+    return [n.name, html + modal];
+  }
+
+  // ---------- Lầu Trân Bảo: chỉ bán bằng Linh Ngọc, không có tab Mua/Bán bằng xu
+  function panelNgocShop(npc, n, p) {
+    const groups = G.ngocShopGroups(p, npc);
+    const key = groups.some(g => g.key === S.shopGroup) ? S.shopGroup : (groups[0] || {}).key;
+    const gr = groups.find(g => g.key === key);
+    const chips = groups.length > 1 ? `<div class="shop-groups">${groups.map(g =>
+      `<button class="btn small ${g.key === key ? 'primary' : ''}" data-act="shop_group" data-key="${g.key}">${esc(g.label)} <small>${g.ids.length}</small></button>`).join('')}</div>` : '';
+    let grid = '<div class="bag-grid">';
+    for (const id of gr ? gr.ids : []) {
+      const d = G.ITEMS[id];
+      const isSel = S.selected && S.selected.where === 'shop' && S.selected.key === id;
+      const dim = (p.linhNgoc || 0) < G.ngocPrice(d) || unfitUlt(p, id);
+      grid += `<div class="cell qb1${isSel ? ' sel' : ''}${dim ? ' dim' : ''}" data-sel="shop:${id}" title="${esc(d.name)}">${itemIcon(id)}</div>`;
+    }
+    grid += '</div>';
+    const sel = S.selected && S.selected.where === 'shop' && G.ngocShopItems(p, npc).includes(S.selected.key) ? shopEntry(S.selected.key) : null;
+    const side = sel ? `${sideHead(sel, 'shop')}
+        <div class="bag-side-actions">${shopButtons(npc, sel, 'shop')}</div>
+        <div class="bag-side-info">${itemInfo(sel, { noTitle: true })}</div>`
+      : `<div class="bag-empty"><span>💎</span><b>Chọn một món</b><small>Chọn hàng để xem thông tin và mua bằng Linh Ngọc.</small></div>`;
+    const html = `<div class="bag-wrap">
+      <div class="bag-main">
+        <div class="bag-head"><div class="bag-wallet wallet-ngoc">💎 <b>${fmt(p.linhNgoc || 0)}</b> ngọc</div></div>
+        ${chips}${grid}
+        <p class="bag-note muted">💎 Chỉ nhận Linh Ngọc. Món mua về là vật phẩm bình thường, giao dịch được nhưng không bán lại cho tiệm.</p>
+      </div>
+      <div class="bag-side">${side}</div>
+    </div>`;
+    const modal = sel && S.detailOpen === `${S.selected.where}:${S.selected.key}` ? detailModal(npc, sel, 'shop') : '';
     return [n.name, html + modal];
   }
 

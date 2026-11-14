@@ -312,14 +312,14 @@ const Sprites = (() => {
   // Tạo từ chính bộ hình của class: tô lại từng điểm ảnh sang màu ấn (vàng / hồng tím), giữ khối sáng tối,
   // chỗ sáng gần trắng như phát quang. Tạo một lần cho mỗi class + ấn, dùng lại cả phiên chơi.
   // Khóa: chf<ấn>_<class>_<hoạt ảnh> (cùng số khung, tốc độ với ch_...).
-  const FORM_RGB = { 1: [255, 206, 84], 2: [255, 112, 214] };
+  const FORM_RGB = { 1: [255, 206, 84], 2: [255, 112, 214], 3: [96, 190, 255], 4: [255, 82, 72], 5: [206, 140, 255] };
   const formKey = (id, tier, a) => `chf${tier}_${id}_${a}`;
   const shellKey = (id, tier, a) => `cha${tier}_${id}_${a}`;
 
   // Lớp màng hào quang: dải sáng ôm sát BÊN NGOÀI đường viền cơ thể (không phủ lên người).
   // Đo khoảng cách từng điểm ảnh tới thân (biến đổi khoảng cách 2 lượt), rồi tô:
   //   lòng màng (0 < d < R): mờ nhẹ;  mép ngoài (d ≈ R): sáng rõ, ngả trắng;  trong thân: trong suốt.
-  const SHELL = { 1: { R: 4, rgb: [255, 214, 92] }, 2: { R: 5.5, rgb: [255, 120, 220] } };
+  const SHELL = { 1: { R: 4, rgb: [255, 214, 92] }, 2: { R: 5.5, rgb: [255, 120, 220] }, 3: { R: 6, rgb: [110, 200, 255] }, 4: { R: 6.5, rgb: [255, 100, 80] }, 5: { R: 7, rgb: [225, 170, 255] } };
   function shellFrame(src, W, H, out, tier) {
     const { R, rgb } = SHELL[tier] || SHELL[1];
     const dist = new Float32Array(W * H);

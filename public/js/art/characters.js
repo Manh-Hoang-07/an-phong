@@ -296,6 +296,28 @@
     },
   };
 
+  // Lầu Trân Bảo (bán bằng Linh Ngọc): thương nhân áo tím viền vàng, mũ nhỏ gắn ngọc, tay nâng viên Linh Ngọc phát sáng
+  NPCS.tran_bao = {
+    coat: 0x4a2f7a, inner: 0xf0e2c0, accent: 0xffd166, hair: 0x1f1830,
+    skin: 0xf1c8a0, skin2: 0xd29a72, pants: 0x2f2250, boot: 0x1a1426, long: true, longHair: false,
+    prop: (g) => {
+      // mũ tròn viền vàng, ngọc tím ở giữa trán
+      rrect(g, 0x2f2250, 13.4, 2.4, 13.2, 5, 2.4);
+      rect(g, 0xffd166, 13.4, 6.4, 13.2, 1.4, 0.95);
+      poly(g, 0xb388ff, [[20, 3], [22, 5], [20, 7.2], [18, 5]]);
+      poly(g, 0xe3d4ff, [[20, 3.6], [21, 5], [20, 5.8], [19.2, 5]], 0.9);
+      // dây lưng vàng
+      rect(g, 0xffd166, 14.4, 30.4, 11.2, 1.6, 0.9);
+      // viên Linh Ngọc nâng trên tay (có quầng sáng)
+      ell(g, 0xb388ff, 30, 27, 5.6, 5.6, 0.28);
+      ell(g, 0xb388ff, 30, 27, 3.6, 3.6, 0.35);
+      poly(g, 0x8a5fe0, [[30, 21.6], [34, 26.4], [30, 33], [26, 26.4]]);
+      poly(g, 0xb388ff, [[30, 21.6], [34, 26.4], [30, 27.4], [26, 26.4]]);
+      poly(g, 0xe3d4ff, [[30, 22.8], [32.2, 25.6], [30, 26.2], [28.6, 25.4]], 0.9);
+      rect(g, 0xffffff, 28.6, 24.2, 1.2, 1.2, 0.9);
+    },
+  };
+
   // NPC dịch vụ của làng II–VII (xem shared/data/npcs.js): cùng dáng và đạo cụ với NPC gốc nhưng đổi tông màu áo / phụ kiện
   // theo làng, không vẽ tay từng người. Hình ảnh riêng (NPC_IMAGES) chỉ có cho NPC gốc ở Hiệp Hội; các làng khác dùng hình vẽ code.
   function hueShift(color, deg) {

@@ -11,10 +11,19 @@
     const q = G.QUESTS[p.quest.step];
     const opts = [];
     if (id === 'npc_an') {
-      const milestones = [['awaken1',20,'Sách Biến Hình I'],['evolution',25,'Sách Tiến Hóa Chức Nghiệp'],['awaken2',45,'Sách Biến Hình II']];
+      // Chỉ hiện ấn kế tiếp (ấn mở lần lượt) cùng Tiến Hóa Chức Nghiệp; xếp theo cấp yêu cầu
+      const nextAw = G.AWAKENS[p.awakenTier || 0];
+      const milestones = [['evolution',25,'Sách Tiến Hóa Chức Nghiệp']];
+      if (nextAw) milestones.push(['awaken' + nextAw.tier, nextAw.level, 'Sách Biến Hình ' + ['I','II','III','IV','V'][nextAw.tier - 1]]);
+      milestones.sort((a, b) => a[1] - b[1]);
       const qx = p.advancement?.quest;
       if (qx) opts.push(`<button class="btn ${qx.progress>=qx.need?'primary':''}" data-act="advancement_complete" ${qx.progress>=qx.need?'':'disabled'}>✔ Trả thử thách ${qx.progress}/${qx.need}</button>`);
       else for (const [mid,lv,label] of milestones) if (!p.advancement?.done?.[mid] && !(mid === 'evolution' && !G.EVOLUTIONS[p.school])) opts.push(`<button class="btn ${p.level>=lv?'primary':''}" data-act="advancement_accept" data-milestone="${mid}" ${p.level>=lv?'':'disabled'}>📜 ${label}${p.level>=lv?'':` (cần cấp ${lv})`}</button>`);
+      // Class đặc biệt mở bằng mật mã (Toàn Năng): thức tỉnh ở đây, chỉ khi đã mở khóa
+      for (const [sid, sc] of Object.entries(G.SCHOOLS)) {
+        if (!sc.special || sc.evolved || !p.unlocks[sid] || p.school === sid) continue;
+        opts.push(`<button class="btn ${p.level >= 5 ? 'primary' : ''}" data-act="awaken_pick" data-school="${sid}" ${p.level >= 5 ? '' : 'disabled'}>${sc.icon} Thức tỉnh ${esc(sc.name)}${p.level >= 5 ? '' : ' (cần cấp 5)'}</button>`);
+      }
       opts.push('<button class="btn" data-act="close">Tạm biệt</button>');
       return [n.name, `<div class="dialog"><div class="face">☠</div><div class="text" style="flex:1"><p>Ba con đường. Ba cuốn sách. Chứng minh sức mạnh bằng cách hạ quái rồi trở về đây.</p><div class="opts">${opts.join('')}</div></div></div>`];
     }
@@ -55,13 +64,8 @@
     }
     if (n.role === 'daily') opts.push('<button class="btn primary" data-act="open" data-panel="daily">📋 Xem nhiệm vụ hằng ngày</button>');
     if (n.role === 'mystic') {
+      // Lữ khách chỉ nhận mật mã. Mọi việc chuyển chức (class đặc biệt, chức nghiệp 2) chỉ có ở NPC ẩn.
       opts.push('<button class="btn" data-act="open" data-panel="code">🔑 Nói mật mã</button>');
-      for (const [sid, sc] of Object.entries(G.SCHOOLS)) {
-        // Chỉ class đặc biệt mở bằng mật mã (Toàn Năng), và chỉ hiện khi đã mở khóa.
-        // Chức nghiệp 2 không có ở đây: chỉ mở bằng Sách Tiến Hóa Chức Nghiệp ở NPC ẩn.
-        if (!sc.special || sc.evolved || !p.unlocks[sid] || p.school === sid) continue;
-        opts.push(`<button class="btn ${p.level >= 5 ? 'primary' : ''}" data-act="awaken_pick" data-school="${sid}" ${p.level >= 5 ? '' : 'disabled'}>${sc.icon} Thức tỉnh ${esc(sc.name)}${p.level >= 5 ? '' : ' (cần cấp 5)'}</button>`);
-      }
     }
     if (n.shop) opts.push(`<button class="btn" data-act="open" data-panel="shop" data-npc="${id}">🛒 Mua bán</button>`);
     if (n.role === 'market') opts.push(`<button class="btn primary" data-act="open_market">🛒 Mở chợ người chơi</button>`);

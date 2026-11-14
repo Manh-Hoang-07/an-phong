@@ -362,7 +362,14 @@ function buildVillage(id, spec, counts) {
   if (ports.includes('<')) g.set(G - 1, 1, '<');
   g.set(G - 1, 4, 'S');
   if (meta.gate || ports.includes('>')) g.set(G - 1, W - 3, meta.gate || '>');
-  const items = Object.keys(meta.npcs || {}).concat(meta.gate ? [] : ports.filter(c => c !== '<' && c !== '>'));
+  // NPC đặc biệt (Lầu Trân Bảo, cốt truyện, lữ khách...) đứng trên các bục cao; NPC dịch vụ (shop, rèn, nhiệm vụ, trạm, chợ) ở mặt đất.
+  // Ưu tiên bục cao nhất cho NPC đứng đầu danh sách UPPER. Cột chọn tránh ký hiệu đèn '!' bên dưới.
+  const UPPER = ['tran_bao', 'minh_triet', 'ha_phong', 'lam_suong', 'lu_khach', 'vy'];
+  const SLOTS = [[7, 52], [10, 62], [10, 34], [13, 22], [13, 74], [13, 90], [16, 16], [16, 38], [16, 86]];   // [hàng đứng, cột]
+  const npcIds = meta.npcs || {};
+  const upper = Object.keys(npcIds).filter(c => UPPER.includes(npcIds[c])).sort((a, b) => UPPER.indexOf(npcIds[a]) - UPPER.indexOf(npcIds[b]));
+  upper.slice(0, SLOTS.length).forEach((c, i) => g.set(SLOTS[i][0], SLOTS[i][1], c));
+  const items = Object.keys(npcIds).filter(c => !upper.slice(0, SLOTS.length).includes(c)).concat(meta.gate ? [] : ports.filter(c => c !== '<' && c !== '>'));
   const hasMobs = Object.keys(meta.spawns || {}).length > 0, last = W - (hasMobs ? 30 : 12), first = 9;
   const step = items.length > 1 ? Math.max(5, Math.min(8, Math.floor((last - first) / (items.length - 1)))) : 0;
   items.forEach((ch, i) => g.set(G - 1, first + i * step, ch));

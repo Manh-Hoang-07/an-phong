@@ -6,7 +6,7 @@
  *   type: dash | melee | projectile | spread | aoe | heal | buff | guard | backstep | manashield | shadow_toggle | shadow_command
  *   ultSchools: các class học được; ultAny: mọi class đều học được.
  *
- * Tuyệt kỹ: mạnh hơn kỹ năng thường, học bằng sách riêng (sach_tk_<id>), không bán ở cửa hàng. */
+ * Tuyệt kỹ: mạnh hơn kỹ năng thường, học bằng sách riêng (sach_tk_<id>), bán ở Lầu Trân Bảo bằng Linh Ngọc (trừ tuyệt kỹ dùng chung ultAny). */
 (function (G) {
   'use strict';
 

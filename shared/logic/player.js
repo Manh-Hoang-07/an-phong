@@ -90,7 +90,7 @@
     // Thức tỉnh (biến hình): chỉ nhân thêm khi ĐANG BIẾN HÌNH (opts.form, do client bật/tắt).
     // Đi theo người chơi, không theo nghề: chức nghiệp 1 hay chức nghiệp 2 đều dùng chung Ấn I / Ấn II.
     // Server tính không có opts → chỉ số thường.
-    const aw = !opts.form ? null : player.formChoice === 'awaken2' ? AWAKENS[1] : AWAKENS[0];
+    const aw = !opts.form ? null : AWAKENS[(G.awakenTierOf(player.formChoice) || 1) - 1];
     let formSta = 1;   // hệ số thể lực của ấn đang bật (theo hệ số năng lượng của ấn)
     const applyMul = (m) => {
       if (!m) return;
@@ -131,7 +131,7 @@
   function newPlayer(name) {
     return {
       name,
-      level: 1, exp: 0, gold: 50,
+      level: 1, exp: 0, gold: 50, linhNgoc: 0,
       school: null,
       awakenTier: 0, formChoice: 'awaken1', formActive: false, hiddenNpcActive: false, villages: ['lang'], titles: [], choices: {},
       advancement: { quest: null, done: {}, unlocked: {} },

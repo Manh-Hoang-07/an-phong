@@ -24,6 +24,22 @@ const actions = {
     ev.push({ t: 'msg', text: `Đã mua ${def.name}${qty > 1 ? ' ×' + qty : ''} (-${fmt(cost)} xu).`, color: '#e0e0e0' });
   },
 
+  // Lầu Trân Bảo: mua bằng Linh Ngọc. Kiểm túi TRƯỚC khi trừ ngọc.
+  buy_ngoc(p, a, ev) {
+    const npc = G.NPCS[a.npc];
+    if (!npc || !npc.ngocShop || !onCurrentMapNpc(p, a.npc)) fail('Lầu Trân Bảo không ở đây.');
+    if (!G.ngocShopItems(p, a.npc).includes(a.item)) fail('Lầu Trân Bảo không bán món này.');
+    const def = G.ITEMS[a.item];
+    const qty = Math.max(1, Math.min(99, Math.floor(Number(a.qty) || 1)));
+    if (!def.stack && qty > 1) fail('Món này chỉ mua từng cái.');
+    const cost = G.ngocPrice(def, qty);
+    if ((p.linhNgoc || 0) < cost) fail('Không đủ Linh Ngọc.');
+    if (bagFree(p) < slotsNeeded(p, a.item, qty)) fail('Túi đã đầy.');
+    p.linhNgoc -= cost;
+    addItem(p, a.item, qty, { shop: true });
+    ev.push({ t: 'msg', text: `Đã mua ${def.name}${qty > 1 ? ' ×' + qty : ''} (-${fmt(cost)} Linh Ngọc).`, color: '#b388ff' });
+  },
+
   sell(p, a, ev) {
     const e = bagEntry(p, a.uid);
     const def = G.ITEMS[e.id];
@@ -82,8 +98,11 @@ const actions = {
     const def = G.ITEMS[e.id];
     if (def.kind === 'transform_book') {
       const id = def.transform;
-      if (id === 'awaken1' && (p.awakenTier >= 1 || p.level < 20 || !p.advancement.done.awaken1)) fail('Sách này chưa thể sử dụng.');
-      if (id === 'awaken2' && (p.awakenTier >= 2 || p.level < 45 || !p.advancement.done.awaken2)) fail('Sách này chưa thể sử dụng.');
+      const awT = G.awakenTierOf(id);   // sách Biến Hình I–V → ấn 1–5
+      if (awT) {
+        // Mở lần lượt: đã có ấn này rồi, thiếu ấn trước, chưa đủ cấp hay chưa làm nhiệm vụ NPC ẩn thì chưa đọc được
+        if ((p.awakenTier || 0) >= awT || (p.awakenTier || 0) < awT - 1 || p.level < G.AWAKENS[awT - 1].level || !p.advancement.done[id]) fail('Sách này chưa thể sử dụng.');
+      }
       if (id === 'evolution') {
         // Đọc sách này là ĐỔI HẲN sang chức nghiệp 2: p.school thành id nhánh, không có đường quay lại.
         const evo = G.evolutionOf(p.school);
@@ -96,12 +115,11 @@ const actions = {
         setSchool(p, evo, ev);   // setSchool tự báo "Tiến hóa thành ..."
         return;
       }
-      if (id === 'awaken1') p.awakenTier = 1;
-      if (id === 'awaken2') p.awakenTier = 2;
+      p.awakenTier = awT;
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
-      p.formChoice = id === 'awaken2' ? 'awaken2' : 'awaken1';
-      const label = id === 'awaken1' ? 'Biến Hình I' : 'Biến Hình II';
+      p.formChoice = id;
+      const label = 'Biến Hình ' + ['I', 'II', 'III', 'IV', 'V'][awT - 1];
       ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa ${label}. Bật/tắt bằng nút biến hình (⚡).`, color: '#ffd54f' });
       return;
     }

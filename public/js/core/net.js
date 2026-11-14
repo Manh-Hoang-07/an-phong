@@ -166,9 +166,9 @@ App.setPlayer = function (p, prev) {
   const hpRatio = formChanged && oldStats?.maxHp ? App.hp / oldStats.maxHp : null;
   const mpRatio = formChanged && oldStats?.maxMp ? App.mp / oldStats.maxMp : null;
   App.player = p;
-  // Nhớ Ấn thức tỉnh người chơi đã chọn (Ấn I / Ấn II) để phím T không tự nhảy sang Ấn cao nhất
-  if (p.formChoice === 'awaken1' || p.formChoice === 'awaken2') App.awakenPick = p.formChoice;
-  else if (!App.awakenPick) App.awakenPick = (p.awakenTier || 0) >= 2 ? 'awaken2' : 'awaken1';
+  // Nhớ Ấn thức tỉnh người chơi đã chọn (Ấn I–V) để phím T không tự nhảy sang Ấn cao nhất
+  if (GameData.awakenTierOf(p.formChoice)) App.awakenPick = p.formChoice;
+  else if (!App.awakenPick) App.awakenPick = 'awaken' + Math.max(1, p.awakenTier || 1);
   App.form = !!p.formActive;
   App.stats = GameData.calcStats(p, { form: App.form });
   if (formChanged) {
