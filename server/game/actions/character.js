@@ -3,8 +3,8 @@
 const G = require('../../../shared');
 const codes = require('../../accounts/codes');
 const { fail, fmt } = require('../core/util');
-const { bagFree, slotsNeeded, giveItem } = require('../core/inventory');
-const { gainGold, gainExp, grantNgoc, setSchool, resetCost } = require('../core/progress');
+const rewards = require('../core/rewards');
+const { setSchool, resetCost } = require('../core/progress');
 const { removeItem, countItem } = require('../core/inventory');
 const { questActive, onCurrentMapNpc } = require('../core/quests');
 
@@ -217,41 +217,10 @@ const actions = {
       fail(claim.message);
     }
     try {
-      const r = claim.rewards || {};
-      const items = Array.isArray(r.items) ? r.items.filter(([id]) => G.ITEMS[id]) : [];
-      const need = items.reduce((s2, [id, n]) => s2 + slotsNeeded(p, id, n), 0);
-      if (bagFree(p) < need) fail(`Túi cần trống ít nhất ${need} ô.`);
-      // Thú đồng hành: mã chỉ toàn thú đã có → báo lỗi và trả lại lượt (không mất mã)
-      const mounts = (Array.isArray(r.mounts) ? r.mounts : []).filter(id => G.MOUNTS[id]);
-      const newMounts = mounts.filter(id => !p.mounts.owned.includes(id));
-      const onlyMounts = !r.unlockClass && !r.gold && !r.exp && !r.skillPoints && !r.linhNgoc && !items.length;
-      if (mounts.length && !newMounts.length && onlyMounts) fail(`Bạn đã có ${mounts.map(id => G.MOUNTS[id].name).join(', ')} rồi.`);
+      const plan = rewards.checkRewards(p, claim.rewards || {});   // túi đầy / thú đã có → ném lỗi, trả lại lượt cho mã
       p.redeemed.push(key);
       ev.push({ t: 'msg', text: '[Hệ thống] Mật mã hợp lệ.', color: '#ffd54f' });
-      if (r.unlockClass && G.SCHOOLS[r.unlockClass]) {
-        // Chức nghiệp 2 không mở bằng mã: chỉ qua Sách Tiến Hóa Chức Nghiệp ở NPC ẩn
-        if (G.SCHOOLS[r.unlockClass].evolved) {
-          ev.push({ t: 'msg', text: `[Hệ thống] Mã này có class ${G.SCHOOLS[r.unlockClass].name} nhưng chức nghiệp 2 chỉ mở bằng Sách Tiến Hóa Chức Nghiệp.`, color: '#ff8a80' });
-        } else {
-          p.unlocks[r.unlockClass] = true;
-          ev.push({ t: 'unlock', school: r.unlockClass });
-          ev.push({ t: 'msg', text: `[Hệ thống] Đã mở khóa class đặc biệt: ${G.SCHOOLS[r.unlockClass].name}.`, color: '#ffc94a' });
-        }
-      }
-      if (r.gold) gainGold(p, Math.max(0, Math.floor(r.gold)), ev);
-      if (r.linhNgoc) grantNgoc(p, r.linhNgoc, 'code:' + key, ev);
-      if (r.exp) gainExp(p, Math.max(0, Math.floor(r.exp)), ev);
-      if (r.skillPoints) p.skillPoints += Math.max(0, Math.floor(r.skillPoints));
-      for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
-      for (const id of newMounts) {
-        p.mounts.owned.push(id);
-        const petStats = G.companionStats(p, id);
-        p.pets[id] = { hp: petStats.maxHp, mp: petStats.maxMp, sta: petStats.maxSta };
-        p.mounts.skills[id] = p.mounts.skill || 'bite';
-        p.mounts.active = p.mounts.summoned[0] || null;
-        ev.push({ t: 'mount_new', id });
-        ev.push({ t: 'msg', text: `[Hệ thống] Nhận thú triệu hồi: ${G.MOUNTS[id].icon} ${G.MOUNTS[id].name}! Mở Menu → Thú đồng hành để gọi thú.`, color: '#ffc94a' });
-      }
+      rewards.applyRewards(p, plan, ev, 'code:' + key);
     } catch (e) {
       // Không phát được quà (ví dụ túi đầy) thì trả lại lượt cho mã
       await codes.release(userId, key);

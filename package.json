@@ -9,6 +9,7 @@
     "dev": "node --watch --env-file-if-exists=.env server/index.js",
     "backup": "node --env-file-if-exists=.env server/tools/ops/backup.js",
     "giftcode": "node --env-file-if-exists=.env server/tools/ops/giftcode.js",
+    "user": "node --env-file-if-exists=.env server/tools/ops/user.js",
     "check:mobs": "node server/tools/check/check-mob-sprites.js",
     "check:maps": "node server/tools/check/check-maps.js"
   },

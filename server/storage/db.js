@@ -239,6 +239,20 @@ const MIGRATIONS = [
   CREATE INDEX IF NOT EXISTS market_status_price_idx ON market_listings (status, price);
   CREATE INDEX IF NOT EXISTS market_seller_idx ON market_listings (seller_id, status);
   `,
+
+  // 7. Trang admin: cờ quản trị trên tài khoản + nhật ký thao tác admin.
+  `
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
+  CREATE TABLE IF NOT EXISTS admin_log (
+    id BIGSERIAL PRIMARY KEY,
+    at BIGINT NOT NULL,
+    admin_id BIGINT NOT NULL REFERENCES users(id),
+    target_id BIGINT,
+    action TEXT NOT NULL,
+    detail JSONB NOT NULL DEFAULT '{}'::jsonb
+  );
+  CREATE INDEX IF NOT EXISTS admin_log_at_idx ON admin_log (at DESC);
+  `,
 ];
 
 /*
@@ -393,7 +407,7 @@ module.exports = {
 
   async sessionByHash(hash) {
     const { rows } = await query(
-      `SELECT s.user_id, s.expires, u.username, u.banned
+      `SELECT s.user_id, s.expires, u.username, u.banned, u.is_admin
          FROM sessions s JOIN users u ON u.id = s.user_id
         WHERE s.token_hash = $1`, [hash]);
     return rows[0] || null;
@@ -413,6 +427,37 @@ module.exports = {
 
   async setBanned(userId, banned, reason = null) {
     await query('UPDATE users SET banned = $2, ban_reason = $3 WHERE id = $1', [userId, banned, banned ? reason : null]);
+  },
+
+  // ---- Trang admin
+  async setAdmin(userId, on) {
+    await query('UPDATE users SET is_admin = $2 WHERE id = $1', [userId, !!on]);
+  },
+  // Tìm theo tên đăng nhập hoặc tên nhân vật (không phân biệt hoa thường), tối đa 15 kết quả
+  async findUsers(q) {
+    const like = '%' + String(q).replace(/[\\%_]/g, (c) => '\\' + c) + '%';
+    const { rows } = await query(
+      `SELECT u.id, u.username, u.banned, u.ban_reason, u.is_admin, u.last_login,
+              p.level, p.school, p.gold, p.core->>'name' AS name, p.core->>'linhNgoc' AS ngoc
+         FROM users u LEFT JOIN players p ON p.user_id = u.id
+        WHERE u.username ILIKE $1 OR p.core->>'name' ILIKE $1
+        ORDER BY (lower(u.username) = lower($2)) DESC, u.id LIMIT 15`, [like, String(q)]);
+    return rows;
+  },
+  async userById(id) {
+    const { rows } = await query('SELECT id, username, banned, ban_reason, is_admin FROM users WHERE id = $1', [id]);
+    return rows[0] || null;
+  },
+  async adminLog(adminId, targetId, action, detail = {}) {
+    await query('INSERT INTO admin_log (at, admin_id, target_id, action, detail) VALUES ($1, $2, $3, $4, $5::jsonb)',
+      [Date.now(), adminId, targetId, action, JSON.stringify(detail)]);
+  },
+  async adminLogList(limit = 50) {
+    const { rows } = await query(
+      `SELECT l.id, l.at, l.action, l.detail, a.username AS admin, t.username AS target
+         FROM admin_log l JOIN users a ON a.id = l.admin_id LEFT JOIN users t ON t.id = l.target_id
+        ORDER BY l.id DESC LIMIT $1`, [limit]);
+    return rows;
   },
 
   async logAuth({ userId = null, username = null, event, ip = null, userAgent = null, detail = null }) {

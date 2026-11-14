@@ -4,6 +4,7 @@
  *
  *   node server/tools/ops/user.js info <tên>                 thông tin + 20 dòng nhật ký gần nhất
  *   node server/tools/ops/user.js log <tên> [số dòng]         nhật ký đăng nhập / đăng xuất / đổi mật khẩu
+ *   node server/tools/ops/user.js admin <tên> on|off          cấp / gỡ quyền trang admin (/admin.html)
  *   node server/tools/ops/user.js ban <tên> [lý do]           khóa tài khoản, đăng xuất mọi phiên
  *   node server/tools/ops/user.js unban <tên>                 mở khóa
  *   node server/tools/ops/user.js snapshots <tên>             danh sách bản chụp nhân vật
@@ -20,6 +21,7 @@ function usage() {
   console.log('Cách dùng:');
   console.log('  node server/tools/ops/user.js info <tên>');
   console.log('  node server/tools/ops/user.js log <tên> [số dòng]');
+  console.log('  node server/tools/ops/user.js admin <tên> on|off');
   console.log('  node server/tools/ops/user.js ban <tên> [lý do]');
   console.log('  node server/tools/ops/user.js unban <tên>');
   console.log('  node server/tools/ops/user.js snapshots <tên>');
@@ -48,6 +50,12 @@ function printLog(rows) {
     printLog(await store.authLog(u.id, 20));
   } else if (cmd === 'log') {
     printLog(await store.authLog(u.id, Number(rest[0]) || 50));
+  } else if (cmd === 'admin') {
+    // Cấp / gỡ quyền trang admin. Có hiệu lực với server đang chạy sau tối đa 60 giây.
+    if (!['on', 'off'].includes(rest[0])) { console.error('Cách dùng: admin <tên> on|off'); process.exit(1); }
+    await store.setAdmin(u.id, rest[0] === 'on');
+    await store.logAuth({ userId: u.id, username: u.username, event: rest[0] === 'on' ? 'admin_on' : 'admin_off' });
+    console.log(u.username, rest[0] === 'on' ? 'đã được cấp quyền admin.' : 'đã bị gỡ quyền admin.');
   } else if (cmd === 'ban') {
     const reason = rest.join(' ') || null;
     await store.setBanned(u.id, true, reason);

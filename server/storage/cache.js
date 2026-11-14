@@ -42,7 +42,7 @@ async function getSession(hash) {
   }
   const row = await store.sessionByHash(hash);
   const value = row && !row.banned && row.expires > now
-    ? { userId: row.user_id, username: row.username, expires: row.expires }
+    ? { userId: row.user_id, username: row.username, isAdmin: !!row.is_admin, expires: row.expires }
     : null;
   if (sessions.size >= SESSION_MAX) sessions.delete(sessions.keys().next().value);
   sessions.set(hash, { value, at: now });
@@ -94,6 +94,9 @@ async function getPlayer(userId) {
 
 // Nhân vật đang xử lý một hành động dở dang (begin chưa end)
 function isBusy(userId) { const e = players.get(userId); return !!(e && e.busy > 0); }
+
+// Nhân vật đang nằm trong bộ nhớ (tức đang chơi hoặc vừa chơi xong chưa quá 15 phút)
+function isLoaded(userId) { return players.has(userId); }
 
 function getRev(userId) { const e = players.get(userId); return e ? e.rev : 0; }
 
@@ -254,5 +257,5 @@ function stop() { for (const t of timers) clearInterval(t); timers = []; }
 module.exports = {
   configure, start, stop,
   getSession, dropSession, dropUserSessions,
-  getPlayer, getRev, isBusy, begin, end, commit, rollback, markDirty, saveNow, flushAll,
+  getPlayer, getRev, isBusy, isLoaded, begin, end, commit, rollback, markDirty, saveNow, flushAll,
 };

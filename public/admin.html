@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Thức Tỉnh · Admin</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <style>
+    :root { --bg: #0b1020; --panel: #121a33; --line: #26335c; --text: #e6ebff; --muted: #8e9bc7; --sys: #3fd0ff; --ok: #6ff0a6; --bad: #ff8a80; --gold: #ffd54f; --ngoc: #b388ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, "Be Vietnam Pro", sans-serif; }
+    header { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    header h1 { margin: 0; font-size: 16px; letter-spacing: 1px; }
+    header .who { margin-left: auto; color: var(--muted); font-size: 12px; }
+    nav { display: flex; gap: 6px; }
+    button, input, select { font: inherit; color: var(--text); background: #0d1530; border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; }
+    button { cursor: pointer; }
+    button:hover:not(:disabled) { border-color: var(--sys); }
+    button:disabled { opacity: .45; cursor: default; }
+    button.on { background: #17306a; border-color: var(--sys); }
+    button.primary { background: #1a4a8a; border-color: var(--sys); }
+    button.danger { border-color: #7a3a44; color: var(--bad); }
+    main { max-width: 980px; margin: 0 auto; padding: 16px; }
+    section { display: none; }
+    section.on { display: block; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    .card h2 { margin: 0 0 10px; font-size: 14px; color: var(--sys); letter-spacing: .5px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+    label.f { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+    label.f input, label.f select { width: 100%; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; font-size: 12px; }
+    tr.pick { background: #17306a55; }
+    .muted { color: var(--muted); }
+    .tag { display: inline-block; padding: 0 6px; border-radius: 9px; font-size: 11px; border: 1px solid var(--line); margin-left: 4px; }
+    .tag.ok { color: var(--ok); border-color: #2f6b4a; } .tag.bad { color: var(--bad); border-color: #7a3a44; }
+    .gold { color: var(--gold); } .ngoc { color: var(--ngoc); }
+    #msg { position: sticky; top: 0; z-index: 5; margin: 0 0 12px; padding: 9px 12px; border-radius: 8px; display: none; }
+    #msg.ok { display: block; background: #12361f; border: 1px solid #2f6b4a; color: var(--ok); }
+    #msg.bad { display: block; background: #3a1a22; border: 1px solid #7a3a44; color: var(--bad); }
+    .items .it { display: flex; gap: 6px; margin-bottom: 6px; }
+    .items .it input:first-child { flex: 1; min-width: 0; }
+    .items .it input.q { width: 80px; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12px/1.4 ui-monospace, monospace; color: var(--muted); }
+    #gate { max-width: 420px; margin: 60px auto; text-align: center; display: none; }
+    @media (max-width: 600px) { main { padding: 10px; } }
+  </style>
+</head>
+<body>
+  <div id="gate" class="card"></div>
+  <div id="app" style="display:none">
+    <header>
+      <h1>◆ ADMIN · THỨC TỈNH</h1>
+      <nav>
+        <button data-tab="players" class="on">Người chơi</button>
+        <button data-tab="codes">Mật mã</button>
+        <button data-tab="log">Nhật ký</button>
+      </nav>
+      <span class="who" id="who"></span>
+    </header>
+    <main>
+      <div id="msg"></div>
+
+      <section id="t-players" class="on">
+        <div class="card">
+          <h2>TÌM NGƯỜI CHƠI</h2>
+          <div class="row">
+            <input id="q" placeholder="Tên đăng nhập hoặc tên nhân vật" style="flex:1;min-width:200px">
+            <button id="q-go" class="primary">Tìm</button>
+          </div>
+          <div id="found"></div>
+        </div>
+        <div class="card" id="grant-card" style="display:none">
+          <h2>TẶNG CHO: <span id="g-who"></span></h2>
+          <div id="g-form"></div>
+          <div class="row" style="margin-top:12px">
+            <button id="g-send" class="primary">Tặng</button>
+            <button id="g-ban" class="danger"></button>
+          </div>
+        </div>
+      </section>
+
+      <section id="t-codes">
+        <div class="card">
+          <h2>TẠO MẬT MÃ</h2>
+          <div class="grid" style="margin-bottom:10px">
+            <label class="f">Mã (để trống = tự sinh)<input id="c-code" maxlength="32" placeholder="VD: TET2027"></label>
+            <label class="f">Số lượt dùng tối đa (trống = không giới hạn)<input id="c-max" type="number" min="1"></label>
+            <label class="f">Hết hạn (trống = không hạn)<input id="c-exp" type="date"></label>
+            <label class="f">Ghi chú<input id="c-note" maxlength="100"></label>
+          </div>
+          <div id="c-form"></div>
+          <div class="row" style="margin-top:12px"><button id="c-add" class="primary">Tạo mã</button></div>
+        </div>
+        <div class="card">
+          <h2>DANH SÁCH MÃ</h2>
+          <div id="c-list"></div>
+        </div>
+      </section>
+
+      <section id="t-log">
+        <div class="card"><h2>NHẬT KÝ ADMIN (50 dòng gần nhất)</h2><div id="l-list"></div></div>
+      </section>
+    </main>
+  </div>
+  <datalist id="dl-items"></datalist>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

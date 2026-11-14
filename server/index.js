@@ -17,6 +17,7 @@ const cache = require('./storage/cache');
 const auth = require('./accounts/auth');
 const game = require('./game');
 const realtime = require('./realtime');
+const admin = require('./http/admin');
 const G = require('../shared');
 
 const PORT = Number(process.env.PORT) || 3100;
@@ -137,6 +138,12 @@ async function api(req, res, url) {
   }
   let body;
   try { body = await readBody(req); } catch { return send(res, 400, { error: 'Dữ liệu không hợp lệ.' }); }
+
+  // Trang admin: người không phải admin nhận 404 (xem server/http/admin.js)
+  if (url.startsWith('/api/admin/')) {
+    const r = await admin.handle(url, session, body);
+    return send(res, r.status, r.obj);
+  }
 
   if (url === '/api/register') {
     if (!(await auth.registerOpen())) return send(res, 403, { error: 'Đã đóng đăng ký tài khoản mới.' });
