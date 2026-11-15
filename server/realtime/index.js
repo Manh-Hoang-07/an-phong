@@ -286,7 +286,12 @@ function tick() {
       c.dirty = false;
       (list = list || []).push([c.id, c.x, c.y, c.f, c.a]);
     }
-    if (list) broadcast(mapId, { t: 'snap', p: list });
+    if (!list) continue;
+    // Người vừa di chuyển không cần nhận lại chính vị trí của mình: client bỏ qua id lạ
+    // (remote.js chỉ tra this.remotes, không có mình trong đó). Phòng chỉ có 1 người thì khỏi gửi.
+    if (r.size < 2) continue;
+    if (list.length === 1) broadcast(mapId, { t: 'snap', p: list }, list[0][0]);
+    else broadcast(mapId, { t: 'snap', p: list });
   }
 }
 

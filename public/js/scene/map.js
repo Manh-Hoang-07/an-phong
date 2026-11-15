@@ -78,9 +78,46 @@ WorldScene.mix(class WorldMap {
     for (const t of this.children.list) if (t.type === 'Text' && t.style.resolution !== res) t.setResolution(res);
   }
 
+  // ------------------------------------------------------------------ Chỉ chạy hiệu ứng trong tầm nhìn
+  // Camera chỉ thấy ~8% bản đồ, nhưng tween của cỏ lay / hạt sáng / cây đung đưa vẫn chạy cho MỌI vật
+  // ở mọi nơi trên bản đồ. Tạm dừng tween của vật nằm ngoài khung nhìn, vào lại thì chạy tiếp.
+  // Hình ảnh không đổi: vật ngoài màn hình có chạy tween cũng không ai thấy.
+  // Gọi 4 lần/giây là đủ (khung nhìn đổi chậm hơn nhịp khung hình rất nhiều).
+  cullEffects(now) {
+    if (Quality.low) return;
+    if (now - (this.cullAt || 0) < 250) return;
+    this.cullAt = now;
+    const v = this.cameras.main.worldView;
+    const m = 120;   // lề: vật sắp vào khung thì chạy sẵn, không thấy nó "khựng" lúc mới hiện
+    const L = v.x - m, R = v.right + m, T = v.y - m, B = v.bottom + m;
+    const inside = (o) => o.x > L && o.x < R && o.y > T && o.y < B;
+    const apply = (objs, tws) => {
+      for (let i = 0; i < objs.length; i++) {
+        const tw = tws[i];
+        if (!tw) continue;
+        const on = inside(objs[i]);
+        if (on === !tw.paused) continue;
+        if (on) tw.resume(); else tw.pause();
+      }
+    };
+    apply(this.grassSprites || [], this.grassTweens || []);
+    apply(this.motes || [], this.moteTweens || []);
+    if (this.swayTweens && this.swayTweens.length) {
+      for (const tw of this.swayTweens) {
+        const t = tw.targets && tw.targets[0];
+        if (!t) continue;
+        const on = inside(t);
+        if (on === !tw.paused) continue;
+        if (on) tw.resume(); else tw.pause();
+      }
+    }
+  }
+
   buildBackground() {
     // Cảnh được dựng lại mỗi lần chuyển bản đồ: bỏ tham chiếu tới vật của bản đồ cũ
     this.screenLayers = []; this.vignette = null; this.weather = []; this.screenOff = null; this.zoomTween = null;
+    // Tween của hiệu ứng giữ lại để tạm dừng khi nằm ngoài khung nhìn (xem cullEffects)
+    this.grassTweens = []; this.moteTweens = []; this.swayTweens = []; this.cullAt = 0;
     // Chữ mới tạo ra cũng vẽ theo độ nét màn hình
     this.events.off('addedtoscene', this.onAddedText, this);
     this.events.on('addedtoscene', this.onAddedText, this);
@@ -153,15 +190,16 @@ WorldScene.mix(class WorldMap {
     // Hạt sáng bay lơ lửng
     const moteColor = this.look.mote;
     this.motes = [];
+    this.moteTweens = [];
     const moteCount = Quality.low ? 0 : (this.look.moteN ?? 14);
     for (let i = 0; i < moteCount; i++) {
       const m = this.add.image(Phaser.Math.Between(0, this.worldW), Phaser.Math.Between(40, this.worldH - 120), 'mote')
         .setTint(moteColor).setAlpha(0.15 + Math.random() * 0.35).setScale(0.3 + Math.random() * 0.6)
         .setDepth(-1).setBlendMode(Phaser.BlendModes.ADD);
-      this.tweens.add({
+      this.moteTweens.push(this.tweens.add({
         targets: m, y: m.y - Phaser.Math.Between(40, 120), x: m.x + Phaser.Math.Between(-60, 60),
         alpha: 0, duration: Phaser.Math.Between(4000, 9000), repeat: -1, delay: Math.random() * 4000,
-      });
+      }));
       this.motes.push(m);
     }
     // Viền tối mềm, giúp khung hình có chiều sâu
@@ -354,7 +392,8 @@ WorldScene.mix(class WorldMap {
     if (!img || Quality.low) return;
     const a = amp + (c % 3) * 0.3;
     img.setAngle(-a);
-    this.tweens.add({ targets: img, angle: a, duration: 2600 + (c % 5) * 380, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (c % 7) * 260 });
+    const tw = this.tweens.add({ targets: img, angle: a, duration: 2600 + (c % 5) * 380, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (c % 7) * 260 });
+    if (this.swayTweens) this.swayTweens.push(tw);
   }
 
   buildDecorations() {
@@ -381,7 +420,8 @@ WorldScene.mix(class WorldMap {
         if (this.look.sway && !Quality.low && (this.theme === 'forest' || this.theme === 'city')) {
           const a = 0.7 + (c % 3) * 0.35;
           tree.setAngle(-a);
-          this.tweens.add({ targets: tree, angle: a, duration: 2600 + (c % 5) * 380, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (c % 7) * 260 });
+          const tw = this.tweens.add({ targets: tree, angle: a, duration: 2600 + (c % 5) * 380, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (c % 7) * 260 });
+          if (this.swayTweens) this.swayTweens.push(tw);
         }
       } else if (ch === '^') {
         if (this.isSolid(r - 1, c)) {   // nhũ đá treo trần
@@ -425,7 +465,7 @@ WorldScene.mix(class WorldMap {
       if (swayGrass && (key === 'd_grass' || key === 'd_flower')) {
         const s = this.add.image(gx, gy, key).setOrigin(0.5, 1).setDepth(-1);
         this.grassSprites.push(s);
-        this.tweens.add({ targets: s, angle: { from: -2.5, to: 2.5 }, duration: 1800 + (h % 9) * 140, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (h % 11) * 150 });
+        this.grassTweens.push(this.tweens.add({ targets: s, angle: { from: -2.5, to: 2.5 }, duration: 1800 + (h % 9) * 140, yoyo: true, repeat: -1, ease: 'Sine.inOut', delay: (h % 11) * 150 }));
       } else this.stampTile(key, gx, gy, bitLayer, 0.5, 1);
     }
     this.flushLayer(bitLayer);

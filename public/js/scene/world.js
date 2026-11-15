@@ -161,6 +161,7 @@ class WorldScene extends Phaser.Scene {
       for (const t of this.tallLayers) t.ts.tilePositionY = t.base + f * t.spare / t.sc;
     } else this.bgFar.tilePositionY = 0;
     this.updateWater(time);
+    this.cullEffects(time);
 
     this.staminaTick(time, delta);
     this.formTick(time, delta);
