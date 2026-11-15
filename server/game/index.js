@@ -62,6 +62,10 @@ function migrate(p) {
   if (!p.advancement.done) p.advancement.done = {};
   if (!p.advancement.unlocked) p.advancement.unlocked = {};
   p.hiddenNpcActive = false; // lần nạp lại hoặc đổi map đều cần gọi NPC lại
+  // `arrive` là điểm tới của lần đổi bản đồ gần nhất, chỉ có nghĩa trong đúng phiên đó. Nếu đã có vị trí
+  // đứng thật (x/y) thì cờ này là dấu vết cũ: giữ lại sẽ khiến lần vào game sau client ném nhân vật về cổng
+  // thay vì đặt đúng chỗ đã lưu. Dữ liệu của người chơi cũ cũng được dọn ở đây.
+  if (p.x != null && p.y != null) p.arrive = null;
   if (!p.formChoice) p.formChoice = 'awaken' + Math.max(1, Math.min(G.AWAKENS.length, p.awakenTier || 1));
   // Dữ liệu Necromancer cũ được giữ làm nhánh tiến hóa thay vì đổi class nền.
   if (p.school === 'tu_linh_thuat_su') { p.school = 'trieu_hoi_su'; p.advancement.unlocked.tu_linh_thuat_su = true; }

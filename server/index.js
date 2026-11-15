@@ -244,15 +244,19 @@ realtime.attach(server);
 
 async function maintenance() {
   const r = await store.maintenance();
+  const mobs = await require('./realtime/mobstore').prune();
   if (r.sessions || r.authLog || r.snapshots) {
     console.log(`Dọn dữ liệu: ${r.sessions} phiên hết hạn, ${r.authLog} dòng nhật ký cũ, ${r.snapshots} bản chụp cũ.`);
   }
+  if (mobs) console.log(`Dọn trạng thái quái của ${mobs} bản đồ lâu không ai vào.`);
 }
 
 async function start() {
   await store.init();
   cache.configure({ migrate: game.migrate, onEvict: (userId) => recentReplies.delete(userId) });
   cache.start();
+  // Trạng thái quái đã lưu (máu, sống/chết) phải đọc xong trước khi có người vào bản đồ
+  await realtime.initMobs();
   await maintenance();
   setInterval(() => maintenance().catch((e) => console.error('Dọn dữ liệu lỗi:', e.message)), 3600 * 1000).unref();
   // Chợ: thử lại việc chuyển tiền cho người bán nếu lần trước lỗi
@@ -276,6 +280,7 @@ async function shutdown(sig) {
   server.close();
   cache.stop();
   try {
+    await realtime.flushMobs();   // ghi nốt máu quái đang chờ
     await cache.flushAll();
     await store.close();
   } catch (e) {

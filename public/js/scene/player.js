@@ -262,14 +262,14 @@ WorldScene.mix(class WorldPlayer {
   }
 
   // Gọi mỗi giây. Máu và năng lượng tự hồi GameData.REGEN mỗi giây, chỉ khi KHÔNG giao chiến: đứng yên hoặc chỉ di chuyển
-  // (không đánh / dùng kỹ năng và không bị đánh trong 2 giây gần nhất). Đang biến hình thì không hồi.
+  // (không đánh / dùng kỹ năng và không bị đánh trong 2 giây gần nhất).
+  // Đang biến hình: máu và năng lượng VẪN hồi y như bình thường; ấn trừ mỗi giây nên thực nhận = hồi − hao.
   regen() {
     if (this.dead) return;
     const now = this.time.now, R = GameData.REGEN;
     // Buff "Ân Sủng" (Trị Liệu Sư): hồi 3% máu mỗi 2 giây (1.5% mỗi giây), 5% khi skill cấp 10 — có cả khi đang đánh
     const grace = this.buffOn('grace');
     if (grace) App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * (grace.regen || 0.03) / 2);
-    if (this.inAwakenForm()) return;
     const maxHp = App.stats.maxHp, maxMp = App.stats.maxMp;
     // Nội tại Dòng Chảy (Pháp Sư): hồi 0,5% năng lượng tối đa mỗi giây ngay cả khi đang chiến đấu
     const flow = this.hasPassive('phap_su');
@@ -718,27 +718,43 @@ WorldScene.mix(class WorldPlayer {
     if (this.player) this.floatText(this.player.x, this.player.y - 52, 'Trở lại dạng thường', '#e0e0e0', 12);
     UI.refresh();
   }
+  // Tốc độ hồi năng lượng / thể lực mỗi giây (dùng để biết biến hình có tự nuôi được không).
+  // Phải khớp với regen() và staminaTick() ở trên.
+  formRegenRates() {
+    const R = GameData.REGEN, S = GameData.STAMINA;
+    const maxMp = App.stats.maxMp, now = this.time.now;
+    const fighting = now - (this.staUsedAt || -1e9) < R.calmMs || now - (this.lastHurt || -1e9) < R.calmMs;
+    let mp = this.hasPassive('phap_su') ? maxMp * 0.005 : 0;
+    if (!fighting) mp += Math.max(R.mp, maxMp * 0.005);
+    const staRate = now - (this.staUsedAt || 0) > S.delay ? 1 : S.activeMul;
+    return { mp, sta: S.regen * staRate };
+  }
+
   formTick(time, delta) {
     if (!App.form) return;
     const aw = this.activeAwaken();
     if (!aw || this.dead) { this.endForm(); return; }
     // Trừ theo từng giây tròn (hiện số trên thanh đổi đều 1, 2 mỗi giây)
     this.formDrainAcc = (this.formDrainAcc || 0) + delta;
+    const drain = aw.drain || 3;
     while (this.formDrainAcc >= 1000) {
       this.formDrainAcc -= 1000;
-      const drain = aw.drain || 3;
       App.mp = Math.max(0, App.mp - drain);
       App.sta = Math.max(0, App.sta - drain);
     }
-    if (App.mp <= 0) this.endForm('Hết năng lượng, biến hình kết thúc.');
-    else if (App.sta <= 0) { App.staLocked = true; this.endForm('Hết thể lực, biến hình kết thúc.'); }
+    // Ấn KHÔNG chặn hồi phục: regen() và staminaTick() vẫn chạy, nên thực nhận = hồi − hao.
+    // Vì vậy chỉ kết thúc khi cạn thật và hồi phục không đủ bù (nếu đủ bù thì biến hình tự nuôi được).
+    const rate = this.formRegenRates();
+    if (App.mp <= 0 && rate.mp < drain) this.endForm('Hết năng lượng, biến hình kết thúc.');
+    else if (App.sta <= 0 && rate.sta < drain) { App.staLocked = true; this.endForm('Hết thể lực, biến hình kết thúc.'); }
   }
 
   // Hồi thể lực từ từ (gọi mỗi khung hình)
+  // Đang biến hình vẫn hồi: ấn trừ mỗi giây, phần hồi bù vào đó nên thực nhận = hồi − hao.
   staminaTick(time, delta) {
     const S = GameData.STAMINA, max = App.stats.maxSta;
     if (App.sta == null) App.sta = max;
-    if (App.sta < max && !this.dead && !this.inAwakenForm()) {
+    if (App.sta < max && !this.dead) {
       const rate = time - (this.staUsedAt || 0) > S.delay ? 1 : S.activeMul;
       App.sta = Math.min(max, App.sta + S.regen * rate * delta / 1000);
     }

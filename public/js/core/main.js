@@ -161,7 +161,8 @@
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') Net.saveOnExit(); });
     App.logout = async () => {
       if (window.Realtime) Realtime.stop();
-      Net.saveOnExit();
+      // Phải CHỜ lưu xong rồi mới xoá phiên: xoá phiên trước thì lệnh lưu bị từ chối (401) và mất vị trí.
+      try { await Net.saveOnExit(); } catch { /* lỗi mạng thì thôi */ }
       await Net.logout();
       location.reload();
     };

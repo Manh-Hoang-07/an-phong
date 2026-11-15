@@ -110,16 +110,16 @@ const Net = (() => {
     for (const ev of m.ev || []) App.onEvent(ev);
   }
 
-  // Lưu khi đóng tab
+  // Lưu khi đóng tab. Trả về promise để nơi gọi chờ được (đăng xuất phải lưu xong rồi mới xoá phiên).
   function saveOnExit() {
-    if (!App.player || !App.scene || !App.scene.player) return;
+    if (!App.player || !App.scene || !App.scene.player) return Promise.resolve();
     const s = App.scene.saveState();
     try {
-      fetch('/api/action', {
+      return fetch('/api/action', {
         method: 'POST', credentials: 'same-origin', keepalive: true,
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'save', ...s }),
-      }).catch(() => { /* mất mạng thì thôi, lần sau tự lưu */ });
-    } catch { /* bỏ qua */ }
+      }).then(() => {}, () => { /* mất mạng thì thôi, lần sau tự lưu */ });
+    } catch { return Promise.resolve(); }
   }
 
   return {

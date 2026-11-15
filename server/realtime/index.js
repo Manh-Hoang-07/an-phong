@@ -17,7 +17,8 @@ const claims = require('./claims');
 const party = require('./party');
 const trade = require('./trade');
 const xplayer = require('../game/core/xplayer');
-const { World, STEP_MS, IDLE_DROP_MS } = require('./mobs');
+const mobstore = require('./mobstore');
+const { World, STEP_MS } = require('./mobs');
 
 const PATH = '/ws';
 const TICK_MS = 100;              // chu kỳ phát vị trí
@@ -111,12 +112,14 @@ function enterRoom(conn, mapId) {
   const r = room(mapId);
   send(conn, { t: 'room', map: mapId, list: [...r.values()].map(stateOf) });
   const world = worldOf(mapId);
-  if (world) { world.emptySince = 0; send(conn, { t: 'mobs', map: mapId, list: world.fullList() }); }
+  if (world) send(conn, { t: 'mobs', map: mapId, list: world.fullList() });
   r.set(conn.id, conn);
   broadcast(mapId, { t: 'join', p: stateOf(conn) }, conn.id);
 }
 
 // ---- Quái do server quản lý (server/realtime/mobs.js)
+// Thế giới quái của bản đồ KHÔNG bị xoá khi bản đồ vắng người: máu quái phải giữ nguyên dù người chơi
+// đăng xuất hay đổi bản đồ. Bản đồ vắng người thì chỉ ngừng chạy AI (xem mobTick).
 function worldOf(mapId) {
   let w = worlds.get(mapId);
   if (!w) {
@@ -150,7 +153,7 @@ function worldOf(mapId) {
         }
         return assist;
       },
-    });
+    }, mobstore.get(mapId));
     if (!w.map) return null;
     worlds.set(mapId, w);
   }
@@ -161,18 +164,22 @@ function mobTick() {
   const now = Date.now();
   for (const [mapId, w] of worlds) {
     const r = rooms.get(mapId);
-    if (!r || !r.size) {
-      if (!w.emptySince) w.emptySince = now;
-      else if (now - w.emptySince > IDLE_DROP_MS) worlds.delete(mapId);
-      continue;
+    // Bản đồ vắng người: ngừng AI (không ai để đánh) nhưng GIỮ NGUYÊN máu quái. Quái chết vẫn hồi sinh
+    // đúng giờ để lần sau vào không gặp bản đồ trống. Không có ai thì chỉ cần chạy 1 giây một lần.
+    if (r && r.size) {
+      const players = [];
+      for (const c of r.values()) players.push({ id: c.id, x: c.x, y: c.y, dead: c.dead });
+      w.step(now, players);
+      if (w.stepCount % 2 === 0) {
+        const snap = w.snapshot(now);
+        if (snap.length) broadcast(mapId, { t: 'msnap', p: snap });
+      }
+    } else if (now - (w.lastIdleAt || 0) >= 1000) {
+      w.lastIdleAt = now;
+      w.stepIdle(now);
     }
-    const players = [];
-    for (const c of r.values()) players.push({ id: c.id, x: c.x, y: c.y, dead: c.dead });
-    w.step(now, players);
-    if (w.stepCount % 2 === 0) {
-      const snap = w.snapshot(now);
-      if (snap.length) broadcast(mapId, { t: 'msnap', p: snap });
-    }
+    // Máu / sống-chết vừa đổi: đưa vào hàng đợi ghi (gộp vài giây một lần, xem mobstore.js)
+    if (w.dirty) { w.dirty = false; mobstore.markDirty(mapId, w.serialize()); }
   }
 }
 
@@ -387,7 +394,14 @@ async function connect(ws, token, session) {
 function close() {
   if (tickTimer) clearInterval(tickTimer);
   if (mobTimer) clearInterval(mobTimer);
+  mobstore.stop();
   if (wss) for (const c of wss.clients) c.close(1001, 'shutdown');
 }
 
-module.exports = { attach, close };
+// Ghi hết trạng thái quái đang chờ (gọi lúc tắt server, sau close()).
+async function flushMobs() {
+  for (const [mapId, w] of worlds) if (w.dirty) { w.dirty = false; mobstore.markDirty(mapId, w.serialize()); }
+  await mobstore.flush();
+}
+
+module.exports = { attach, close, flushMobs, initMobs: () => mobstore.init() };

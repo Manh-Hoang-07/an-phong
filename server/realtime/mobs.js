@@ -2,13 +2,21 @@
 /*
  * Quái do server quản lý (Giai đoạn 3, xem docs/KE_HOACH_DA_NGUOI_CHOI.md).
  *
- * Mỗi bản đồ có người chơi thì có một "thế giới quái" (World): danh sách quái, máu, hồi sinh và AI
+ * Mỗi bản đồ có một "thế giới quái" (World): danh sách quái, máu, hồi sinh và AI
  * (đi tuần → phát hiện → đuổi → gồng đòn → lao tới → nghỉ). AI mô phỏng lại logic cũ của client
  * (public/js/scene/monsters.js) nhưng chỉ tính vị trí; client chỉ vẽ theo gói `msnap`.
+ * Thế giới quái sống suốt thời gian server chạy, kể cả khi bản đồ vắng người.
  *
  * Server làm chủ: vị trí, máu, sống/chết, hồi sinh, thời điểm đòn đặc biệt của trùm, quái phụ khi trùm nổi giận.
  * Client vẫn tự tính: sát thương của MÌNH lên quái (gửi lên bằng gói `hit`, server kiểm tra trần), sát thương
  * quái lên MÌNH (kiểm tra va chạm ngay trên máy mình trong lúc quái lao tới), hiệu ứng.
+ *
+ * LUẬT MÁU QUÁI: máu đã mất thì mất luôn. Người chơi đăng xuất, đổi bản đồ, chạy ra ngoài tầm, hay cả server
+ * khởi động lại đều KHÔNG làm quái hồi máu. Chỉ khi quái chết (hoặc hết giờ hồi sinh sau khi chết) thì nó mới
+ * về đầy máu. Vì vậy:
+ *   - Không có hồi máu theo thời gian (kể cả trùm / thủ lĩnh).
+ *   - Thế giới quái của bản đồ KHÔNG bị xoá khi bản đồ vắng người; chỉ ngừng chạy AI.
+ *   - Máu được lưu xuống database (server/realtime/mobstore.js) để sống qua lần khởi động lại.
  */
 const G = require('../../shared');
 const mapgrid = require('./mapgrid');
@@ -17,7 +25,6 @@ const STEP_MS = 50;
 const GRAVITY = 1300;
 const FLAG_SLOW = 1, FLAG_FREEZE = 2, FLAG_ENRAGE = 4;
 const ST = { move: 0, windup: 1, lunge: 2 };
-const IDLE_DROP_MS = 30000;      // bản đồ không còn ai: giữ thêm chừng này rồi bỏ (quái hồi sinh đầy)
 const CONTRIB_SHARE = 0.1;       // đánh được từ 10% máu quái trở lên thì được tính điểm kết liễu (nhận thưởng như người hạ)
 const MAX_MOBS = 300;
 const LEASH = 600;               // xa hơn thế (hoặc chết / rời map) thì quái bỏ mục tiêu
@@ -25,20 +32,28 @@ const SWITCH_THREAT = 1.3;       // đổi mục tiêu khi có người gây nhi
 const BIG_SCALE_STEP = 0.5;      // trùm / thủ lĩnh: mỗi người chơi gần thêm 50% máu tối đa
 const BIG_SCALE_MAX = 3;
 const BIG_RANGE = 700;
-const REGEN_AFTER_MS = 10000;    // trùm / thủ lĩnh không ai đánh 10 giây thì hồi máu 10%/giây (chống đánh lén rồi bỏ chạy)
 
 class World {
-  constructor(mapId, hooks) {
+  constructor(mapId, hooks, saved) {
     this.mapId = mapId;
     this.hooks = hooks;          // { emit(obj), kill(mob, killerId, contrib) → assistIds }
     this.map = mapgrid.load(mapId);
     this.mobs = [];
     this.byUid = new Map();
     this.nextUid = 0;
-    this.emptySince = 0;
     this.stepCount = 0;
+    this.dirty = false;          // có máu / sống-chết vừa đổi, cần ghi xuống database
     if (!this.map) return;
-    for (const sp of this.map.spawns) this.add(sp.id, sp.r, sp.c);
+    // Khoá bền của một con quái: "<id quái>#<số thứ tự trong danh sách xuất hiện>". Không dùng uid vì uid
+    // đổi khi danh sách quái phụ (do trùm gọi) chen vào giữa.
+    const seen = new Map();
+    for (const sp of this.map.spawns) {
+      const n = seen.get(sp.id) || 0;
+      seen.set(sp.id, n + 1);
+      const m = this.add(sp.id, sp.r, sp.c, { key: `${sp.id}#${n}` });
+      if (m && saved) this.restore(m, saved[m.key]);
+    }
+    if (saved) this.dirty = true;
   }
 
   add(id, r, c, opts = {}) {
@@ -58,8 +73,8 @@ class World {
     const maxHp = G.monHp(def);
     const m = {
       uid: this.nextUid++, id, def, x, y, vy: 0, f: Math.random() < 0.5 ? -1 : 1, hp: maxHp, maxHp, alive: true,
-      baseHp: maxHp, scale: 1, threat: new Map(), target: null, lastHitAt: 0, lastHpSent: 0,
-      homeX: x, homeY: y, span, minion: !!opts.minion, deaths: 0, respawnAt: 0,
+      baseHp: maxHp, scale: 1, threat: new Map(), target: null,
+      homeX: x, homeY: y, span, minion: !!opts.minion, deaths: 0, respawnAt: 0, key: opts.key || null,
       aggro: false, state: 'move', stateUntil: 0, lungeDir: 1, lvx: 0, lvy: 0,
       nextAttack: 0, nextTurn: 0, nextJump: 0, nextSlam: 0, nextSpecial: 0, patrol: 0,
       slowUntil: 0, freezeUntil: 0, knockUntil: 0, enraged: false, fled: false,
@@ -69,6 +84,42 @@ class World {
     this.mobs.push(m);
     this.byUid.set(m.uid, m);
     return m;
+  }
+
+  // ---------------------------------------------------------------- Lưu / khôi phục trạng thái
+  // Chỉ lưu những gì KHÔNG tự dựng lại được: máu, hệ số máu, sống/chết, số lần chết, giờ hồi sinh, nổi giận.
+  // Vị trí, mục tiêu, hận thù để tự nhiên (quái đi về chỗ cũ, người chơi vào lại thì đánh tiếp).
+  serialize() {
+    const out = {};
+    for (const m of this.mobs) {
+      if (m.minion || !m.key) continue;   // quái phụ do trùm gọi là tạm thời, không lưu
+      out[m.key] = {
+        hp: Math.max(0, Math.round(m.hp)), mh: m.maxHp, sc: m.scale,
+        al: m.alive ? 1 : 0, d: m.deaths, ra: m.respawnAt, en: m.enraged ? 1 : 0,
+      };
+    }
+    return out;
+  }
+
+  restore(m, s) {
+    if (!s || typeof s !== 'object') return;
+    const scale = Number.isFinite(s.sc) && s.sc >= 1 ? Math.min(BIG_SCALE_MAX, s.sc) : 1;
+    m.scale = scale;
+    m.maxHp = Math.max(1, Math.round(m.baseHp * scale));
+    m.deaths = Number.isFinite(s.d) && s.d >= 0 ? Math.trunc(s.d) : 0;
+    m.alive = s.al !== 0;
+    if (m.alive) {
+      const hp = Number.isFinite(s.hp) ? s.hp : m.maxHp;
+      m.hp = Math.max(1, Math.min(m.maxHp, Math.round(hp)));   // còn sống thì luôn còn ít nhất 1 máu
+      m.enraged = !!s.en && m.hp < m.maxHp * 0.5;
+      m.respawnAt = 0;
+    } else {
+      m.hp = 0;
+      m.enraged = false;
+      const ra = Number.isFinite(s.ra) ? s.ra : 0;
+      // Đã chết mà không có mốc hồi sinh (dữ liệu cũ / đồng hồ lệch): hồi sinh sau đúng thời gian chờ của nó
+      m.respawnAt = ra > 0 ? ra : Date.now() + (m.def.respawn || 10) * 1000;
+    }
   }
 
   flags(m, now) {
@@ -110,7 +161,6 @@ class World {
     // Phần sát thương tính cho hận thù / chia thưởng không vượt quá máu còn lại (đòn thừa không được cộng)
     const eff = Math.min(dmg, m.hp);
     m.hp -= dmg;
-    m.lastHitAt = now;
     m.threat.set(connId, (m.threat.get(connId) || 0) + eff);
     m.contrib.set(connId, (m.contrib.get(connId) || 0) + eff);
     if (!m.contribSrc) m.contribSrc = new Map();
@@ -128,6 +178,7 @@ class World {
       m.knockUntil = now + 150;
       if (!d.fly) m.x = Math.max(m.span[0] - 4, Math.min(m.span[1] + 4, m.x));
     }
+    this.dirty = true;
     this.hooks.emit({ t: 'mhit', u: m.uid, hp: Math.max(0, m.hp), d: dmg, c: hit.crit ? 1 : 0, by: connId, dir: hit.dir === -1 ? -1 : 1, src: hit.src });
     // Trùm phụ bỏ chạy khi còn ít máu: tính là hạ gục
     if (m.hp > 0 && d.fleeAt && m.hp <= m.maxHp * d.fleeAt) { m.fled = true; this.die(m, connId, now); return true; }
@@ -140,6 +191,7 @@ class World {
     m.hp = 0;
     m.deaths++;
     m.aggro = false; m.state = 'move'; m.lastSent = ''; m.threat.clear(); m.target = null;
+    this.dirty = true;
     const kid = `${this.mapId}.${m.uid}.${m.deaths}`;
     const assist = m.minion ? [] : this.hooks.kill(m, killerId, m.contrib, CONTRIB_SHARE, kid) || [];
     this.hooks.emit({ t: 'mdie', u: m.uid, by: killerId, as: assist, kid: m.minion ? undefined : kid, fled: m.fled ? 1 : 0, x: Math.round(m.x), y: Math.round(m.y) });
@@ -149,11 +201,13 @@ class World {
     } else m.respawnAt = now + (m.def.respawn || 10) * 1000;
   }
 
+  // Hồi sinh: CHỈ xảy ra sau khi quái đã chết. Đây là chỗ duy nhất đưa máu về đầy.
   respawn(m) {
     m.maxHp = m.baseHp; m.scale = 1; m.threat.clear(); m.target = null;
     m.hp = m.maxHp; m.alive = true; m.aggro = false; m.state = 'move'; m.enraged = false; m.fled = false;
     m.slowUntil = m.freezeUntil = m.knockUntil = 0; m.nextSpecial = m.nextSlam = 0; m.vy = 0;
-    m.x = m.homeX; m.y = m.homeY; m.lastSent = '';
+    m.x = m.homeX; m.y = m.homeY; m.lastSent = ''; m.respawnAt = 0;
+    this.dirty = true;
     this.hooks.emit({ t: 'mresp', m: this.full(m) });
   }
 
@@ -164,6 +218,15 @@ class World {
     for (const m of this.mobs.slice()) {
       if (!m.alive) { if (!m.minion && now >= m.respawnAt) this.respawn(m); continue; }
       this.stepMob(m, now, dt, players);
+    }
+  }
+
+  // Bản đồ vắng người: không chạy AI, nhưng quái đã chết vẫn hồi sinh đúng giờ (máu quái còn sống thì
+  // giữ nguyên, không hồi). Nhờ vậy lần sau có người vào thì bản đồ không trống trơn.
+  stepIdle(now) {
+    this.stepCount++;
+    for (const m of this.mobs.slice()) {
+      if (!m.alive && !m.minion && now >= m.respawnAt) this.respawn(m);
     }
   }
 
@@ -196,31 +259,19 @@ class World {
     return { target, near };
   }
 
-  // Trùm / thủ lĩnh: nhiều người đánh cùng lúc thì máu tối đa tăng (giữ nguyên tỉ lệ máu hiện tại), không ai đánh thì hồi máu
+  // Trùm / thủ lĩnh: nhiều người đánh cùng lúc thì máu tối đa tăng (giữ nguyên tỉ lệ máu hiện tại).
+  // KHÔNG hồi máu khi không ai đánh: máu đã mất là mất (xem luật đầu file).
   stepBigHp(m, now, living) {
-    const inFight = m.aggro || m.hp < m.maxHp;
-    if (inFight) {
-      const n = living.filter((p) => Math.abs(p.x - m.x) < BIG_RANGE && Math.abs(p.y - m.y) < 400).length;
-      const scale = Math.min(BIG_SCALE_MAX, 1 + BIG_SCALE_STEP * Math.max(0, n - 1));
-      if (scale > m.scale + 0.01) {
-        const ratio = m.hp / m.maxHp;
-        m.scale = scale;
-        m.maxHp = Math.round(m.baseHp * scale);
-        m.hp = Math.max(1, Math.round(ratio * m.maxHp));
-        this.hooks.emit({ t: 'mhp', u: m.uid, hp: m.hp, mh: m.maxHp });
-      }
-    }
-    if (!m.aggro && m.hp < m.maxHp && now - m.lastHitAt > REGEN_AFTER_MS) {
-      m.hp = Math.min(m.maxHp, m.hp + m.maxHp * 0.1 * (STEP_MS / 1000));
-      if (m.hp >= m.maxHp) {
-        // Hồi đầy: trở về như mới (hết giận, bỏ quái phụ, máu tối đa gốc)
-        m.maxHp = m.baseHp; m.hp = m.maxHp; m.scale = 1; m.enraged = false; m.contrib = new Map(); m.threat.clear();
-        for (const o of this.mobs.slice()) if (o.minion && o.alive) { o.alive = false; this.byUid.delete(o.uid); this.mobs = this.mobs.filter((x) => x !== o); this.hooks.emit({ t: 'mdel', u: o.uid }); }
-        this.hooks.emit({ t: 'mhp', u: m.uid, hp: m.hp, mh: m.maxHp });
-      } else if (now - m.lastHpSent > 500) {
-        m.lastHpSent = now;
-        this.hooks.emit({ t: 'mhp', u: m.uid, hp: Math.round(m.hp), mh: m.maxHp });
-      }
+    if (!m.aggro && m.hp >= m.maxHp) return;
+    const n = living.filter((p) => Math.abs(p.x - m.x) < BIG_RANGE && Math.abs(p.y - m.y) < 400).length;
+    const scale = Math.min(BIG_SCALE_MAX, 1 + BIG_SCALE_STEP * Math.max(0, n - 1));
+    if (scale > m.scale + 0.01) {
+      const ratio = m.hp / m.maxHp;
+      m.scale = scale;
+      m.maxHp = Math.round(m.baseHp * scale);
+      m.hp = Math.max(1, Math.round(ratio * m.maxHp));
+      this.dirty = true;
+      this.hooks.emit({ t: 'mhp', u: m.uid, hp: m.hp, mh: m.maxHp });
     }
   }
 
@@ -356,4 +407,4 @@ class World {
   }
 }
 
-module.exports = { World, STEP_MS, IDLE_DROP_MS };
+module.exports = { World, STEP_MS };

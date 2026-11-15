@@ -253,6 +253,17 @@ const MIGRATIONS = [
   );
   CREATE INDEX IF NOT EXISTS admin_log_at_idx ON admin_log (at DESC);
   `,
+
+  // 8. Trạng thái quái theo bản đồ: máu, sống/chết, mốc hồi sinh (server/realtime/mobstore.js).
+  //    Máu quái phải sống qua lần khởi động lại server, nên nằm trong database chứ không chỉ trong bộ nhớ.
+  `
+  CREATE TABLE IF NOT EXISTS mob_state (
+    map_id TEXT PRIMARY KEY,
+    data JSONB NOT NULL,
+    updated BIGINT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS mob_state_updated_idx ON mob_state (updated);
+  `,
 ];
 
 /*

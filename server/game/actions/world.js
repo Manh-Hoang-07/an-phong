@@ -19,6 +19,9 @@ const actions = {
     const st = G.calcStats(p, { form: !!p.formActive });
     if (Number.isFinite(a.x)) p.x = Math.round(a.x);
     if (Number.isFinite(a.y)) p.y = Math.round(a.y);
+    // Đã lưu được vị trí đứng thật thì cờ `arrive` (điểm tới của lần đổi bản đồ) hết hiệu lực.
+    // Không xoá thì lần sau vào game client thấy arrive và ném nhân vật về cổng, bỏ qua x/y vừa lưu.
+    if (p.x != null && p.y != null) p.arrive = null;
     if (Number.isFinite(a.hp)) p.hp = Math.max(1, Math.min(st.maxHp, Math.round(a.hp)));
     if (Number.isFinite(a.mp)) p.mp = Math.max(0, Math.min(st.maxMp, Math.round(a.mp)));
     if (p.mounts && Array.isArray(p.mounts.summoned) && a.pets && typeof a.pets === 'object') {
