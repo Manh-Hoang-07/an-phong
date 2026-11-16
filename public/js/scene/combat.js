@@ -336,6 +336,17 @@ WorldScene.mix(class WorldCombat {
     if (App.hp <= 0 && !this.dead) this.die();
   }
 
+  // Tử Linh Dung Hợp hết hạn: chỉ số cộng thêm tự mất hiệu lực theo mốc `until` trong calcStats,
+  // nhưng App.stats chỉ tính lại khi có sự kiện. Nên tính lại một lần rồi báo server dọn `p.fusion`.
+  fusionExpire() {
+    const fu = App.player && App.player.fusion;
+    if (!fu || !fu.until || fu.until > Date.now()) return;
+    App.player.fusion = null;
+    App.recalcStats();
+    UI.log('Dung hợp tan: bóng ma đã tiêu biến, chỉ số trở lại bình thường.', '#9b8bbf');
+    try { Realtime.send({ t: 'fusion_end' }); } catch (e) { /* mất kết nối thì server tự dọn khi hết hạn */ }
+  }
+
   async die() {
     if (this.dead) return;
     this.dead = true;

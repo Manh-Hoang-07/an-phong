@@ -106,17 +106,11 @@
   }
 
   // Phần đầu cột bên: biểu tượng, tên, loại · cấp · giá
-  // Đá nâng bậc trang bị đặc biệt: đếm trong túi để hiện "có N" ngay ở quầy
-  function stoneCount(p) {
-    return (p.bag || []).filter(e => e.id === 'huyen_tinh_thach').reduce((s, e) => s + e.qty, 0);
-  }
-  function stoneOk(p, d) { return stoneCount(p) >= G.specialStoneCost((d && d.tier) || 1); }
-
   function sideHead(entry, where) {
     const p = App.player, d = G.ITEMS[entry.id], q = qOf(entry);
     const priceLine = where === 'shop' && ngocMode
       ? `<small class="ngoc">Giá: ${fmt(G.ngocPrice(d))} 💎${d.stack ? ' / cái' : ''}</small>
-        ${d.special ? `<small class="${stoneOk(p, d) ? 'ngoc' : 'warn-line'}">${stoneOk(p, d) ? '✓' : '⚠'} Cần ${G.specialStoneCost(d.tier || 1)} Huyền Tinh Thạch (có ${stoneCount(p)})</small>` : ''}
+        ${d.special ? `<small class="${d.level && d.level > p.level ? 'warn-line' : 'muted'}">${d.level ? `Mặc được từ cấp ${d.level}${d.level > p.level ? ` (bạn cấp ${p.level})` : ''}` : ''}</small>` : ''}
         ${unfitItem(p, entry.id) ? '<small class="warn-line">⚠ Không hợp class của bạn</small>' : ''}` : null;
     const price = where === 'shop' ? G.shopPrice(p, d) : G.sellPrice(entry);
     const discount = where === 'shop' && p.shopDiscount ? `<s class="muted">${fmt(d.price)}</s> ` : '';

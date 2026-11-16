@@ -824,6 +824,14 @@ WorldScene.mix(class WorldPlayer {
     if (shield) { g.fillStyle(0x8fb4ff, 0.12).fillCircle(pl.x, pl.y, 38); g.lineStyle(2, 0xbfd2ff, 0.7).strokeCircle(pl.x, pl.y, 38); }
     // Buff awaken tạm thời (skill vn1 Toàn Năng)
     if (this.buffOn('awaken', time)) { g.lineStyle(2, 0xffd54f, 0.5 + Math.sin(time / 90) * 0.3).strokeEllipse(pl.x, pl.y + 28, 60, 14); }
+    // Tử Linh Dung Hợp đang bật: vòng tím nhấp nháy + đếm ngược giây còn lại
+    const fu = App.player && App.player.fusion;
+    if (fu && fu.until > Date.now()) {
+      g.lineStyle(3, 0x9b6bff, 0.55 + Math.sin(time / 100) * 0.25).strokeEllipse(pl.x, pl.y + 28, 74, 18);
+      const left = Math.ceil((fu.until - Date.now()) / 1000);
+      if (!this.fusionText) this.fusionText = this.add.text(pl.x, pl.y - 78, '', { fontSize: '13px', color: '#d9c2ff' }).setOrigin(0.5).setDepth(9);
+      this.fusionText.setText(`🕸️ ${left}s`).setPosition(pl.x, pl.y - 78).setVisible(true);
+    } else if (this.fusionText && this.fusionText.visible) this.fusionText.setVisible(false);
   }
 
   levelUpFx() {

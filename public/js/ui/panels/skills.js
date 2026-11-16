@@ -28,6 +28,16 @@
     if (s.shred) out.push(`quái chịu thêm ${Math.round(s.shred * 100)}% sát thương`);
     if (s.chain) out.push(`nổ lan ${Math.round(s.chain * 100)}%`);
     if (s.exec) out.push(`×${s.exec.mult} lên quái dưới ${Math.round(s.exec.below * 100)}% máu`);
+    // Lấy Mạng Đổi Mạng: cái giá là MÁU, phải hiện rõ chứ không để người chơi tự phát hiện
+    if (s.selfZero) out.push(s.buaSaves ? 'giết ngay · mình về 0 máu (Bùa giữ 1 máu)' : 'giết ngay · mình về 0 máu');
+  // Tử Linh Dung Hợp: cộng dồn chỉ số của mỗi bóng ma trong bộ sưu tập
+  if (s.type === 'fusion') {
+    const F = G.FUSION || { hp: 0.1, mp: 0.05, sta: 0.05, def: 0.05 };
+    out.push(`dung hợp bóng ma ${s.fusionSec || 60}s`
+      + ` · mỗi bóng +${Math.round(F.hp * 100)}% HP, +${Math.round(F.mp * 100)}% MP, +${Math.round(F.sta * 100)}% thể lực, +${Math.round(F.def * 100)}% DEF`);
+    out.push('bộ sưu tập mất trắng');
+  }
+    if (s.range) out.push(`tầm ${s.range}`);
     if (s.distance) out.push(`xa ${s.distance}`);
     if (s.radius) out.push(`bán kính ${s.radius}`);
     return out.join(' · ');
@@ -90,12 +100,12 @@
       }).join('');
     const ms = [[5, base.t5], [10, base.t10]].filter(([, t]) => t)
       .map(([m, t]) => `<div class="sk-milestone${lv >= m ? ' on' : ''}">${lv >= m ? '✓' : '◇'} <b>Cấp ${m}</b>: ${esc(t)}</div>`).join('');
-    return `<div class="sk-card${base.ult ? ' is-ult' : ''}">
+    return `<div class="sk-card${base.superUlt ? ' is-ult is-superult' : base.ult ? ' is-ult' : ''}">
       <div class="sk-card-ic">${base.icon}</div>
       <div class="sk-card-main">
         <div class="sk-card-title">
           <b>${esc(base.name)}</b>
-          ${base.ult ? '<span class="tag-ult">TUYỆT KỸ</span>' : ''}
+          ${base.superUlt ? '<span class="tag-superult">SIÊU TUYỆT KỸ</span>' : base.ult ? '<span class="tag-ult">TUYỆT KỸ</span>' : ''}
           <span class="sk-lv">Cấp ${lv}/${G.SKILL_MAX}</span>
         </div>
         <div class="sk-pips">${pips}</div>

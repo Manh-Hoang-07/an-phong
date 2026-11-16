@@ -17,6 +17,8 @@ const claims = require('./claims');
 const party = require('./party');
 const trade = require('./trade');
 const xplayer = require('../game/core/xplayer');
+const gameActions = require('../game/actions/world');
+const combatActions = require('../game/actions/combat');
 const mobstore = require('./mobstore');
 const { World, STEP_MS } = require('./mobs');
 
@@ -250,6 +252,76 @@ function onHit(conn, m) {
 
 const num = (v) => (Number.isFinite(v) && Math.abs(v) <= WORLD_BOUND ? Math.round(v) : null);
 
+// ---------------------------------------------------------------- Lấy Mạng Đổi Mạng
+// Đòn giết ngay: mục tiêu mất toàn bộ máu, người dùng cũng mất toàn bộ máu.
+// Bùa Hộ Mệnh (hiệu ứng `undying` của trang bị đặc biệt) cứu NGƯỜI DÙNG lên 1 máu; quái không có bùa nên chết.
+//
+// Vì sao phải đi đường riêng thay vì để client gửi `hit` với dmg = máu quái:
+//   - `onHit` có trần sát thương và ngân sách mỗi giây → trùm 925.000 máu không bao giờ lọt.
+//   - Hồi chiêu phải do SERVER giữ, nếu không client sửa đồng hồ là dùng được liên tục.
+//   - Cái giá (máu về 0) phải do server ghi, không tin client.
+//
+// Hồi chiêu bùa: client giữ `lastStandCd` cho đường bị quái đánh, nhưng server KHÔNG biết biến đó.
+// Nên ở đây server giữ bộ đếm riêng `p.buaCd` (rơi vào section `misc` nên tự được lưu).
+// Đánh đổi đã biết: nếu người chơi vừa được bùa cứu do quái đánh rồi dùng chiêu ngay, server vẫn cho
+// bùa cứu lần nữa (tối đa mỗi 180 giây). Chặn tuyệt đối thì phải cho client làm nguồn sự thật về hồi
+// chiêu, tức là mở lỗ lớn hơn — không đáng.
+async function onExec(conn, m) {
+  const w = conn.map && worlds.get(conn.map);
+  if (!w) return;
+  const now = Date.now();
+  if (conn.dead && now - conn.deadAt > 1500) return;
+  const mob = w.byUid.get(m.u | 0);
+  if (!mob || !mob.alive) return;
+  if (Math.abs(conn.x - mob.x) > 1100 || Math.abs(conn.y - mob.y) > 700) return;   // quá xa
+  if (mob.def.passive) return;
+
+  let buaUsed = false;
+  let applied = false;
+  await xplayer.mutate(conn.userId, (p) => {
+    // Đã học và ĐANG GẮN trên thanh kỹ năng. Không có trên thanh thì không dùng được.
+    if (!(p.skills && p.skills.ulSinhTu > 0)) return;
+    if (!Array.isArray(p.skillSlots) || !p.skillSlots.includes('ulSinhTu')) return;
+    if (now < (p.execCd || 0)) return;
+    const sk = G.skillAt('ulSinhTu', p.skills.ulSinhTu);
+    const st = G.calcStats(p, { form: !!p.formActive });
+    // Bùa chỉ cứu khi ĐANG MẶC và chưa hồi chiêu. Client gửi cờ `bua` chỉ để đối chiếu, không tin.
+    const fx = G.specialFx(p).undying;
+    const bua = !!fx && m.bua === 1 && now >= (p.buaCd || 0);
+    p.hp = bua ? 1 : 0;
+    p.execCd = now + (sk.cd || 180) * 1000;
+    if (bua) { p.buaCd = now + 60000; buaUsed = true; }
+    // Chết theo: dùng đúng luật chết của game (mất 5% kinh nghiệm, hồi sinh ở làng).
+    // Gọi SAU khi đã ghi hp = 0 để không bị ghi đè.
+    if (!bua) gameActions.die(p, {}, []);
+    applied = true;
+  }).catch((e) => console.error('Đổi mạng lỗi:', e.message));
+
+  if (!applied) return;
+  // Giết quái SAU khi nhân vật đã ghi xong: applyHit → die → hooks.kill → phiếu thưởng → client nhận mdie.
+  // dmg = mob.hp nên máu về đúng 0, không phụ thuộc trần sát thương.
+  w.applyHit(mob, conn.id, { dmg: mob.hp, crit: true, src: 'player', dir: 1 }, now);
+  if (buaUsed) send(conn, { t: 'sys', text: '🪬 Bùa Hộ Mệnh giữ bạn lại 1 máu. Hồi chiêu bùa 60 giây.' });
+}
+
+// ===== Siêu tuyệt kỹ Tử Linh Dung Hợp =====
+// Client chỉ báo "tôi dùng chiêu"; server tự kiểm class, đã học, đang gắn trên thanh, hồi chiêu, có bóng, đủ MP.
+// Logic nằm ở combatActions.applyFusion (một chỗ duy nhất, dùng chung với action `fusion`).
+async function onFusion(conn) {
+  let msg = null;
+  await xplayer.mutate(conn.userId, (p) => {
+    // Đang gắn trên thanh kỹ năng mới dùng được — cùng luật với onExec.
+    if (!Array.isArray(p.skillSlots) || !p.skillSlots.includes('ulTuLinhDungHop')) {
+      msg = 'Kỹ năng chưa được gắn lên thanh.';
+      return;
+    }
+    const r = combatActions.applyFusion(p);
+    msg = r.ok ? r.text : r.msg;
+  }).catch((e) => console.error('Dung hợp lỗi:', e.message));
+  if (msg) send(conn, { t: 'sys', text: msg });
+}
+
+
 function onPos(conn, m) {
   const x = num(m.x), y = num(m.y);
   if (x === null || y === null) return;
@@ -311,6 +383,11 @@ function onMessage(conn, data) {
   else if (m.t === 'chat') onChat(conn, m);
   else if (m.t === 'who') onWho(conn);
   else if (m.t === 'hit') onHit(conn, m);
+  else if (m.t === 'exec') onExec(conn, m).catch((e) => console.error('Đổi mạng lỗi:', e.message));
+  else if (m.t === 'fusion') onFusion(conn).catch((e) => console.error('Dung hợp lỗi:', e.message));
+  else if (m.t === 'fusion_end') xplayer.mutate(conn.userId, (p) => {
+    if (p.fusion && p.fusion.until <= Date.now()) delete p.fusion;
+  }).catch(() => {});
   else if (m.t === 'party_inv') party.invite(conn, m.to);
   else if (m.t === 'party_resp') party.respond(conn, m.ok === true);
   else if (m.t === 'party_leave') party.leave(conn);

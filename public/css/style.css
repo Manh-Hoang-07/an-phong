@@ -1184,6 +1184,9 @@ body.touch .tb-talk { bottom: 300px; }
   border: 1px solid rgba(231,182,107,.15);
 }
 .sk-card.is-ult { border-color: rgba(255,204,61,.34); background: linear-gradient(160deg, rgba(255,204,61,.06), rgba(24,22,22,.6)); }
+/* Siêu tuyệt kỹ: bậc trên tuyệt kỹ. Tím đỏ để khác hẳn màu vàng của tuyệt kỹ thường. */
+.sk-card.is-superult { border-color: rgba(214,92,255,.5); background: linear-gradient(160deg, rgba(214,92,255,.1), rgba(28,14,30,.72)); box-shadow: 0 0 0 1px rgba(214,92,255,.14) inset; }
+.tag-superult { font-size: 9px; padding: 1px 5px; border-radius: 4px; background: rgba(214,92,255,.18); color: #e6a8ff; border: 1px solid rgba(214,92,255,.5); letter-spacing: .5px; }
 .sk-card-ic {
   width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center;
   font-size: 21px; border-radius: 10px; background: rgba(0,0,0,.32); border: 1px solid rgba(231,182,107,.2);

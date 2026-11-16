@@ -2,8 +2,9 @@
  * Trang bị đặc biệt: 5 ô × 5 bậc, CHỈ mua bằng Linh Ngọc ở Lầu Trân Bảo.
  *
  * Khác trang bị thường ở năm điểm:
- *   - KHÔNG có cấp sử dụng. Mua được là mặc được ngay, không phải đợi đủ cấp.
- *     Bậc (I→V) chỉ quyết định giá và độ mạnh, không phải điều kiện dùng.
+ *   - CÓ cấp sử dụng, và cấp gắn với BẬC: I=10, II=30, III=50, IV=70, V=90.
+ *     Mua thì không cần cấp (mua trước cất túi được), nhưng MẶC và NÂNG BẬC thì phải đủ cấp.
+ *     Đây là món đầu tư dài hạn: bậc V mở ở cấp 90, gần trần game 100.
  *   - Không bán bằng xu, không bán lại được (price = 0) → không có lỗ hổng đổi ngọc ra xu.
  *   - Chỉ số CỐ ĐỊNH: mua ra là đúng chỉ số, không ngẫu nhiên, không dòng phụ, không cường hóa ở Thợ rèn.
  *   - Mỗi món mang một trường `fx` (hiệu ứng riêng) mà KHÔNG bộ trang bị thường nào có.
@@ -22,13 +23,13 @@
 (function (G) {
   'use strict';
 
-  // Bậc: giá Linh Ngọc. KHÔNG có cấp sử dụng — bậc chỉ là độ mạnh và giá.
+  // Bậc: cấp sử dụng và giá Linh Ngọc. Cấp là điều kiện MẶC, không phải điều kiện mua.
   const TIERS = [
-    { n: 1, price: 40 },
-    { n: 2, price: 90 },
-    { n: 3, price: 180 },
-    { n: 4, price: 320 },
-    { n: 5, price: 500 },
+    { n: 1, level: 10, price: 40 },
+    { n: 2, level: 30, price: 90 },
+    { n: 3, level: 50, price: 180 },
+    { n: 4, level: 70, price: 320 },
+    { n: 5, level: 90, price: 500 },
   ];
   const TIER_NAMES = ['I', 'II', 'III', 'IV', 'V'];
 
@@ -123,14 +124,16 @@
         // Tên CỐ ĐỊNH, không kèm số La Mã: bậc là thuộc tính của món, không phải một món khác.
         name: row.name,
         kind: 'armor', slot: row.slot,
-        // tier: bậc I→V, dùng để sắp xếp trong quầy và chọn dáng icon. KHÔNG phải cấp sử dụng.
+        // tier: bậc I→V, dùng để sắp xếp trong quầy và chọn dáng icon.
         tier: t.n,
+        // level: cấp tối thiểu để MẶC món ở bậc này (10/30/50/70/90). Mua thì không cần cấp.
+        level: t.level,
         special: true, ngocGroup: 'gear', priceNgoc: t.price, price: 0,
         // Huyền Tinh Thạch để nâng lên đúng bậc này: 1 / 2 / 4 / 8 / 16
         stoneCost: Math.pow(2, t.n - 1),
         stats: row.stats[i], fx: row.fx[i],
-        desc: `Trang bị đặc biệt, chỉ mua bằng Linh Ngọc ở Lầu Trân Bảo. Mặc được ngay, không cần cấp. `
-          + `Nâng bậc bằng Huyền Tinh Thạch + Linh Ngọc (bậc ${TIER_NAMES[i]}: ${Math.pow(2, t.n - 1)} đá · ${t.price} Linh Ngọc). `
+        desc: `Trang bị đặc biệt, chỉ mua bằng Linh Ngọc ở Lầu Trân Bảo. Mặc được từ cấp ${t.level}. `
+          + `Nâng bậc bằng Huyền Tinh Thạch + Linh Ngọc (bậc ${TIER_NAMES[i]}: ${Math.pow(2, t.n - 1)} đá · ${t.price} Linh Ngọc, cần cấp ${t.level}). `
           + `Không cường hóa ở Thợ rèn được. ${row.fxText(i)}`,
       };
     });

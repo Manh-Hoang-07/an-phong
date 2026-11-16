@@ -1,7 +1,7 @@
 'use strict';
 /* Luật chơi phía server · Hành động: hạ quái (chống gian lận tốc độ hạ, trùm hồi sinh). */
 const G = require('../../../shared');
-const { fail, rand } = require('../core/util');
+const { fail, rand, fmt } = require('../core/util');
 const { countItem, dropLoot, pruneLoot } = require('../core/inventory');
 const { gainExp, gainGold } = require('../core/progress');
 const { currentQuest, questComplete, questActive, sideDropActive, sideDropNeed } = require('../core/quests');
@@ -228,6 +228,57 @@ const actions = {
       if (c) { lk.tokens -= 1; killOne(p, { monster: c.monster, x: c.x, y: c.y, source: c.source, party: !!c.party, bonus: c.bonus }, ev, lk, now); }
     }
   },
+
+  // ===== Siêu tuyệt kỹ Tử Linh Dung Hợp =====
+  // Dung hợp toàn bộ bộ sưu tập bóng ma vào bản thân trong `fusionSec` giây; đổi lại roster mất trắng.
+  // Logic nằm ở applyFusion (dùng chung với server/realtime/index.js onFusion) — một chỗ duy nhất.
+  fusion(p, a, ev) {
+    const r = applyFusion(p);
+    if (!r.ok) fail(r.msg);
+    ev.push({ t: 'msg', text: r.text, color: '#c6a7ff' });
+    ev.push({ t: 'fusion', until: p.fusion.until, count: r.fu.count, hp: r.fu.hp, mp: r.fu.mp, sta: r.fu.sta, def: r.fu.def, sec: r.sec });
+  },
+
+  // Dung hợp hết hạn: client báo để server dọn `p.fusion` (chỉ số tự hết hiệu lực theo mốc `until`).
+  fusion_end(p) {
+    if (p.fusion && p.fusion.until <= Date.now()) delete p.fusion;
+  },
 };
 
+// Dùng chung cho action `fusion` (HTTP) và onFusion (realtime): kiểm hết điều kiện rồi ghi p.fusion + xoá roster.
+// Trả { ok, msg } khi lỗi, hoặc { ok:true, fu, sec, text } khi thành công. KHÔNG ném lỗi để cả hai đường gọi được.
+function applyFusion(p) {
+  if (p.school !== 'tu_linh_thuat_su') return { ok: false, msg: 'Chỉ Tử Linh Thuật Sư mới dùng được dung hợp.' };
+  const id = 'ulTuLinhDungHop';
+  const lv = G.skillLevel(p, id) || 0;
+  if (!lv) return { ok: false, msg: 'Bạn chưa học Tử Linh Dung Hợp.' };
+  const now = Date.now();
+  if (now < (p.fusionCd || 0)) return { ok: false, msg: `Chưa hồi chiêu (còn ${Math.ceil((p.fusionCd - now) / 1000)} giây).` };
+  if (p.fusion && p.fusion.until > now) return { ok: false, msg: 'Đang trong thời gian dung hợp.' };
+  const roster = (p.shadows && p.shadows.roster) || [];
+  if (!roster.length) return { ok: false, msg: 'Không có bóng ma nào để dung hợp.' };
+  const sk = G.skillAt(id, lv);
+  const cost = Math.round((sk.mp || 0) * (G.calcStats(p, { form: !!p.formActive }).costMul || 1));
+  if ((p.mp || 0) < cost) return { ok: false, msg: 'Không đủ năng lượng.' };
+  const fu = G.shadowFusion(p, roster);
+  if (!fu.count) return { ok: false, msg: 'Không có bóng ma nào để dung hợp.' };
+
+  p.mp -= cost;
+  p.fusionCd = now + (sk.cd || 240) * 1000;
+  // Bản sao bộ sưu tập: roster bị xoá ngay dưới, không có bản sao thì calcStats không tính được.
+  p.fusion = { until: now + (sk.fusionSec || 60) * 1000, souls: roster.map(s => ({ monster: s.monster, lv: s.lv, stats: s.stats })) };
+  // Cái giá: mất trắng bộ sưu tập.
+  p.shadows.roster = [];
+  p.shadows.active = [];
+  p.shadows.enabled = false;
+  p.shadows.fullNotice = false;
+  // Máu hiện tại giữ nguyên, chỉ trần tăng — dung hợp không hồi máu miễn phí.
+  const st = G.calcStats(p, { form: !!p.formActive });
+  p.hp = Math.max(1, Math.min(p.hp || 1, st.maxHp));
+  p.mp = Math.min(p.mp, st.maxMp);
+  const sec = sk.fusionSec || 60;
+  return { ok: true, fu, sec, text: `🕸️ Dung hợp ${fu.count} bóng ma: +${fmt(fu.hp)} sinh lực, +${fmt(fu.mp)} năng lượng, +${fmt(fu.sta)} thể lực, +${fmt(fu.def)} phòng thủ trong ${sec} giây. Bộ sưu tập đã tan biến.` };
+}
+
 module.exports = actions;
+module.exports.applyFusion = applyFusion;

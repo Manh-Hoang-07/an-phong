@@ -33,11 +33,14 @@ const CONSUMED = {
   summon: [],
   shadow_toggle: [],
   shadow_command: ['power', 'radius', 'freeze'],
+  execute: ['selfZero', 'buaSaves', 'range', 'reach', 'execPvp'],
+  // Tử Linh Dung Hợp: cộng dồn chỉ số bóng ma (shared/data/pets/shadow.js) trong fusionSec giây
+  fusion: ['fusionSec', 'fusionCost'],
 };
 
 // Trường chung luôn được đọc ở mọi kỹ năng
 const COMMON = ['school', 'evolutionKey', 'icon', 'name', 'level', 'mp', 'cd', 'type', 'desc',
-  'm5', 't5', 'm10', 't10', 'ult', 'ultSchools', 'ultAny', 'lv'];
+  'm5', 't5', 'm10', 't10', 'ult', 'ultSchools', 'ultAny', 'lv', 'shopNgoc', 'superUlt'];
 
 // Type mà bản thân nó đã đánh trúng MỌI quái trong vùng quét → "xuyên" là đúng sẵn,
 // không cần trường `pierce` (hitBox/hitCircle không dừng ở mục tiêu đầu tiên).

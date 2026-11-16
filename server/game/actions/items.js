@@ -40,12 +40,10 @@ const actions = {
       const owned = G.SPECIAL_SLOTS.some(sl => p.equip[sl] && G.ITEMS[p.equip[sl].id] && G.ITEMS[p.equip[sl].id].slot === def.slot)
         || p.bag.some(e => G.ITEMS[e.id] && G.ITEMS[e.id].slot === def.slot && G.ITEMS[e.id].special);
       if (owned) fail(`Đã có ${def.name} rồi. Muốn mạnh hơn thì nâng bậc, đừng mua thêm.`);
-      // Mua bậc I cũng cần đá: đá là điều kiện của bậc, không phải chỉ của lần nâng.
-      const stone = G.specialStoneCost(def.tier || 1);
-      if (countItem(p, 'huyen_tinh_thach') < stone) fail(`Cần ${stone} Huyền Tinh Thạch.`);
+      // Mua bậc I KHÔNG cần đá: đá là chi phí của lần NÂNG bậc, không phải của lần mua.
+      // Mua cũng không cần cấp — cấp là điều kiện MẶC (bậc I cần cấp 10), nên mua trước cất túi được.
     }
     if (bagFree(p) < slotsNeeded(p, a.item, qty)) fail('Túi đã đầy.');
-    if (def.special) removeItem(p, 'huyen_tinh_thach', G.specialStoneCost(def.tier || 1));
     p.linhNgoc -= cost;
     addItem(p, a.item, qty, { shop: true });
     ev.push({ t: 'msg', text: `Đã mua ${def.name}${qty > 1 ? ' ×' + qty : ''} (-${fmt(cost)} Linh Ngọc).`, color: '#b388ff' });
@@ -62,6 +60,9 @@ const actions = {
     if (!def || !def.special) fail('Chỉ nâng bậc được trang bị đặc biệt.');
     const cost = G.specialUpgradeCost(def);
     if (!cost) fail('Đã đạt bậc V, không nâng được nữa.');
+    // Cấp sử dụng gắn với bậc: nâng lên bậc nào thì phải đủ cấp của bậc đó (I=10 … V=90)
+    const nextDef = G.ITEMS[cost.id];
+    if ((nextDef.level || 1) > p.level) fail(`Cần đạt cấp ${nextDef.level} để nâng lên bậc ${['I', 'II', 'III', 'IV', 'V'][nextDef.tier - 1]}.`);
     if (countItem(p, 'huyen_tinh_thach') < cost.stone) fail(`Cần ${cost.stone} Huyền Tinh Thạch.`);
     if ((p.linhNgoc || 0) < cost.ngoc) fail('Không đủ Linh Ngọc.');
     removeItem(p, 'huyen_tinh_thach', cost.stone);
@@ -102,8 +103,8 @@ const actions = {
     const e = bagEntry(p, a.uid);
     const def = G.ITEMS[e.id];
     if (!def.slot) fail('Không trang bị được.');
-    // Trang bị đặc biệt không có cấp sử dụng: mua được là mặc được
-    if (!def.special && (def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level}.`);
+    // Mọi trang bị đều có cấp sử dụng, kể cả trang bị đặc biệt (cấp gắn với bậc: I=10 … V=90)
+    if ((def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level}.`);
     if (!G.canUseItem(p, def)) {
       if (def.slot === 'weapon' && !p.school) fail('Chưa chọn class: chỉ dùng được vũ khí luyện tập.');
       if (def.slot === 'weapon') fail(`${G.WEAPON_TYPES[def.wtype]?.name || 'Vũ khí này'} chỉ dành cho ${G.weaponOwners(def.wtype).map(s => G.SCHOOLS[s].name).join(', ') || 'class khác'}. Class ${G.SCHOOLS[p.school].name} dùng ${G.WEAPON_TYPES[G.classWeapon(p.school)].name}.`);

@@ -65,7 +65,7 @@
   }
 
   // ===== Lầu Trân Bảo: bán bằng Linh Ngọc =====
-  const NGOC_GROUPS = [['gear', 'Trang bị đặc biệt'], ['util', 'Tiện ích'], ['book', 'Sách'], ['ult', 'Tuyệt kỹ']];
+  const NGOC_GROUPS = [['gear', 'Trang bị đặc biệt'], ['util', 'Tiện ích'], ['book', 'Sách'], ['ult', 'Tuyệt kỹ'], ['superult', 'Siêu tuyệt kỹ']];
   const ngocRank = (id) => Math.max(0, NGOC_GROUPS.findIndex(g => g[0] === ITEMS[id].ngocGroup));
   // Hàng bán bằng ngọc: món trong n.shop có priceNgoc + mọi trang bị đặc biệt (ngocGroup 'gear')
   // + mọi sách tuyệt kỹ class (không lọc theo class, không gồm tuyệt kỹ chung ultAny)
@@ -82,7 +82,7 @@
     for (const sid of Object.keys(G.SKILLS)) {
       const sk = G.SKILLS[sid];
       const id = G.ultBookId(sid);
-      if (sk.ult && !sk.ultAny && ITEMS[id] && ITEMS[id].priceNgoc > 0 && !list.includes(id)) list.push(id);
+      if (sk.ult && ITEMS[id] && ITEMS[id].priceNgoc > 0 && !list.includes(id)) list.push(id);
     }
     const lv = (id) => ITEMS[id].tier || ITEMS[id].level || 0;
     // Trong nhóm trang bị đặc biệt: xếp theo ô (Bùa, Ấn, Cánh, Linh Đan, Chuông) rồi mới theo bậc

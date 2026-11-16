@@ -55,6 +55,122 @@ WorldScene.mix(class WorldSkills {
     this.floatText(this.player.x, this.player.y - 30, '+' + amount, '#69f0ae', 16);
   }
 
+  // ---------------------------------------------------------------- Lấy Mạng Đổi Mạng
+  // Mục tiêu gần nhất trong tầm, cùng quy tắc với shadow_command: quái sống, không thụ động.
+  // Tìm theo trục x (bản đồ chạy ngang) nhưng chặn thêm trục y bằng `reach`.
+  executeTarget(range, reach) {
+    const pl = this.player;
+    return this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive
+      && Math.abs(m.sprite.x - pl.x) < range && Math.abs(m.sprite.y - pl.y) < reach)
+      .sort((a, b) => Math.abs(a.sprite.x - pl.x) - Math.abs(b.sprite.x - pl.x))[0] || null;
+  }
+
+  // Bùa Hộ Mệnh còn dùng được? Đọc hiệu ứng đang mặc + hồi chiêu client.
+  // Server kiểm lại lần nữa bằng p.buaCd (server/realtime/index.js onExec) — client không phải nguồn sự thật.
+  buaReady() {
+    const fx = GameData.specialFx(App.player).undying;
+    if (!fx) return null;
+    return this.time.now >= (this.lastStandCd || 0) ? fx : null;
+  }
+
+  castExecute(id, sk, time) {
+    const target = this.executeTarget(sk.range || 520, sk.reach || 320);
+    if (!target) { UI.log('Không có mục tiêu trong tầm.', '#bdbdbd'); return; }
+    const bua = this.buaReady();
+    const cdMs = sk.cd * 1000 * (1 - (App.stats.cdr || 0) / 100);
+    this.cooldowns[id] = time + cdMs;
+    this.cooldownLen[id] = cdMs;
+    const pl = this.player;
+    this.floatText(pl.x, pl.y - 52, sk.name, '#ffd54f', 17);
+    this.attackAnim(time, 520, 'skill');
+    Sound.play('ult');
+    this.cameras.main.flash(200, 255, 255, 255);
+    this.cameras.main.shake(260, 0.012);
+    this.hitstop(140);
+    // Vệt chém trắng nối thẳng tới mục tiêu: đòn này phải thấy rõ nó đi đâu
+    const tx = target.sprite.x, ty = target.sprite.y;
+    const line = this.add.rectangle((pl.x + tx) / 2, (pl.y + ty) / 2, Math.abs(tx - pl.x) + 40, 6, 0xffffff, 0.95)
+      .setDepth(9).setBlendMode(Phaser.BlendModes.ADD).setAngle(Math.atan2(ty - pl.y, tx - pl.x) * 57.2958);
+    this.tweens.add({ targets: line, alpha: 0, scaleY: 3, duration: 420, onComplete: () => line.destroy() });
+    this.ringFx(tx, ty, 0xffffff, 3.4);
+    // Mục tiêu chết. Quái do server quản lý thì để server giết: thưởng chảy đúng đường mdie/kid.
+    if (target.net) Realtime.send({ t: 'exec', u: target.uid, bua: bua ? 1 : 0 });
+    else { target.hp = 0; this.killMonster(target); }
+    // Trả giá: bùa cứu thì 1 máu + bất tử, không bùa thì chết theo.
+    if (sk.buaSaves && bua) {
+      App.hp = 1;
+      this.lastStandUntil = time + (bua.dur || 5) * 1000;
+      this.lastStandCd = time + 60000;
+      this.floatText(pl.x, pl.y - 70, '🪬 Đổi mạng', '#ffe082', 16);
+    } else {
+      this.floatText(pl.x, pl.y - 70, '💀 Đổi mạng', '#ff5252', 18);
+      this.dieByExec();
+    }
+  }
+
+  // ---------------------------------------------------------------- Tử Linh Dung Hợp
+  // Dung hợp toàn bộ bộ sưu tập bóng ma vào bản thân trong `fusionSec` giây; đổi lại roster mất trắng.
+  // Client KHÔNG tự tính chỉ số: server là nguồn sự thật, client chỉ kiểm điều kiện, gửi lệnh và vẽ hiệu ứng.
+  castFusion(id, sk, time) {
+    const p = App.player;
+    if (p.school !== 'tu_linh_thuat_su') { UI.log('Chỉ Tử Linh Thuật Sư mới dùng được dung hợp.', '#bdbdbd'); return; }
+    const roster = (p.shadows && p.shadows.roster) || [];
+    if (!roster.length) { UI.log('Không có bóng ma nào để dung hợp.', '#bdbdbd'); return; }
+    if (p.fusion && p.fusion.until > Date.now()) { UI.log('Đang trong thời gian dung hợp.', '#bdbdbd'); return; }
+    const cost = Math.round(sk.mp * (App.stats.costMul || 1));
+    if (App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }
+    const cdMs = sk.cd * 1000 * (1 - (App.stats.cdr || 0) / 100);
+    this.cooldowns[id] = time + cdMs;
+    this.cooldownLen[id] = cdMs;
+    const pl = this.player;
+    this.floatText(pl.x, pl.y - 52, sk.name, '#c6a7ff', 17);
+    this.attackAnim(time, 480, 'skill');
+    Sound.play('ult');
+    this.cameras.main.flash(260, 180, 140, 255);
+    this.cameras.main.shake(300, 0.010);
+    this.hitstop(120);
+    // Hiệu ứng: vòng xoáy tím dưới chân + các chấm sáng bay từ bốn phía vào người (bóng ma bị hút vào)
+    const ring = this.add.circle(pl.x, pl.y, 18, 0x9b6bff, 0.35).setDepth(8.5).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: ring, radius: 130, alpha: 0, duration: 620, onComplete: () => ring.destroy() });
+    for (let i = 0; i < 12; i++) {
+      const a = (Math.PI * 2 * i) / 12, d = 120 + Math.random() * 60;
+      const dot = this.add.circle(pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, 4, 0xd9c2ff, 0.95)
+        .setDepth(8.6).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: dot, x: pl.x, y: pl.y - 20, alpha: 0, duration: 420 + i * 18, onComplete: () => dot.destroy() });
+    }
+    // Server kiểm lại class / bóng / hồi chiêu / MP rồi mới ghi p.fusion và xoá roster.
+    Realtime.send({ t: 'fusion' });
+  }
+
+  // Chết vì cái giá của Lấy Mạng Đổi Mạng.
+  // KHÁC die() ở một điểm quan trọng: KHÔNG gọi Net.action('die').
+  // Server đã tự chạy luật chết (mất 5% kinh nghiệm, hồi sinh ở làng) ngay trong onExec, và đẩy bản vá
+  // về đây. Gọi thêm action 'die' là chết hai lần: mất 10% kinh nghiệm và tranh nhau ghi p.hp.
+  dieByExec() {
+    if (this.dead) return;
+    this.dead = true;
+    App.hp = 0;
+    this.freeCastUsed = false;
+    try {
+      this.endForm();
+      if (this.sheetId) { this.attackUntil = 0; this.player.setAngle(0); this.player.play(this.charAnim('death')); }
+      else this.player.setTint(0x555555).setAngle(this.facing * -90);
+      this.player.body.setVelocity(0, 0);
+    } catch (e) { /* bỏ qua hiệu ứng chết */ }
+    UI.banner('ĐỔI MẠNG · BẠN ĐÃ GỤC', 1800);
+    Sound.play('death');
+    // Chờ bản vá nhân vật về (map/hp mới do server quyết), rồi dựng lại cảnh ở đúng bản đồ đó.
+    setTimeout(() => {
+      if (!this.sys || !this.sys.isActive()) return;
+      App.sta = App.stats.maxSta; App.staLocked = false;
+      try { this.cameras.main.fadeOut(300); } catch (e) { /* bỏ qua */ }
+      setTimeout(() => {
+        if (!this.sys || !this.sys.isActive()) return;
+        this.scene.restart({ map: (App.player && App.player.map) || GameData.START_MAP, arrive: 'S' });
+      }, 340);
+    }, 1800);
+  }
+
   useSkill(slot, time) {
     const p = App.player;
     // Ô thứ 9 (GEAR_SKILL_SLOT): kỹ năng do TRANG BỊ cấp, không nằm trong p.skillSlots.
@@ -69,6 +185,11 @@ WorldScene.mix(class WorldSkills {
     if (!lv) return;
     const sk = GameData.skillAt(id, lv);
     if (time < (this.cooldowns[id] || 0)) return;
+    // Lấy Mạng Đổi Mạng: tìm mục tiêu TRƯỚC rồi mới trả giá — không có mục tiêu thì không mất gì.
+    // Không tốn MP, không tốn thể lực: cái giá là MÁU (xem shared/data/skills/ult/ult-dac-biet.js).
+    if (sk.type === 'execute') { this.castExecute(id, sk, time); return; }
+    // Tử Linh Dung Hợp: cần có bóng ma trong bộ sưu tập, không có thì không mất gì (không tốn MP, không hồi chiêu).
+    if (sk.type === 'fusion') { this.castFusion(id, sk, time); return; }
     const cost = Math.round(sk.mp * App.stats.costMul);
     // Bộ Lưu Trữ 10 món — Cổ Ngữ: kỹ năng ĐẦU TIÊN mỗi trận không tốn năng lượng.
     // Cờ reset ở resetCombatFlags() khi vào bản đồ mới hoặc hồi sinh.

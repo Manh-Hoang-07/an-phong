@@ -32,8 +32,8 @@
 
   function canUseItem(player, def) {
     if (!def || !def.slot) return false;
-    // Trang bị đặc biệt: mua được là mặc được, không có cấp sử dụng
-    if (!def.special && (def.level || 1) > player.level) return false;
+    // Trang bị đặc biệt cũng có cấp sử dụng, gắn với bậc (I=10 … V=90)
+    if ((def.level || 1) > player.level) return false;
     if (def.slot === 'weapon') return canUseWeapon(player, def);
     return true;
   }
@@ -130,9 +130,14 @@
     // Đây là cái giá của việc mặc đồ nhiễm — ăn chỉ số thì mất máu.
     const nhiem = nhiemLoad(player);
     if (nhiem) hp *= nhiemHpMul(nhiem);
+    // Siêu tuyệt kỹ Tử Linh Dung Hợp: bóng ma đã dung hợp thì cộng thẳng chỉ số vào người.
+    // `player.fusion` do server ghi khi dùng chiêu (kèm bản sao bộ sưu tập, vì roster bị xoá ngay);
+    // hết hạn thì điều kiện `until > now` tự loại. Cộng SAU các tầng nhân để không bị nhân lên.
+    const fu = player.fusion && player.fusion.until > Date.now() ? G.shadowFusion(player, player.fusion.souls) : null;
+    if (fu) { hp += fu.hp; mp += fu.mp; def += fu.def; }
     return {
       maxHp: Math.round(hp), maxMp: Math.round(mp), atk: Math.round(atk), def: Math.round(def),
-      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * staMul * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)) + eq.sta,
+      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * staMul * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)) + eq.sta + (fu ? fu.sta : 0),
       crit: Math.min(60, r1(crit)), speed: speedFinal, skillMul, costMul, wtype,
       // Số bậc nhiễm đang mang — client đọc để chặn hồi máu ngoài giao chiến và hiện cảnh báo
       nhiem,

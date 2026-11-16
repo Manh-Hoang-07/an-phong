@@ -307,6 +307,7 @@ class WorldScene extends Phaser.Scene {
     this.companionUpdate(time, delta);
     this.summonUpdate(time, delta);
     this.shadowUpdate(time, delta);
+    this.fusionExpire();
     this.nameTag.setPosition(pl.x, pl.y - 44);
     this.shadow.setPosition(pl.x, pl.y + 29).setVisible(onGround).setScale(1, 1);
 
@@ -362,6 +363,9 @@ class WorldScene extends Phaser.Scene {
   }
 
   talkTo(id, x) {
+    // Đang mở bảng (cửa hàng, túi...) thì bấm xuyên qua bảng xuống NPC phía sau không được mở hội thoại,
+    // nếu không bấm tab "Siêu tuyệt kỹ" nằm đè lên NPC sẽ bị đá về menu nói chuyện.
+    if (App.panelOpen) return;
     if (Math.abs(this.player.x - x) > 140) { UI.log('Hãy lại gần hơn để nói chuyện.', '#bdbdbd'); return; }
     this.facing = x > this.player.x ? 1 : -1;
     // Mở bảng hội thoại ngay; server ghi nhận lượt nói chuyện xong thì UI.refresh tự vẽ lại bảng (nhiệm vụ có thể vừa đổi)

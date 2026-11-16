@@ -616,13 +616,16 @@ const UI = (() => {
     const haveStone = (p.bag || []).filter(e => e.id === 'huyen_tinh_thach').reduce((s, e) => s + e.qty, 0);
     const haveNgoc = p.linhNgoc || 0;
     const okStone = haveStone >= cost.stone, okNgoc = haveNgoc >= cost.ngoc;
+    // Cấp sử dụng gắn với bậc: chưa đủ cấp của bậc kế thì không nâng được
+    const okLevel = (next.level || 1) <= p.level;
     // Xem trước bậc kế: chỉ số và hiệu ứng đổi thế nào
     const now = G.instStats(entry).main, nx = next.stats || {};
     const diff = Object.keys(nx).filter(k => (now[k] || 0) !== nx[k])
       .map(k => `${G.statLabel(k)} ${now[k] || 0}→<b>${nx[k]}${G.statUnit(k)}</b>`).join(' · ');
     h += `<div class="sp-next">Bậc ${ROMAN[cost.tier - 1]}: ${diff || 'chỉ số giữ nguyên'}</div>`;
-    h += `<div class="sp-cost ${okStone && okNgoc ? '' : 'bad'}">Cần <b>${cost.stone}</b> Huyền Tinh Thạch (có ${haveStone}) · <b>${fmt(cost.ngoc)}</b> 💎 (có ${fmt(haveNgoc)})</div>`;
-    h += `<button class="btn sp-up" data-act="upgrade_special" data-uid="${entry.uid != null ? entry.uid : ''}" data-slot="${d.slot}"${okStone && okNgoc ? '' : ' disabled'}>Nâng bậc — ${cost.stone} đá · ${fmt(cost.ngoc)} 💎</button>`;
+    if (next.level) h += `<div class="sp-next ${okLevel ? '' : 'bad'}">Cần cấp ${next.level}${okLevel ? '' : ` (bạn cấp ${p.level})`}</div>`;
+    h += `<div class="sp-cost ${okStone && okNgoc && okLevel ? '' : 'bad'}">Cần <b>${cost.stone}</b> Huyền Tinh Thạch (có ${haveStone}) · <b>${fmt(cost.ngoc)}</b> 💎 (có ${fmt(haveNgoc)})</div>`;
+    h += `<button class="btn sp-up" data-act="upgrade_special" data-uid="${entry.uid != null ? entry.uid : ''}" data-slot="${d.slot}"${okStone && okNgoc && okLevel ? '' : ' disabled'}>Nâng bậc — ${cost.stone} đá · ${fmt(cost.ngoc)} 💎</button>`;
     return h;
   }
   function itemInfo(entry, opts = {}) {

@@ -33,7 +33,9 @@ console.log('1. Dữ liệu 25 món: 5 ô × 5 bậc');
     ok(of.length === 5, `${slot}: đủ 5 bậc`, String(of.length));
     const tiers = of.map(i => G.ITEMS[i].tier).sort((a, b) => a - b);
     ok(JSON.stringify(tiers) === JSON.stringify([1, 2, 3, 4, 5]), `${slot}: đủ bậc I→V`, tiers.join(','));
-    ok(of.every(i => !G.ITEMS[i].level), `${slot}: KHÔNG có cấp sử dụng`, of.map(i => G.ITEMS[i].level).join(','));
+    ok(of.every(i => G.ITEMS[i].level), `${slot}: CÓ cấp sử dụng`, of.map(i => G.ITEMS[i].level).join(','));
+    const lvls = of.slice().sort((a, b) => G.ITEMS[a].tier - G.ITEMS[b].tier).map(i => G.ITEMS[i].level);
+    ok(JSON.stringify(lvls) === JSON.stringify([10, 30, 50, 70, 90]), `${slot}: cấp theo bậc 10/30/50/70/90`, lvls.join(','));
     const prices = of.slice().sort((a, b) => G.ITEMS[a].tier - G.ITEMS[b].tier).map(i => G.ITEMS[i].priceNgoc);
     ok(JSON.stringify(prices) === JSON.stringify([40, 90, 180, 320, 500]), `${slot}: giá ngọc tăng theo bậc`, prices.join(','));
     ok(of.every(i => G.ITEMS[i].price === 0), `${slot}: không bán được bằng xu (price = 0)`);
@@ -403,11 +405,18 @@ console.log('\n5. Trang bị được và chặn đúng ở Thợ rèn');
   const p = G.newPlayer('t'); p.level = 90; p.school = 'kiem_si';
   const ids = Object.keys(G.ITEMS).filter(i => G.ITEMS[i].special);
   const bad = ids.filter(i => !G.canUseItem(p, G.ITEMS[i]));
-  ok(bad.length === 0, 'mọi món đặc biệt trang bị được ở mọi cấp', bad.join(', ') || 'tất cả OK');
-  // KHÔNG có cấp sử dụng: nhân vật cấp 1 vẫn mặc được món bậc V
+  ok(bad.length === 0, 'cấp 90 mặc được cả 25 món', bad.join(', ') || 'tất cả OK');
+  // CÓ cấp sử dụng: cấp 1 chỉ mặc được bậc I (cấp 10)? Không — bậc I cần cấp 10, nên cấp 1 chặn hết.
   const low = G.newPlayer('t'); low.level = 1;
-  const blocked = ids.filter(i => !G.canUseItem(low, G.ITEMS[i]));
-  ok(blocked.length === 0, 'nhân vật cấp 1 mặc được cả 25 món (không có cấp sử dụng)', blocked.join(', ') || 'tất cả OK');
+  ok(ids.every(i => !G.canUseItem(low, G.ITEMS[i])), 'nhân vật cấp 1 KHÔNG mặc được món nào (bậc I cần cấp 10)');
+  // Cấp 10 mặc được đúng bậc I của cả 5 ô
+  const lv10 = G.newPlayer('t'); lv10.level = 10;
+  const okAt10 = ids.filter(i => G.canUseItem(lv10, G.ITEMS[i]));
+  ok(okAt10.length === 5 && okAt10.every(i => G.ITEMS[i].tier === 1), 'cấp 10 mặc được đúng 5 món bậc I', okAt10.map(i => G.ITEMS[i].name).join(','));
+  // Cấp 50: bậc I–III (10/30/50), chặn IV (70) và V (90)
+  const lv50 = G.newPlayer('t'); lv50.level = 50;
+  const okAt50 = ids.filter(i => G.canUseItem(lv50, G.ITEMS[i]));
+  ok(okAt50.length === 15 && okAt50.every(i => G.ITEMS[i].tier <= 3), 'cấp 50 mặc được bậc I–III (15 món)', String(okAt50.length));
   // Không cường hóa: món đặc biệt có cờ special để smith.js chặn
   ok(ids.every(i => G.ITEMS[i].special === true), 'mọi món đặc biệt có cờ special (Thợ rèn chặn cường hóa / tẩy luyện / phân rã)');
   // Bán lại được 0 xu
@@ -430,18 +439,12 @@ console.log('\n5b. Mua bậc I cần đá, nâng bậc tại chỗ giữ nguyên
   ok(shopIds.every(i => G.ITEMS[i].tier === 1), 'cả 5 món bày ra đều là bậc I', shopIds.map(i => G.ITEMS[i].name).join(','));
   ok(!G.ngocShopItems(p, 'tran_bao').includes('bua_db_5'), 'bậc V không bán rời ở quầy');
 
-  // Thiếu đá: chặn, KHÔNG trừ ngọc
+  // Thiếu đá vẫn mua được bậc I: đá là chi phí NÂNG bậc, không phải chi phí mua
   giveStone(0);
   const noStone = buy('bua_db_1');
-  ok(!noStone.ok, 'thiếu đá thì không mua được bậc I', noStone.text);
-  ok(p.linhNgoc === 5000, 'thiếu đá: không trừ ngọc', String(p.linhNgoc));
-
-  // Đủ đá: mua được, trừ đúng 1 đá + 40 ngọc
-  giveStone(1);
-  const first = buy('bua_db_1');
-  ok(first.ok, 'đủ 1 đá: mua Bùa bậc I được', first.text);
-  ok(p.linhNgoc === 4960, 'trừ đúng 40 Linh Ngọc', String(p.linhNgoc));
-  ok(stone() === 0, 'trừ đúng 1 Huyền Tinh Thạch', String(stone()));
+  ok(noStone.ok, 'không có đá vẫn mua được bậc I', noStone.text);
+  ok(p.linhNgoc === 4960, 'mua bậc I trừ đúng 40 Linh Ngọc', String(p.linhNgoc));
+  ok(stone() === 0, 'mua bậc I KHÔNG trừ đá', String(stone()));
 
   // Mua lại cùng ô bị chặn
   giveStone(5);
@@ -478,6 +481,19 @@ console.log('\n5b. Mua bậc I cần đá, nâng bậc tại chỗ giữ nguyên
   // Bậc V là trần
   const maxed = up({ uid });
   ok(!maxed.ok, 'bậc V rồi thì không nâng được nữa', maxed.text);
+
+  // Cấp sử dụng gắn với bậc: chưa đủ cấp của bậc kế thì không nâng được, không trừ gì
+  const pLv = G.newPlayer('buyLv'); pLv.level = 20; pLv.school = 'kiem_si'; pLv.linhNgoc = 5000; pLv.map = 'lang';
+  pLv.bag.push({ uid: 11, id: 'bua_db_1', qty: 1, plus: 0, q: 1, roll: 1, aff: [] });
+  pLv.bag.push({ uid: 12, id: 'huyen_tinh_thach', qty: 20, plus: 0 });
+  const lowLvUp = (() => { const ev = []; try { items.upgrade_special(pLv, { uid: 11 }, ev); return { ok: true }; } catch (e) { return { ok: false, text: e.message }; } })();
+  ok(!lowLvUp.ok, 'cấp 20 không nâng được lên bậc II (cần cấp 30)', lowLvUp.text);
+  ok(pLv.linhNgoc === 5000, 'thiếu cấp: không trừ ngọc', String(pLv.linhNgoc));
+  ok(pLv.bag.find(e => e.id === 'huyen_tinh_thach').qty === 20, 'thiếu cấp: không trừ đá', String(pLv.bag.find(e => e.id === 'huyen_tinh_thach').qty));
+  ok(G.ITEMS[pLv.bag.find(e => e.uid === 11).id].tier === 1, 'thiếu cấp: bậc không đổi', String(G.ITEMS[pLv.bag.find(e => e.uid === 11).id].tier));
+  pLv.level = 30;
+  const nowOkUp = (() => { const ev = []; try { items.upgrade_special(pLv, { uid: 11 }, ev); return { ok: true }; } catch (e) { return { ok: false, text: e.message }; } })();
+  ok(nowOkUp.ok, 'đủ cấp 30 thì nâng lên bậc II được', nowOkUp.text);
 
   // Nâng khi thiếu đá / thiếu ngọc đều bị chặn và không trừ gì
   giveStone(0);
