@@ -42,7 +42,7 @@
   // Dung hợp TOÀN BỘ bộ sưu tập bóng ma (kể cả bóng không triệu hồi) vào bản thân trong 60 giây.
   // Cái giá: bộ sưu tập mất trắng — bóng tan hết, không khôi phục được.
   // Chỉ số cộng dồn nằm ở G.shadowFusion (shared/data/pets/shadow.js), hệ số ở G.FUSION.
-  ulTuLinhDungHop: { school: 'tu_linh_thuat_su', icon: '🕸️', name: 'Tử Linh Dung Hợp', level: 60, mp: 320, cd: 240, ult: true,
+  ulTuLinhDungHop: { school: 'tu_linh_thuat_su', icon: '🕸️', name: 'Tử Linh Dung Hợp', level: 1, priceLevel: 60, /* TEST: cấp học tạm = 1, trả lại 60 khi test xong; giá sách vẫn tính theo priceLevel */ mp: 320, cd: 240, ult: true,
   superUlt: true, type: 'fusion', shopNgoc: true, fusionSec: 60, fusionCost: 'roster',
   desc: 'Dung hợp toàn bộ bóng ma trong bộ sưu tập vào bản thân: cộng dồn sinh lực, năng lượng, thể lực và '
   + 'phòng thủ của chúng trong 60 giây. Bóng đang lưu giữ hay đang triệu hồi đều tính. Đổi lại, mọi bóng ma '

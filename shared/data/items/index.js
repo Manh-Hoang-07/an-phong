@@ -85,7 +85,7 @@
     ITEMS[G.ultBookId(sid)] = { name: `Sách ${label}: ${sk.name}`, kind: 'ult_book', skill: sid, level: sk.level, stack: true, price: 0,
       desc: `Đọc để học ${label.toLowerCase()} ${sk.name}. Dành cho: ${who}. Cần cấp ${sk.level}. ${sk.ultAny && !sk.shopNgoc ? 'Nhận từ nhiệm vụ Khảo hạch Tuyệt Kỹ.' : 'Mua ở Lầu Trân Bảo hoặc nhận qua mật mã.'}` };
     if (!sk.ultAny || sk.shopNgoc) {
-      ITEMS[G.ultBookId(sid)].priceNgoc = ngocPriceOfUlt(sk.level) * (sk.superUlt ? 2 : 1);
+      ITEMS[G.ultBookId(sid)].priceNgoc = ngocPriceOfUlt(sk.priceLevel || sk.level) * (sk.superUlt ? 2 : 1);
       ITEMS[G.ultBookId(sid)].ngocGroup = sk.superUlt ? 'superult' : 'ult';
     }
   }
