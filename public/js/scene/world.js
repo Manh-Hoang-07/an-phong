@@ -110,7 +110,9 @@ class WorldScene extends Phaser.Scene {
     for (const l of App.player.loot || []) if (l.map === this.mapId) this.addLoot(l, false);
 
     this.cameras.main.setBounds(0, 0, this.worldW, this.worldH);
-    this.cameras.main.startFollow(this.player, true, 0.12, 0.12, 0, -90);
+    // Độ bám của camera, tính cho MỘT khung ở 60 FPS. update() quy đổi theo delta thật (xem camFollow).
+    this.camLerp = 0.12;
+    this.cameras.main.startFollow(this.player, true, this.camLerp, this.camLerp, 0, -90);
     this.cameras.main.fadeIn(300);
     this.physics.world.setBounds(0, 0, this.worldW, this.worldH + 200);
 
@@ -150,10 +152,23 @@ class WorldScene extends Phaser.Scene {
     this.load.start();
   }
 
+  // Camera bám theo nhân vật với độ mượt KHÔNG phụ thuộc tốc độ khung hình.
+  // Phaser làm mượt bằng Linear(scroll, đích, lerp) mỗi khung, không nhân delta: máy 30 FPS camera
+  // bám chậm đúng một nửa máy 60 FPS, nên chạy thấy "lag". Ở đây quy đổi lerp theo delta thật:
+  //   lerp(delta) = 1 - (1 - camLerp)^(delta / 16.667)
+  // Ở 60 FPS (delta = 16,667) kết quả đúng bằng camLerp cũ → hình y như trước, không đổi cảm giác.
+  // delta được kẹp trong [1, 100] ms để một khung bị treo (chuyển tab, GC) không làm camera nhảy cóc.
+  camFollow(delta) {
+    const cam = this.cameras.main;
+    const d = Phaser.Math.Clamp(delta || 16.667, 1, 100);
+    cam.setLerp(1 - Math.pow(1 - this.camLerp, d / 16.667), 1 - Math.pow(1 - this.camLerp, d / 16.667));
+  }
+
   // ------------------------------------------------------------------ Vòng lặp
   update(time, delta) {
     if (!this.player) return;
     const cam = this.cameras.main;
+    this.camFollow(delta);
     this.bgFar.tilePositionX = cam.scrollX * 0.15;
     this.bgNear.tilePositionX = cam.scrollX * 0.35;
     if (this.bgMid && this.bgMid.active) this.bgMid.tilePositionX = cam.scrollX * 0.25;

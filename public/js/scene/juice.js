@@ -26,7 +26,7 @@ const Quality = (() => {
  * nhưng canvas được vẽ bằng đúng số điểm ảnh thật của màn hình rồi phóng camera lên k lần.
  * Nhờ vậy tọa độ, kích thước, va chạm giữ nguyên như cũ mà hình thì nét theo màn hình.
  *   w, H : kích thước logic      k : số điểm ảnh vẽ trên 1 đơn vị logic
- * Chế độ Cao supersample tới 1.5× trên màn hình thường và tận dụng thêm màn hình Retina.
+ * k = cssH × dpr / H: canvas vẽ đúng số điểm ảnh thật của thiết bị (1:1, không phóng rồi thu lại).
  */
 const View = {
   H: 540, w: 960, k: 1,
@@ -38,10 +38,11 @@ const View = {
     // Chiều cao canvas thực sự chiếm trên màn hình (chế độ FIT, có thể có viền đen khi màn hình quá dài)
     const cssH = Math.min(ih, iw * this.H / this.w);
     const dpr = window.devicePixelRatio || 1;
-    const high = Quality.mode === 'high';
-    const cap = Quality.low ? 1.5 : high ? 3.5 : 2.5;
-    const boost = high ? 1.5 : 1;
-    let k = Math.max(0.75, Math.min(cap, cssH * dpr / this.H * boost));
+    // Vẽ đúng điểm ảnh thật của thiết bị: 1 điểm ảnh canvas = 1 điểm ảnh màn hình, không phóng rồi thu lại.
+    // Trước đây chế độ Cao nhân thêm 1.5 (supersample) → canvas 2,25 lần số điểm ảnh mà hình không nét hơn
+    // (pixel art phóng to rồi thu lại chỉ thêm bước nội suy), chỉ tốn GPU. Trần vẫn giữ để máy Retina không vỡ bộ nhớ.
+    const cap = Quality.low ? 1.5 : Quality.mode === 'high' ? 3.5 : 2.5;
+    let k = Math.max(0.75, Math.min(cap, cssH * dpr / this.H));
     // Điện thoại (nhất là iPhone, màn 3×): khung WebGL quá lớn (vd. iPhone 12 Pro Max ra ~4100×1900 ≈ 7,7 triệu điểm)
     // làm Safari hết bộ nhớ → tab bị tải lại / trắng màn hình, trong khi máy tính (dpr thấp) vẫn bình thường.
     // Giới hạn tổng số điểm ảnh của khung vẽ; nhìn vẫn nét vì màn hình nhỏ.
