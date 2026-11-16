@@ -29,7 +29,7 @@
     //
     // `superUlt: true` là bậc CAO HƠN tuyệt kỹ: vẫn tính là tuyệt kỹ (ult: true) nên dùng chung ô R/X/Z,
     // nhưng bảng kỹ năng gắn nhãn riêng và Lầu Trân Bảo xếp nó vào nhóm riêng.
-    ulSinhTu: { school: 'chung', ultAny: true, icon: '💀', name: 'Sinh Tử Đồng Quy', level: 60, mp: 0, cd: 180, ult: true,
+    ulSinhTu: { school: 'chung', ultAny: true, icon: '💀', name: 'Sinh Tử Đồng Quy', level: 1, priceLevel: 60, /* TEST: cấp học tạm = 1, trả lại 60 khi test xong */ mp: 0, cd: 180, ult: true,
       superUlt: true, type: 'execute', shopNgoc: true, selfZero: true, buaSaves: true, range: 520, reach: 320, execPvp: true,
       desc: 'Sinh tử đồng quy: sống chết cùng về một chỗ. Mục tiêu mất toàn bộ sinh lực và gục ngay — quái thường, '
         + 'tinh anh, thủ lĩnh hay trùm đều vậy. Bạn cũng mất toàn bộ sinh lực. Có Bùa Hộ Mệnh thì bạn giữ lại 1 máu '
