@@ -17,7 +17,6 @@
   function panelQuest() {
     const p = App.player;
     const q = G.QUESTS[p.quest.step];
-    const doneList = G.QUESTS.slice(0, p.quest.step).map(x => `<div class="q-done">✓ ${esc(x.name)}</div>`).join('');
     const dl = dailyLines(p);
 
     if (!q) {
@@ -30,7 +29,6 @@
         ${sidePanelHtml(p)}
         ${dl.length ? `<div class="q-card">${sectionH('Nhiệm vụ hằng ngày', `làm mới sau ${resetIn()}`)}
           ${dl.map(l => `<div class="q-daily${l.x.claimed ? ' done' : ''}">${l.x.claimed ? '✓' : l.icon} ${esc(l.text)} <b>${l.have}/${l.x.need}</b>${l.x.claimed ? ' (đã nhận)' : ''}</div>`).join('')}</div>` : ''}
-        ${doneList ? `<div class="q-card">${sectionH('Đã hoàn thành')}${doneList}</div>` : ''}
       </div>`];
     }
 
@@ -61,9 +59,7 @@
     const daily = dl.length ? `<div class="q-card">${sectionH('Nhiệm vụ hằng ngày', `làm mới sau ${resetIn()}`)}
       ${dl.map(l => `<div class="q-daily${l.x.claimed ? ' done' : l.done ? ' ok' : ''}">${l.x.claimed ? '✓' : l.icon} ${esc(l.text)} <b>${l.have}/${l.x.need}</b>${l.x.claimed ? ' (đã nhận)' : ''}</div>`).join('')}</div>` : '';
 
-    const done = doneList ? `<div class="q-card">${sectionH('Đã hoàn thành')}${doneList}</div>` : '';
-
-    return ['Nhiệm vụ', `<div class="q-wrap">${main}${sidePanelHtml(p)}${daily}${done}</div>`];
+    return ['Nhiệm vụ', `<div class="q-wrap">${main}${sidePanelHtml(p)}${daily}</div>`];
   }
 
   Object.assign(UI._, { panelQuest, guideHtml });

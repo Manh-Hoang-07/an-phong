@@ -23,7 +23,7 @@ G.AWAKENS.forEach((aw) => {
 });
 
 function hidden(p) {
-  if (p.map !== 'lang' || !p.hiddenNpcActive) fail('Không có hồi đáp. Hãy ở Tân Đô và chat "ncp an".');
+  if (p.map !== 'lang' || !p.hiddenNpcActive) fail('Không có hồi đáp. Hãy ở Tân Đô và chat "npc an".');
 }
 
 // Bậc Ấn đang chọn có mở khóa chưa

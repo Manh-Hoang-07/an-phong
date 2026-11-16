@@ -267,9 +267,13 @@ WorldScene.mix(class WorldPlayer {
   regen() {
     if (this.dead) return;
     const now = this.time.now, R = GameData.REGEN;
-    // Buff "Ân Sủng" (Trị Liệu Sư): hồi 3% máu mỗi 2 giây (1.5% mỗi giây), 5% khi skill cấp 10 — có cả khi đang đánh
-    const grace = this.buffOn('grace');
-    if (grace) App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * (grace.regen || 0.03) / 2);
+    // Buff hồi máu liên tục (Ân Sủng, Thanh Tẩy, Ý Chí Hộ Vệ, Phước Lành…): `regen` là % máu tối đa mỗi 2 giây.
+    // Trước đây chỉ đọc buff 'grace' nên mọi buff khác khai `regen` đều vô tác dụng; giờ cộng dồn mọi buff đang bật.
+    let regenPct = 0;
+    for (const k in this.buffs) {
+      const b = this.buffs[k];
+      if (now < b.until && b.regen) regenPct += b.regen;
+    }    if (regenPct) App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * regenPct / 2);
     const maxHp = App.stats.maxHp, maxMp = App.stats.maxMp;
     // Nội tại Dòng Chảy (Pháp Sư): hồi 0,5% năng lượng tối đa mỗi giây ngay cả khi đang chiến đấu
     const flow = this.hasPassive('phap_su');
@@ -727,7 +731,8 @@ WorldScene.mix(class WorldPlayer {
     let mp = this.hasPassive('phap_su') ? maxMp * 0.005 : 0;
     if (!fighting) mp += Math.max(R.mp, maxMp * 0.005);
     const staRate = now - (this.staUsedAt || 0) > S.delay ? 1 : S.activeMul;
-    return { mp, sta: S.regen * staRate };
+    const staBoost = 1 + (App.stats.staRegen || 0) / 100;   // Cánh: hồi thể lực nhanh hơn
+    return { mp, sta: S.regen * staRate * staBoost };
   }
 
   formTick(time, delta) {
@@ -756,7 +761,9 @@ WorldScene.mix(class WorldPlayer {
     if (App.sta == null) App.sta = max;
     if (App.sta < max && !this.dead) {
       const rate = time - (this.staUsedAt || 0) > S.delay ? 1 : S.activeMul;
-      App.sta = Math.min(max, App.sta + S.regen * rate * delta / 1000);
+      // Cánh (trang bị đặc biệt) cộng % hồi thể lực: App.stats.staRegen = 15 nghĩa là hồi nhanh thêm 15%
+      const boost = 1 + (App.stats.staRegen || 0) / 100;
+      App.sta = Math.min(max, App.sta + S.regen * rate * boost * delta / 1000);
     }
     if (App.staLocked && App.sta >= max * S.unlock) App.staLocked = false;
   }

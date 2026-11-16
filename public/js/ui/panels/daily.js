@@ -23,7 +23,9 @@
     html += '</div>';
     const all = lines.every(l => l.x.claimed);
     const b = G.DAILY_BONUS;
-    html += `<div class="detail" style="margin-top:10px"><b>🎁 Thưởng hoàn thành cả 3:</b> ${b.stones} đá cường hóa${b.items.map(([id, n]) => ', ' + G.ITEMS[id].name + (n > 1 ? ' ×' + n : '')).join('')}
+    const bonusItems = b.items.map(([id, n]) => ', ' + G.ITEMS[id].name + (n > 1 ? ' ×' + n : '')).join('');
+    html += `<div class="detail" style="margin-top:10px"><b>🎁 Thưởng hoàn thành cả 3:</b> ${b.stones} đá cường hóa${bonusItems}
+      <div class="muted" style="margin-top:4px">Sách kỹ năng không còn ở nhiệm vụ ngày — mỗi tuần nhận ${G.WEEKLY_BOOKS} cuốn ở mốc hạ trùm bên dưới.</div>
       <div class="row" style="margin-top:8px">${(p.dailyByMap[here] || {}).bonus ? '<span class="okc">✓ Đã nhận hôm nay</span>'
         : `<button class="btn ${all ? 'primary' : ''}" data-act="daily_bonus" ${all ? '' : 'disabled'}>Nhận thưởng thêm</button>`}</div></div>`;
     if ((p.weeklyByMap || {})[here]) {
@@ -32,7 +34,7 @@
         { kind: 'kills', label: `Hạ ${G.WEEKLY_KILLS} quái`, have: w.kills, need: G.WEEKLY_KILLS, claimed: w.claimedKills,
           reward: `${fmt(wr.kills.exp)} kinh nghiệm, ${fmt(wr.kills.gold)} xu, ${wr.kills.stones} đá cường hóa` },
         { kind: 'bosses', label: `Hạ ${G.WEEKLY_BOSSES} trùm`, have: w.bosses, need: G.WEEKLY_BOSSES, claimed: w.claimedBosses,
-          reward: `${fmt(wr.bosses.exp)} kinh nghiệm, ${fmt(wr.bosses.gold)} xu, ${wr.bosses.stones} đá cường hóa cao, 1 sách kỹ năng` },
+          reward: `${fmt(wr.bosses.exp)} kinh nghiệm, ${fmt(wr.bosses.gold)} xu, ${wr.bosses.stones} đá cường hóa cao, ${G.WEEKLY_BOOKS} sách kỹ năng` },
       ];
       html += `<hr style="border-color:#333"><div class="muted">Nhiệm vụ tuần của làng · ${esc(w.week)} · làm mới vào thứ Hai · chỉ tính quái hạ ở vùng của làng này</div><div class="list">`;
       for (const l of rows) {

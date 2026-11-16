@@ -102,6 +102,10 @@ const Sound = (() => {
     jump: () => { hiss(0.08, 0.08, 'bandpass', 600, 1400); },
     land: () => { hiss(0.1, 0.14, 'lowpass', 400, 120); tone('sine', 90, 50, 0.1, 0.12); },
     error: () => tone('square', 220, 160, 0.12, 0.06),
+    // Né đòn (Cánh): tiếng gió ngắn, không có âm trầm của đòn trúng
+    dodge: () => { hiss(0.12, 0.22, 'highpass', 2600, 1200); tone('sine', 900, 1500, 0.09, 0.07); },
+    // Hộ Mệnh bật khiên: chuông trầm + hơi thở dài
+    ward: () => { tone('sine', 300, 620, 0.35, 0.18); tone('triangle', 150, 300, 0.4, 0.12); hiss(0.3, 0.12, 'lowpass', 1200, 300); },
   };
   const lastPlay = {};
   function play(name) {

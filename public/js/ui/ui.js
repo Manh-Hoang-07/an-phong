@@ -77,7 +77,8 @@ const UI = (() => {
     return `background-image:url('${esc(img.url)}');background-size:contain`;
   }
   let lastMenuTab = 'bag';
-  const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿' };
+  const SLOT_ICONS = { mu: '🎩', ao: '👘', gang_tay: '🧤', dai_lung: '🎗️', quan: '👖', giay: '👟', nhan: '💍', day_chuyen: '📿', ngoc_boi: '🧿',
+    bua: '🪬', an: '🔱', canh: '🪽', linh_dan: '💠', chuong: '🔔' };
   const WEAPON_ICONS = Object.fromEntries(Object.entries(G.WEAPON_TYPES).map(([k, w]) => [k, w.icon]));
   const statText = (k, v) => `${G.statLabel(k)} +${v}${G.statUnit(k)}`;
   const qOf = (e) => (G.ITEMS[e.id] && G.ITEMS[e.id].slot ? (e.q || 1) : 1);
@@ -137,6 +138,7 @@ const UI = (() => {
     selected: null,         // { where: 'bag'|'equip'|'storage', key }
     smithTab: 'upgrade', lastUpgrade: null, confirmSalvage: null,   // thợ rèn
     confirmDrop: null,   // túi đồ: "uid:số lượng" đang chờ bấm lần nữa để bỏ
+    confirmBuy: null,    // tiệm: món không hợp class đang chờ bấm lần nữa để mua
     detailOpen: null,    // "where:key" của vật phẩm đang mở khung chi tiết đầy đủ
     codeDraft: '', codeMsg: '',                                    // nhập mật mã
   };
@@ -283,6 +285,20 @@ const UI = (() => {
     resolve: ['🛡', 'Ý Chí Hộ Vệ'], declare: ['📢', 'Tuyên Chiến'], blessing: ['🙏', 'Phước Lành'],
   };
   let lastBuffSig = '';
+  // Tên hiển thị của một hiệu ứng: ưu tiên tên kỹ năng đã dùng, để hai kỹ năng cùng nhóm
+  // (vd. Cuồng Nộ của Kiếm Sĩ và của Tanker) vẫn hiện đúng tên riêng của chúng.
+  function buffLabel(b) {
+    const sk = b.skill && GameData.SKILLS[b.skill];
+    if (sk && sk.name) return sk.name;
+    const look = BUFF_LOOK[b.name];
+    return look ? look[1] : (b.name || '?');
+  }
+  function buffIcon(b) {
+    const sk = b.skill && GameData.SKILLS[b.skill];
+    if (sk && sk.icon) return sk.icon;
+    const look = BUFF_LOOK[b.name];
+    return look ? look[0] : '✨';
+  }
   function tickBuffs(time, scene) {
     const box = $('buffbar');
     if (!box) return;
@@ -301,8 +317,8 @@ const UI = (() => {
     const sig = live.map(([k]) => k).join(',');
     if (sig !== lastBuffSig) {
       lastBuffSig = sig;
-      box.innerHTML = live.map(([k]) => {
-        const [icon, name] = BUFF_LOOK[k] || ['✨', GameData.SKILLS[k] ? GameData.SKILLS[k].name : k];
+      box.innerHTML = live.map(([k, b]) => {
+        const name = buffLabel(b), icon = buffIcon(b);
         return `<div class="bf" data-bf="${esc(k)}" title="${esc(name)}"><span class="bf-ic">${icon}</span><span class="bf-t"></span><i class="bf-p"></i></div>`;
       }).join('');
       box.classList.remove('hidden');
@@ -560,13 +576,37 @@ const UI = (() => {
       (label ? `<span class="lbl">${esc(label)}</span>` : '') + '</div>';
   }
 
+  // Khối nâng bậc của trang bị đặc biệt: hiện bậc hiện tại, chi phí bậc kế, và nút bấm.
+  // Bậc là thuộc tính của CÙNG một món (giữ uid) — nâng tại chỗ, không mua món mới, không rác trong túi.
+  function specialUpgradeBox(entry, d) {
+    const p = App.player;
+    const tier = d.tier || 1;
+    const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+    const cost = G.specialUpgradeCost(d);
+    let h = `<div class="sp-tier">Bậc <b>${ROMAN[tier - 1]}</b> / V</div>`;
+    if (!cost) return h + '<div class="muted">Đã đạt bậc V — bậc cao nhất.</div>';
+    const next = G.ITEMS[cost.id];
+    const haveStone = (p.bag || []).filter(e => e.id === 'huyen_tinh_thach').reduce((s, e) => s + e.qty, 0);
+    const haveNgoc = p.linhNgoc || 0;
+    const okStone = haveStone >= cost.stone, okNgoc = haveNgoc >= cost.ngoc;
+    // Xem trước bậc kế: chỉ số và hiệu ứng đổi thế nào
+    const now = G.instStats(entry).main, nx = next.stats || {};
+    const diff = Object.keys(nx).filter(k => (now[k] || 0) !== nx[k])
+      .map(k => `${G.statLabel(k)} ${now[k] || 0}→<b>${nx[k]}${G.statUnit(k)}</b>`).join(' · ');
+    h += `<div class="sp-next">Bậc ${ROMAN[cost.tier - 1]}: ${diff || 'chỉ số giữ nguyên'}</div>`;
+    h += `<div class="sp-cost ${okStone && okNgoc ? '' : 'bad'}">Cần <b>${cost.stone}</b> Huyền Tinh Thạch (có ${haveStone}) · <b>${fmt(cost.ngoc)}</b> 💎 (có ${fmt(haveNgoc)})</div>`;
+    h += `<button class="btn sp-up" data-act="upgrade_special" data-uid="${entry.uid != null ? entry.uid : ''}" data-slot="${d.slot}"${okStone && okNgoc ? '' : ' disabled'}>Nâng bậc — ${cost.stone} đá · ${fmt(cost.ngoc)} 💎</button>`;
+    return h;
+  }
   function itemInfo(entry, opts = {}) {
     const d = G.ITEMS[entry.id];
     const p = App.player;
     const q = qOf(entry);
     let h = opts.noTitle ? '' : `<h3 class="q${q}">${itemIcon(entry.id)} ${esc(d.name)}${entry.plus ? ' +' + entry.plus : ''}</h3>`;
     const tags = [];
-    if (d.slot) tags.push(`<span class="q${q}">${G.QUALITY_NAMES[q]}</span>`, G.SLOT_NAMES[d.slot]);
+    // Trang bị đặc biệt: chỉ số cố định, không phẩm chất, không độ hoàn hảo → gắn nhãn riêng
+    if (d.slot && d.special) tags.push('<span class="q4">Đặc biệt</span>', `Bậc ${['I', 'II', 'III', 'IV', 'V'][(d.tier || 1) - 1]}`);
+    else if (d.slot) tags.push(`<span class="q${q}">${G.QUALITY_NAMES[q]}</span>`, G.SLOT_NAMES[d.slot]);
     if (d.level) tags.push(`<span class="${d.level > p.level ? 'bad' : ''}">Cấp ${d.level}</span>`);
     const set = G.setOfItem(d);
     if (set) tags.push(`<span class="muted">Bộ ${set.name} (cấp ${set.min}–${set.max})</span>`);
@@ -580,8 +620,11 @@ const UI = (() => {
         h += '<div class="affix">' + entry.aff.map(([k, v, pp]) =>
           `<div>◆ ${statText(k, v)} <span class="muted">${pp >= 0.8 ? '★' : ''}</span></div>`).join('') + '</div>';
       }
-      const pf = G.perfection(entry);
-      h += `<div class="perf">Độ hoàn hảo: <b class="${pf >= 80 ? 'q4' : pf >= 50 ? 'okc' : 'muted'}">${pf}%</b></div>`;
+      // Đồ đặc biệt: chỉ số cố định, không có độ hoàn hảo để hiện
+      if (!d.special) {
+        const pf = G.perfection(entry);
+        h += `<div class="perf">Độ hoàn hảo: <b class="${pf >= 80 ? 'q4' : pf >= 50 ? 'okc' : 'muted'}">${pf}%</b></div>`;
+      }
       // So sánh với món đang mặc cùng ô
       const cur = p.equip[d.slot];
       if (opts.compare && cur && cur.uid !== entry.uid) {
@@ -593,7 +636,14 @@ const UI = (() => {
       } else if (opts.compare && !cur) h += '<div class="cmp up">Ô này đang trống ▲</div>';
     }
     if (d.desc) h += `<div class="muted">${esc(d.desc)}</div>`;
+    // Trang bị đặc biệt: khối nâng bậc. Bậc là thuộc tính của món nên nâng tại chỗ, không mua món mới.
+    if (d.special) h += specialUpgradeBox(entry, d);
     if (d.kind === 'skill_book' || d.kind === 'ult_book') h += bookSkillInfo(d, p);
+    // Sách kỹ năng: cho thấy đã đọc bao nhiêu trên trần 7 cuốn
+    if (d.kind === 'book') {
+      const used = p.skillBooks || 0, max = G.SKILL_BOOK_MAX;
+      h += `<div class="${used >= max ? 'bad' : 'muted'}">Đã đọc: <b>${used}/${max}</b> cuốn${used >= max ? ' — đã đạt tối đa, không đọc thêm được' : ` · còn đọc được ${max - used}`}</div>`;
+    }
     if (opts.sell && G.sellPrice(entry)) h += `<div class="gold">Bán được: ${fmt(G.sellPrice(entry))} xu / cái</div>`;
     return h;
   }
@@ -608,8 +658,9 @@ const UI = (() => {
     const lv1 = G.skillAt(id, 1), max = G.skillAt(id, G.SKILL_MAX);
     const learned = G.skillLevel(p, id);
     const fits = sk.ult ? (!p.school || !G.ultFits || G.ultFits(p, sk)) : (!p.school || G.availableSkills(p).includes(id));
+    const owner = G.SCHOOLS[G.baseSchool(sk.evolutionKey || sk.school)];
     const status = learned ? `<span class="okc">Đã học (cấp ${learned})</span>`
-      : !fits ? '<span class="bad">Không thuộc class của bạn</span>'
+      : !fits ? `<span class="bad">Của class ${esc(owner ? owner.name : 'khác')} — không đọc được</span>`
         : sk.level > p.level ? `<span class="bad">Cần cấp ${sk.level}</span>` : '<span class="okc">Học được</span>';
     const ms = [[5, sk.t5], [10, sk.t10]].filter(([, t]) => t)
       .map(([m, t]) => `<div class="sk-milestone">◇ <b>Cấp ${m}</b>: ${esc(t)}</div>`).join('');

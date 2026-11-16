@@ -48,10 +48,7 @@
 
     // ---------- Thông tin khác
     const misc = [
-      ['Túi đồ', G.bagSize(p) + ' ô' + (p.bagPlus ? ` (+${p.bagPlus * 10})` : '')],
-      ['Điểm kỹ năng', p.skillPoints || 0],
       ['Giảm giá cửa hàng', Math.round((p.shopDiscount || 0) * 100) + '%'],
-      ['Đã hạ quái', fmt(Object.values(p.kills || {}).reduce((a, b) => a + b, 0))],
       ...((p.titles || []).length ? [['Danh hiệu', p.titles.join(', ')]] : []),
     ];
     const info = `<div class="ch-group"><div class="ch-group-h">Thông tin</div>

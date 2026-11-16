@@ -54,9 +54,11 @@
   function weeklyReward(level, mapId) {
     const k = mapId ? villageRewardMult(mapId) : 1;
     const st = (n) => Math.max(1, Math.round(n * k));
+    // Sách kỹ năng: mỗi tuần đúng WEEKLY_BOOKS cuốn, chỉ ở mốc hạ trùm (mốc diệt quái không có sách).
     return {
       kills: { exp: Math.round(expToNext(level) * 0.5 * k), gold: Math.round(100 * level * k), stones: st(8) },
-      bosses: { exp: Math.round(expToNext(level) * 0.6 * k), gold: Math.round(150 * level * k), stones: st(3), items: [['sach_ky_nang', 1]] },
+      bosses: { exp: Math.round(expToNext(level) * 0.6 * k), gold: Math.round(150 * level * k), stones: st(3),
+        items: [['sach_ky_nang', G.WEEKLY_BOOKS]] },
     };
   }
 

@@ -21,6 +21,9 @@
     if (s.duration) out.push(`${s.duration} giây`);
     if (s.slow) out.push(`làm chậm ${s.slow}s`);
     if (s.freeze) out.push(`đóng băng ${s.freeze}s`);
+    if (s.stun) out.push(`choáng ${s.stun}s`);
+    if (s.knock) out.push('hất văng');
+    if (s.pierce) out.push('xuyên');
     if (s.vsSlowed) out.push(`×${s.vsSlowed} lên quái đang chậm`);
     if (s.shred) out.push(`quái chịu thêm ${Math.round(s.shred * 100)}% sát thương`);
     if (s.chain) out.push(`nổ lan ${Math.round(s.chain * 100)}%`);
@@ -160,25 +163,6 @@
     </div>`];
   }
 
-  // Đọc Sách Tẩy Kỹ Năng trong túi đồ: chọn một kỹ năng đang có để xóa hẳn
-  function panelErase() {
-    const p = App.player;
-    const books = p.bag.filter(e => e.id === 'sach_tay_ky_nang').reduce((x, e) => x + e.qty, 0);
-    const learned = Object.keys(p.skills || {}).filter(id => G.SKILLS[id] && G.skillLevel(p, id) > 0)
-      .sort((a, b) => (G.SKILLS[a].ult ? 1 : 0) - (G.SKILLS[b].ult ? 1 : 0) || G.SKILLS[a].level - G.SKILLS[b].level);
-    const rows = learned.map(id => {
-      const sk = G.SKILLS[id], lv = G.skillLevel(p, id);
-      const ask = S.confirmErase === id;
-      return `<div class="li"><div class="ic">${sk.icon}</div>
-        <div class="main"><b>${esc(sk.name)}</b>${sk.ult ? ' <span class="tag-ult">TUYỆT KỸ</span>' : ''}
-          <small>Cấp ${lv}/${G.SKILL_MAX}${lv > 1 ? ` · mất ${lv - 1} điểm đã cộng` : ''}</small></div>
-        <button class="btn small act-btn danger${ask ? ' confirm' : ''}" data-act="erase_skill" data-skill="${id}" ${books ? '' : 'disabled'}>${ask ? '⚠ Bấm lần nữa để xóa' : 'Chọn'}</button></div>`;
-    }).join('');
-    return ['Sách Tẩy Kỹ Năng', `<p class="muted" style="margin-top:0">Chọn kỹ năng muốn xóa. Kỹ năng và toàn bộ điểm đã cộng sẽ mất, trả lại 1 ô học. Còn <b class="gold">${books}</b> sách.</p>
-      <div class="list">${rows || '<p class="muted">Bạn chưa học kỹ năng nào.</p>'}</div>
-      <div class="row" style="margin-top:12px"><button class="btn" data-act="open" data-panel="bag">← Quay lại túi đồ</button></div>`];
-  }
-
   Object.assign(UI._, { skillNumbers, slotLabel, panelSkills });
-  Object.assign(UI._.PANELS, { skills: panelSkills, erase: panelErase });
+  Object.assign(UI._.PANELS, { skills: panelSkills });
 })();

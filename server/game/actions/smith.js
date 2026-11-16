@@ -15,6 +15,7 @@ const actions = {
     if (!target) fail('Không có trang bị.');
     const def = G.ITEMS[target.id];
     if (!def.slot) fail('Chỉ nâng cấp được trang bị.');
+    if (def.special) fail('Trang bị đặc biệt mua bằng Linh Ngọc, không cường hóa được.');
     const plus = target.plus || 0;
     if (plus >= G.UPGRADE_MAX) fail(`Đã đạt tối đa +${G.UPGRADE_MAX}.`);
     const cost = G.upgradeCost(plus);
@@ -44,6 +45,7 @@ const actions = {
     if (!target) fail('Không có trang bị.');
     const def = G.ITEMS[target.id];
     if (!def.slot) fail('Chỉ tẩy luyện được trang bị.');
+    if (def.special) fail('Trang bị đặc biệt không có dòng phụ để tẩy luyện.');
     G.normalizeInst(target);
     if (target.q < 2) fail('Đồ thường không có dòng phụ để tẩy luyện.');
     const cost = reforgeCost(target);
@@ -62,6 +64,7 @@ const actions = {
     const e = bagEntry(p, a.uid);
     const def = G.ITEMS[e.id];
     if (!def.slot) fail('Chỉ phân rã được trang bị.');
+    if (def.special) fail('Trang bị đặc biệt mua bằng Linh Ngọc, không phân rã được.');
     G.normalizeInst(e);
     const stones = salvageStones(e);
     p.bag.splice(p.bag.indexOf(e), 1);

@@ -61,29 +61,21 @@ const actions = {
     ev.push({ t: 'msg', text: `${sk.name} lên cấp ${lv + 1}.${milestone ? ' Mở hiệu ứng: ' + milestone : ''}`, color: '#4fc3f7' });
   },
 
-  // Sách Tẩy Kỹ Năng: xóa hẳn một kỹ năng đã học (mất cả điểm đã cộng), trả lại ô học
-  erase_skill(p, a, ev) {
-    const sk = G.SKILLS[a.skill];
-    if (!sk || !G.skillLevel(p, a.skill)) fail('Bạn chưa học kỹ năng này.');
-    if (countItem(p, 'sach_tay_ky_nang') < 1) fail('Cần Sách Tẩy Kỹ Năng.');
-    removeItem(p, 'sach_tay_ky_nang', 1);
-    delete p.skills[a.skill];
-    p.skillSlots = p.skillSlots.map(id => (id === a.skill ? null : id));
-    ev.push({ t: 'msg', text: `[Hệ thống] Đã tẩy kỹ năng ${sk.name}. Ô học được trả lại.`, color: '#ffd54f' });
-  },
-
-  // Tẩy điểm kỹ năng ở Hội trưởng: các kỹ năng đã học giữ nguyên nhưng về cấp 1, hoàn điểm đã cộng
+  // Tẩy điểm kỹ năng ở Hội trưởng: các kỹ năng đã học giữ nguyên nhưng về cấp 1, hoàn điểm đã cộng.
+  // Tốn 1 Sách Tẩy Kỹ Năng + xu. Sách là điều kiện bắt buộc, không còn cách nào xóa kỹ năng trực tiếp.
   reset_skills(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải.');
     const ids = Object.keys(p.skills).filter(id => G.skillLevel(p, id) > 0);
     const spent = ids.reduce((x, id) => x + G.skillLevel(p, id) - 1, 0);
     if (!spent) fail('Bạn chưa cộng điểm kỹ năng nào.');
+    if (countItem(p, 'sach_tay_ky_nang') < 1) fail('Cần 1 Sách Tẩy Kỹ Năng (mua bằng Linh Ngọc ở Lầu Trân Bảo).');
     const cost = resetCost(p);
     if (p.gold < cost) fail('Không đủ xu.');
+    removeItem(p, 'sach_tay_ky_nang', 1);
     p.gold -= cost;
     p.skillPoints += spent;
     for (const id of ids) p.skills[id] = 1;
-    ev.push({ t: 'msg', text: `Đã tẩy điểm kỹ năng, nhận lại ${spent} điểm (-${fmt(cost)} xu).`, color: '#ffd54f' });
+    ev.push({ t: 'msg', text: `Đã tẩy điểm kỹ năng, nhận lại ${spent} điểm (-${fmt(cost)} xu, -1 Sách Tẩy Kỹ Năng).`, color: '#ffd54f' });
   },
 
   // Thức tỉnh class đặc biệt ở NPC ẩn (Người Gác Màn): chỉ class mở bằng mật mã, không phải chức nghiệp 2.

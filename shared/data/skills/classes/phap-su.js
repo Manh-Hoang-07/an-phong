@@ -35,7 +35,7 @@
       m5: { radius: 240 }, t5: 'Vùng băng lan rộng hơn.',
       m10: { freeze: 3, power: 2.53 }, t10: 'Đóng băng lâu hơn, sát thương tăng.' },
     tn7: { school: 'phap_su', icon: '🔥', name: 'Hỏa Tinh Bạo Liệt', level: 35, mp: 124, cd: 19,
-      type: 'meteor', power: 1.05, radius: 250, count: 2, desc: 'Triệu hồi hai thiên thạch lửa phát nổ trên chiến trường.',
+      type: 'meteor', power: 1.05, radius: 250, count: 2, chain: 0.45, desc: 'Triệu hồi hai thiên thạch lửa phát nổ trên chiến trường.',
       m5: { radius: 300 }, t5: 'Vụ nổ lan rộng hơn.',
       m10: { count: 3, power: 0.92 }, t10: 'Gọi thêm một thiên thạch, tổng sức công phá lớn hơn.' },
     tn8: { school: 'phap_su', icon: '☄️', name: 'Hỏa Cầu', level: 10, mp: 30, cd: 3.5,

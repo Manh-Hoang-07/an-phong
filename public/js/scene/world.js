@@ -284,6 +284,7 @@ class WorldScene extends Phaser.Scene {
 
     this.placeWeapon();
     this.juiceUpdate(time, onGround, move);
+    this.lastStandExpire(time);
     this.companionUpdate(time, delta);
     this.summonUpdate(time, delta);
     this.shadowUpdate(time, delta);

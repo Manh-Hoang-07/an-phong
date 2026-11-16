@@ -3,7 +3,7 @@
  */
 (function (G) {
   'use strict';
-  const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats, baseSchool } = G;
+  const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, SPECIAL_SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats, baseSchool } = G;
 
   function nextAwaken(player) {
     const next = (player.awakenTier || 0) + 1;
@@ -32,7 +32,8 @@
 
   function canUseItem(player, def) {
     if (!def || !def.slot) return false;
-    if ((def.level || 1) > player.level) return false;
+    // Trang bị đặc biệt: mua được là mặc được, không có cấp sử dụng
+    if (!def.special && (def.level || 1) > player.level) return false;
     if (def.slot === 'weapon') return canUseWeapon(player, def);
     return true;
   }
@@ -49,7 +50,7 @@
   function calcStats(player, opts = {}) {
     const lv = player.level;
     const p = player.points;
-    const eq = { hp: 0, mp: 0, atk: 0, def: 0, crit: 0, lifesteal: 0, cdr: 0, speed: 0, boss: 0, goldfind: 0, expfind: 0 };
+    const eq = { hp: 0, mp: 0, atk: 0, def: 0, crit: 0, lifesteal: 0, cdr: 0, speed: 0, boss: 0, goldfind: 0, expfind: 0, sta: 0, staRegen: 0, skill: 0 };
     for (const slot of SLOTS) {
       const it = player.equip[slot];
       if (!it) continue;
@@ -77,6 +78,8 @@
     }
     // Sức mạnh kỹ năng theo Tinh thần: có trần ×2 (SPI/(SPI+150)), không tăng vô hạn như trước. Chỉ nhân vào sát thương kỹ năng (không nhân hồi máu / buff).
     let skillMul = 1 + p.spi / (p.spi + 150);
+    // Linh Đan (trang bị đặc biệt): cộng thẳng % sát thương kỹ năng, ngoài điểm Tinh thần
+    if (eq.skill) skillMul *= 1 + eq.skill / 100;
     let costMul = 1;
     if (sc) {
       const b = sc.bonus;
@@ -114,8 +117,10 @@
     const staMul = aw ? formSta : G.STAMINA.maxMul;
     return {
       maxHp: Math.round(hp), maxMp: Math.round(mp), atk: Math.round(atk), def: Math.round(def),
-      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * staMul * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)),
+      maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * staMul * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)) + eq.sta,
       crit: Math.min(60, r1(crit)), speed: speedFinal, skillMul, costMul, wtype,
+      // Hệ số hồi thể lực (Cánh): 0 = không có gì, 15 = hồi nhanh thêm 15%
+      staRegen: Math.max(0, r1(eq.staRegen)),
       lifesteal: Math.min(15, r1(eq.lifesteal + scLifesteal)),
       cdr: Math.min(30, r1(eq.cdr + perkAdd.cdr + scCdr)),
       // Trần cộng dồn: sát thương lên trùm 80%, xu rơi thêm 100%, kinh nghiệm thêm 60%
@@ -127,6 +132,26 @@
   const BOOST_MAX_MS = 24 * 3600 * 1000;
   function boostLeft(player, kind, now) { return Math.max(0, ((player.boosts || {})[kind] || 0) - now); }
   function expBoostMul(player, now) { return boostLeft(player, 'exp', now) > 0 ? 2 : 1; }
+
+  // ---------------------------------------------------------------- Hiệu ứng trang bị đặc biệt
+  // Gom hiệu ứng (trường fx) của MỌI món đang mặc thành một bảng theo loại hiệu ứng.
+  // Mỗi ô chỉ có một món nên không cộng dồn trong cùng một loại; gom hết để client đọc một chỗ.
+  //   undying    { dur, cd }           máu cạn thì không chết, giữ 1 máu `dur` giây (Bùa Hộ Mệnh)
+  //   everyNth   { n, mult }           đòn thứ n nặng hơn (Ấn)
+  //   dodge      { chance }            né đòn (Cánh)
+  //   skillPower { mul }               % sát thương kỹ năng (Linh Đan) — đã cộng vào skillMul
+  //   onKill     { hp, mp }            hồi theo % tối đa khi hạ quái (Chuông Trấn Hồn)
+  function specialFx(player) {
+    const out = {};
+    for (const slot of SPECIAL_SLOTS) {
+      const it = player.equip && player.equip[slot];
+      if (!it) continue;
+      const def = ITEMS[it.id];
+      if (!def || !def.fx) continue;
+      out[def.fx.kind] = def.fx;
+    }
+    return out;
+  }
 
   function newPlayer(name) {
     return {
@@ -166,5 +191,5 @@
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
+  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, specialFx, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

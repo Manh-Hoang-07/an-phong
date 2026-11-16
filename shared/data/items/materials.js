@@ -15,6 +15,10 @@
     da_cuong_hoa_cao: { name: 'Đá cường hóa cao', kind: 'material', price: 1000, stack: true, desc: 'Đá cường hóa tinh khiết, dùng cho trang bị cấp 21 trở lên.' },
     da_cuong_hoa_than_thoai: { name: 'Đá cường hóa thần thoại', kind: 'material', price: 5000, stack: true, desc: 'Đá cường hóa tối thượng, dùng cho trang bị cấp 31 trở lên.' },
     loi_tinh_van: { name: 'Lõi Tinh Vân', kind: 'material', price: 12000, stack: true, desc: 'Nguyên liệu cường hóa và chế tạo trang bị cấp 51 trở lên.' },
+    // Đá riêng của trang bị đặc biệt: KHÔNG bán ở đâu, chỉ rơi từ trùm và tinh anh.
+    // Dùng để nâng bậc Bùa Hộ Mệnh / Ấn / Cánh / Linh Đan / Chuông Trấn Hồn, đi cặp với Linh Ngọc.
+    huyen_tinh_thach: { name: 'Huyền Tinh Thạch', kind: 'material', price: 0, stack: true,
+      desc: 'Tinh thể kết lại từ tàn dư của những kẻ mạnh. Chỉ rơi từ trùm và tinh anh. Dùng để nâng bậc trang bị đặc biệt ở Lầu Trân Bảo (bậc I: 1 viên, II: 2, III: 4, IV: 8, V: 16).' },
   };
 
   (G.ITEM_PARTS = G.ITEM_PARTS || {})['materials'] = PART;

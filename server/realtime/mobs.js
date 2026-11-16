@@ -77,7 +77,7 @@ class World {
       homeX: x, homeY: y, span, minion: !!opts.minion, deaths: 0, respawnAt: 0, key: opts.key || null,
       aggro: false, state: 'move', stateUntil: 0, lungeDir: 1, lvx: 0, lvy: 0,
       nextAttack: 0, nextTurn: 0, nextJump: 0, nextSlam: 0, nextSpecial: 0, patrol: 0,
-      slowUntil: 0, freezeUntil: 0, knockUntil: 0, enraged: false, fled: false,
+      slowUntil: 0, freezeUntil: 0, stunUntil: 0, knockUntil: 0, enraged: false, fled: false,
       contrib: new Map(), lastSent: '',
     };
     if (opts.minion) m.aggro = true;
@@ -172,6 +172,12 @@ class World {
       if (d.boss || d.leader || d.finalBoss) m.slowUntil = Math.max(m.slowUntil, now + ms);
       else m.freezeUntil = Math.max(m.freezeUntil, now + ms);
     }
+    // Choáng: cắt ngang đòn đang gồng, quái đứng yên tại chỗ (trùm chỉ bị làm chậm)
+    if (hit.stun > 0) {
+      const ms = Math.min(hit.stun, 2) * 1000;
+      if (d.boss || d.leader || d.finalBoss) m.slowUntil = Math.max(m.slowUntil, now + ms);
+      else { m.stunUntil = Math.max(m.stunUntil || 0, now + ms); if (m.state !== 'move') this.endAttack(m, now); }
+    }
     if (hit.knock > 0 && !d.boss && !d.leader && !d.passive) {
       const dir = hit.dir === -1 ? -1 : 1;
       m.x += dir * Math.min(hit.knock, 400) * 0.15;
@@ -205,7 +211,7 @@ class World {
   respawn(m) {
     m.maxHp = m.baseHp; m.scale = 1; m.threat.clear(); m.target = null;
     m.hp = m.maxHp; m.alive = true; m.aggro = false; m.state = 'move'; m.enraged = false; m.fled = false;
-    m.slowUntil = m.freezeUntil = m.knockUntil = 0; m.nextSpecial = m.nextSlam = 0; m.vy = 0;
+    m.slowUntil = m.freezeUntil = m.stunUntil = m.knockUntil = 0; m.nextSpecial = m.nextSlam = 0; m.vy = 0;
     m.x = m.homeX; m.y = m.homeY; m.lastSent = ''; m.respawnAt = 0;
     this.dirty = true;
     this.hooks.emit({ t: 'mresp', m: this.full(m) });
@@ -298,6 +304,7 @@ class World {
     if (big && !m.enraged && m.hp < m.maxHp * 0.5) this.enrage(m, now);
 
     if (now < m.freezeUntil) { if (m.state !== 'move') this.endAttack(m, now); this.fall(m, dt); return; }
+    if (now < (m.stunUntil || 0)) { if (m.state !== 'move') this.endAttack(m, now); this.fall(m, dt); return; }
 
     let spd = d.speed * (now < m.slowUntil ? 0.5 : 1);
     if (m.enraged) spd *= 1.35;

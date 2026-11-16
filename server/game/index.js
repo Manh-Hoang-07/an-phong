@@ -62,6 +62,27 @@ function migrate(p) {
   if (!p.advancement.done) p.advancement.done = {};
   if (!p.advancement.unlocked) p.advancement.unlocked = {};
   p.hiddenNpcActive = false; // lần nạp lại hoặc đổi map đều cần gọi NPC lại
+  // Trang bị đặc biệt: từ nay mỗi ô chỉ giữ MỘT món (bậc là thuộc tính, nâng tại chỗ).
+  // Người chơi cũ có thể đang giữ nhiều bậc cùng một ô: giữ bậc cao nhất, trả phần dư về túi thì mất —
+  // nên thay vào đó chỉ bỏ khỏi túi những bậc thấp hơn bậc đang mặc/còn lại, và ghi log để đối soát.
+  if (Array.isArray(p.bag)) {
+    const keep = {};
+    for (const sl of G.SPECIAL_SLOTS) {
+      const it = p.equip && p.equip[sl];
+      if (it && G.ITEMS[it.id] && G.ITEMS[it.id].special) keep[sl] = G.ITEMS[it.id].tier || 1;
+    }
+    for (const e of p.bag) {
+      const d = G.ITEMS[e.id];
+      if (!d || !d.special) continue;
+      const t = d.tier || 1;
+      if (!keep[d.slot] || t > keep[d.slot]) keep[d.slot] = t;
+    }
+    p.bag = p.bag.filter(e => {
+      const d = G.ITEMS[e.id];
+      if (!d || !d.special) return true;
+      return (d.tier || 1) === keep[d.slot];   // chỉ giữ đúng bậc cao nhất của ô đó
+    });
+  }
   // `arrive` là điểm tới của lần đổi bản đồ gần nhất, chỉ có nghĩa trong đúng phiên đó. Nếu đã có vị trí
   // đứng thật (x/y) thì cờ này là dấu vết cũ: giữ lại sẽ khiến lần vào game sau client ném nhân vật về cổng
   // thay vì đặt đúng chỗ đã lưu. Dữ liệu của người chơi cũ cũng được dọn ở đây.
@@ -196,6 +217,13 @@ function migrate(p) {
     }
   }
   if (!Number.isFinite(p.skillPoints)) p.skillPoints = 0;
+  // Sách kỹ năng đã đọc (tối đa SKILL_BOOK_MAX). Người chơi cũ chưa có trường này: suy ra từ
+  // số điểm đã cộng vượt quá điểm thăng cấp, chặn ở mức trần để không ai bị coi là đọc quá.
+  if (!Number.isFinite(p.skillBooks)) {
+    const fromLevel = Math.max(0, (p.level || 1) - 1);
+    const spent = Object.keys(p.skills || {}).reduce((s, id) => s + (G.SKILLS[id] && !G.SKILLS[id].ult ? (p.skills[id] || 0) : 0), 0);
+    p.skillBooks = Math.min(G.SKILL_BOOK_MAX, Math.max(0, spent + p.skillPoints - fromLevel));
+  }
   // Dữ liệu cũ của cơ chế hai hình thái chức nghiệp: bỏ hẳn.
   // Người chơi cũ đã mở chức nghiệp 2 thì p.school đổi sang id nhánh luôn, không còn chuyện bật/tắt.
   if (p.careerSlots !== undefined) delete p.careerSlots;

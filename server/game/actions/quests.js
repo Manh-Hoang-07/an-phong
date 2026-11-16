@@ -160,14 +160,14 @@ const actions = {
     } else if (kind === 'bosses') {
       if (w.claimedBosses) fail('Tuần này bạn đã nhận thưởng trùm rồi.');
       if (w.bosses < G.WEEKLY_BOSSES) fail(`Cần hạ ${G.WEEKLY_BOSSES} trùm (${w.bosses}/${G.WEEKLY_BOSSES}).`);
-      const need = slotsNeeded(p, 'da_cuong_hoa_cao', r.bosses.stones) + slotsNeeded(p, 'sach_ky_nang', 1);
+      const need = slotsNeeded(p, 'da_cuong_hoa_cao', r.bosses.stones) + slotsNeeded(p, 'sach_ky_nang', G.WEEKLY_BOOKS);
       if (bagFree(p) < need) fail('Túi đã đầy.');
       w.claimedBosses = true;
       gainExp(p, r.bosses.exp, ev);
       gainGold(p, r.bosses.gold, ev);
       giveItem(p, 'da_cuong_hoa_cao', r.bosses.stones, ev);
-      giveItem(p, 'sach_ky_nang', 1, ev);
-      ev.push({ t: 'msg', text: '[Hệ thống] Hoàn thành nhiệm vụ tuần: hạ trùm.', color: '#ffd54f' });
+      giveItem(p, 'sach_ky_nang', G.WEEKLY_BOOKS, ev);
+      ev.push({ t: 'msg', text: `[Hệ thống] Hoàn thành nhiệm vụ tuần: hạ trùm. Nhận ${G.WEEKLY_BOOKS} sách kỹ năng (tuần này).`, color: '#ffd54f' });
     } else fail('Loại nhiệm vụ tuần không hợp lệ.');
   },
 

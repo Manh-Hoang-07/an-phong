@@ -7,11 +7,17 @@
 (function (G) {
   'use strict';
 
-  const SLOTS = ['weapon', 'mu', 'ao', 'gang_tay', 'dai_lung', 'quan', 'giay', 'nhan', 'day_chuyen', 'ngoc_boi'];
+  // 10 ô trang bị thường + 5 ô trang bị đặc biệt (chỉ mua bằng Linh Ngọc, xem items/special.js).
+  // Trang bị đặc biệt KHÔNG thuộc bộ theo cấp nào (setOfItem trả về null cho món có special: true).
+  const SLOTS = ['weapon', 'mu', 'ao', 'gang_tay', 'dai_lung', 'quan', 'giay', 'nhan', 'day_chuyen', 'ngoc_boi',
+    'bua', 'an', 'canh', 'linh_dan', 'chuong'];
   const SLOT_NAMES = {
     weapon: 'Vũ khí', mu: 'Mũ', ao: 'Áo', gang_tay: 'Găng tay', dai_lung: 'Đai lưng',
     quan: 'Quần', giay: 'Giày', nhan: 'Nhẫn', day_chuyen: 'Dây chuyền', ngoc_boi: 'Ngọc bội',
+    bua: 'Bùa Hộ Mệnh', an: 'Ấn', canh: 'Cánh', linh_dan: 'Linh Đan', chuong: 'Chuông Trấn Hồn',
   };
+  // Ô trang bị đặc biệt: hiện ở hàng dưới bảng trang bị, không lẫn với 10 ô thường
+  const SPECIAL_SLOTS = ['bua', 'an', 'canh', 'linh_dan', 'chuong'];
 
   // ---------------------------------------------------------------- Bộ trang bị theo cấp
   // Cứ 10 cấp là một bộ. Mỗi ô trang bị đúng một món; cấp sử dụng của từng món trải đều trong 10 cấp
@@ -35,5 +41,5 @@
     { id: 10, name: 'Sáng Thế', min: 91, max: 100, desc: 'Trang bị thợ săn cấp 91–100.' },
   ];
 
-  Object.assign(G, { SLOTS, SLOT_NAMES, SET_LEVELS, SETS });
+  Object.assign(G, { SLOTS, SLOT_NAMES, SPECIAL_SLOTS, SET_LEVELS, SETS });
 })(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

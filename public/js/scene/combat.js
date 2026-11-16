@@ -135,6 +135,19 @@ WorldScene.mix(class WorldCombat {
       ? { dmg: Math.max(1, Math.round((extra.petAtk || 100) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
       : this.calcDamage(mult, m);
     if (extra.basic && m.def.resist) dmg = Math.max(1, Math.round(dmg * (1 - m.def.resist)));
+    // Ấn (trang bị đặc biệt) — Ấn Sát: cứ n đòn đánh trúng thì đòn thứ n gây thêm sát thương.
+    // Đếm riêng theo từng mục tiêu (m.anCount), đổi mục tiêu thì đếm lại từ đầu.
+    // Bỏ qua đòn phản sát thương / dây chuyền / thú / bóng ma: chỉ đếm đòn của người chơi.
+    const anFx = GameData.specialFx(App.player).everyNth;
+    if (anFx && !extra.reflect && !extra.isChain && !extra.pet && !extra.shadow) {
+      m.anCount = (m.anCount || 0) + 1;
+      if (m.anCount >= (anFx.n || 5)) {
+        m.anCount = 0;
+        dmg = Math.max(1, Math.round(dmg * (anFx.mult || 1)));
+        this.floatText(m.sprite.x, this.monsterTop(m) - 26, '🔱 Ấn Sát', '#ffd54f', 15);
+        this.hitstop(40);
+      }
+    }
     if (m.shredUntil > now && !extra.reflect) dmg = Math.max(1, Math.round(dmg * (1 + (m.shred || 0))));   // Tên Phá Giáp: quái chịu thêm sát thương
     if (extra.shred) { m.shred = extra.shred; m.shredUntil = now + 6000; }
     if (!m.net) { m.hp -= dmg; m.aggro = true; }
@@ -151,7 +164,7 @@ WorldScene.mix(class WorldCombat {
       const sp = m.sprite;
       Realtime.send({
         t: 'hit', u: m.uid, d: dmg, c: crit ? 1 : 0, src: m.lastHitSource, dir: extra.dir || Math.sign(sp.x - this.player.x) || 1,
-        slow: extra.slow || 0, freeze: extra.freeze || 0, knock: extra.knock || 90,
+        slow: extra.slow || 0, freeze: extra.freeze || 0, stun: extra.stun || 0, knock: extra.knock || 90,
       });
       this.damageChain(m, extra);
       return;
@@ -168,6 +181,11 @@ WorldScene.mix(class WorldCombat {
       m.knockUntil = this.time.now + 150;
     }
     if (extra.slow) m.slowUntil = this.time.now + extra.slow * 1000;
+    // Choáng: quái đứng yên, không gồng đòn (xem monsters.js). Trùm chỉ bị làm chậm thay vì choáng hẳn.
+    if (extra.stun) {
+      if (m.def.boss || m.def.leader || m.def.finalBoss) m.slowUntil = Math.max(m.slowUntil || 0, this.time.now + extra.stun * 1000);
+      else m.stunUntil = Math.max(m.stunUntil || 0, this.time.now + extra.stun * 1000);
+    }
     // Hồn Nổ Dây Chuyền: mỗi quái trúng gây thêm vụ nổ nhỏ lên quái bên cạnh (tối đa chainBudget.n lần mỗi lần dùng)
     this.damageChain(m, extra);
     if (extra.freeze) {
@@ -202,20 +220,39 @@ WorldScene.mix(class WorldCombat {
   hurtPlayer(atk, dir, push = 260, mon = null) {
     const now = this.time.now;
     if (now < this.invulnUntil || this.dashing) return;
+    // Cánh (trang bị đặc biệt) — Phiêu Diêu: né hoàn toàn một đòn, không mất máu, không mất khiên
+    const dodgeFx = GameData.specialFx(App.player).dodge;
+    if (dodgeFx && Math.random() < dodgeFx.chance) {
+      this.floatText(this.player.x, this.player.y - 34, 'Né', '#8ef0ff', 17);
+      Sound.play('dodge');
+      this.invulnUntil = now + 300;
+      return;
+    }
     let dmg = Math.max(1, Math.round(atk * Phaser.Math.FloatBetween(0.9, 1.1) * (1 - GameData.defReduce(App.stats.def, App.player.level))));
     // Nội tại Tanker "Thành Đồng": máu dưới 50% giảm thêm 10% sát thương
     if (App.hp < App.stats.maxHp * 0.5 && this.hasPassive('tanker')) dmg = Math.max(1, Math.round(dmg * 0.9));
-    const guard = this.buffOn('guard', now);
-    if (guard) {
-      dmg = Math.max(1, Math.round(dmg * (1 - guard.reduce)));
-      if (guard.reflect && mon && mon.alive) this.damageMonster(mon, 0, { reflect: Math.round(atk * guard.reflect) });
+    // Thủ thế: giảm sát thương CỘNG DỒN từ mọi kỹ năng đang bật.
+    // Cộng quá 100% thì đòn vẫn gây tối thiểu 1 sát thương (Math.max ở dưới), không âm máu.
+    const reduce = this.buffReduce(now);
+    if (reduce > 0) {
+      dmg = Math.max(1, Math.round(dmg * (1 - reduce)));
+      // Phản sát thương cũng cộng dồn từ mọi thủ thế đang bật
+      const refl = this.buffReflect(now);
+      if (refl && mon && mon.alive) this.damageMonster(mon, 0, { reflect: Math.round(atk * refl) });
     }
-    const shield = this.buffOn('manashield', now);
-    if (shield && App.mp > 0) {
-      const take = Math.min(App.mp, Math.round(dmg * shield.absorb));
+    // Khiên năng lượng: hấp thụ CỘNG DỒN từ mọi khiên đang bật
+    const absorb = this.buffAbsorb(now);
+    if (absorb > 0 && App.mp > 0) {
+      const take = Math.min(App.mp, Math.round(dmg * absorb));
       App.mp -= take; dmg -= take;
       if (take) this.floatText(this.player.x, this.player.y - 46, '🔷' + take, '#8fb4ff', 13);
       if (dmg <= 0) { this.invulnUntil = now + 500; return; }
+    }
+    // Bùa Hộ Mệnh: đang trong 5 giây Hộ Mệnh thì mọi đòn đều không trừ máu, máu giữ nguyên 1
+    if (this.lastStandUntil && now < this.lastStandUntil) {
+      this.floatText(this.player.x, this.player.y - 46, '🪬', '#ffe082', 13);
+      this.invulnUntil = now + 400;
+      return;
     }
     App.hp -= dmg;
     const companions = this.summonedPetIds();
@@ -238,7 +275,32 @@ WorldScene.mix(class WorldCombat {
     this.floatText(this.player.x, this.player.y - 30, '-' + dmg, '#ff5252', 16);
     this.player.setVelocity(dir * push, -220);
     this.knockUntil = now + 220;
+    // Bùa Hộ Mệnh (trang bị đặc biệt) — Hộ Mệnh: máu cạn thì không chết, giữ 1 máu trong 5 giây.
+    // Đặt SAU khi trừ máu để bắt đúng đòn gây chết, và TRƯỚC khi kiểm tra chết.
+    this.lastStandCheck(now);
     if (App.hp <= 0) this.die();
+  }
+
+  // Hộ Mệnh: máu tụt xuống 0 thì cưỡng chế còn đúng 1 máu, giữ trong `dur` giây. Hồi lại sau `cd` giây.
+  // Trong thời gian đó mọi đòn đánh đều không trừ máu (xem hurtPlayer). Hết hạn mà máu vẫn ≤ 0 thì gục.
+  lastStandCheck(now) {
+    const fx = GameData.specialFx(App.player).undying;
+    if (!fx) return;
+    if (App.hp > 0) return;
+    if (now < (this.lastStandCd || 0)) return;
+    this.lastStandCd = now + (fx.cd || 60) * 1000;
+    this.lastStandUntil = now + (fx.dur || 5) * 1000;
+    App.hp = 1;
+    Sound.play('ward');
+    this.floatText(this.player.x, this.player.y - 52, '🪬 Hộ Mệnh 5s', '#ffe082', 16);
+    this.ringFx(this.player.x, this.player.y, 0xffe082, 2.4);
+  }
+
+  // Hết 5 giây bất tử: máu vẫn ≤ 0 (chưa kịp hồi) thì mới thật sự gục
+  lastStandExpire(now) {
+    if (!this.lastStandUntil || now < this.lastStandUntil) return;
+    this.lastStandUntil = 0;
+    if (App.hp <= 0 && !this.dead) this.die();
   }
 
   async die() {
@@ -265,11 +327,17 @@ WorldScene.mix(class WorldCombat {
     setTimeout(restart, 340);   // dùng setTimeout thay đồng hồ cảnh: không phụ thuộc hitstop / làm chậm thời gian
   }
 
-  slashFx(x, y, sx = 1, sy = 1, flipY = false) {
-    const fx = this.add.image(x, y, 'slash').setDepth(7).setFlipX(this.facing < 0).setFlipY(flipY).setScale(sx, sy).setTint(this.accent());
+  // Vệt chém. o: { angle (radian), tint, life, sy, flipY, alpha }
+  // Kỹ năng nhiều nhát cần mỗi nhát một vệt KHÁC NHAU (góc, cỡ, màu) thì người chơi mới đếm ra số nhát.
+  slashFx(x, y, sx = 1, sy = 1, flipY = false, o = {}) {
+    const fx = this.add.image(x, y, 'slash').setDepth(7).setFlipX(this.facing < 0).setFlipY(flipY)
+      .setScale(sx, sy).setTint(o.tint == null ? this.accent() : o.tint);
+    if (o.angle) fx.setAngle(this.facing * o.angle * 57.2958);
     // Hình vẽ sẵn đã có động tác vung vũ khí, vệt chém chỉ để làm sáng thêm
-    if (this.sheetId) { fx.setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setScale(sx * 0.9, sy * 0.7); }
-    this.tweens.add({ targets: fx, alpha: 0, scaleX: fx.scaleX * 1.2, duration: 200, onComplete: () => fx.destroy() });
+    if (this.sheetId) { fx.setAlpha(o.alpha || 0.45).setBlendMode(Phaser.BlendModes.ADD).setScale(sx * 0.9, sy * 0.7); }
+    else if (o.alpha) fx.setAlpha(o.alpha);
+    this.tweens.add({ targets: fx, alpha: 0, scaleX: fx.scaleX * 1.2, duration: o.life || 200, onComplete: () => fx.destroy() });
+    return fx;
   }
 
   ringFx(x, y, color, scale = 2) {
@@ -294,3 +362,4 @@ WorldScene.mix(class WorldCombat {
     this.time.delayedCall(ms, () => { if (!this.physics.world.isPaused) return; this.physics.world.resume(); });
   }
 });
+

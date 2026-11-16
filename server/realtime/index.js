@@ -199,7 +199,7 @@ function onHit(conn, m) {
   w.applyHit(mob, conn.id, {
     dmg: Math.min(dmg, conn.dmgCap || 5000), crit: m.c === 1,
     src: m.src === 'pet' || m.src === 'shadow' ? m.src : 'player', dir: m.dir === -1 ? -1 : 1,
-    slow: f(m.slow, 6), freeze: f(m.freeze, 4), knock: f(m.knock, 400),
+    slow: f(m.slow, 6), freeze: f(m.freeze, 4), stun: f(m.stun, 2), knock: f(m.knock, 400),
   }, now);
 }
 

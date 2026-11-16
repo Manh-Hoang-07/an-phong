@@ -78,7 +78,7 @@
       ],
       end: ['[Hệ thống] ...', '[Hệ thống] Người chơi số 7. Trạng thái: tự do. Chế độ cổng ngẫu nhiên đã mở.', '— Hết Phần Hai: Năm Trụ Mộng —'],
       obj: {},
-      reward: rw(100, 'story', [['sach_ky_nang_vo_dinh', 1], ['da_cuong_hoa_than_thoai', 8]], { skillPoints: 8 }),
+      reward: rw(100, 'story', [['da_cuong_hoa_than_thoai', 8]], { skillPoints: 8 }),
       choices: [
         { id: 'pha_chuoi', label: 'Phá Chuỗi: "Giải thoát bà. Để ổ khóa tan."', title: 'Người Phá Chuỗi', text: 'Lăng mỉm cười, tan thành ánh sáng. Các cổng đóng dần; thợ săn mất sức mạnh Hệ thống nhưng không ai phải trả giá nữa.' },
         { id: 'giu_loi', label: 'Giữ Lời: "Giữ ổ khóa, nhưng ai cũng được quyền từ chối."', title: 'Người Giữ Lời', text: 'Lăng gật đầu. Hệ thống tiếp tục, nhưng từ nay, thợ săn tự quyết có nhận sức mạnh hay không.' },

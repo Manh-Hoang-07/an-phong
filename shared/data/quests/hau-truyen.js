@@ -41,7 +41,7 @@
         'Trưởng làng Vực: Lần này thì thật sự yên bình rồi. Tân Đô sẽ luôn mở cửa chào đón cậu.',
         '[Hệ thống] Hậu truyện hoàn thành. Cổng SS vẫn mở để thợ săn tiếp tục khám phá.',
       ],
-      reward: rw(50, 'boss', [['sach_ky_nang_vo_dinh', 1], ['da_cuong_hoa_than_thoai', 8]], { skillPoints: 6 }) },
+      reward: rw(50, 'boss', [['da_cuong_hoa_than_thoai', 8]], { skillPoints: 6 }) },
   ];
 
   (G.QUEST_PARTS = G.QUEST_PARTS || []).push(PART);

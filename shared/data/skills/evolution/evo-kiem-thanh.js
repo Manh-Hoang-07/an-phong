@@ -42,7 +42,7 @@
       m5: { range: 820 }, t5: 'Tầm xa hơn (820).',
       m10: { count: 2, power: 2 }, t10: 'Số lượng tăng lên 2. Sức mạnh 200%.' },
     ks42: { school: 'kiem_si', evolutionKey: 'kiem_thanh', icon: '🌪️', name: 'Phong Vân Kiếm Vũ', level: 42, mp: 112, cd: 14,
-      type: 'aoe', power: 2.9, radius: 260, desc: 'Xoay chém diện rộng, đẩy lùi quái.',
+      type: 'aoe', power: 2.9, radius: 260, knock: 330, desc: 'Xoay chém diện rộng, đẩy lùi quái.',
       m5: { radius: 320 }, t5: 'Vùng rộng hơn (320).',
       m10: { power: 3.5 }, t10: 'Sức mạnh 350%.' },
     ks45: { school: 'kiem_si', evolutionKey: 'kiem_thanh', icon: '✨', name: 'Chân Kiếm Thức Tỉnh', level: 45, mp: 140, cd: 30,

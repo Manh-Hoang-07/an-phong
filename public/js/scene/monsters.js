@@ -126,6 +126,17 @@ WorldScene.mix(class WorldMonsters {
 
   killMonster(m) {
     this.killFx(m);
+    // Chuông Trấn Hồn (trang bị đặc biệt) — Trấn Hồn: hạ quái thì hồi % máu và năng lượng tối đa
+    const onKill = GameData.specialFx(App.player).onKill;
+    if (onKill && !this.dead) {
+      const hpGain = Math.round(App.stats.maxHp * (onKill.hp || 0));
+      const mpGain = Math.round(App.stats.maxMp * (onKill.mp || 0));
+      if (hpGain > 0 && App.hp < App.stats.maxHp) {
+        App.hp = Math.min(App.stats.maxHp, App.hp + hpGain);
+        this.floatText(this.player.x, this.player.y - 34, '+' + hpGain, '#69f0ae', 13);
+      }
+      if (mpGain > 0 && App.mp < App.stats.maxMp) App.mp = Math.min(App.stats.maxMp, App.mp + mpGain);
+    }
     const s = m.sprite;
     const dropY = m.def.fly ? this.groundY(Math.floor(s.y / T), Math.floor(s.x / T)) : s.y;
     this.pendingKills.push({ monster: m.id, x: Math.round(s.x), y: Math.round(dropY), source: m.lastHitSource || 'player' });
@@ -337,6 +348,7 @@ WorldScene.mix(class WorldMonsters {
     const winding = m.state === 'windup';
     if (time < (m.flashUntil || 0)) s.setTintFill(0xffffff);
     else if (frozen) s.setTint(0x9ad7ff);
+    else if (time < (m.stunUntil || 0)) { if (Math.floor(time / 90) % 2) s.setTintFill(0xffe082); else this.baseTint(m); }
     else if (winding) { if (Math.floor(time / 70) % 2) s.setTintFill(0xff4d4d); else this.baseTint(m); }
     else if (m.enraged) s.setTint(0xff9a9a);
     else if (time < m.slowUntil) s.setTint(0x9fc5e8);
@@ -363,6 +375,11 @@ WorldScene.mix(class WorldMonsters {
     if (m.wave) this.updateBossWave(m, time);
 
     if (frozen) {
+      if (m.state !== 'move') this.endAttack(m, time);
+      s.body.setVelocity(0, d.fly ? 0 : s.body.velocity.y); this.drawMonsterBar(m); return;
+    }
+    // Choáng: đứng yên, không gồng đòn, không lao tới. Ngắn hơn đóng băng nhưng cắt ngang đòn đang gồng.
+    if (time < (m.stunUntil || 0)) {
       if (m.state !== 'move') this.endAttack(m, time);
       s.body.setVelocity(0, d.fly ? 0 : s.body.velocity.y); this.drawMonsterBar(m); return;
     }

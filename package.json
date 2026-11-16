@@ -19,10 +19,14 @@
     "mobs:reset": "node --env-file-if-exists=.env server/tools/ops/reset-mobs.js",
     "check:player-pos": "node server/tools/check/check-player-pos.js",
     "check:awaken-regen": "node server/tools/check/check-awaken-regen.js",
+    "check:skill-fx": "node server/tools/check/audit-skill-fx.js",
+    "check:skill-books": "node server/tools/check/check-skill-books.js",
+    "check:buff-stacking": "node server/tools/check/check-buff-stacking.js",
     "check:player-pos-live": "node --env-file-if-exists=.env server/tools/check/check-player-pos-live.js",
     "check:player-pos-restart": "node --env-file-if-exists=.env server/tools/check/check-player-pos-restart.js",
     "player:pos": "node --env-file-if-exists=.env server/tools/check/peek-player-pos.js",
-    "player:fix-arrive": "node --env-file-if-exists=.env server/tools/ops/fix-arrive.js"
+    "player:fix-arrive": "node --env-file-if-exists=.env server/tools/ops/fix-arrive.js",
+    "check:special-gear": "node server/tools/check/check-special-gear.js"
   },
   "engines": {
     "node": ">=22.13"

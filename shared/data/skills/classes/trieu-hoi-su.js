@@ -64,6 +64,12 @@
       type: 'spread', power: 1.2, count: 3, range: 480, desc: 'Rồng linh lực lao ra ba hướng.',
       m5: { count: 5, power: 0.9 }, t5: 'Số lượng tăng lên 5. Sức mạnh 90%.',
       m10: { slow: 2, power: 1.1 }, t10: 'Làm chậm 2 giây. Sức mạnh 110%.' },
+    // Tuyệt kỹ đặc trưng của Triệu Hồi Sư: Sách Tuyệt Kỹ Chức Nghiệp dạy đúng kỹ năng này.
+    // Dùng chung dòng với Tử Linh Thuật Sư (ultSchools) nên cả hai nhánh đều học được.
+    th11: { school: 'trieu_hoi_su', ultSchools: ['trieu_hoi_su', 'tu_linh_thuat_su'], icon: '🌟', name: 'Vạn Linh Quy Tụ', level: 20, mp: 230, cd: 46, ult: true,
+      type: 'meteor', power: 3.2, radius: 260, count: 2, desc: 'Tụ hội toàn bộ linh thể, giáng hai đợt linh quang xuống chiến trường và hồi sinh lực cho chủ.',
+      m5: { radius: 310, heal: 0.12 }, t5: 'Vùng nổ rộng hơn, hồi 12% máu.',
+      m10: { count: 3, power: 2.6 }, t10: 'Ba đợt linh quang.' },
     nl7: { school: 'tu_linh_thuat_su', icon: '🩸', name: 'Vuốt Quỷ', level: 27, mp: 50, cd: 5,
       type: 'melee', power: 0.7, hits: 3, range: 130, finisher: 1.1, desc: 'Xé nát kẻ địch trước mặt bằng móng vuốt âm khí.',
       m5: { hits: 4 }, t5: 'Chém 4 nhát.',

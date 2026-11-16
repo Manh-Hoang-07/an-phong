@@ -69,9 +69,7 @@
       case 'close_detail': S.detailOpen = null; renderPanel(); break;
       case 'learn_skill': await act('learn_skill', { skill: ds.skill }); break;
       case 'erase_skill':
-        if (S.confirmErase !== ds.skill) { S.confirmErase = ds.skill; renderPanel(); break; }
-        S.confirmErase = null;
-        await act('erase_skill', { skill: ds.skill }); renderPanel();
+        // Sách Tẩy Kỹ Năng giờ chỉ dùng ở Hội trưởng Khải, không xóa kỹ năng trực tiếp.
         break;
       case 'clear_slot': await act('set_skill', { slot: Number(ds.slot), skill: null }); break;
       case 'reset_skills': await act('reset_skills'); renderPanel(); break;
@@ -113,8 +111,7 @@
       case 'equip': await act('equip', { uid: Number(ds.uid) }); S.selected = null; renderPanel(); break;
       case 'unequip': await act('unequip', { slot: ds.slot }); S.selected = null; renderPanel(); break;
       case 'use':
-        if (G.ITEMS[ds.item]?.kind === 'erase_book') { S.confirmErase = null; openPanel('erase', { force: true }); break; }
-        if (['transform_book', 'book', 'ult_book', 'skill_book', 'slot_book', 'erase_book'].includes(G.ITEMS[ds.item]?.kind)) { await act('use', { item: ds.item }); renderPanel(); }
+        if (['transform_book', 'book', 'ult_book', 'skill_book', 'slot_book'].includes(G.ITEMS[ds.item]?.kind)) { await act('use', { item: ds.item }); renderPanel(); }
         else App.scene.usePotion(ds.item === 'thuoc_nhiem_do' || ds.item.startsWith('binh_mau') ? 'hp' : 'mp', ds.item);
         break;
       case 'sell': await act('sell', { uid: Number(ds.uid), qty: Number(ds.qty) }); break;
@@ -127,7 +124,19 @@
         renderPanel();
         break;
       }
-      case 'buy': await act('buy', { npc: ds.npc, item: ds.item, qty: Number(ds.qty) }); break;
+      // Mua bằng xu. Sách của class khác: bấm lần đầu để hỏi xác nhận, lần hai mới mua.
+      case 'buy': case 'buy_many': {
+        const d = G.ITEMS[ds.item], pl = App.player;
+        const unfit = d && pl.school && (
+          (d.kind === 'ult_book' && d.skill && G.SKILLS[d.skill] && !G.ultFits(pl, G.SKILLS[d.skill])) ||
+          (d.kind === 'skill_book' && !G.bookFits(pl, ds.item)));
+        if (unfit && S.confirmBuy !== ds.item) { S.confirmBuy = ds.item; renderPanel(); break; }
+        S.confirmBuy = null;
+        const inp = el.closest('.shop-qty')?.querySelector('input');
+        const qty = a === 'buy_many' ? Math.max(1, Math.min(Number(inp?.max) || 99, Math.floor(Number(inp?.value) || 1))) : Number(ds.qty) || 1;
+        await act('buy', { npc: ds.npc, item: ds.item, qty });
+        break;
+      }
       // Lầu Trân Bảo (Linh Ngọc). Sách tuyệt kỹ không hợp class: bấm lần đầu để hỏi xác nhận, lần hai mới mua.
       case 'buy_ngoc': case 'buy_ngoc_many': {
         const d = G.ITEMS[ds.item], pl = App.player;
@@ -148,11 +157,10 @@
         inp?.dispatchEvent(new Event('input', { bubbles: true }));
         break;
       }
-      case 'buy_many': case 'sell_many': {
+      case 'sell_many': {
         const inp = el.closest('.shop-qty')?.querySelector('input');
         const qty = Math.max(1, Math.min(Number(inp?.max) || 99, Math.floor(Number(inp?.value) || 1)));
-        if (a === 'buy_many') await act('buy', { npc: ds.npc, item: ds.item, qty });
-        else await act('sell', { uid: Number(ds.uid), qty });
+        await act('sell', { uid: Number(ds.uid), qty });
         break;
       }
       case 'add_stat': await act('add_stat', { stat: ds.stat, n: Number(ds.n) }); break;
@@ -162,6 +170,13 @@
       case 'upgrade': {
         const s = S.selected;
         await act('upgrade', s.where === 'equip' ? { slot: s.key } : { uid: Number(s.key) });
+        renderPanel();
+        break;
+      }
+      case 'upgrade_special': {
+        // Nâng bậc tại chỗ: ưu tiên uid (món trong túi), không có thì theo ô đang mặc
+        const a = ds.uid ? { uid: Number(ds.uid) } : { slot: ds.slot };
+        await act('upgrade_special', a);
         renderPanel();
         break;
       }

@@ -17,7 +17,7 @@
     pa2: { school: 'kiem_si', icon: '⚔️', name: 'Liên Trảm', level: 8, mp: 40, cd: 6,
       type: 'melee', power: 0.27, hits: 4, range: 100, desc: 'Chém liên tiếp phía trước.',
       m5: { hits: 5 }, t5: 'Chém 5 nhát.',
-      m10: { finisher: 0.76 }, t10: 'Nhát cuối gây 76% sức mạnh và hất văng quái.' },
+      m10: { finisher: 0.76, knock: 380 }, t10: 'Nhát cuối gây 76% sức mạnh và hất văng quái.' },
     pa4: { school: 'kiem_si', icon: '🛡️', name: 'Khiên Ý Chí', level: 12, mp: 50, cd: 18,
       type: 'guard', duration: 5, reduce: 0.4, desc: 'Giảm sát thương nhận vào.',
       m5: { duration: 7 }, t5: 'Kéo dài 7 giây.',

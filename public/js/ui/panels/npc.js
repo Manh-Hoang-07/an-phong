@@ -50,7 +50,11 @@
       opts.push(`<button class="btn ${can ? 'primary' : ''}" data-act="rank_eval" ${can ? '' : 'disabled'}>📋 Đánh giá hạng: ${G.playerRank(p)} → ${nr.rank}${can ? '' : ` (cần cấp ${nr.level})`}</button>`);
     }
     if (id === 'lao_su' && p.school && Object.keys(p.skills || {}).length) {
-      opts.push(`<button class="btn" data-act="reset_skills">♻️ Tẩy điểm kỹ năng (${fmt(100 * p.level)} xu)</button>`);
+      const books = p.bag.filter(e => e.id === 'sach_tay_ky_nang').reduce((x, e) => x + e.qty, 0);
+      const label = books
+        ? `♻️ Tẩy điểm kỹ năng (1 Sách Tẩy + ${fmt(100 * p.level)} xu)`
+        : `♻️ Tẩy điểm kỹ năng — cần 1 Sách Tẩy Kỹ Năng (đang có 0). Mua ở Lầu Trân Bảo bằng Linh Ngọc.`;
+      opts.push(`<button class="btn${books ? '' : ' danger'}" data-act="reset_skills" ${books ? '' : 'disabled'}>${label}</button>`);
     }
     // Phụ tuyến do NPC này giao
     for (const sq of G.SIDE_QUESTS.filter(x => x.npc === id)) {

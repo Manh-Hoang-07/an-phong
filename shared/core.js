@@ -55,12 +55,9 @@
     const d = Math.max(0, def || 0);
     return Math.min(DEF_REDUCE_MAX, d / (d + 60 + 12 * Math.max(1, level || 1)));
   }
-  // Sát thương sau giáp (tối thiểu 1)
-  function mitigate(atk, def, level) {
-    return Math.max(1, atk * (1 - defReduce(def, level)));
-  }
+  // Sát thương sau giáp (tối thiểu 1) — dùng defReduce ở nơi gọi.
 
-  Object.assign(G, { MAX_LEVEL, BAG_SIZE, STORAGE_SIZE, STAT_POINTS_PER_LEVEL, RANKS, rankOf, RANK_ORDER, playerRank, nextRank, START_MAP, TILE, expToNext, r1, interp, defReduce, mitigate, DEF_REDUCE_MAX });
+  Object.assign(G, { MAX_LEVEL, BAG_SIZE, STORAGE_SIZE, STAT_POINTS_PER_LEVEL, RANKS, rankOf, RANK_ORDER, playerRank, nextRank, START_MAP, TILE, expToNext, r1, interp, defReduce, DEF_REDUCE_MAX });
   if (typeof module === 'object' && module.exports) module.exports = G;
   else root.GameData = G;
 })(typeof self !== 'undefined' ? self : this);

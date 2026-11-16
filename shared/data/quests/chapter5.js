@@ -130,7 +130,7 @@
         '— Kết thúc: Thức Tỉnh —',
         '[Hệ thống] Chế độ End-game đã mở. Cổng SS xuất hiện ở phía đông Tân Đô.',
       ],
-      reward: rw(50, 'story', [['sach_ky_nang_vo_dinh', 1]], { skillPoints: 10, perk: 'tu_do' }) },
+      reward: rw(50, 'story', [], { skillPoints: 10, perk: 'tu_do' }) },
   ];
 
   (G.QUEST_PARTS = G.QUEST_PARTS || []).push(PART);

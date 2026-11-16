@@ -35,6 +35,10 @@
   const SKILL_BASE_CAP = 5;
   const SKILL_EXPAND_MAX = 2;
 
+  // Sách kỹ năng (sach_ky_nang): mỗi nhân vật đọc TỐI ĐA 7 cuốn = +7 điểm kỹ năng từ sách.
+  // Điểm kỹ năng còn lại đến từ thăng cấp. Đếm riêng ở p.skillBooks để không lẫn với điểm thăng cấp.
+  const SKILL_BOOK_MAX = 7;
 
-  Object.assign(G, { SKILL_MAX, SKILLS, SKILL_SLOTS, ULT_SLOT, EXTRA_SLOT, ULT_SLOTS, ULT_EXTRA_SLOT, ultBookId, skillBookId, SKILL_BASE_CAP, SKILL_EXPAND_MAX });
+
+  Object.assign(G, { SKILL_MAX, SKILLS, SKILL_SLOTS, ULT_SLOT, EXTRA_SLOT, ULT_SLOTS, ULT_EXTRA_SLOT, ultBookId, skillBookId, SKILL_BASE_CAP, SKILL_EXPAND_MAX, SKILL_BOOK_MAX });
 })(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

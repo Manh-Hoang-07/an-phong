@@ -19,8 +19,15 @@
 
   // Đang mở Lầu Trân Bảo (bán bằng Linh Ngọc): đặt ở đầu panelShop, các hàm vẽ bên dưới đọc cờ này
   let ngocMode = false;
-  // Sách tuyệt kỹ không hợp class người chơi → nhãn cảnh báo + hỏi xác nhận trước khi mua
-  const unfitUlt = (p, id) => { const d = G.ITEMS[id]; return !!(d && d.kind === 'ult_book' && d.skill && p.school && G.SKILLS[d.skill] && !G.ultFits(p, G.SKILLS[d.skill])); };
+  // Món không hợp class người chơi (sách tuyệt kỹ / sách kỹ năng của class khác) → nhãn cảnh báo + hỏi xác nhận trước khi mua
+  const unfitItem = (p, id) => {
+    const d = G.ITEMS[id];
+    if (!d || !p.school) return false;
+    if (d.kind === 'ult_book') return !!(d.skill && G.SKILLS[d.skill] && !G.ultFits(p, G.SKILLS[d.skill]));
+    if (d.kind === 'skill_book') return !G.bookFits(p, id);
+    return false;
+  };
+  const unfitUlt = unfitItem;
 
   const kindName = (d) => d.slot ? (G.SLOT_NAMES[d.slot] || 'Trang bị')
     : d.kind === 'potion' ? 'Thuốc'
@@ -32,20 +39,29 @@
   // Món hàng trong tiệm, dựng thành vật phẩm mẫu để dùng chung hàm hiển thị với túi đồ
   const shopEntry = (id) => G.ITEMS[id].slot ? G.makeInst(id, { shop: true }) : { id, qty: 1, plus: 0 };
 
-  // Hàng bán gom theo bộ trang bị (mỗi bộ dùng cho 10 cấp), cộng một nhóm "Thuốc và vật phẩm"
+  // Hàng bán gom theo bộ trang bị (mỗi bộ dùng cho 10 cấp), sách kỹ năng gom theo dòng class,
+  // cộng một nhóm "Thuốc và vật phẩm"
   function shopGroups(p, npc) {
     const groups = [];
     for (const id of G.shopItems(p, npc)) {
-      const set = G.setOfItem(G.ITEMS[id]);
-      const key = set ? 'set' + set.id : 'misc';
+      const d = G.ITEMS[id];
+      const set = G.setOfItem(d);
+      const line = d.kind === 'skill_book' ? G.bookLine(id) : '';
+      const key = set ? 'set' + set.id : line ? 'book_' + line : 'misc';
       let gr = groups.find(g => g.key === key);
-      if (!gr) groups.push(gr = { key, set, items: [] });
+      if (!gr) groups.push(gr = { key, set, line, items: [] });
       gr.items.push(id);
     }
     // Nhóm vật phẩm lên đầu cho dễ thấy
     groups.sort((a, b) => (a.key === 'misc' ? -1 : 0) - (b.key === 'misc' ? -1 : 0));
     return groups;
   }
+
+  // Nhãn nhóm: bộ trang bị → tên bộ + khoảng cấp; sách → tên dòng class
+  const groupLabel = (g, mySet) => g.set
+    ? `${esc(g.set.name)} <small>${g.set.min}–${g.set.max}</small>${mySet && g.set.id === mySet.id ? ' ★' : ''}`
+    : g.line ? `${esc(G.SCHOOLS[g.line] ? G.SCHOOLS[g.line].name : g.line)} <small>${g.items.length} sách</small>`
+      : 'Vật phẩm';
 
   // Ô chọn số lượng + nút mua/bán nhiều
   function qtyBox(act, max, unit, attrs, label, canFn) {
@@ -74,7 +90,8 @@
       if (d.stack) btns.push(qtyBox('buy_ngoc_many', 99, price, `data-npc="${npc}" data-item="${entry.id}"`, '💎 Mua nhiều', n => have >= G.ngocPrice(d, n)));
     } else if (where === 'shop') {
       const price = G.shopPrice(p, d);
-      btns.push(`<button class="btn act-btn primary" data-act="buy" data-npc="${npc}" data-item="${entry.id}" data-qty="1" ${p.gold >= price ? '' : 'disabled'}>🛒 Mua 1</button>`);
+      const warn = unfitItem(p, entry.id) ? '<p class="warn-line">⚠ Không hợp class của bạn. Bấm mua lần nữa để xác nhận.</p>' : '';
+      btns.push(warn + `<button class="btn act-btn primary" data-act="buy" data-npc="${npc}" data-item="${entry.id}" data-qty="1" ${p.gold >= price ? '' : 'disabled'}>${S.confirmBuy === entry.id ? '✔ Xác nhận mua' : '🛒 Mua 1'}</button>`);
       if (d.stack) btns.push(qtyBox('buy_many', 99, price, `data-npc="${npc}" data-item="${entry.id}"`, '🛒 Mua nhiều', n => p.gold >= G.shopPrice(p, d, n)));
     } else {
       const price = G.sellPrice(entry);
@@ -89,20 +106,28 @@
   }
 
   // Phần đầu cột bên: biểu tượng, tên, loại · cấp · giá
+  // Đá nâng bậc trang bị đặc biệt: đếm trong túi để hiện "có N" ngay ở quầy
+  function stoneCount(p) {
+    return (p.bag || []).filter(e => e.id === 'huyen_tinh_thach').reduce((s, e) => s + e.qty, 0);
+  }
+  function stoneOk(p, d) { return stoneCount(p) >= G.specialStoneCost((d && d.tier) || 1); }
+
   function sideHead(entry, where) {
     const p = App.player, d = G.ITEMS[entry.id], q = qOf(entry);
     const priceLine = where === 'shop' && ngocMode
       ? `<small class="ngoc">Giá: ${fmt(G.ngocPrice(d))} 💎${d.stack ? ' / cái' : ''}</small>
-        ${unfitUlt(p, entry.id) ? '<small class="warn-line">⚠ Không hợp class của bạn</small>' : ''}` : null;
+        ${d.special ? `<small class="${stoneOk(p, d) ? 'ngoc' : 'warn-line'}">${stoneOk(p, d) ? '✓' : '⚠'} Cần ${G.specialStoneCost(d.tier || 1)} Huyền Tinh Thạch (có ${stoneCount(p)})</small>` : ''}
+        ${unfitItem(p, entry.id) ? '<small class="warn-line">⚠ Không hợp class của bạn</small>' : ''}` : null;
     const price = where === 'shop' ? G.shopPrice(p, d) : G.sellPrice(entry);
     const discount = where === 'shop' && p.shopDiscount ? `<s class="muted">${fmt(d.price)}</s> ` : '';
-    const sub = [kindName(d), d.slot ? G.QUALITY_NAMES[q] : '', d.level ? 'Cấp ' + d.level : '', entry.qty > 1 ? '×' + entry.qty : '']
+    const sub = [kindName(d), d.slot ? (d.special ? 'Đặc biệt · Bậc ' + ['I', 'II', 'III', 'IV', 'V'][(d.tier || 1) - 1] : G.QUALITY_NAMES[q]) : '', d.level ? 'Cấp ' + d.level : '', entry.qty > 1 ? '×' + entry.qty : '']
       .filter(Boolean).join(' · ');
     return `<div class="bag-side-head">
         <span class="bag-side-ic">${itemIcon(entry.id)}</span>
         <div><b class="q${q}">${esc(d.name)}${entry.plus ? ' +' + entry.plus : ''}</b>
         <small>${esc(sub)}</small>
-        ${priceLine !== null ? priceLine : `<small class="gold">${where === 'shop' ? 'Giá mua' : 'Giá bán'}: ${discount}${fmt(price)} xu${d.stack || entry.qty > 1 ? ' / cái' : ''}</small>`}</div>
+        ${priceLine !== null ? priceLine : `<small class="gold">${where === 'shop' ? 'Giá mua' : 'Giá bán'}: ${discount}${fmt(price)} xu${d.stack || entry.qty > 1 ? ' / cái' : ''}</small>`}
+        ${where === 'shop' && !ngocMode && unfitItem(p, entry.id) ? '<small class="warn-line">⚠ Sách của class khác, đọc sẽ không học được</small>' : ''}</div>
       </div>`;
   }
 
@@ -145,17 +170,17 @@
       if (!key) key = (mySet && groups.find(g => g.key === 'set' + mySet.id) || groups[0] || {}).key;
       const gr = groups.find(g => g.key === key);
       const chips = groups.length > 1 ? `<div class="shop-groups">${groups.map(g =>
-        `<button class="btn small ${g.key === key ? 'primary' : ''}" data-act="shop_group" data-key="${g.key}">${g.set
-          ? `${esc(g.set.name)} <small>${g.set.min}–${g.set.max}</small>${mySet && g.set.id === mySet.id ? ' ★' : ''}` : 'Vật phẩm'}</button>`).join('')}</div>` : '';
+        `<button class="btn small ${g.key === key ? 'primary' : ''}" data-act="shop_group" data-key="${g.key}">${groupLabel(g, mySet)}</button>`).join('')}</div>` : '';
       let grid = '<div class="bag-grid">';
       for (const id of gr ? gr.items : []) {
         const d = G.ITEMS[id];
         const isSel = S.selected && S.selected.where === 'shop' && S.selected.key === id;
+        const unfit = !G.bookFits(p, id);
         const dim = (d.level && d.level > p.level) || p.gold < G.shopPrice(p, d);
-        grid += `<div class="cell qb1${isSel ? ' sel' : ''}${dim ? ' dim' : ''}" data-sel="shop:${id}" title="${esc(d.name)}">${itemIcon(id)}</div>`;
+        grid += `<div class="cell qb1${isSel ? ' sel' : ''}${dim ? ' dim' : ''}" data-sel="shop:${id}" title="${esc(d.name)}">${itemIcon(id)}${unfit ? '<span class="lbl">class khác</span>' : ''}</div>`;
       }
       grid += '</div>';
-      main = chips + grid + (n.gearShop ? '<p class="bag-note muted">💠 Trang bị bán ở tiệm có phẩm chất Thường. Đồ Tốt, Hiếm, Huyền thoại chỉ rơi từ quái và trùm.</p>' : '');
+      main = chips + grid + (n.gearShop ? '<p class="bag-note muted">💠 Trang bị bán ở tiệm có phẩm chất Thường. Đồ Tốt, Hiếm, Huyền thoại chỉ rơi từ quái và trùm. Sách kỹ năng của mọi class đều bán ở đây — sách class khác mua được nhưng phải đổi class mới đọc được.</p>' : '');
       if (S.selected && S.selected.where === 'shop' && G.shopItems(p, npc).includes(S.selected.key)) sel = shopEntry(S.selected.key);
     } else {
       const size = G.bagSize(p);

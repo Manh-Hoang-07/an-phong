@@ -6,14 +6,9 @@
   // Ô trang bị hai bên nhân vật (trái 5 ô, phải 5 ô)
   const LEFT_SLOTS = ['weapon', 'mu', 'ao', 'gang_tay', 'dai_lung'];
   const RIGHT_SLOTS = ['quan', 'giay', 'nhan', 'day_chuyen', 'ngoc_boi'];
-  // Hàng dưới: chỗ dành cho trang bị bổ sung sau này. Thêm một dòng vào đây là có thêm ô.
-  const FUTURE_SLOTS = [
-    ['linh_vat', 'Linh vật', '🪬'],
-    ['bua', 'Bùa', '🧿'],
-    ['an', 'Ấn', '🔱'],
-    ['canh', 'Cánh', '🪽'],
-    ['ho_menh', 'Hộ mệnh', '🛡'],
-  ];
+  // Hàng dưới: 5 ô trang bị ĐẶC BIỆT (chỉ mua bằng Linh Ngọc ở Lầu Trân Bảo).
+  // Thứ tự cố định theo G.SPECIAL_SLOTS; tên và icon lấy từ SLOT_NAMES / SLOT_ICONS.
+  const SPECIAL_ICONS = { bua: '🧿', an: '🔱', canh: '🪽', linh_dan: '💠', chuong: '🔔' };
 
   // ------------------------------------------------------------ Hình nhân vật
   // Cắt khung idle đầu tiên của bộ hình rồi phóng to thành ảnh chân dung (data URL, lưu lại dùng tiếp).
@@ -88,7 +83,7 @@
       const sel = S.selected && S.selected.where === 'equip' && S.selected.key === slot;
       const ic = e ? itemIcon(e.id) : (UI._.SLOT_ICONS[slot] || '◇');
       const name = e ? `${esc(d.name)}${e.plus ? ' +' + e.plus : ''}` : esc(G.SLOT_NAMES[slot]);
-      const sub = e ? `${G.QUALITY_NAMES[q]} · ${G.perfection(e)}%` : 'Trống';
+      const sub = e ? (d.special ? `Đặc biệt · Bậc ${['I', 'II', 'III', 'IV', 'V'][(d.tier || 1) - 1]}` : `${G.QUALITY_NAMES[q]} · ${G.perfection(e)}%`) : 'Trống';
       return `<div class="eq-slot${e ? ' filled' : ' empty'}${sel ? ' sel' : ''}" data-sel="equip:${slot}" title="${esc(G.SLOT_NAMES[slot])}">
         <span class="eq-slot-ic">${ic}</span>
         <span class="eq-slot-txt"><b class="${e ? 'q' + q : 'muted'}">${name}</b><small>${sub}</small></span></div>`;
@@ -109,10 +104,10 @@
       </div>
     </div>`;
 
-    const future = `<div class="eq-future">
-      <div class="eq-future-h">Ô trang bị bổ sung <small>sẽ mở ở bản cập nhật sau</small></div>
-      <div class="eq-future-row">${FUTURE_SLOTS.map(([, name, icon]) =>
-        `<div class="eq-future-cell"><span>${icon}</span><small>${esc(name)}</small></div>`).join('')}</div>
+    // 5 ô trang bị đặc biệt: dùng chung slotRow nên bấm/tháo/xem chi tiết y như ô thường
+    const special = `<div class="eq-future">
+      <div class="eq-future-h">Trang bị đặc biệt <small>chỉ mua bằng 💎 Linh Ngọc ở Lầu Trân Bảo</small></div>
+      <div class="eq-future-row">${G.SPECIAL_SLOTS.map(slotRow).join('')}</div>
     </div>`;
 
     const sel = selectedEntry();
@@ -131,7 +126,7 @@
       <div class="eq-col">${LEFT_SLOTS.map(slotRow).join('')}</div>
       ${center}
       <div class="eq-col">${RIGHT_SLOTS.map(slotRow).join('')}</div>
-    </div>${future}${detail}${modal}`];
+    </div>${special}${detail}${modal}`];
   }
 
   Object.assign(UI._, { panelEquip, portraitOf });

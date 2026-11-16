@@ -8,7 +8,13 @@ const { currentQuest, questComplete, questActive, sideDropActive, sideDropNeed }
 const { ensureWeekly, ensureBoards } = require('../core/periodic');
 const claims = require('../../realtime/claims');
 
-const lastKill = new Map(); // userId -> {t, boss:{monster:time}}
+const lastKill = new Map(); // userId -> {t, tokens, boss:{monster:time}}
+
+// Chống gian lận tốc độ hạ quái: ngân sách quái theo nhịp đánh THẬT của vũ khí đang cầm.
+// Một đòn đánh lan hạ được nhiều quái, nên trần tính theo đòn × số quái mỗi đòn, không theo quái/giây thuần.
+// Kiếm 360ms → 2,78 đòn/giây × 4 = 11,1 quái/giây (trước đây gói 15 quái/90ms = 167 quái/giây).
+const MAX_KILLS_PER_SWING = 4;
+const KILL_BURST_SEC = 3;   // tích tối đa 3 giây ngân sách, để lag mạng không bị chặn oan
 
 // Kinh nghiệm cho linh thú / bóng ma theo người kết liễu: tự hạ 100%, chủ hạ 50%.
 // Cấp tối đa của thú/bóng bằng cấp chủ (lên cấp thì hồi đầy).
@@ -199,17 +205,25 @@ const actions = {
     const list = Array.isArray(a.list) ? a.list.slice(0, 15) : [];
     if (!list.length) fail('Không có quái.');
     const now = Date.now();
-    const lk = lastKill.get(userId) || { t: 0, boss: {} };
-    if (now - lk.t < 90) fail('Quá nhanh.');
+    const lk = lastKill.get(userId) || { t: 0, tokens: 0, boss: {} };
+
+    // Ngân sách quái theo nhịp đánh thật của vũ khí đang cầm (server tự đọc p.equip, client không sửa được).
+    const wtype = G.calcStats(p).wtype;
+    const cd = G.WEAPON_TYPES[wtype]?.cooldown || 400;
+    const rate = (1000 / cd) * MAX_KILLS_PER_SWING;   // quái/giây được phép
+    const cap = rate * KILL_BURST_SEC;                // tích tối đa
+    lk.tokens = Math.min(cap, (lk.tokens || 0) + ((now - lk.t) / 1000) * rate);
     lk.t = now;
     lastKill.set(userId, lk);
+
     // Đang kết nối realtime: quái do server quản lý, chỉ nhận thưởng khi có phiếu do server cấp (realtime/claims.js).
     // Vị trí, loại quái, nguồn hạ lấy từ phiếu, không tin số liệu client gửi.
     const managed = claims.isOnline(userId);
     for (const k of list) {
-      if (!managed) { killOne(p, k, ev, lk, now); continue; }
+      if (lk.tokens < 1) break;   // hết ngân sách thì dừng, không phạt người chơi
+      if (!managed) { lk.tokens -= 1; killOne(p, k, ev, lk, now); continue; }
       const c = claims.take(userId, k && k.kid);
-      if (c) killOne(p, { monster: c.monster, x: c.x, y: c.y, source: c.source, party: !!c.party, bonus: c.bonus }, ev, lk, now);
+      if (c) { lk.tokens -= 1; killOne(p, { monster: c.monster, x: c.x, y: c.y, source: c.source, party: !!c.party, bonus: c.bonus }, ev, lk, now); }
     }
   },
 };

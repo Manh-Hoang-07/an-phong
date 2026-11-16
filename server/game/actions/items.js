@@ -2,7 +2,7 @@
 /* Luật chơi phía server · Hành động: mua bán, mặc / tháo trang bị, dùng thuốc, nhặt đồ, kho. */
 const G = require('../../../shared');
 const { fail, fmt } = require('../core/util');
-const { bagFree, slotsNeeded, addItem, addInst, instName, bagEntry, qualityColor, pruneLoot } = require('../core/inventory');
+const { bagFree, slotsNeeded, addItem, addInst, instName, bagEntry, qualityColor, pruneLoot, countItem, removeItem } = require('../core/inventory');
 const { clampHpMp, storageFor, setSchool, learnNewSkill } = require('../core/progress');
 const { onCurrentMapNpc, roleHere } = require('../core/quests');
 
@@ -34,10 +34,43 @@ const actions = {
     if (!def.stack && qty > 1) fail('Món này chỉ mua từng cái.');
     const cost = G.ngocPrice(def, qty);
     if ((p.linhNgoc || 0) < cost) fail('Không đủ Linh Ngọc.');
+    // Trang bị đặc biệt: mỗi ô chỉ cần MỘT món (bậc là thuộc tính của món, nâng tại chỗ bằng 'upgrade_special').
+    // Đã có món của ô đó — đang mặc hay trong túi — thì không mua lại, kẻo mất ngọc oan.
+    if (def.special) {
+      const owned = G.SPECIAL_SLOTS.some(sl => p.equip[sl] && G.ITEMS[p.equip[sl].id] && G.ITEMS[p.equip[sl].id].slot === def.slot)
+        || p.bag.some(e => G.ITEMS[e.id] && G.ITEMS[e.id].slot === def.slot && G.ITEMS[e.id].special);
+      if (owned) fail(`Đã có ${def.name} rồi. Muốn mạnh hơn thì nâng bậc, đừng mua thêm.`);
+      // Mua bậc I cũng cần đá: đá là điều kiện của bậc, không phải chỉ của lần nâng.
+      const stone = G.specialStoneCost(def.tier || 1);
+      if (countItem(p, 'huyen_tinh_thach') < stone) fail(`Cần ${stone} Huyền Tinh Thạch.`);
+    }
     if (bagFree(p) < slotsNeeded(p, a.item, qty)) fail('Túi đã đầy.');
+    if (def.special) removeItem(p, 'huyen_tinh_thach', G.specialStoneCost(def.tier || 1));
     p.linhNgoc -= cost;
     addItem(p, a.item, qty, { shop: true });
     ev.push({ t: 'msg', text: `Đã mua ${def.name}${qty > 1 ? ' ×' + qty : ''} (-${fmt(cost)} Linh Ngọc).`, color: '#b388ff' });
+  },
+
+  // Nâng bậc trang bị đặc biệt TẠI CHỖ: giữ nguyên uid, chỉ đổi bậc. Không sinh món mới, không rác trong túi.
+  // Chi phí: 2^(bậc-1) Huyền Tinh Thạch + priceNgoc của bậc đích. Làm được ở bất kỳ đâu (không cần Lầu Trân Bảo / Thợ rèn).
+  upgrade_special(p, a, ev) {
+    let target = null;
+    if (a.slot) target = p.equip[a.slot];
+    else if (a.uid != null) target = p.bag.find(e => e.uid === Number(a.uid)) || null;
+    if (!target) fail('Không có trang bị.');
+    const def = G.ITEMS[target.id];
+    if (!def || !def.special) fail('Chỉ nâng bậc được trang bị đặc biệt.');
+    const cost = G.specialUpgradeCost(def);
+    if (!cost) fail('Đã đạt bậc V, không nâng được nữa.');
+    if (countItem(p, 'huyen_tinh_thach') < cost.stone) fail(`Cần ${cost.stone} Huyền Tinh Thạch.`);
+    if ((p.linhNgoc || 0) < cost.ngoc) fail('Không đủ Linh Ngọc.');
+    removeItem(p, 'huyen_tinh_thach', cost.stone);
+    p.linhNgoc -= cost.ngoc;
+    target.id = cost.id;                       // giữ uid, giữ vị trí (đang mặc hay trong túi)
+    target.plus = 0; target.q = 1; target.roll = 1; target.aff = [];
+    const next = G.ITEMS[cost.id];
+    ev.push({ t: 'upgrade_special', tier: next.tier, slot: next.slot });
+    ev.push({ t: 'msg', text: `Nâng bậc thành công! ${def.name} lên bậc ${['I', 'II', 'III', 'IV', 'V'][next.tier - 1]} (-${cost.stone} Huyền Tinh Thạch, -${fmt(cost.ngoc)} Linh Ngọc).`, color: '#69f0ae' });
   },
 
   sell(p, a, ev) {
@@ -69,7 +102,8 @@ const actions = {
     const e = bagEntry(p, a.uid);
     const def = G.ITEMS[e.id];
     if (!def.slot) fail('Không trang bị được.');
-    if ((def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level}.`);
+    // Trang bị đặc biệt không có cấp sử dụng: mua được là mặc được
+    if (!def.special && (def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level}.`);
     if (!G.canUseItem(p, def)) {
       if (def.slot === 'weapon' && !p.school) fail('Chưa chọn class: chỉ dùng được vũ khí luyện tập.');
       if (def.slot === 'weapon') fail(`${G.WEAPON_TYPES[def.wtype]?.name || 'Vũ khí này'} chỉ dành cho ${G.weaponOwners(def.wtype).map(s => G.SCHOOLS[s].name).join(', ') || 'class khác'}. Class ${G.SCHOOLS[p.school].name} dùng ${G.WEAPON_TYPES[G.classWeapon(p.school)].name}.`);
@@ -143,7 +177,7 @@ const actions = {
       if (!p.school) fail('Hãy thức tỉnh class trước khi đọc Sách Kỹ Năng.');
       const id = def.skill, sk = G.SKILLS[id];
       if (!sk || sk.ult) fail('Sách này không hợp lệ.');
-      if (!G.availableSkills(p).includes(id)) fail('Kỹ năng này không thuộc class của bạn.');
+      if (!G.availableSkills(p).includes(id)) fail(`Kỹ năng này thuộc class khác (${G.SCHOOLS[G.baseSchool(sk.evolutionKey || sk.school)]?.name || 'không rõ'}). Đổi sang class đó mới đọc được.`);
       if (G.skillLevel(p, id)) fail('Bạn đã học kỹ năng này rồi.');
       if (sk.level > p.level) fail(`Cần đạt cấp ${sk.level} để học ${sk.name}.`);
       if (G.usedSkillSlots(p, false) >= G.skillCap(p, false)) fail('Đã hết ô học kỹ năng thường. Dùng Sách Mở Rộng Ô Kỹ Năng hoặc Sách Tẩy Kỹ Năng.');
@@ -163,12 +197,16 @@ const actions = {
       ev.push({ t: 'msg', text: `[Hệ thống] Đã mở thêm 1 ô học ${def.ult ? 'tuyệt kỹ' : 'kỹ năng thường'} (${G.skillCap(p, !!def.ult)} ô).`, color: '#ffd54f' });
       return;
     }
-    if (def.kind === 'erase_book') fail('Đọc sách trong Túi đồ rồi chọn kỹ năng muốn xóa.');
+    if (def.kind === 'erase_book') fail('Sách Tẩy Kỹ Năng không đọc được. Mang đến Hội trưởng Khải để tẩy điểm kỹ năng.');
     if (def.kind === 'book') {
+      // Mỗi nhân vật đọc tối đa SKILL_BOOK_MAX cuốn = +7 điểm kỹ năng từ sách
+      const used = p.skillBooks || 0;
+      if (used >= G.SKILL_BOOK_MAX) fail(`Đã đọc đủ ${G.SKILL_BOOK_MAX} cuốn sách kỹ năng (tối đa +${G.SKILL_BOOK_MAX} điểm từ sách). Điểm còn lại kiếm bằng cách thăng cấp.`);
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
       p.skillPoints += 1;
-      ev.push({ t: 'msg', text: '[Hệ thống] Đọc Sách kỹ năng: +1 điểm kỹ năng.', color: '#4fc3f7' });
+      p.skillBooks = used + 1;
+      ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách kỹ năng: +1 điểm kỹ năng (${p.skillBooks}/${G.SKILL_BOOK_MAX} cuốn).`, color: '#4fc3f7' });
       return;
     }
     if (def.kind === 'boost') {

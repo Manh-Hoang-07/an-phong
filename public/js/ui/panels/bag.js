@@ -117,7 +117,7 @@
               : d.kind === 'pet_gear' ? 'Trang bị thú'
                 : d.kind === 'material' ? 'Nguyên liệu'
                   : d.kind === 'quest' ? 'Vật phẩm nhiệm vụ' : 'Vật phẩm';
-      const sub = [kindName, d.slot ? G.QUALITY_NAMES[q] : '', d.level ? 'Cấp ' + d.level : '', entry.qty > 1 ? '×' + entry.qty : '']
+      const sub = [kindName, d.slot ? (d.special ? 'Đặc biệt · Bậc ' + ['I', 'II', 'III', 'IV', 'V'][(d.tier || 1) - 1] : G.QUALITY_NAMES[q]) : '', d.level ? 'Cấp ' + d.level : '', entry.qty > 1 ? '×' + entry.qty : '']
         .filter(Boolean).join(' · ');
       side = `<div class="bag-side-head">
           <span class="bag-side-ic">${UI._.itemIcon(entry.id)}</span>

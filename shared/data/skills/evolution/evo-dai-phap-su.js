@@ -34,7 +34,7 @@
       m5: { radius: 300 }, t5: 'Vùng rộng hơn (300).',
       m10: { freeze: 3, power: 2.8 }, t10: 'Đóng băng 3 giây. Sức mạnh 280%.' },
     ps37: { school: 'phap_su', evolutionKey: 'dai_phap_su', icon: '🌀', name: 'Lôi Cầu Xoáy', level: 37, mp: 100, cd: 16,
-      type: 'meteor', power: 1.5, radius: 260, count: 2, desc: 'Quả cầu sét rơi xuống và nổ lan.',
+      type: 'meteor', power: 1.5, radius: 260, count: 2, chain: 0.5, desc: 'Quả cầu sét rơi xuống và nổ lan.',
       m5: { radius: 310 }, t5: 'Vùng rộng hơn (310).',
       m10: { count: 3, power: 1.2 }, t10: 'Số lượng tăng lên 3. Sức mạnh 120%.' },
     ps38: { school: 'phap_su', evolutionKey: 'dai_phap_su', icon: '💠', name: 'Hồi Nguyên', level: 38, mp: 30, cd: 20,

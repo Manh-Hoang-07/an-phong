@@ -8,7 +8,9 @@
   const QUALITY_NAMES = { 1: 'Thường', 2: 'Tốt', 3: 'Hiếm', 4: 'Huyền thoại' };
   const QUALITY_MUL = { 1: 1, 2: 1.1, 3: 1.2, 4: 1.35 };   // nhân chỉ số chính
   const QUALITY_AFFIX = { 1: 0, 2: 1, 3: 2, 4: 3 };       // số dòng phụ
-  const QUALITY_PRICE = { 1: 1, 2: 2, 3: 4, 4: 8 };       // nhân giá bán
+  // Nhân giá BÁN LẠI (sellPrice = price/4 × hệ số này). Giữ dưới 4 để bán lại luôn lỗ so với giá shop:
+  // mua shop rồi bán lại mất 75%, đồ rơi q4 bán được 75% giá shop (không phải 200% như trước).
+  const QUALITY_PRICE = { 1: 1, 2: 1.5, 3: 2, 4: 3 };
   // Tỉ lệ phẩm chất khi rơi: [thường, tốt, hiếm, huyền thoại]
   const QUALITY_ODDS = { normal: [0.62, 0.30, 0.07, 0.01], boss: [0, 0, 0.8, 0.2] };
 
@@ -26,7 +28,12 @@
     goldfind: { name: 'Xu rơi thêm', unit: '%', min: () => 5, max: (l) => Math.min(25, 12 + l) },
     expfind: { name: 'Kinh nghiệm thêm', unit: '%', min: () => 3, max: (l) => Math.min(15, 6 + l * 0.5) },
   };
-  const STAT_NAMES = { atk: 'Tấn công', def: 'Phòng thủ', hp: 'Máu', mp: 'Năng lượng', crit: 'Chí mạng' };
+  // Nhãn chỉ số. sta / staRegen / skill chỉ có trên trang bị đặc biệt (không nằm trong AFFIXES nên
+  // đồ thường không bao giờ roll ra), nhưng vẫn cần nhãn để bảng chi tiết hiện đúng tên.
+  const STAT_NAMES = {
+    atk: 'Tấn công', def: 'Phòng thủ', hp: 'Máu', mp: 'Năng lượng', crit: 'Chí mạng',
+    sta: 'Thể lực', staRegen: 'Hồi thể lực', skill: 'Sát thương kỹ năng',
+  };
 
   // Nâng cấp: tỉ lệ thành công khi nâng từ +n lên +(n+1)
   const UPGRADE_MAX = 12;
