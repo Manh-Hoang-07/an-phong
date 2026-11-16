@@ -41,5 +41,51 @@
     { id: 10, name: 'Sáng Thế', min: 91, max: 100, desc: 'Trang bị thợ săn cấp 91–100.' },
   ];
 
-  Object.assign(G, { SLOTS, SLOT_NAMES, SPECIAL_SLOTS, SET_LEVELS, SETS });
+  // ---------------------------------------------------------------- Thưởng mặc đủ bộ
+  // Trước đây SETS chỉ là nhãn gom nhóm trong quầy: mặc đủ 10 món không được gì.
+  // Nay mỗi bộ có hai ngưỡng:
+  //   at6  — mặc từ 6 món cùng bộ trở lên: cộng chỉ số (mul = hệ số nhân, add = cộng phẳng)
+  //   at10 — mặc đủ 10 món: hiệu ứng đổi lối chơi (fx) và/hoặc chỉ số cộng thêm
+  //
+  // Vì sao ngưỡng 6 chứ không phải 10: có 5 ô đặc biệt (bua/an/canh/linh_dan/chuong) KHÔNG thuộc
+  // bộ nào, và đồ độc nhất rơi từ trùm cũng không thuộc bộ. Ngưỡng 6 buộc người chơi chọn giữa
+  // "6 món cùng bộ + 4 ô tự do" và "đủ 10 món để lấy hiệu ứng". Đó là quyết định thật mỗi lần đổi đồ.
+  //
+  // fx dùng chung cơ chế với trang bị đặc biệt (xem specialFx trong shared/logic/player.js):
+  //   setStone    { cd }             khiên đá: đỡ trọn 1 đòn mỗi `cd` giây
+  //   setFreeze   { chance, dur }    đòn đánh có `chance` cơ hội đóng băng quái `dur` ms
+  //   setFreeCast { }                kỹ năng đầu tiên mỗi trận không tốn năng lượng
+  //   setPhase    { cd }             lướt qua đòn đánh mỗi `cd` giây, không mất máu
+  const SET_BONUS = {
+    1: { // Tân Binh — bộ mở đầu, thưởng nhẹ để người chơi mới thấy được tác dụng
+      at6: { mul: { hp: 1.10 } },
+      at10: { mul: { hp: 1.10, atk: 1.10 } },
+    },
+    2: { // Thạch Vương
+      at6: { mul: { hp: 1.12 } },
+      at10: { mul: { hp: 1.12 }, fx: { kind: 'setStone', cd: 12 } },
+    },
+    3: { // Băng Long
+      at6: { mul: { def: 1.10 } },
+      at10: { mul: { def: 1.10 }, fx: { kind: 'setFreeze', chance: 0.25, dur: 2 } },
+    },
+    4: { // Lưu Trữ
+      at6: { mul: { mp: 1.08 } },
+      at10: { mul: { mp: 1.08 }, fx: { kind: 'setFreeCast' } },
+    },
+    5: { // Vĩnh Hằng
+      at6: { mul: { atk: 1.10 } },
+      at10: { mul: { atk: 1.10 }, fx: { kind: 'setPhase', cd: 8 } },
+    },
+    6: { at6: { mul: { hp: 1.10, def: 1.06 } }, at10: { mul: { hp: 1.10, def: 1.06, atk: 1.08 } } },
+    7: { at6: { mul: { atk: 1.08, hp: 1.06 } }, at10: { mul: { atk: 1.08, hp: 1.06 }, add: { crit: 5 } } },
+    8: { at6: { mul: { hp: 1.10, mp: 1.06 } }, at10: { mul: { hp: 1.10, mp: 1.06 }, add: { cdr: 5 } } },
+    9: { at6: { mul: { atk: 1.08, def: 1.08 } }, at10: { mul: { atk: 1.08, def: 1.08 }, add: { lifesteal: 3 } } },
+    10: { at6: { mul: { hp: 1.12, atk: 1.10 } }, at10: { mul: { hp: 1.12, atk: 1.10, def: 1.10 }, add: { boss: 10 } } },
+  };
+  // Ngưỡng mặc đủ bộ
+  const SET_TIER_LOW = 6;
+  const SET_TIER_HIGH = 10;
+
+  Object.assign(G, { SLOTS, SLOT_NAMES, SPECIAL_SLOTS, SET_LEVELS, SETS, SET_BONUS, SET_TIER_LOW, SET_TIER_HIGH });
 })(typeof module === 'object' && module.exports ? require('../../core') : self.GameData);

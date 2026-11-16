@@ -482,6 +482,9 @@ html.narrow #hud-right { max-width: calc(100vw - 20px); }
   border-radius: 8px; border: 1px dashed var(--line-2); background: rgba(3, 7, 18, 0.55); text-align: center;
 }
 .sslot.ult { border-color: rgba(255, 204, 61, 0.7); }
+/* Ô thứ 9 — kỹ năng do trang bị cấp: viền tím để phân biệt với ô học bằng sách */
+.sslot.gear { border-color: rgba(179, 136, 255, 0.75); border-style: solid; }
+.sslot.gear.filled { background: rgba(60, 40, 100, 0.35); }
 .sslot .k { position: absolute; left: 5px; top: 2px; font-size: 10px; color: var(--muted); font-weight: 700; }
 .sslot .ic { font-size: 22px; line-height: 1.1; }
 .sslot small { font-size: 10.5px; line-height: 1.2; }
@@ -829,6 +832,9 @@ body.touch .inv-detail .detail { margin-top: 0; }
 #tbtns .tb-s4   { right: 222px; bottom: 2px; }
 #tbtns .tb-form { right: 218px; bottom: 63px; }
 #tbtns .tb-aws  { right: 197px; bottom: 124px; }
+/* Ô kỹ năng thứ 9 (do trang bị cấp): nhỏ hơn nút kỹ năng, đặt ở góc trống trên-trái của cụm.
+   Kiểm tra không đè: aws kết thúc ở bottom 174, nút này bắt đầu 176; right 236 > ult2 (kết thúc 67). */
+#tbtns .tb-gear { right: 236px; bottom: 176px; width: 46px; height: 46px; font-size: 19px; border-color: #b388ff !important; }
 html.compact body.touch #quest-track { width: min(190px, calc(var(--gw, 100vw) * .25)); max-width: 190px; padding: 6px 9px; font-size: 10.5px; line-height: 1.35; }
 .inv-wallet { margin: 0 0 8px; padding: 7px 10px; border: 1px solid rgba(231,182,107,.2); border-radius: 8px; color: var(--gold); font-size: 12px; font-weight: 700; }
 

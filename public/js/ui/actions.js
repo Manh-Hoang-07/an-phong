@@ -166,6 +166,13 @@
       case 'add_stat': await act('add_stat', { stat: ds.stat, n: Number(ds.n) }); break;
       case 'set_skill': await act('set_skill', { slot: Number(ds.slot), skill: ds.skill }); break;
       case 'store': await act('store', { uid: Number(ds.uid) }); hideTip(); break;
+      case 'cleanse_nhiem': {
+        // Gột vết nhiễm: món đang mặc thì gửi theo ô, món trong túi thì gửi theo uid
+        const payload = ds.where === 'equip' ? { slot: ds.slot } : { uid: Number(ds.uid) };
+        await act('cleanse_nhiem', payload);
+        renderPanel();
+        break;
+      }
       case 'retrieve': await act('retrieve', { uid: Number(ds.uid) }); hideTip(); break;
       case 'upgrade': {
         const s = S.selected;
@@ -184,6 +191,12 @@
       case 'reforge': {
         const s = S.selected;
         await act('reforge', s.where === 'equip' ? { slot: s.key } : { uid: Number(s.key) });
+        renderPanel();
+        break;
+      }
+      case 'seal': {
+        const s = S.selected;
+        await act('seal', s.where === 'equip' ? { slot: s.key } : { uid: Number(s.key) });
         renderPanel();
         break;
       }

@@ -51,9 +51,17 @@
     cung_sang_the: { name: 'Cung Sáng Thế', kind: 'weapon', slot: 'weapon', wtype: 'cung', school: 'cung_thu', level: 91, minQ: 3, stats: { atk: 214, hp: 417, mp: 277, crit: 28 }, price: 62900 },
     truong_sang_the: { name: 'Trượng Sáng Thế', kind: 'weapon', slot: 'weapon', wtype: 'truong', school: 'phap_su', level: 91, minQ: 3, stats: { atk: 180, def: 16, hp: 417, mp: 416 }, price: 62900 },
     // ===== Vật phẩm đặc biệt / hiếm từ GDD
-    song_dao_lam_suong: { name: 'Song Đao Lam Sương', kind: 'weapon', slot: 'weapon', wtype: 'song_dao', school: 'sat_thu', level: 15, minQ: 3, stats: { atk: 28, crit: 8, speed: 20 }, price: 5000, desc: 'Song đao của Lam Sương: tốc chạy +20.' },
-    thuong_bang_suong: { name: 'Thượng Băng Sương', kind: 'weapon', slot: 'weapon', wtype: 'kiem', school: 'kiem_si', level: 27, minQ: 4, stats: { atk: 65, hp: 150, def: 10 }, price: 25000, desc: 'Kiếm băng: quái lại gần (trong 170) bị làm chậm một nửa tốc độ.' },
-    than_kiem_vinh_hang: { name: 'Thần Kiếm Vĩnh Hằng', kind: 'weapon', slot: 'weapon', wtype: 'kiem', school: 'kiem_si', level: 45, minQ: 4, stats: { atk: 130, def: 15, hp: 250, boss: 30 }, price: 0, desc: 'Đòn đánh xuyên mọi phòng thủ của quái Hư Không (cấp 41–50) và tăng sát thương lên trùm.' },
+    song_dao_lam_suong: { name: 'Song Đao Lam Sương', kind: 'weapon', slot: 'weapon', wtype: 'song_dao', school: 'sat_thu', level: 15, minQ: 3, stats: { atk: 28, crit: 8, speed: 20 }, price: 5000,
+      grantsSkill: 'st1',
+      desc: 'Song đao của Lam Sương: tốc chạy +20. Cầm đao là dùng được Lướt Bóng của Sát Thủ (ô kỹ năng F).' },
+    thuong_bang_suong: { name: 'Thượng Băng Sương', kind: 'weapon', slot: 'weapon', wtype: 'kiem', school: 'kiem_si', level: 27, minQ: 4, stats: { atk: 65, hp: 150, def: 10 }, price: 25000,
+      fx: { kind: 'slowAura', range: 170, mul: 0.5 },
+      grantsSkill: 'tn3',
+      desc: 'Kiếm băng: quái lại gần (trong 170) bị làm chậm một nửa tốc độ. Cầm kiếm là dùng được Băng Ngục của Pháp Sư (ô kỹ năng F).' },
+    than_kiem_vinh_hang: { name: 'Thần Kiếm Vĩnh Hằng', kind: 'weapon', slot: 'weapon', wtype: 'kiem', school: 'kiem_si', level: 45, minQ: 4, stats: { atk: 130, def: 15, hp: 250, boss: 30 }, price: 0,
+      fx: { kind: 'pierce', minLevel: 41, maxLevel: 50 },
+      grantsSkill: 'pa4',
+      desc: 'Đòn đánh xuyên mọi phòng thủ của quái Hư Không (cấp 41–50) và tăng sát thương lên trùm. Cầm kiếm là dùng được Khiên Ý Chí (ô kỹ năng F).' },
   };
 
   (G.ITEM_PARTS = G.ITEM_PARTS || {})['weapons'] = PART;

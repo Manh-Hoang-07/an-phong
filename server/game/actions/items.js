@@ -278,6 +278,26 @@ const actions = {
     if (G.ITEMS[e.id].stack) addItem(p, e.id, e.qty);
     else p.bag.push(e);
   },
+
+  // Gột Vết Nhiễm: đứng ở Dược sư, dùng 1 Thuốc chữa nhiễm đỏ để gột sạch vết nhiễm của MỘT món.
+  // Gột xong mất phần chỉ số cộng thêm của nhiễm (18%) nhưng lấy lại được máu tối đa và hồi máu.
+  // Đây là chỗ thuoc_nhiem_do có tác dụng thật, không chỉ là bình máu 50%.
+  cleanse_nhiem(p, a, ev) {
+    // Dược sư là NPC role 'shop' có shopKind 'herb' — không phải role riêng
+    const npc = G.npcByRole(p, p.map, 'shop');
+    if (!npc || G.NPCS[npc].shopKind !== 'herb') fail('Hãy đến gặp Dược sư.');
+    if (countItem(p, 'thuoc_nhiem_do') < 1) fail('Cần 1 Thuốc chữa nhiễm đỏ.');
+    const target = a.slot ? p.equip[a.slot] : bagEntry(p, a.uid);
+    if (!target) fail('Không có trang bị.');
+    const def = G.ITEMS[target.id];
+    if (!def.slot) fail('Chỉ gột được trang bị.');
+    if (!(target.nhiem > 0)) fail('Món này không bị nhiễm đỏ.');
+    const tier = target.nhiem;
+    removeItem(p, 'thuoc_nhiem_do', 1);
+    G.cleanseNhiem(target);
+    clampHpMp(p);
+    ev.push({ t: 'msg', text: `Gột sạch Vết Nhiễm bậc ${tier} trên ${def.name}. Mất phần chỉ số cộng thêm, lấy lại máu tối đa.`, color: '#a5d6a7' });
+  },
 };
 
 module.exports = actions;

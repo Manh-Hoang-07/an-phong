@@ -27,7 +27,25 @@ const LOOK_REFRESH_MS = 5000;     // cập nhật tên/cấp/class/vũ khí từ
 const SESSION_CHECK_MS = 30000;
 const MAX_MSG_BYTES = 1024;
 const MAX_MSGS_PER_SEC = 160;
-const MAX_HITS_PER_SEC = 80;      // đòn đánh quái tối đa mỗi giây của một người
+// Trần đòn đánh mỗi giây. Vũ khí nhanh nhất (song đao 270ms) là 3,7 đòn/giây; đánh lan gửi mỗi quái
+// một gói nên một nhát trúng 4 quái = 14,8 gói/giây. 16 chừa dư cho lag, và chặn 80 → 16.
+const MAX_HITS_PER_SEC = 16;
+// Đòn từ KỸ NĂNG có ngân sách riêng, vì một lần dùng kỹ năng bắn ra nhiều đòn (hits 9, count 5, chain 6).
+// Kỹ năng thưa nhất là 1 lần/giây; 20 đòn/giây đủ cho kỹ năng nhiều nhát nhất trong lúc chờ hồi chiêu.
+const MAX_SKILL_HITS_PER_SEC = 20;
+// Hệ số trần sát thương một đòn, tính từ ATK của chính nhân vật (server tự đọc, client không sửa được).
+// Đánh thường: vũ khí mạnh nhất mult 1,25 × chí mạng 2,5 × ngẫu nhiên 1,1 × buff ATK 1,41 × shred 1,25 ≈ 6,1.
+const CAP_MUL_BASIC = 8;
+// Kỹ năng: power 7,93 × skillMul 1,13 × chí mạng 2,5 × ngẫu nhiên 1,1 × buff 1,41 × vsSlowed 2 × shred 1,25
+// ≈ 87. Lấy 90 để tuyệt kỹ mạnh nhất của người chơi mạnh nhất (ATK 1.856) vẫn lọt.
+// Lưu ý: trần CŨ (60×) thực ra đã CẮT OAN tuyệt kỹ — 111.860 so với 161.221 thật, hụt 28%.
+const CAP_MUL_SKILL = 90;
+// Ngân sách SÁT THƯƠNG kỹ năng mỗi giây. Cần thiết vì cờ `sk` do client gửi: kẻ gian có thể giả nó cho
+// đánh thường để lấy trần 90×. Ngân sách này chặn tổng sát thương, không chỉ số đòn.
+// Tuyệt kỹ AoE trúng 6 quái ≈ 6 × 167.540 = 1,0M, nên tốc độ nạp 6×ATK×90/giây và tích tối đa 2 giây
+// (2,0M) để một lần dùng AoE thật luôn lọt, còn spam liên tục bị ghì ở 1,0M/giây.
+const SKILL_DMG_RATE_MUL = 6;
+const SKILL_DMG_BURST_SEC = 2;
 const CHAT_MAX_LEN = 100;
 const CHAT_GAP_MS = { map: 1200, world: 8000, party: 800 };
 const WORLD_BOUND = 100000;
@@ -73,9 +91,14 @@ async function refreshLook(conn) {
   const name = String(p.name || '?').slice(0, 16);
   try {
     const st = G.calcStats(p, { form: !!p.formActive });
-    // Trần sát thương một đòn (đã gồm chí mạng, buff, hệ số kỹ năng): chặn client gửi số tuỳ ý
+    // Trần sát thương một đòn, tính từ ATK của chính nhân vật: chặn client gửi số tuỳ ý.
+    // Hai trần vì đòn thường và tuyệt kỹ khác nhau hơn 10 lần (xem CAP_MUL_* ở đầu file).
+    // dmgCap giữ lại cho tương thích; capBasic/capSkill là thứ onHit dùng.
     conn.dmgCap = Math.max(st.atk, 30) * 60 + 500;
-  } catch { conn.dmgCap = 5000; }
+    conn.atk = Math.max(st.atk, 30);
+    conn.capBasic = conn.atk * CAP_MUL_BASIC + 50;
+    conn.capSkill = conn.atk * CAP_MUL_SKILL + 500;
+  } catch { conn.dmgCap = 5000; conn.atk = 30; conn.capBasic = 5000; conn.capSkill = 20000; }
   const changed = name !== conn.name || school !== conn.school || level !== conn.level || weapon !== conn.weapon;
   conn.name = name; conn.school = school; conn.level = level; conn.weapon = weapon;
   return changed;
@@ -188,16 +211,38 @@ function onHit(conn, m) {
   if (!w) return;
   const now = Date.now();
   if (conn.dead && now - conn.deadAt > 1500) return;
-  if (now - conn.hitAt >= 1000) { conn.hitAt = now; conn.hitN = 0; }
-  if (++conn.hitN > MAX_HITS_PER_SEC) return;
+  // Hai ngân sách riêng: đánh thường và kỹ năng. Kỹ năng bắn nhiều đòn một lần nên cần ngân sách rộng hơn,
+  // nhưng không được dùng chung với đánh thường (nếu không thì đánh thường thành cửa sau).
+  const isSkill = m.sk === 1;
+  if (now - conn.hitAt >= 1000) { conn.hitAt = now; conn.hitN = 0; conn.skillHitN = 0; }
+  if (isSkill) {
+    if (++conn.skillHitN > MAX_SKILL_HITS_PER_SEC) return;
+  } else if (++conn.hitN > MAX_HITS_PER_SEC) return;
   const mob = w.byUid.get(m.u | 0);
   if (!mob || !mob.alive) return;
   if (Math.abs(conn.x - mob.x) > 1100 || Math.abs(conn.y - mob.y) > 700) return;   // quá xa (đã gồm tầm bắn / thú đi theo)
   const dmg = Number(m.d);
   if (!(dmg >= 1)) return;
   const f = (v, max) => (Number.isFinite(v) && v > 0 ? Math.min(v, max) : 0);
+  const atk = Math.max(conn.atk || 30, 30);
+  let cap = isSkill ? (conn.capSkill || atk * CAP_MUL_SKILL + 500) : (conn.capBasic || atk * CAP_MUL_BASIC + 50);
+  // Cờ `sk` do client gửi nên không đáng tin: kỹ năng còn bị ghì thêm bằng ngân sách SÁT THƯƠNG mỗi giây,
+  // để giả cờ cũng không đổi được nhiều hơn một lượng nhỏ.
+  if (isSkill) {
+    const rate = atk * CAP_MUL_SKILL * SKILL_DMG_RATE_MUL;
+    const pool = rate * SKILL_DMG_BURST_SEC;
+    // Lần dùng kỹ năng đầu tiên phải có ngân sách đầy, nếu không đòn đầu tiên bị chặn oan.
+    if (!conn.skillDmgAt) { conn.skillDmg = pool; conn.skillDmgAt = now; }
+    else {
+      conn.skillDmg = Math.min(pool, (conn.skillDmg || 0) + ((now - conn.skillDmgAt) / 1000) * rate);
+      conn.skillDmgAt = now;
+    }
+    if (conn.skillDmg < 1) return;
+    cap = Math.min(cap, conn.skillDmg);
+    conn.skillDmg -= Math.min(dmg, cap);
+  }
   w.applyHit(mob, conn.id, {
-    dmg: Math.min(dmg, conn.dmgCap || 5000), crit: m.c === 1,
+    dmg: Math.min(dmg, cap), crit: m.c === 1,
     src: m.src === 'pet' || m.src === 'shadow' ? m.src : 'player', dir: m.dir === -1 ? -1 : 1,
     slow: f(m.slow, 6), freeze: f(m.freeze, 4), stun: f(m.stun, 2), knock: f(m.knock, 400),
   }, now);
@@ -370,7 +415,8 @@ async function connect(ws, token, session) {
     id: nextId++, ws, token, userId: session.userId,
     name: '?', school: null, level: 1, weapon: null,
     map: null, x: 0, y: 0, f: 1, a: 'idle', dirty: false, hpPct: 100,
-    dmgCap: 5000, hitAt: now, hitN: 0, dead: false, deadAt: 0,
+    dmgCap: 5000, atk: 30, capBasic: 5000, capSkill: 20000, skillDmg: 0, skillDmgAt: now,
+    hitAt: now, hitN: 0, skillHitN: 0, dead: false, deadAt: 0,
     alive: true, rateAt: now, rateN: 0, lastChat: {}, checkedAt: now, lookAt: now,
   };
   const old = byUser.get(conn.userId);

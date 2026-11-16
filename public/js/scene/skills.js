@@ -57,20 +57,31 @@ WorldScene.mix(class WorldSkills {
 
   useSkill(slot, time) {
     const p = App.player;
-    const id = p.skillSlots[slot];
+    // Ô thứ 9 (GEAR_SKILL_SLOT): kỹ năng do TRANG BỊ cấp, không nằm trong p.skillSlots.
+    // Mặc đồ thì có, tháo đồ thì mất — xem gearSkill trong shared/logic/skills.js.
+    const gear = slot === GameData.GEAR_SKILL_SLOT ? GameData.gearSkill(p) : null;
+    const id = gear ? gear.id : p.skillSlots[slot];
     if (!id) {
       UI.log(p.school ? 'Ô kỹ năng trống. Mở bảng Kỹ năng (phím K) để học và gắn kỹ năng.' : 'Chưa có kỹ năng. Đạt cấp 5 và thức tỉnh class ở Hội trưởng Khải.', '#bdbdbd');
       return;
     }
-    const lv = GameData.skillLevel(p, id);
+    const lv = gear ? gear.level : GameData.skillLevel(p, id);
     if (!lv) return;
     const sk = GameData.skillAt(id, lv);
     if (time < (this.cooldowns[id] || 0)) return;
     const cost = Math.round(sk.mp * App.stats.costMul);
-    if (App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }
+    // Bộ Lưu Trữ 10 món — Cổ Ngữ: kỹ năng ĐẦU TIÊN mỗi trận không tốn năng lượng.
+    // Cờ reset ở resetCombatFlags() khi vào bản đồ mới hoặc hồi sinh.
+    const freeCast = GameData.specialFx(p).setFreeCast && !this.freeCastUsed;
+    if (!freeCast && App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }
     const sta = this.skillStaminaCost(sk);
     if (!this.canSpendStamina(sta)) return;
-    App.mp -= cost;
+    if (freeCast) {
+      this.freeCastUsed = true;
+      this.floatText(this.player.x, this.player.y - 60, '📖 Cổ Ngữ', '#4fc3f7', 14);
+    } else {
+      App.mp -= cost;
+    }
     this.spendStamina(sta);
     const cdMs = sk.cd * 1000 * (1 - (App.stats.cdr || 0) / 100);
     this.cooldowns[id] = time + cdMs;
@@ -113,8 +124,8 @@ WorldScene.mix(class WorldSkills {
         if (target) {
           this.shadowFocusTarget = target;
           this.shadowFocusUntil = time + 6000;
-          this.hitCircle(target.sprite.x, target.sprite.y, sk.radius, pw, fx({ freeze: sk.freeze }));
-        } else this.hitCircle(pl.x + f * 100, pl.y, sk.radius, pw, fx({ freeze: sk.freeze }));
+          this.hitCircle(target.sprite.x, target.sprite.y, sk.radius, pw, fx({ freeze: sk.freeze, sk: 1 }));
+        } else this.hitCircle(pl.x + f * 100, pl.y, sk.radius, pw, fx({ freeze: sk.freeze, sk: 1 }));
         break;
       }
       case 'dash': {
@@ -134,13 +145,13 @@ WorldScene.mix(class WorldSkills {
           const trail = this.add.rectangle((a + b) / 2, pl.y, Math.max(40, b - a + 50), 5, this.accent(), 0.75)
             .setDepth(7).setBlendMode(Phaser.BlendModes.ADD);
           this.tweens.add({ targets: trail, scaleY: 3, alpha: 0, duration: 280, onComplete: () => trail.destroy() });
-          this.hitBox((a + b) / 2, pl.y, b - a + 50, 64, pw, fx());
+          this.hitBox((a + b) / 2, pl.y, b - a + 50, 64, pw, fx({ sk: 1 }));
           this.slashFx(pl.x, pl.y, 1.6, 1.2);
           if (sk.after) {
             this.time.delayedCall(180, () => {
               const g = this.add.rectangle((a + b) / 2, pl.y, b - a + 40, 6, this.accent(), 0.9).setDepth(7).setBlendMode(Phaser.BlendModes.ADD);
               this.tweens.add({ targets: g, scaleY: 4, alpha: 0, duration: 260, onComplete: () => g.destroy() });
-              this.hitBox((a + b) / 2, pl.y, b - a + 50, 64, sk.after * App.stats.skillMul, fx());
+              this.hitBox((a + b) / 2, pl.y, b - a + 50, 64, sk.after * App.stats.skillMul, fx({ sk: 1 }));
             });
           }
         });
@@ -167,7 +178,7 @@ WorldScene.mix(class WorldSkills {
             this.ringFx(pl.x + this.facing * (sk.range / 2), pl.y, fin ? 0xffffff : this.accent(), fin ? 2.2 : 1.1);
             // Hất văng / choáng dồn vào NHÁT CUỐI (mô tả luôn nói "nhát cuối ... hất văng"),
             // làm chậm / đóng băng / xuyên giáp thì mọi nhát đều ăn.
-            const hitFx = fx(isLast ? {} : { knock: 0, stun: 0 });
+            const hitFx = fx(isLast ? { sk: 1 } : { knock: 0, stun: 0, sk: 1 });
             this.hitBox(pl.x + this.facing * sk.range / 2, pl.y, sk.range, 70,
               fin ? sk.finisher * App.stats.skillMul : pw, hitFx);
             if (fin) { this.cameras.main.shake(120, 0.006); this.hitstop(40); }
@@ -210,7 +221,7 @@ WorldScene.mix(class WorldSkills {
         for (let k = 0; k < n; k++) {
           this.shoot({ key: water ? 'fx_wave' : 'proj_fire', speed: water ? 520 : 820, range: sk.range, mult: pw,
             pierce: sk.pierce, slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun,
-            knock: sk.knock || (water ? 140 : 60), dy: (k - (n - 1) / 2) * 16 });
+            knock: sk.knock || (water ? 140 : 60), sk: 1, dy: (k - (n - 1) / 2) * 16 });
         }
         break;
       }
@@ -218,7 +229,7 @@ WorldScene.mix(class WorldSkills {
         this.swing();
         for (let k = 0; k < sk.count; k++) {
           const ang = (k - (sk.count - 1) / 2) * 0.16;
-          this.shoot({ key: 'proj_fire', speed: 760, range: sk.range, mult: pw, angle: ang,
+          this.shoot({ key: 'proj_fire', speed: 760, range: sk.range, mult: pw, angle: ang, sk: 1,
             slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun, knock: sk.knock, pierce: sk.pierce });
         }
         break;
@@ -231,7 +242,7 @@ WorldScene.mix(class WorldSkills {
           this.swing();
           for (let k = 0; k < (sk.count || 1); k++) {
             const ang = (k - ((sk.count || 1) - 1) / 2) * 0.12;
-            this.shoot({ key: 'proj_fire', speed: 780, range: 420, mult: pw, angle: ang,
+            this.shoot({ key: 'proj_fire', speed: 780, range: 420, mult: pw, angle: ang, sk: 1,
               slow: sk.slow, freeze: sk.freeze, stun: sk.stun, knock: sk.knock });
           }
         });
@@ -249,7 +260,7 @@ WorldScene.mix(class WorldSkills {
           if (t >= 21) g.destroy();
         } });
         this.cameras.main.shake(150, 0.006);
-        this.hitCircle(pl.x, pl.y, sk.radius, pw, fx({ ...(sk.chain ? { chain: pw * sk.chain, chainRadius: 150, chainBudget: { n: 6 } } : {}) }));
+        this.hitCircle(pl.x, pl.y, sk.radius, pw, fx({ ...(sk.chain ? { chain: pw * sk.chain, chainRadius: 150, chainBudget: { n: 6 } } : {}), sk: 1 }));
         if (sk.heal) this.skillHeal(sk.heal);
         break;
       }
@@ -273,7 +284,7 @@ WorldScene.mix(class WorldSkills {
           this.tweens.add({ targets: sw, y: gy + 20, duration: 300, ease: 'Quad.in', onComplete: () => {
             this.cameras.main.shake(200, 0.012);
             this.ringFx(x, gy - 10, 0xffd54f, 3);
-            this.hitCircle(x, gy - 30, sk.radius, pw, fx({ knock: sk.knock || 300 }));
+            this.hitCircle(x, gy - 30, sk.radius, pw, fx({ knock: sk.knock || 300, sk: 1 }));
             this.tweens.add({ targets: sw, alpha: 0, duration: 500, delay: 250, onComplete: () => sw.destroy() });
           } });
         }));
@@ -289,7 +300,7 @@ WorldScene.mix(class WorldSkills {
             const x = cx + Phaser.Math.Between(-sk.width / 2, sk.width / 2);
             const a = this.add.image(x, top, 'fx_arrow_down').setDepth(8);
             this.tweens.add({ targets: a, y: gy - 16, duration: 260, ease: 'Quad.in', onComplete: () => {
-              this.hitBox(x, gy - 30, 46, 90, pw, fx());
+              this.hitBox(x, gy - 30, 46, 90, pw, fx({ sk: 1 }));
               this.tweens.add({ targets: a, alpha: 0, duration: 300, onComplete: () => a.destroy() });
             } });
           });
@@ -308,7 +319,7 @@ WorldScene.mix(class WorldSkills {
               this.cameras.main.shake(260, 0.016);
               this.cameras.main.flash(120, 255, 140, 60);
               this.ringFx(x, gy - 20, 0xff9d4d, 4);
-              this.hitCircle(x, gy - 30, sk.radius, pw, fx({ knock: sk.knock || 260,
+              this.hitCircle(x, gy - 30, sk.radius, pw, fx({ knock: sk.knock || 260, sk: 1,
                 ...(sk.chain ? { chain: pw * sk.chain, chainRadius: 170, chainBudget: { n: 6 } } : {}) }));
             } });
           });

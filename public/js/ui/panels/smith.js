@@ -10,7 +10,7 @@
     const items = [];
     if (S.smithTab !== 'salvage') for (const s of G.SLOTS) if (p.equip[s]) items.push({ where: 'equip', key: s, entry: p.equip[s], tag: 'Đang mặc' });
     for (const e of p.bag) if (G.ITEMS[e.id].slot) items.push({ where: 'bag', key: e.uid, entry: e, tag: 'Trong túi' });
-    const tabs = [['upgrade', '⚒️ Nâng cấp'], ['reforge', '🔮 Tẩy luyện'], ['salvage', '♻️ Phân rã']]
+    const tabs = [['upgrade', '⚒️ Nâng cấp'], ['reforge', '🔮 Tẩy luyện'], ['seal', '🔏 Khắc ấn'], ['salvage', '♻️ Phân rã']]
       .map(([k, n]) => `<button class="btn small ${S.smithTab === k ? 'primary' : ''}" data-act="smith_tab" data-tab="${k}">${n}</button>`).join(' ');
     let html = `<div class="row" style="margin-bottom:8px">${tabs}<span style="margin-left:auto">🪙 <b class="gold">${fmt(p.gold)}</b> · 💎 <b>${stones}</b></span></div><div class="cols"><div class="list">`;
     if (!items.length) html += '<p class="muted">Không có trang bị nào.</p>';
@@ -27,6 +27,7 @@
       const tip = {
         upgrade: 'Chọn trang bị bên trái để nâng cấp. Mỗi cấp +8% chỉ số chính.',
         reforge: 'Tẩy luyện gieo lại toàn bộ dòng phụ của đồ Tốt, Hiếm, Huyền thoại (giữ nguyên số dòng). Có thể ra tốt hơn hoặc tệ hơn.',
+        seal: `Khắc ấn: đồ đạt độ hoàn hảo ${G.PERFECT_MIN}% trở lên được thêm 1 dòng phụ thứ tư, vĩnh viễn. Mỗi món chỉ khắc ấn một lần.`,
         salvage: 'Phân rã đồ trong túi để lấy Đá cường hóa: Thường 0–1, Tốt 1, Hiếm 3, Huyền thoại 6 viên, cộng thêm theo cấp nâng.',
       }[S.smithTab];
       html += `<div class="detail muted">${tip}</div></div></div>`;
@@ -58,6 +59,18 @@
         html += `<div class="detail"><div>Gieo lại ${e.aff.length || G.QUALITY_AFFIX[q]} dòng phụ ngẫu nhiên.</div>
           <div>Chi phí: <span class="${p.gold >= c.gold ? '' : 'bad'}">${fmt(c.gold)} xu</span>, <span class="${stones >= c.stones ? '' : 'bad'}">${c.stones} đá cường hóa</span></div>
           <div class="row" style="margin-top:10px"><button class="btn primary" data-act="reforge" ${p.gold >= c.gold && stones >= c.stones ? '' : 'disabled'}>🔮 Tẩy luyện</button></div></div>`;
+      }
+    } else if (S.smithTab === 'seal') {
+      // Khắc ấn: chỉ đồ đạt độ hoàn hảo 95%+ và chưa khắc ấn
+      const pf = G.perfection(e);
+      if (e.seal) html += '<div class="detail muted">Món này đã được khắc ấn rồi (dòng phụ thứ tư là vĩnh viễn).</div>';
+      else if (q < 2) html += '<div class="detail muted">Đồ Thường không có dòng phụ. Chỉ đồ Tốt trở lên mới khắc ấn được.</div>';
+      else if (pf < G.PERFECT_MIN) html += `<div class="detail muted">Cần độ hoàn hảo <b>${G.PERFECT_MIN}%</b> trở lên. Món này đang <b class="bad">${pf}%</b> — còn thiếu ${G.PERFECT_MIN - pf}%.</div>`;
+      else {
+        const c = G.sealCost(e);
+        html += `<div class="detail"><div>Thêm <b>1 dòng phụ thứ tư</b> ngẫu nhiên, giữ nguyên ${e.aff.length} dòng hiện có. Vĩnh viễn, không tẩy lại được.</div>
+          <div>Chi phí: <span class="${p.gold >= c.gold ? '' : 'bad'}">${fmt(c.gold)} xu</span>, <span class="${stones >= c.stones ? '' : 'bad'}">${c.stones} đá cường hóa</span></div>
+          <div class="row" style="margin-top:10px"><button class="btn primary" data-act="seal" ${p.gold >= c.gold && stones >= c.stones ? '' : 'disabled'}>🔏 Khắc ấn</button></div></div>`;
       }
     } else {
       const base = { 1: '0–1', 2: 1, 3: 3, 4: 6 }[q];

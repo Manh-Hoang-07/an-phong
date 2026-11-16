@@ -7,7 +7,7 @@
  */
 (function (G) {
   'use strict';
-  const { SKILL_MAX, SKILLS } = G;
+  const { SKILL_MAX, SKILLS, SKILL_SLOTS } = G;
 
   // Thông số thực tế của kỹ năng ở một cấp
   function skillAt(id, lv) {
@@ -92,5 +92,50 @@
   // Chỉ còn MỘT thanh kỹ năng. Giữ hàm để chỗ gọi cũ không vỡ, nhưng luôn trả về skillSlots.
   const slotsOf = (player) => player.skillSlots;
 
-  Object.assign(G, { skillAt, schoolsOf, ultFits, availableSkills, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, skillCap, learnedIds, usedSkillSlots, skillLevel, slotsOf });
+  // ---------------------------------------------------------------- Kỹ năng do trang bị cấp
+  // Một món Huyền thoại / độc nhất có thể mang theo một kỹ năng NẰM NGOÀI cây của class đang chơi:
+  //   grantsSkill: 'tn3'   → món này cho dùng Băng Ngục (kỹ năng của Pháp Sư)
+  //
+  // Ô này là ô ẢO, KHÔNG lưu vào p.skillSlots:
+  //   - mặc đồ thì có, tháo đồ thì mất, không cần lưu, không cần migrate save cũ
+  //   - vì không nằm trong p.skillSlots nên bước lọc ô khi nạp nhân vật
+  //     (server/game/index.js, G.availableSkills(p).includes(id)) không bao giờ đụng tới nó
+  //     → không có chuyện đặt chiêu vào ô rồi thoát ra vào lại là mất trắng
+  //
+  // Chỉ MỘT kỹ năng mượn được cùng lúc: món đầu tiên theo thứ tự SLOTS thắng. Đó là quyết định
+  // thật khi mặc đồ — muốn chiêu của món khác thì phải bỏ món đang cho chiêu.
+  const GEAR_SKILL_SLOT = SKILL_SLOTS;   // 8 — ngay sau 8 ô thật
+  const GEAR_SKILL_KEY = 'V';
+
+  // Cấp của kỹ năng mượn: theo cấp nhân vật, không cần điểm kỹ năng, không nâng bằng điểm.
+  // Cấp 12 → 1, cấp 24 → 3, cấp 40 → 5, cấp 80 → 10.
+  const gearSkillLevel = (player) => Math.min(SKILL_MAX, Math.max(1, Math.floor((player.level || 1) / 8)));
+
+  // Kỹ năng đang được trang bị cấp: { id, from, level } hoặc null
+  function gearSkill(player) {
+    if (!player || !player.equip) return null;
+    for (const slot of G.SLOTS) {
+      const it = player.equip[slot];
+      if (!it) continue;
+      const def = G.ITEMS[it.id];
+      if (!def || !def.grantsSkill) continue;
+      const sk = SKILLS[def.grantsSkill];
+      if (!sk || sk.ult) continue;      // chỉ mượn được kỹ năng thường, không mượn tuyệt kỹ
+      return { id: def.grantsSkill, from: it.id, level: gearSkillLevel(player) };
+    }
+    return null;
+  }
+
+  // Cấp thực tế để dùng một kỹ năng: đã học thì lấy cấp đã học, chưa học mà trang bị cấp thì lấy cấp mượn.
+  // Dùng hàm này ở mọi chỗ TÍNH TOÁN (dùng chiêu, hiện chỉ số); skillLevel vẫn là "đã học" thuần tuý
+  // để chỗ kiểm tra học sách / đếm ô học không bị lẫn.
+  function skillLevelOf(player, id) {
+    const learned = skillLevel(player, id);
+    if (learned) return learned;
+    const g = gearSkill(player);
+    return g && g.id === id ? g.level : 0;
+  }
+
+  Object.assign(G, { skillAt, schoolsOf, ultFits, availableSkills, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, skillCap, learnedIds, usedSkillSlots, skillLevel, slotsOf,
+    GEAR_SKILL_SLOT, GEAR_SKILL_KEY, gearSkill, gearSkillLevel, skillLevelOf });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

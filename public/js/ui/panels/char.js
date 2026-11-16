@@ -54,6 +54,21 @@
     const info = `<div class="ch-group"><div class="ch-group-h">Thông tin</div>
       <table class="stat-table">${misc.map(([a, b]) => `<tr><td class="muted">${a}</td><td>${esc(b)}</td></tr>`).join('')}</table></div>`;
 
+    // ---------- Bộ trang bị đang mặc
+    // Hiện số món / ngưỡng để người chơi biết còn thiếu bao nhiêu mới được thưởng.
+    // Ngưỡng 6 = cộng chỉ số, ngưỡng 10 = hiệu ứng đổi lối chơi (xem SET_BONUS).
+    const counts = G.setCounts(p);
+    const setRows = Object.keys(counts).map(id => {
+      const n = counts[id], def = G.SETS.find(s => s.id === Number(id));
+      if (!def) return '';
+      const tier = n >= G.SET_TIER_HIGH ? 2 : n >= G.SET_TIER_LOW ? 1 : 0;
+      const cls = tier === 2 ? 'q4' : tier === 1 ? 'okc' : 'muted';
+      const note = tier === 2 ? 'đủ bộ — hiệu ứng đang chạy' : tier === 1 ? `còn ${G.SET_TIER_HIGH - n} món để đủ bộ` : `cần ${G.SET_TIER_LOW} món mới có thưởng`;
+      return `<tr><td>${esc(def.name)}</td><td class="${cls}"><b>${n}/${G.SET_TIER_HIGH}</b> <small>${note}</small></td></tr>`;
+    }).join('');
+    const setBox = setRows ? `<div class="ch-group"><div class="ch-group-h">Bộ trang bị</div>
+      <table class="stat-table">${setRows}</table></div>` : '';
+
     // ---------- Điểm tiềm năng
     const pts = `<div class="ch-group">
       <div class="ch-group-h">Điểm tiềm năng <b class="gold">${p.freePoints}</b></div>
@@ -85,7 +100,7 @@
     const desc = school ? `<p class="ch-desc muted">${esc(school.desc)}</p>` : '';
 
     return ['Nhân vật', `<div class="ch-wrap">
-      <div class="ch-col">${head}${stats}${info}${desc}</div>
+      <div class="ch-col">${head}${stats}${setBox}${info}${desc}</div>
       <div class="ch-col">${pts}${formHtml}${perkHtml}</div>
     </div>`];
   }

@@ -16,7 +16,9 @@
     mu_tinh_van: { name: 'Mũ Tinh Vân', kind: 'armor', slot: 'mu', level: 75, minQ: 3, stats: { def: 48, hp: 633, mp: 192 }, price: 49600 },
     mu_than_mong: { name: 'Mũ Thần Mộng', kind: 'armor', slot: 'mu', level: 85, minQ: 3, stats: { def: 56, hp: 733, mp: 218 }, price: 56300 },
     mu_sang_the: { name: 'Mũ Sáng Thế', kind: 'armor', slot: 'mu', level: 95, minQ: 3, stats: { def: 64, hp: 833, mp: 244 }, price: 62900 },
-    vuong_mien_tri_thuc: { name: 'Vương Miện Tri Thức', kind: 'armor', slot: 'mu', level: 36, minQ: 4, stats: { def: 25, hp: 300, mp: 150, cdr: 15 }, price: 80000, desc: 'Giảm 15% hồi chiêu toàn bộ kỹ năng.' },
+    vuong_mien_tri_thuc: { name: 'Vương Miện Tri Thức', kind: 'armor', slot: 'mu', level: 36, minQ: 4, stats: { def: 25, hp: 300, mp: 150, cdr: 15 }, price: 80000,
+      grantsSkill: 'tk4',
+      desc: 'Giảm 15% hồi chiêu toàn bộ kỹ năng. Đội mũ là dùng được Giáp Sắt của Tanker (ô kỹ năng F).' },
   };
 
   (G.ITEM_PARTS = G.ITEM_PARTS || {})['mu'] = PART;

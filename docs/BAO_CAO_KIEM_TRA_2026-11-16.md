@@ -2,8 +2,7 @@
 
 **Ngày gốc:** 2026-11-16 · **Cập nhật:** 2026-11-16 (sau đợt sửa)
 **Phạm vi:** `shared/`, `server/`, `public/js/` — logic, nhiệm vụ, trang bị, vật phẩm, kỹ năng, kinh tế, bảo mật
-**Trạng thái:** 8/12 vấn đề đã xử lý. Báo cáo này giữ lại **những việc còn mở**.
-
+**Trạng thái:** 9/12 vấn đề đã xử lý. Báo cáo này giữ lại **những việc còn mở**.
 Quy mô dữ liệu hiện tại: **449 vật phẩm, 170 kỹ năng, 100 nhiệm vụ chính, 28 phụ tuyến, 59 bản đồ, 74 quái, 76 NPC.**
 
 ---
@@ -22,6 +21,7 @@ Quy mô dữ liệu hiện tại: **449 vật phẩm, 170 kỹ năng, 100 nhiệ
 | 4.5 | Typo `"ncp an"` | Sửa thành `"npc an"` | `server/game/actions/advancement.js:26` |
 | 4.6 | `mitigate()` chết | Xoá hàm và export | `shared/core.js` |
 | 2.1 | Gói `kills` tin client (167 quái/giây) | Trần theo `cooldown` vũ khí: 8,3–14,8 quái/giây | `server/game/actions/combat.js` |
+| 2.2 | `dmgCap` 60× (rộng 38×, cắt oan tuyệt kỹ) | Hai trần 8×/90× + ngân sách sát thương kỹ năng | `server/realtime/index.js`, `public/js/scene/skills.js`, `public/js/scene/combat.js` |
 
 **Kiểm chứng sau khi sửa** — tất cả đạt:
 
@@ -92,28 +92,66 @@ lk.tokens = Math.min(cap, (lk.tokens || 0) + ((now - lk.t) / 1000) * rate);
 
 ---
 
-### 2.2. Trần sát thương `dmgCap` quá rộng
+### 2.2. ~~Trần sát thương `dmgCap` quá rộng~~ — ĐÃ SỬA
 
-**Vị trí:** `server/realtime/index.js:77`
+**Vị trí:** `server/realtime/index.js`
+
+**Trước:** một trần duy nhất `atk × 60 + 500`. Nó vừa quá rộng cho đánh thường (38×) vừa quá hẹp cho tuyệt kỹ (cắt 28% sát thương thật ở cấp 100). Một con số không thể phục vụ cả hai.
+
+**Sau:** hai trần, phân biệt bằng cờ `sk` trong gói `hit`.
 
 ```js
-conn.dmgCap = Math.max(st.atk, 30) * 60 + 500;
+const CAP_MUL_BASIC = 8;    // đánh thường
+const CAP_MUL_SKILL = 90;   // kỹ năng
+const MAX_HITS_PER_SEC = 16;
+const MAX_SKILL_HITS_PER_SEC = 20;
+const SKILL_DMG_RATE_MUL = 6;      // ngân sách sát thương kỹ năng/giây = 6 × trần kỹ năng
+const SKILL_DMG_BURST_SEC = 2;     // tích tối đa 2 giây
+
+conn.atk = Math.max(st.atk, 30);
+conn.capBasic = conn.atk * CAP_MUL_BASIC + 50;
+conn.capSkill = conn.atk * CAP_MUL_SKILL + 500;
 ```
 
-Client tự tính sát thương của mình lên quái và gửi bằng gói `hit`. Server chỉ kẹp ở trần trên. `mobs.js:11` nói thẳng: *"Client vẫn tự tính: sát thương của MÌNH lên quái (gửi lên bằng gói `hit`, server kiểm tra trần)."*
+**Vì sao 8× và 90×.** Đây là hệ số nhân thật lớn nhất của mỗi loại, tính từ dữ liệu:
 
-Trần đó là **60 lần ATK + 500**. So với đòn thật:
+| Loại | Thành phần | Tích |
+|---|---|---|
+| Đánh thường | vũ khí `mult` 1,25 × chí mạng 2,5 × ngẫu nhiên 1,1 × buff ATK 1,41 × shred 1,25 | **6,1** |
+| Kỹ năng | `power` 7,93 × `skillMul` 1,13 × chí mạng 2,5 × ngẫu nhiên 1,1 × buff 1,41 × `vsSlowed` 2 × shred 1,25 | **87** |
 
-| Cấp | ATK | Đòn thường | Đòn chí mạng | Trần/đòn | Trần gấp |
+**Kiểm chứng: không cắt oan ở cấp nào.**
+
+| Cấp | ATK tối đa | Trần thường | Đòn thật max | Trần kỹ năng | Tuyệt kỹ max |
 |---|---|---|---|---|---|
-| 10 | 110 | 110 | 176 | 7.100 | 40× |
-| 30 | 335 | 335 | 536 | 20.600 | 38× |
-| 50 | 592 | 592 | 947 | 36.020 | 38× |
-| 100 | 1.164 | 1.164 | 1.862 | 70.340 | 38× |
+| 10 | 378 | 3.074 | 2.290 ✓ | 34.520 | 32.835 ✓ |
+| 30 | 729 | 5.882 | 4.417 ✓ | 66.110 | 63.324 ✓ |
+| 50 | 1.128 | 9.074 | 6.834 ✓ | 102.020 | 97.983 ✓ |
+| 70 | 1.414 | 11.362 | 8.567 ✓ | 127.760 | 122.827 ✓ |
+| 100 | 1.856 | 14.898 | 11.245 ✓ | 167.540 | 161.221 ✓ |
 
-Quái thường cao nhất (`thien_than_rong`, cấp 94) có 6.340 máu. Một đòn ở trần giết **11 con**. Kèm `MAX_HITS_PER_SEC = 80` (so với 2,78 đòn/giây thật của kiếm) — gấp 29 lần tốc độ thật.
+**Ngân sách sát thương kỹ năng.** Cờ `sk` do client gửi nên không đáng tin: kẻ gian giả `sk=1` cho đánh thường sẽ lấy trần 90×. Ngân sách này chặn tổng sát thương kỹ năng mỗi giây, không chỉ số đòn:
 
-**Sửa:** hạ trần xuống khoảng `atk * 3 + 50` (đủ cho chí mạng + buff + tuyệt kỹ mạnh nhất), và hạ `MAX_HITS_PER_SEC` xuống ~12. Tốt hơn nữa: tính sát thương phía server từ `calcStats` — server đã có đủ chỉ số, không có lý do gì tin client.
+```js
+const rate = atk * CAP_MUL_SKILL * SKILL_DMG_RATE_MUL;   // 1.002.240/giây ở ATK 1.856
+const pool = rate * SKILL_DMG_BURST_SEC;                  // tích tối đa 2.004.480
+```
+
+Một lần AoE trúng 6 quái ≈ 967.000, lọt. Hai lần liên tiếp ≈ 1.935.000, vẫn lọt (nhờ burst 2 giây). Spam liên tục thì bị ghì ở 1.002.240/giây.
+
+**Kết quả mô phỏng:**
+
+| Ca | Kết quả |
+|---|---|
+| Đánh thường thật, song đao 3,7 đòn/s × 4 quái | 80/80 lọt |
+| Tuyệt kỹ 9 nhát (`ulKiem2`), 1 lần/giây | 45/45 lọt |
+| AoE 6 quái cùng lúc | 6/6 lọt, 967.326 |
+| 2 tuyệt kỹ AoE liên tiếp | 12/12 lọt, 1.934.652 |
+| Gian gửi `d = 999999` (thường) | cắt còn 14.898 (67×) |
+| Gian spam 80 đòn/giây | còn 16 đòn/giây (giảm 5×) |
+| Gian giả `sk=1` + `d = 999999` | 1.279.492 sát thương/giây (giảm 7×) |
+
+**Còn lại:** sát thương vẫn do client tính. Trần và ngân sách chặn được khai thác quy mô lớn, nhưng một client sửa được mã vẫn có thể gây sát thương tối đa mỗi đòn. Muốn bịt hẳn thì phải tính sát thương phía server từ `calcStats` — server đã có đủ chỉ số. Đó là việc lớn hơn, nên ghi lại đây.
 
 ---
 
@@ -152,17 +190,67 @@ Học được 10 kỹ năng nhưng chỉ gắn được 6. Đây gần như ch�
 
 ---
 
+### 3.3. `soi_dau_do` — quái mồ côi, không spawn ở đâu
+
+**Vị trí:** `shared/data/monsters/chapter3.js:27`
+
+```js
+soi_dau_do: { name: 'Sói Đầu Đàn Băng Giá · Thủ Lĩnh', level: 26, hp: 1620, atk: 560,
+  gold: [40, 80], respawn: 90, leader: true,
+  drops: [['bang_tinh', 0.3, 'c3q3'], ['binh_nl_lon', 0.12], ['da_cuong_hoa_trung', 0.08]], ... }
+```
+
+Đã kiểm ba đường:
+
+- Không map nào có `soi_dau_do` trong `spawns` (quét toàn bộ 59 map).
+- Không nhiệm vụ nào có `soi_dau_do` trong `obj.kill` (quét 128 nhiệm vụ + 28 phụ tuyến).
+- Không có code nào dựng động nó.
+
+Đây là **thủ lĩnh duy nhất trong game không xuất hiện**. Nó mang drop `bang_tinh` gắn tag `c3q3`, nhưng `bang_tinh` còn rơi từ `soi_tuyet` và `yeu_tinh_bang` nên nhiệm vụ `c3q3` vẫn làm được. Không chặn tiến trình, chỉ là nội dung chết.
+
+**Sửa:** hoặc thêm vào `spawns` của một map băng (`lo_ren_bang` hoặc `dinh_nui`, cấp 26 hợp lý), hoặc xoá hẳn. Tôi nghiêng về thêm vào map — một thủ lĩnh 1.620 máu với 40–80 vàng là nội dung tốt bị bỏ phí.
+
+---
+
+### 3.4. README lệch số kỹ năng so với dữ liệu
+
+**Vị trí:** `README.md:101`
+
+> *"Mỗi class có **5 kỹ năng chủ động** (1 trong số đó là tuyệt kỹ, mở ở cấp 20) và **1 nội tại**."*
+
+Thực tế trong `shared/data/skills/classes/`:
+
+| Class | Kỹ năng thường | Tuyệt kỹ riêng |
+|---|---|---|
+| `kiem_si` | 10 | 4 |
+| `cung_thu` | 10 | 3 |
+| `phap_su` | 10 | 3 |
+| `sat_thu` | 10 | 4 |
+| `tanker` | 10 | 4 |
+| `tri_lieu_su` | 10 | 3 |
+| `trieu_hoi_su` | 10 | 3 |
+| `toan_nang` | 6 | — |
+
+Không phải lỗi game, chỉ là tài liệu cũ. Nhưng người chơi mới đọc README sẽ tưởng mỗi class chỉ có 5 kỹ năng, rồi bất ngờ khi thấy 10.
+
+**Sửa:** cập nhật con số trong README.
+
+---
+
 ## 4. Đề xuất ưu tiên
 
 **Trước khi mở cho người chơi thật:**
 
 1. ~~**Bịt cửa sau `kills`**~~ — **đã sửa** (mục 2.1): trần theo `cooldown` vũ khí, 167 → 8,3–14,8 quái/giây.
-2. **Hạ `dmgCap`** (2.2) xuống `atk * 3 + 50`, và `MAX_HITS_PER_SEC` xuống ~12. Hoặc tốt hơn: tính sát thương phía server.
+2. ~~**Hạ `dmgCap`**~~ — **đã sửa** (mục 2.2): hai trần 8×/90×, `MAX_HITS_PER_SEC` 80 → 16.
+3. **Tính sát thương phía server** (mục 2.2, phần "còn lại"). Trần và ngân sách đã chặn khai thác quy mô lớn, nhưng client sửa được mã vẫn gây được sát thương tối đa mỗi đòn. Đây là việc lớn, không gấp.
 
 **Dọn dẹp:**
 
 3. Sửa `minLevel` của `c3q6`, `c5q7`, `c5q8` (3.1).
 4. Thêm ghi chú UI về số ô gắn kỹ năng (3.2).
+5. Cho `soi_dau_do` vào `spawns` một map băng, hoặc xoá (3.3).
+6. Cập nhật số kỹ năng trong README (3.4).
 
 ---
 
@@ -177,6 +265,11 @@ Học được 10 kỹ năng nhưng chỉ gắn được 6. Đây gần như ch�
 | `sideDropNeed` dùng `Math.max` thay vì cộng | **Không phải lỗi.** `req` là chuỗi tuần tự, không nhận song song được |
 | Sách trỏ tuyệt kỹ `undefined` | **Không tái hiện.** Mọi `skill_book`/`ult_book` đều trỏ tới skill tồn tại |
 | Nhiệm vụ trỏ quái/vật phẩm không tồn tại | **Không có.** Toàn bộ 128 nhiệm vụ sạch |
+| `cong_do` không có portal nào dẫn tới | **Không phải lỗi.** Đây là map khởi đầu (`NEW_PLAYER_MAP`), người chơi spawn thẳng vào |
+| `npc_an` không đứng ở map nào | **Không phải lỗi.** NPC ẩn, hiện ra khi chat `"npc an"` ở Tân Đô (`advancement.js:33`) |
+| 3 sách tuyệt kỹ `ulChung*` có `priceNgoc = undefined` | **Không phải lỗi.** Thưởng nhiệm vụ phụ của Hội trưởng Khải (`side.js:194-202`), không bán ở shop |
+| 15 sách tuyệt kỹ `price = 0` | **Không phải lỗi.** Bán bằng Linh Ngọc (`priceNgoc`), không bán bằng xu |
+| `than_kiem_vinh_hang` `price = 0` | **Không phải lỗi.** Vũ khí cuối, nhận từ nhiệm vụ, không bán |
 
 ---
 

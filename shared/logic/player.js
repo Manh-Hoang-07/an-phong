@@ -3,7 +3,7 @@
  */
 (function (G) {
   'use strict';
-  const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, SPECIAL_SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats, baseSchool } = G;
+  const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, SPECIAL_SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats, baseSchool, setBonusOf, nhiemLoad, nhiemHpMul } = G;
 
   function nextAwaken(player) {
     const next = (player.awakenTier || 0) + 1;
@@ -90,6 +90,15 @@
     // bonus speed nhân (sat_thu: speed: 1.15 — nhân trực tiếp vào base speed)
     const scSpeed = sc && sc.bonus && sc.bonus.speed ? sc.bonus.speed : 1;
     hp *= perkMul.hp; mp *= perkMul.mp; atk *= perkMul.atk; def *= perkMul.def;
+    // Thưởng mặc đủ bộ (xem setBonusOf trong shared/logic/items.js).
+    // Nhân SAU nội tại cốt truyện và TRƯỚC thức tỉnh, để bộ là một tầng riêng cộng dồn.
+    const setB = setBonusOf(player);
+    if (setB && setB.mul) {
+      if (setB.mul.hp) hp *= setB.mul.hp;
+      if (setB.mul.mp) mp *= setB.mul.mp;
+      if (setB.mul.atk) atk *= setB.mul.atk;
+      if (setB.mul.def) def *= setB.mul.def;
+    }
     // Thức tỉnh (biến hình): chỉ nhân thêm khi ĐANG BIẾN HÌNH (opts.form, do client bật/tắt).
     // Đi theo người chơi, không theo nghề: chức nghiệp 1 hay chức nghiệp 2 đều dùng chung Ấn I / Ấn II.
     // Server tính không có opts → chỉ số thường.
@@ -106,6 +115,8 @@
     // Chức nghiệp 2 đã cộng 30% vào đường cong nền ở trên (evoMul); ở đây chỉ còn hệ số của Ấn thức tỉnh.
     if (aw) applyMul(aw.mul);
     crit += perkAdd.crit;
+    // Thưởng bộ: chỉ số cộng phẳng (crit, cdr, lifesteal, boss...) cộng vào perkAdd để đi qua trần như mọi nguồn khác
+    if (setB && setB.add) for (const k in setB.add) perkAdd[k] = (perkAdd[k] || 0) + setB.add[k];
     const w = player.equip.weapon;
     const wtype = w ? ITEMS[w.id].wtype : 'tay';
     // bonus lifesteal và cdr từ class
@@ -115,10 +126,16 @@
     const speedFinal = Math.round(Math.min(290, Math.min(260, 190 + p.agi * 2) * scSpeed + eq.speed));
     // Thể lực tối đa: dạng thường x1.3 (STAMINA.maxMul). Đang biến hình thì KHÔNG có hệ số này, thay bằng hệ số của ấn / hình thái
     const staMul = aw ? formSta : G.STAMINA.maxMul;
+    // Vết Nhiễm: món đang mặc bị nhiễm đỏ thì trừ máu tối đa (6% mỗi bậc, sàn 30%).
+    // Đây là cái giá của việc mặc đồ nhiễm — ăn chỉ số thì mất máu.
+    const nhiem = nhiemLoad(player);
+    if (nhiem) hp *= nhiemHpMul(nhiem);
     return {
       maxHp: Math.round(hp), maxMp: Math.round(mp), atk: Math.round(atk), def: Math.round(def),
       maxSta: Math.round((G.STAMINA.base + G.STAMINA.perLevel * (lv - 1) + G.STAMINA.perAgi * (p.agi || 0)) * staMul * (sc && sc.bonus && sc.bonus.sta ? sc.bonus.sta : 1)) + eq.sta,
       crit: Math.min(60, r1(crit)), speed: speedFinal, skillMul, costMul, wtype,
+      // Số bậc nhiễm đang mang — client đọc để chặn hồi máu ngoài giao chiến và hiện cảnh báo
+      nhiem,
       // Hệ số hồi thể lực (Cánh): 0 = không có gì, 15 = hồi nhanh thêm 15%
       staRegen: Math.max(0, r1(eq.staRegen)),
       lifesteal: Math.min(15, r1(eq.lifesteal + scLifesteal)),
@@ -133,7 +150,7 @@
   function boostLeft(player, kind, now) { return Math.max(0, ((player.boosts || {})[kind] || 0) - now); }
   function expBoostMul(player, now) { return boostLeft(player, 'exp', now) > 0 ? 2 : 1; }
 
-  // ---------------------------------------------------------------- Hiệu ứng trang bị đặc biệt
+  // ---------------------------------------------------------------- Hiệu ứng trang bị
   // Gom hiệu ứng (trường fx) của MỌI món đang mặc thành một bảng theo loại hiệu ứng.
   // Mỗi ô chỉ có một món nên không cộng dồn trong cùng một loại; gom hết để client đọc một chỗ.
   //   undying    { dur, cd }           máu cạn thì không chết, giữ 1 máu `dur` giây (Bùa Hộ Mệnh)
@@ -141,15 +158,27 @@
   //   dodge      { chance }            né đòn (Cánh)
   //   skillPower { mul }               % sát thương kỹ năng (Linh Đan) — đã cộng vào skillMul
   //   onKill     { hp, mp }            hồi theo % tối đa khi hạ quái (Chuông Trấn Hồn)
+  //   pierce     { minLevel, maxLevel } bỏ qua phòng thủ quái trong khoảng cấp (Thần Kiếm Vĩnh Hằng)
+  //   slowAura   { range, mul }        quái trong tầm bị giảm tốc (Thượng Băng Sương)
+  //   setStone   { cd }                khiên đá: đỡ trọn 1 đòn mỗi `cd` giây (bộ Thạch Vương 10 món)
+  //   setFreeze  { chance, dur }       đòn đánh có cơ hội đóng băng quái (bộ Băng Long 10 món)
+  //   setFreeCast{ }                   kỹ năng đầu tiên mỗi trận không tốn năng lượng (bộ Lưu Trữ 10 món)
+  //   setPhase   { cd }                lướt qua đòn đánh mỗi `cd` giây (bộ Vĩnh Hằng 10 món)
+  //
+  // Quét CẢ 15 ô, không chỉ 5 ô đặc biệt: đồ độc nhất rơi từ trùm cũng thiết kế được bằng fx.
+  // Ô đặc biệt nằm CUỐI mảng SLOTS nên nếu trùng loại hiệu ứng thì đồ đặc biệt thắng.
   function specialFx(player) {
     const out = {};
-    for (const slot of SPECIAL_SLOTS) {
+    for (const slot of SLOTS) {
       const it = player.equip && player.equip[slot];
       if (!it) continue;
       const def = ITEMS[it.id];
       if (!def || !def.fx) continue;
       out[def.fx.kind] = def.fx;
     }
+    // Hiệu ứng của bộ trang bị (chỉ ở ngưỡng 10 món). Đặt sau cùng nên thắng nếu trùng loại.
+    const setB = setBonusOf(player);
+    if (setB && setB.fx) out[setB.fx.kind] = setB.fx;
     return out;
   }
 

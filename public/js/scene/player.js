@@ -280,8 +280,10 @@ WorldScene.mix(class WorldPlayer {
     if (flow) App.mp = Math.min(maxMp, App.mp + maxMp * 0.005);
     const fighting = now - (this.staUsedAt || -1e9) < R.calmMs || now - (this.lastHurt || -1e9) < R.calmMs;
     if (fighting) return;
-    // Ngoài giao chiến: hồi 0,5% máu và năng lượng tối đa mỗi giây (Pháp Sư cộng thêm phần Dòng Chảy ở trên = gấp đôi)
-    App.hp = Math.min(maxHp, App.hp + Math.max(R.hp, maxHp * 0.005));
+    // Vết Nhiễm: đang mặc đồ nhiễm đỏ thì KHÔNG hồi máu ngoài giao chiến.
+    // Đây là cái giá thật của đồ nhiễm — năng lượng vẫn hồi bình thường.
+    const nhiem = App.stats.nhiem || 0;
+    if (!nhiem) App.hp = Math.min(maxHp, App.hp + Math.max(R.hp, maxHp * 0.005));
     App.mp = Math.min(maxMp, App.mp + Math.max(R.mp, maxMp * 0.005));
   }
 

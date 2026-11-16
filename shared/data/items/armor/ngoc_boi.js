@@ -15,7 +15,9 @@
     ngoc_boi_tinh_van: { name: 'Ngọc bội Tinh Vân', kind: 'armor', slot: 'ngoc_boi', level: 80, minQ: 3, stats: { def: 43, hp: 570, mp: 192, crit: 9 }, price: 49600 },
     ngoc_boi_than_mong: { name: 'Ngọc bội Thần Mộng', kind: 'armor', slot: 'ngoc_boi', level: 90, minQ: 3, stats: { def: 50, hp: 660, mp: 218, crit: 10 }, price: 56300 },
     ngoc_boi_sang_the: { name: 'Ngọc bội Sáng Thế', kind: 'armor', slot: 'ngoc_boi', level: 100, minQ: 3, stats: { def: 57, hp: 750, mp: 244, crit: 11 }, price: 62900 },
-    huy_hieu_binh_minh: { name: 'Huy Hiệu Bình Minh', kind: 'armor', slot: 'ngoc_boi', level: 12, minQ: 3, stats: { atk: 10, hp: 80, mp: 40 }, price: 3000, desc: 'Huy hiệu đội Bình Minh: tăng tấn công, máu và năng lượng.' },
+    huy_hieu_binh_minh: { name: 'Huy Hiệu Bình Minh', kind: 'armor', slot: 'ngoc_boi', level: 12, minQ: 3, stats: { atk: 10, hp: 80, mp: 40 }, price: 3000,
+      grantsSkill: 'tl1',
+      desc: 'Huy hiệu đội Bình Minh: tăng tấn công, máu và năng lượng. Đeo là dùng được Chữa Lành của Trị Liệu Sư (ô kỹ năng F).' },
   };
 
   (G.ITEM_PARTS = G.ITEM_PARTS || {})['ngoc_boi'] = PART;

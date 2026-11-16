@@ -168,6 +168,18 @@ const UI = (() => {
     badge.classList.toggle('hidden', !pts);
     const tn = G.baseSchool(p.school) === 'toan_nang';
     document.querySelectorAll('.sk-extra, .tb-s4, .tb-ult3').forEach(el => el.classList.toggle('hidden', !tn));
+    // Ô kỹ năng thứ 9: chỉ hiện khi đang mặc món có grantsSkill (mặc đồ thì có, tháo đồ thì mất)
+    const gearSk = G.gearSkill(p);
+    document.querySelectorAll('.sk-gear, .tb-gear').forEach(el => el.classList.toggle('hidden', !gearSk));
+    if (gearSk) {
+      const gsk = G.skillAt(gearSk.id, gearSk.level);
+      const gico = document.querySelector('#skillbar .sk-gear .ico');
+      if (gico) setHtml(gico, `${skIcon(gearSk.id)}<small>${esc(gsk.name.split(' ')[0])}</small>`);
+      const gEl = document.querySelector('#skillbar .sk-gear');
+      if (gEl) gEl.title = `${gsk.name} cấp ${gsk.lv} — do ${G.ITEMS[gearSk.from].name} cấp (${Math.round(gsk.mp * st.costMul)} năng lượng)`;
+      const gt = document.querySelector('#touch .tb-gear .ico');
+      if (gt) setHtml(gt, `${skIcon(gearSk.id)}<small>${esc(gsk.name.split(' ').pop())}</small>`);
+    }
     // Nút biến hình: chỉ hiện khi đã có Ấn thức tỉnh; sáng lên khi đang biến hình
     const awk = G.awakenOf(p);
     const hasForm = (p.awakenTier || 0) > 0;
@@ -253,6 +265,21 @@ const UI = (() => {
     const noAtk = !!App.staLocked || (scene.attackStaminaCost && sta < scene.attackStaminaCost());
     for (const el of [document.querySelector('#skillbar .sk[data-k="atk"]'), document.querySelector('#touch .tb-attack')]) if (el) el.classList.toggle('nosta', noAtk);
     const bar = p.skillSlots || [];
+    // Ô kỹ năng thứ 9: cooldown riêng, lấy id từ trang bị đang mặc
+    const gearNow = G.gearSkill(p);
+    if (gearNow) {
+      const left = (scene.cooldowns[gearNow.id] || 0) - time;
+      const h = left > 0 ? (left / (scene.cooldownLen[gearNow.id] || 1) * 100) + '%' : '0';
+      const gsk = G.skillAt(gearNow.id, gearNow.level);
+      const noMp = App.mp < Math.round(gsk.mp * st.costMul);
+      const noSta = !!App.staLocked || sta < (gsk.ult ? G.STAMINA.ult : G.STAMINA.skill);
+      for (const el of [document.querySelector('#skillbar .sk-gear'), document.querySelector('#touch .tb-gear')]) {
+        if (!el) continue;
+        el.querySelector('.cd').style.height = h;
+        el.classList.toggle('nomp', noMp);
+        el.classList.toggle('nosta', noSta);
+      }
+    }
     for (let i = 0; i < G.SKILL_SLOTS; i++) {
       const id = bar[i];
       const left = id ? (scene.cooldowns[id] || 0) - time : 0;
@@ -610,6 +637,8 @@ const UI = (() => {
     if (d.level) tags.push(`<span class="${d.level > p.level ? 'bad' : ''}">Cấp ${d.level}</span>`);
     const set = G.setOfItem(d);
     if (set) tags.push(`<span class="muted">Bộ ${set.name} (cấp ${set.min}–${set.max})</span>`);
+    if (d.slot && !d.special && entry.seal) tags.push('<span class="q4">🔏 Đã khắc ấn</span>');
+    if (entry.nhiem > 0) tags.push(`<span class="bad">☣ Nhiễm đỏ bậc ${entry.nhiem}</span>`);
     if (d.slot === 'weapon' && d.wtype) tags.push(`<span class="${G.canUseItem({ ...p, level: 99 }, d) ? '' : 'bad'}">${esc(G.WEAPON_TYPES[d.wtype].name)} · ${d.school ? G.SCHOOLS[d.school].name : 'chưa chọn class'}</span>`);
     else if (d.school) tags.push(`<span class="${G.canUseItem({ ...p, level: 99 }, d) ? '' : 'bad'}">${G.SCHOOLS[d.school].name}</span>`);
     if (tags.length) h += `<div class="muted">${tags.join(' · ')}</div>`;
@@ -623,7 +652,9 @@ const UI = (() => {
       // Đồ đặc biệt: chỉ số cố định, không có độ hoàn hảo để hiện
       if (!d.special) {
         const pf = G.perfection(entry);
-        h += `<div class="perf">Độ hoàn hảo: <b class="${pf >= 80 ? 'q4' : pf >= 50 ? 'okc' : 'muted'}">${pf}%</b></div>`;
+        const sealable = G.canSeal(entry);
+        h += `<div class="perf">Độ hoàn hảo: <b class="${pf >= 80 ? 'q4' : pf >= 50 ? 'okc' : 'muted'}">${pf}%</b>`
+          + (sealable ? ` <span class="q4">— khắc ấn được ở Thợ rèn</span>` : '') + '</div>';
       }
       // So sánh với món đang mặc cùng ô
       const cur = p.equip[d.slot];
@@ -636,6 +667,30 @@ const UI = (() => {
       } else if (opts.compare && !cur) h += '<div class="cmp up">Ô này đang trống ▲</div>';
     }
     if (d.desc) h += `<div class="muted">${esc(d.desc)}</div>`;
+    // Vết Nhiễm: nói rõ đang được gì và mất gì, kèm nút gột khi đứng ở Dược sư
+    if (entry.nhiem > 0) {
+      const atHerb = G.npcByRole(p, p.map, 'shop') && G.NPCS[G.npcByRole(p, p.map, 'shop')].shopKind === 'herb';
+      const meds = p.bag.filter(e => e.id === 'thuoc_nhiem_do').reduce((s, e) => s + e.qty, 0);
+      h += `<div class="detail" style="border-color:rgba(239,83,80,.5)"><div><b class="bad">☣ ${esc(G.nhiemText(entry.nhiem))}</b></div>
+        <div class="muted" style="font-size:11px">Món này mạnh hơn đồ sạch cùng cấp, nhưng khi đang mặc thì mất máu tối đa và không hồi máu ngoài giao chiến.</div>
+        ${atHerb
+          ? (() => {
+              // Món đang mặc hay trong túi: suy từ uid, không cần chỗ gọi truyền vào
+              const worn = p.equip[d.slot] && p.equip[d.slot].uid === entry.uid;
+              return `<div class="row" style="margin-top:8px"><button class="btn primary" data-act="cleanse_nhiem" data-where="${worn ? 'equip' : 'bag'}" data-uid="${entry.uid}" data-slot="${d.slot}" ${meds ? '' : 'disabled'}>💊 Gột bằng Thuốc chữa nhiễm đỏ (${meds})</button></div>`;
+            })()
+          : '<div class="muted" style="font-size:11px">Mang đến Dược sư để gột bằng Thuốc chữa nhiễm đỏ.</div>'}</div>`;
+    }
+    // Trang bị cấp kỹ năng: nói rõ chiêu gì, cấp mấy, và cảnh báo mất khi tháo
+    if (d.grantsSkill && G.SKILLS[d.grantsSkill]) {
+      const gs = G.SKILLS[d.grantsSkill];
+      const glv = G.gearSkillLevel(p);
+      const equipped = p.equip[d.slot] && p.equip[d.slot].id === entry.id;
+      h += `<div class="detail" style="border-color:rgba(179,136,255,.5)"><div><b class="q4">🔮 Cấp kỹ năng: ${esc(gs.name)}</b>
+        <span class="muted">(cấp ${glv} theo cấp nhân vật)</span></div>
+        <div class="muted">${esc(gs.desc)}</div>
+        <div class="muted" style="font-size:11px">${equipped ? `Đang bật ở ô <b>${G.GEAR_SKILL_KEY}</b>.` : `Mặc vào là dùng được ở ô <b>${G.GEAR_SKILL_KEY}</b>.`} Tháo ra là mất, không tốn điểm kỹ năng.</div></div>`;
+    }
     // Trang bị đặc biệt: khối nâng bậc. Bậc là thuộc tính của món nên nâng tại chỗ, không mua món mới.
     if (d.special) h += specialUpgradeBox(entry, d);
     if (d.kind === 'skill_book' || d.kind === 'ult_book') h += bookSkillInfo(d, p);

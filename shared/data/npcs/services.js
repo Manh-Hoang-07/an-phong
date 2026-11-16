@@ -18,7 +18,7 @@
       greet: 'Vào cổng mà không mang thuốc là tự sát đấy, cậu nhóc.',
       shop: ['binh_mau_nho', 'binh_nl_nho', 'binh_mau_vua', 'binh_nl_vua',
         'binh_mau_lon', 'binh_nl_lon', 'binh_mau_dac', 'binh_nl_dac',
-        'binh_mau_than_thoai', 'binh_nl_than_thoai',
+        'binh_mau_than_thoai', 'binh_nl_than_thoai', 'thuoc_nhiem_do',
         'da_cuong_hoa', 'da_cuong_hoa_trung', 'da_cuong_hoa_cao', 'da_cuong_hoa_than_thoai'] },
     // Chỉ bán bằng Linh Ngọc (xem ngocShopItems trong shared/logic/shop.js); sách tuyệt kỹ tự sinh từ G.SKILLS. Chỉ đứng ở Tân Đô I.
     tran_bao: { name: 'Lầu Trân Bảo', role: 'shop', color: 0x8a6a2f, ngocShop: true,

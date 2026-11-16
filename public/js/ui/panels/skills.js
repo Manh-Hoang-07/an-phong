@@ -50,6 +50,19 @@
         : `<span class="ic ph">${ult ? '★' : '◇'}</span><small class="muted">${ult ? 'Tuyệt kỹ' : 'Trống'}</small>`}
       </div>`;
     }).join('');
+    // Ô thứ 9: do trang bị cấp. Không gắn/gỡ được — mặc đồ thì có, tháo đồ thì mất.
+    const gear = G.gearSkill(p);
+    const gearCell = gear ? (() => {
+      const sk = G.SKILLS[gear.id];
+      return `<div class="sslot filled gear">
+        <span class="k">${G.GEAR_SKILL_KEY}</span>
+        <span class="ic">${sk.icon}</span><small>${esc(sk.name)}</small>
+        <span class="muted" style="font-size:10px">cấp ${gear.level} · ${esc(G.ITEMS[gear.from].name)}</span>
+      </div>`;
+    })() : `<div class="sslot gear">
+        <span class="k">${G.GEAR_SKILL_KEY}</span>
+        <span class="ic ph">◇</span><small class="muted">Trang bị cấp</small>
+      </div>`;
     const usedN = G.usedSkillSlots(p, false), capN = G.skillCap(p, false);
     const usedU = G.usedSkillSlots(p, true), capU = G.skillCap(p, true);
     return `<div class="sk-bar-card">
@@ -57,7 +70,8 @@
         <b>Thanh kỹ năng</b>
         <span class="sk-bar-cap">Thường <b>${usedN}/${capN}</b> · Tuyệt kỹ <b>${usedU}/${capU}</b></span>
       </div>
-      <div class="skill-slots">${cells}</div>
+      <div class="skill-slots">${cells}${gearCell}</div>
+      <div class="muted" style="font-size:11px;margin-top:6px">Ô <b>${G.GEAR_SKILL_KEY}</b> là kỹ năng do trang bị cấp: mặc món có kỹ năng riêng thì có, tháo ra thì mất. Không tốn điểm kỹ năng, không nâng cấp được.</div>
     </div>`;
   }
 

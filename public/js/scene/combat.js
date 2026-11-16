@@ -8,7 +8,8 @@ WorldScene.mix(class WorldCombat {
     const bossMul = (mon.def.boss || mon.def.leader) ? 1 + (st.boss || 0) / 100 : 1;
     // Giảm giáp theo tỉ lệ: DEF / (DEF + 60 + 12 x cấp quái), tối đa 75% (xem GameData.defReduce)
     // Thần Kiếm Vĩnh Hằng: đòn đánh xuyên mọi phòng thủ của quái Hư Không (cấp 41–50)
-    const pierce = App.player?.equip?.weapon?.id === 'than_kiem_vinh_hang' && mon.def.level >= 41 && mon.def.level <= 50;
+    const pierceFx = GameData.specialFx(App.player).pierce;
+    const pierce = !!pierceFx && mon.def.level >= (pierceFx.minLevel || 1) && mon.def.level <= (pierceFx.maxLevel || 999);
     let dmg = st.atk * mult * (1 + bt.atk) * bossMul * (pierce ? 1 : 1 - GameData.defReduce(mon.def.def, mon.def.level));
     dmg = Math.max(1, dmg) * Phaser.Math.FloatBetween(0.9, 1.1);
     const crit = Math.random() * 100 < Math.min(90, st.crit + bt.crit);
@@ -150,6 +151,14 @@ WorldScene.mix(class WorldCombat {
     }
     if (m.shredUntil > now && !extra.reflect) dmg = Math.max(1, Math.round(dmg * (1 + (m.shred || 0))));   // Tên Phá Giáp: quái chịu thêm sát thương
     if (extra.shred) { m.shred = extra.shred; m.shredUntil = now + 6000; }
+    // Bộ Băng Long 10 món — Đóng Băng: đòn đánh của người chơi có cơ hội đóng băng quái.
+    // Chỉ đòn của người chơi (không tính phản sát thương / dây chuyền / thú / bóng ma) để không bị đóng băng vô hạn.
+    const freezeFx = GameData.specialFx(App.player).setFreeze;
+    if (freezeFx && !extra.reflect && !extra.isChain && !extra.pet && !extra.shadow && !extra.freeze && !m.def.passive
+        && Math.random() < (freezeFx.chance || 0)) {
+      extra.freeze = freezeFx.dur || 2;
+      this.floatText(m.sprite.x, this.monsterTop(m) - 40, '❄ Đóng Băng', '#80d8ff', 14);
+    }
     if (!m.net) { m.hp -= dmg; m.aggro = true; }
     if (!extra.pet && App.stats.lifesteal && !m.def.passive && !this.dead) {
       App.hp = Math.min(App.stats.maxHp, App.hp + dmg * App.stats.lifesteal / 100);
@@ -165,6 +174,9 @@ WorldScene.mix(class WorldCombat {
       Realtime.send({
         t: 'hit', u: m.uid, d: dmg, c: crit ? 1 : 0, src: m.lastHitSource, dir: extra.dir || Math.sign(sp.x - this.player.x) || 1,
         slow: extra.slow || 0, freeze: extra.freeze || 0, stun: extra.stun || 0, knock: extra.knock || 90,
+        // sk: đòn này đến từ kỹ năng (không phải đánh thường). Server dùng để chọn trần sát thương cao hơn
+        // và trừ ngân sách kỹ năng riêng — xem server/realtime/index.js onHit.
+        sk: extra.sk ? 1 : 0,
       });
       this.damageChain(m, extra);
       return;
@@ -220,12 +232,33 @@ WorldScene.mix(class WorldCombat {
   hurtPlayer(atk, dir, push = 260, mon = null) {
     const now = this.time.now;
     if (now < this.invulnUntil || this.dashing) return;
+    const fxNow = GameData.specialFx(App.player);
     // Cánh (trang bị đặc biệt) — Phiêu Diêu: né hoàn toàn một đòn, không mất máu, không mất khiên
-    const dodgeFx = GameData.specialFx(App.player).dodge;
+    const dodgeFx = fxNow.dodge;
     if (dodgeFx && Math.random() < dodgeFx.chance) {
       this.floatText(this.player.x, this.player.y - 34, 'Né', '#8ef0ff', 17);
       Sound.play('dodge');
       this.invulnUntil = now + 300;
+      return;
+    }
+    // Bộ Vĩnh Hằng 10 món — Xuyên Không: lướt qua đòn đánh mỗi `cd` giây
+    const phaseFx = fxNow.setPhase;
+    if (phaseFx && now >= (this.phaseCd || 0)) {
+      this.phaseCd = now + (phaseFx.cd || 8) * 1000;
+      this.floatText(this.player.x, this.player.y - 34, 'Xuyên Không', '#b388ff', 16);
+      Sound.play('dodge');
+      this.ringFx(this.player.x, this.player.y, 0xb388ff, 1.8);
+      this.invulnUntil = now + 300;
+      return;
+    }
+    // Bộ Thạch Vương 10 món — Khiên Đá: đỡ trọn một đòn mỗi `cd` giây
+    const stoneFx = fxNow.setStone;
+    if (stoneFx && now >= (this.stoneCd || 0)) {
+      this.stoneCd = now + (stoneFx.cd || 12) * 1000;
+      this.floatText(this.player.x, this.player.y - 46, '🛡 Khiên Đá', '#a1887f', 15);
+      Sound.play('ward');
+      this.ringFx(this.player.x, this.player.y, 0xa1887f, 2.0);
+      this.invulnUntil = now + 400;
       return;
     }
     let dmg = Math.max(1, Math.round(atk * Phaser.Math.FloatBetween(0.9, 1.1) * (1 - GameData.defReduce(App.stats.def, App.player.level))));
@@ -307,6 +340,8 @@ WorldScene.mix(class WorldCombat {
     if (this.dead) return;
     this.dead = true;
     App.hp = 0;
+    // Hồi sinh: reset cờ hiệu ứng bộ để trận mới được dùng lại Cổ Ngữ
+    this.freeCastUsed = false;
     // Lỗi ở hiệu ứng/ mạng không được làm kẹt nhân vật ở trạng thái "đã chết": luôn hồi sinh về làng ở cuối
     try {
       this.endForm();

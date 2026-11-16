@@ -154,7 +154,9 @@ function killOne(p, a, ev, lk, now) {
         // Vũ khí rơi: chọn ngẫu nhiên trong vũ khí cùng bậc của mọi class (giữ nguyên tỉ lệ rơi vũ khí / giáp)
         const tier = G.WEAPON_TIER_OF[id];
         if (tier) { const row = Object.values(G.TIER_WEAPONS[tier]); id = row[Math.floor(Math.random() * row.length)]; }
-        dropLoot(p, G.makeInst(id, { table }), spot(), y, ev);
+        // Đồ rơi ở cổng đỏ có thể dính Nhiễm đỏ: chỉ số mạnh hơn nhưng mặc vào thì mất máu và không hồi máu.
+        // Gột bằng Thuốc chữa nhiễm đỏ ở Dược sư (xem cleanse_nhiem trong actions/items.js).
+        dropLoot(p, G.rollNhiem(G.makeInst(id, { table }), p.map), spot(), y, ev);
       }
     }
 

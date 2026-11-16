@@ -71,6 +71,33 @@ const actions = {
     if (stones > 0) addItem(p, 'da_cuong_hoa', stones);
     ev.push({ t: 'msg', text: `Phân rã ${def.name}${stones ? `, nhận ${stones} Đá cường hóa` : ', không thu được gì'}.`, color: '#e0e0e0' });
   },
+
+  // Khắc ấn: đồ đạt độ hoàn hảo 95% trở lên được thêm 1 dòng phụ thứ tư, vĩnh viễn.
+  // Đây là chỗ duy nhất độ hoàn hảo có tác dụng thật (trước đây chỉ để hiển thị).
+  seal(p, a, ev) {
+    if (!roleHere(p, 'smith')) fail('Hãy đến gặp Thợ rèn.');
+    const target = a.slot ? p.equip[a.slot] : bagEntry(p, a.uid);
+    if (!target) fail('Không có trang bị.');
+    const def = G.ITEMS[target.id];
+    if (!def.slot) fail('Chỉ khắc ấn được trang bị.');
+    if (def.special) fail('Trang bị đặc biệt không có dòng phụ để khắc ấn.');
+    G.normalizeInst(target);
+    if (target.seal) fail('Món này đã được khắc ấn rồi.');
+    if ((target.q || 1) < 2) fail('Đồ Thường không có dòng phụ để khắc ấn.');
+    const pf = G.perfection(target);
+    if (pf < G.PERFECT_MIN) fail(`Cần độ hoàn hảo ${G.PERFECT_MIN}% trở lên (món này ${pf}%).`);
+    const cost = G.sealCost(target);
+    if (p.gold < cost.gold) fail('Không đủ xu.');
+    if (countItem(p, 'da_cuong_hoa') < cost.stones) fail(`Cần ${cost.stones} Đá cường hóa.`);
+    p.gold -= cost.gold;
+    removeItem(p, 'da_cuong_hoa', cost.stones);
+    // Thêm đúng 1 dòng phụ mới, giữ nguyên các dòng cũ
+    const extra = G.rollAffixes(def, target.q, 1);
+    target.aff = (target.aff || []).concat(extra);
+    target.seal = true;
+    clampHpMp(p);
+    ev.push({ t: 'msg', text: `Khắc ấn xong ${def.name}: ${extra.map(([k, v]) => `${G.statLabel(k)} +${v}${G.statUnit(k)}`).join(', ')} (dòng thứ ${target.aff.length}, vĩnh viễn).`, color: '#ffd54f' });
+  },
 };
 
 module.exports = actions;

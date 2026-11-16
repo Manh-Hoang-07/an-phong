@@ -90,6 +90,8 @@ class WorldScene extends Phaser.Scene {
     this.lastHurt = 0;
     this.changing = false;
     this.dead = false;
+    // Cờ hiệu ứng bộ trang bị: reset mỗi lần vào bản đồ mới (Cổ Ngữ chỉ miễn phí kỹ năng đầu mỗi trận)
+    this.freeCastUsed = false;
 
     this.buildBackground();
     this.buildTiles();
@@ -252,6 +254,8 @@ class WorldScene extends Phaser.Scene {
       if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOTS[0], time);
       if (this.pressed('KeyX') || this.tpressed('ult2')) this.useSkill(GameData.ULT_SLOTS[1], time);
       if (this.pressed('KeyZ') || this.tpressed('ult3')) { if (GameData.baseSchool(App.player.school) === 'toan_nang') this.useSkill(GameData.ULT_SLOTS[2], time); }
+      // Ô thứ 9: kỹ năng do trang bị cấp (chỉ có khi đang mặc món có grantsSkill)
+      if (this.pressed('Key' + GameData.GEAR_SKILL_KEY) || this.tpressed('gear')) this.useSkill(GameData.GEAR_SKILL_SLOT, time);
       if (this.pressed('KeyT') || this.tpressed('form')) this.toggleForm(time);
       if (this.pressed('KeyG') || this.tpressed('aws')) this.switchAwaken();
       if (this.pressed('KeyQ') || this.tpressed('hp')) this.usePotion('hp');
