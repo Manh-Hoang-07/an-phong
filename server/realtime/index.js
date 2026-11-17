@@ -149,6 +149,9 @@ async function refreshLook(conn) {
   // Chỉ lấy id + cấp + cờ loại; refresh mỗi LOOK_REFRESH_MS nên thay đổi sách/ô được cập nhật trong vài giây.
   conn.skillLevels = {};
   for (const id of Object.keys(p.skills || {})) if (G.SKILLS[id] && p.skills[id] > 0) conn.skillLevels[id] = p.skills[id];
+  // Siêu tuyệt kỹ nằm ở p.superUlts (trụ riêng), nhưng engine cast vẫn cần thấy chúng ở cache này.
+  // Chỉ đưa vào khi ĐÃ SỞ HỮU thật — server tự đọc từ save, client không gửi được trường này.
+  for (const id of G.superUltsOf(p)) conn.skillLevels[id] = G.SUPER_ULT_LEVEL;
   conn.skillEquipped = Array.isArray(p.skillSlots) ? p.skillSlots.filter(Boolean) : [];
   // Kỹ năng do trang bị cấp (ô thứ 9) — cache riêng để onCast không từ chối nhầm.
   conn.gearSkillId = null;
@@ -427,11 +430,11 @@ async function onExec(conn, m) {
   let applied = false;
   let overLevel = false;
   await xplayer.mutate(conn.userId, (p) => {
-    // Đã học và ĐANG GẮN trên thanh kỹ năng. Không có trên thanh thì không dùng được.
-    if (!(p.skills && p.skills.ulSinhTu > 0)) return;
+    // Đã SỞ HỮU (trụ riêng p.superUlts) và ĐANG GẮN trên thanh. Thiếu một trong hai thì không dùng.
+    if (!G.ownsSuperUlt(p, 'ulSinhTu')) return;
     if (!Array.isArray(p.skillSlots) || !p.skillSlots.includes('ulSinhTu')) return;
     if (now < (p.execCd || 0)) return;
-    const sk = G.skillAt('ulSinhTu', p.skills.ulSinhTu);
+    const sk = G.skillAt('ulSinhTu', G.SUPER_ULT_LEVEL);
     const st = G.calcStats(p, { form: !!p.formActive });
     // Bùa chỉ cứu khi ĐANG MẶC và chưa hồi chiêu. Client gửi cờ `bua` chỉ để đối chiếu, không tin.
     const fx = G.specialFx(p).undying;
@@ -491,9 +494,8 @@ async function onManaBurst(conn) {
       msg = 'Kỹ năng chưa được gắn lên thanh.';
       return;
     }
-    const lv = G.skillLevel(p, 'ulPhapSuper') || 0;
-    if (!lv) { msg = 'Bạn chưa học Cấm Chú Giải Phóng.'; return; }
-    const sk = G.skillAt('ulPhapSuper', lv);
+    if (!G.ownsSuperUlt(p, 'ulPhapSuper')) { msg = 'Bạn chưa sở hữu Cấm Chú Giải Phóng.'; return; }
+    const sk = G.skillAt('ulPhapSuper', G.SUPER_ULT_LEVEL);
     if (now < (p.mpLock || 0)) { msg = `Cấm chú đang phong ấn năng lượng (còn ${Math.ceil((p.mpLock - now) / 1000)} giây).`; return; }
     if (now < (p.manaBurstCd || 0)) { msg = `Chưa hồi chiêu (còn ${Math.ceil((p.manaBurstCd - now) / 1000)} giây).`; return; }
     if ((p.mp || 0) < 50) { msg = 'Cần ít nhất 50 năng lượng để giải phóng.'; return; }
@@ -519,9 +521,8 @@ async function onAllIn(conn) {
       msg = 'Kỹ năng chưa được gắn lên thanh.';
       return;
     }
-    const lv = G.skillLevel(p, 'ulToanNangSuper') || 0;
-    if (!lv) { msg = 'Bạn chưa học Vạn Pháp Quy Nhất.'; return; }
-    const sk = G.skillAt('ulToanNangSuper', lv);
+    if (!G.ownsSuperUlt(p, 'ulToanNangSuper')) { msg = 'Bạn chưa sở hữu Vạn Pháp Quy Nhất.'; return; }
+    const sk = G.skillAt('ulToanNangSuper', G.SUPER_ULT_LEVEL);
     if (now < (p.skillLock || 0)) { msg = `Kỹ năng đang bị phong ấn (còn ${Math.ceil((p.skillLock - now) / 1000)} giây).`; return; }
     if (now < (p.allinCd || 0)) { msg = `Chưa hồi chiêu (còn ${Math.ceil((p.allinCd - now) / 1000)} giây).`; return; }
     p.skillLock = now + (sk.lockSec || 60) * 1000;

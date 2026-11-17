@@ -22,7 +22,8 @@ function checkRewards(p, r) {
   // Thú đồng hành: chỉ toàn thú đã có → báo lỗi (mật mã không mất lượt)
   const mounts = (Array.isArray(r.mounts) ? r.mounts : []).filter(id => G.MOUNTS[id]);
   const newMounts = mounts.filter(id => !p.mounts.owned.includes(id));
-  const onlyMounts = !r.unlockClass && !r.gold && !r.exp && !r.skillPoints && !r.linhNgoc && !items.length;
+  const onlyMounts = !r.unlockClass && !r.gold && !r.exp && !r.skillPoints && !r.linhNgoc && !items.length
+    && !(Array.isArray(r.superUlts) && r.superUlts.some(id => G.isSuperUlt(id) && !G.ownsSuperUlt(p, id)));
   if (mounts.length && !newMounts.length && onlyMounts) fail(`Bạn đã có ${mounts.map(id => G.MOUNTS[id].name).join(', ')} rồi.`);
   return { r, items, newMounts };
 }
@@ -43,6 +44,12 @@ function applyRewards(p, plan, ev, src) {
   if (r.linhNgoc) grantNgoc(p, r.linhNgoc, src, ev);
   if (r.exp) gainExp(p, Math.max(0, Math.floor(r.exp)), ev);
   if (r.skillPoints) p.skillPoints += Math.max(0, Math.floor(r.skillPoints));
+  // Tuyệt Phẩm tặng thẳng (mật mã / trang admin): mở ở trụ riêng, không ghi vào p.skills.
+  const superUlts = (Array.isArray(r.superUlts) ? r.superUlts : []).filter(id => G.isSuperUlt(id));
+  for (const id of superUlts) {
+    if (!G.learnSuperUlt(p, id)) continue;
+    ev.push({ t: 'msg', text: `[Hệ thống] Nhận Tuyệt Phẩm: ${G.SKILLS[id].icon} ${G.SKILLS[id].name}. Gắn vào ô R/X/Z để dùng.`, color: '#d66cff' });
+  }
   for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
   for (const id of newMounts) {
     p.mounts.owned.push(id);

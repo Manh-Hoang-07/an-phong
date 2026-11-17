@@ -28,6 +28,8 @@
     "player:pos": "node --env-file-if-exists=.env server/tools/check/peek-player-pos.js",
     "player:fix-arrive": "node --env-file-if-exists=.env server/tools/ops/fix-arrive.js",
     "check:ky-nguyen": "node server/tools/check/check-ky-nguyen.js",
+    "check:super-ults": "node server/tools/check/check-super-ults.js",
+    "check:skills-panel": "node server/tools/check/check-skills-panel.js",
     "check:gear": "node server/tools/check/check-gear-systems.js"
   },
   "engines": {

@@ -15,12 +15,12 @@
     if (!base) return null;
     lv = Math.max(1, Math.min(SKILL_MAX, lv || 1));
     const s = { ...base };
-    // SIÊU TUYỆT KỸ: chỉ số CỐ ĐỊNH, cấp không nhân gì cả.
+    // TUYỆT PHẨM: chỉ số CỐ ĐỊNH, cấp không nhân gì cả.
     // Lý do: chúng đã ở tầm giết-trùm-một-đòn hoặc ×28 sinh lực; +45% sát thương và −15% hồi chiêu
     // không đổi được lối chơi, chỉ phá cân bằng. Điểm kỹ năng = cấp − 1 (cấp 100 có 99 điểm) nên
     // nâng cấp gần như miễn phí — càng không có lý do cho nó mạnh thêm.
     // Cấp 1–10 vẫn tồn tại như mốc SỞ HỮU (đọc sách là có), nhưng không có bậc trung gian:
-    // dữ liệu siêu tuyệt kỹ đã gộp m5/m10 vào chỉ số gốc, nên ở đây trả về nguyên bản.
+    // dữ liệu TUYỆT PHẨM đã gộp m5/m10 vào chỉ số gốc, nên ở đây trả về nguyên bản.
     if (base.superUlt) { s.lv = lv; return s; }
     if (lv >= 5 && base.m5) Object.assign(s, base.m5);
     if (lv >= 10 && base.m10) Object.assign(s, base.m10);
@@ -94,10 +94,24 @@
 
   // Giới hạn học: 5 ô gốc + số ô đã mở rộng (tối đa 2) cho mỗi loại; usedSkillSlots = số kỹ năng đã học của loại đó
   const skillCap = (player, ult) => G.SKILL_BASE_CAP + Math.min(G.SKILL_EXPAND_MAX, Math.max(0, (player.skillExpand && player.skillExpand[ult ? 'ult' : 'normal']) || 0));
-  const learnedIds = (player, ult) => Object.keys(player.skills || {}).filter(id => player.skills[id] > 0 && G.SKILLS[id] && !!G.SKILLS[id].ult === !!ult);
+  // Tuyệt Phẩm KHÔNG tính vào ô học: nó là trụ riêng (logic/super-ults.js), không có cấp,
+  // không tiêu điểm. Đếm nó vào đây là bắt người chơi trả một ô tuyệt kỹ cho thứ không nâng cấp được.
+  const learnedIds = (player, ult) => Object.keys(player.skills || {}).filter(id => player.skills[id] > 0 && G.SKILLS[id] && !G.SKILLS[id].superUlt && !!G.SKILLS[id].ult === !!ult);
   const usedSkillSlots = (player, ult) => learnedIds(player, ult).length;
 
-  function skillLevel(player, id) { return (player.skills && player.skills[id]) || 0; }
+  // ---------------------------------------------------------------- Tuyệt Phẩm (trụ riêng)
+  // Logic của trụ nằm ở logic/super-ults.js. Ở đây chỉ giữ hai chỗ PHẢI biết về nó:
+  //   - skillLevel: cấp của Tuyệt Phẩm đến từ p.superUlts, không bao giờ từ p.skills
+  //   - learnedIds: Tuyệt Phẩm không tính vào ô học
+  // Không định nghĩa lại luật của trụ ở file này — một nguồn sự thật duy nhất.
+
+  // Cấp để TÍNH TOÁN của một kỹ năng.
+  // Tuyệt Phẩm: cấp CHỈ đến từ p.superUlts. Không đọc p.skills cho nó — nếu đọc, một save bị sửa
+  // (ghi thẳng p.skills.ulPhapSuper = 10) sẽ vừa qua được onCast vừa qua được client.
+  function skillLevel(player, id) {
+    if (G.isTuyetPham(id)) return G.ownsTuyetPham(player, id) ? G.TUYET_PHAM_LEVEL : 0;
+    return (player.skills && player.skills[id]) || 0;
+  }
 
   // Chỉ còn MỘT thanh kỹ năng. Giữ hàm để chỗ gọi cũ không vỡ, nhưng luôn trả về skillSlots.
   const slotsOf = (player) => player.skillSlots;

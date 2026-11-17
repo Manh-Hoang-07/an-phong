@@ -156,12 +156,12 @@ const T = 1000000;   // mốc thời gian giả, khớp castWinAt khởi tạo t
   ok(onHitAllowed(c, 'st1', T + 200) === false, 'B4: đòn ngay sau cast bị từ chối phải bị bỏ qua');
   console.log('  B4 cast bị từ chối: đòn trong 1s = CHAN');
 }
-// B5 — siêu tuyệt kỹ 2 lần/60 giây (khớp ngân sách có sẵn ở server).
+// B5 — TUYỆT PHẨM 2 lần/60 giây (khớp ngân sách có sẵn ở server).
 {
   const c = makeConn();
   const r1 = onCast(c, 'ulSinhTu', T);
   const r2 = onCast(c, 'ulSinhTu', T + 2000);   // cùng id, cd 150s → bị chặn bởi hồi chiêu, không phải rate
-  ok(r1 === true, 'B5: siêu tuyệt kỹ lần 1 hợp lệ');
+  ok(r1 === true, 'B5: TUYỆT PHẨM lần 1 hợp lệ');
   ok(r2 === false, 'B5: cùng chiêu bấm lại khi còn hồi chiêu bị từ chối');
   // Test riêng bộ đếm rate bằng một conn MỚI (r1 ở trên đã chiếm 1 slot superUlt của c).
   const c2 = makeConn();
@@ -171,8 +171,8 @@ const T = 1000000;   // mốc thời gian giả, khớp castWinAt khởi tạo t
   c2.skillLevels.__suA = c2.skillLevels.__suB = c2.skillLevels.__suC = 1;
   c2.skillEquipped.push('__suA', '__suB', '__suC');
   const a = onCast(c2, '__suA', T), b = onCast(c2, '__suB', T), d = onCast(c2, '__suC', T);
-  ok(a && b && !d, 'B5: siêu tuyệt kỹ đúng 2 lần/60s, lần 3 bị chặn');
-  console.log('  B5 siêu tuyệt kỹ 2 lần/60s:', [a, b, d].map(r => r ? 'LOT' : 'CHAN').join(', '));
+  ok(a && b && !d, 'B5: TUYỆT PHẨM đúng 2 lần/60s, lần 3 bị chặn');
+  console.log('  B5 TUYỆT PHẨM 2 lần/60s:', [a, b, d].map(r => r ? 'LOT' : 'CHAN').join(', '));
 }
 
 // B6 — kỹ năng nhiều nhát: đòn của chiêu cũ vẫn được nhận sau khi đã bấm chiêu khác.

@@ -229,7 +229,7 @@ const actions = {
     }
   },
 
-  // ===== Siêu tuyệt kỹ Tử Linh Dung Hợp =====
+  // ===== TUYỆT PHẨM Tử Linh Dung Hợp =====
   // Dung hợp toàn bộ bộ sưu tập bóng ma vào bản thân trong `fusionSec` giây; đổi lại roster mất trắng.
   // Logic nằm ở applyFusion (dùng chung với server/realtime/index.js onFusion) — một chỗ duy nhất.
   fusion(p, a, ev) {
@@ -250,14 +250,13 @@ const actions = {
 function applyFusion(p) {
   if (p.school !== 'tu_linh_thuat_su') return { ok: false, msg: 'Chỉ Tử Linh Thuật Sư mới dùng được dung hợp.' };
   const id = 'ulTuLinhDungHop';
-  const lv = G.skillLevel(p, id) || 0;
-  if (!lv) return { ok: false, msg: 'Bạn chưa học Tử Linh Dung Hợp.' };
+  if (!G.ownsSuperUlt(p, id)) return { ok: false, msg: 'Bạn chưa sở hữu Tử Linh Dung Hợp.' };
   const now = Date.now();
   if (now < (p.fusionCd || 0)) return { ok: false, msg: `Chưa hồi chiêu (còn ${Math.ceil((p.fusionCd - now) / 1000)} giây).` };
   if (p.fusion && p.fusion.until > now) return { ok: false, msg: 'Đang trong thời gian dung hợp.' };
   const roster = (p.shadows && p.shadows.roster) || [];
   if (!roster.length) return { ok: false, msg: 'Không có bóng ma nào để dung hợp.' };
-  const sk = G.skillAt(id, lv);
+  const sk = G.skillAt(id, G.SUPER_ULT_LEVEL);
   const cost = Math.round((sk.mp || 0) * (G.calcStats(p, { form: !!p.formActive }).costMul || 1));
   if ((p.mp || 0) < cost) return { ok: false, msg: 'Không đủ năng lượng.' };
   const fu = G.shadowFusion(p, roster);

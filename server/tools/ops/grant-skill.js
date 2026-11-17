@@ -61,6 +61,13 @@ function usage() {
       const slot = (p.skillSlots || []).indexOf(id);
       console.log(`  ${sk.ult ? '★' : '·'} ${id.padEnd(22)} cấp ${String(p.skills[id]).padEnd(3)} ${sk.name}${slot >= 0 ? ` — gắn ô ${G.isUltSlot(slot) ? G.ultKeyLabel(slot) : slot + 1}` : ''}`);
     }
+    console.log('Tuyệt Phẩm đã sở hữu (trụ riêng):');
+    const supers = G.superUltsOf(p);
+    if (!supers.length) console.log('  (chưa có)');
+    for (const id of supers) {
+      const slot = (p.skillSlots || []).indexOf(id);
+      console.log(`  ✦ ${id.padEnd(22)} ${G.SKILLS[id].name}${slot >= 0 ? ` — gắn ô ${G.ultKeyLabel(slot)}` : ' (chưa gắn)'}`);
+    }
     console.log('Kỳ Nguyên đã mở / đang bật:');
     const kn = p.kyNguyen || { owned: [], active: [] };
     if (!kn.owned || !kn.owned.length) console.log('  (chưa mở Kỳ Nguyên nào)');
@@ -76,6 +83,26 @@ function usage() {
   if (!id) { usage(); await store.close(); process.exit(1); }
   const sk = G.SKILLS[id];
   if (!sk) { console.error('Không có kỹ năng:', id); await store.close(); process.exit(1); }
+  // Tuyệt Phẩm là trụ riêng: ghi p.superUlts, không ghi p.skills, không có cấp để nâng.
+  if (sk.superUlt) {
+    if (!p.superUlts || typeof p.superUlts !== 'object' || Array.isArray(p.superUlts)) p.superUlts = {};
+    const had = p.superUlts[id] === true;
+    p.superUlts[id] = true;
+    if (!Array.isArray(p.skillSlots)) p.skillSlots = Array(G.SKILL_SLOTS).fill(null);
+    while (p.skillSlots.length < G.SKILL_SLOTS) p.skillSlots.push(null);
+    const slots = G.ultSlotsOf(p);
+    let slot = slots.find(i => !p.skillSlots[i]);
+    if (slot === undefined) slot = slots[slots.length - 1];
+    const replaced = p.skillSlots[slot];
+    p.skillSlots[slot] = id;
+    await store.savePlayerFull(u.id, p, 'grant_superult');
+    await store.logAuth({ userId: u.id, username: u.username, event: 'grant_superult', detail: id });
+    console.log(`Nhân vật: ${p.name} · Siêu tuyệt kỹ: ${sk.name} (${id})${had ? ' — đã có sẵn' : ''}`);
+    console.log(`  Gắn vào: ô ${G.ultKeyLabel(slot)}${replaced ? ` (thay ${G.SKILLS[replaced]?.name || replaced})` : ''}`);
+    if (!p.school) console.log('  ⚠ Chưa thức tỉnh class: chưa dùng được.');
+    await store.close();
+    return;
+  }
 
   const lvArg = argv[2] && !argv[2].startsWith('--') ? Number(argv[2]) : 1;
   const lv = Math.max(1, Math.min(G.SKILL_MAX, Number.isFinite(lvArg) ? lvArg : 1));

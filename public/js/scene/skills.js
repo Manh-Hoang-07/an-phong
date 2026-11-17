@@ -256,7 +256,7 @@ WorldScene.mix(class WorldSkills {
     this.cameras.main.flash(340, 200, 160, 255);
     this.cameras.main.shake(420, 0.020);
     this.hitstop(200);
-    // --- 1. Vụ nổ tổng hợp ở giữa (power riêng của siêu tuyệt kỹ)
+    // --- 1. Vụ nổ tổng hợp ở giữa (power riêng của TUYỆT PHẨM)
     const g = this.add.graphics().setDepth(7.5);
     let t = 0;
     this.time.addEvent({ delay: 16, repeat: 26, callback: () => {
@@ -371,7 +371,7 @@ WorldScene.mix(class WorldSkills {
       if (sk.freeze) o.freeze = sk.freeze;
       if (sk.shred) o.shred = sk.shred;
       if (sk.vsSlowed) o.vsSlowed = sk.vsSlowed;
-      // Loại đòn để server chọn đúng trần sát thương: 1 kỹ năng, 2 tuyệt kỹ, 3 siêu tuyệt kỹ.
+      // Loại đòn để server chọn đúng trần sát thương: 1 kỹ năng, 2 tuyệt kỹ, 3 TUYỆT PHẨM.
       // Server KHÔNG tin cờ này (client sửa được) — nó chỉ chọn trần, còn chặn thật là ngân sách mỗi giây.
       o.sk = 1;
       o.id = id;                       // server đối chiếu đòn với lần cast hợp lệ
@@ -600,6 +600,8 @@ WorldScene.mix(class WorldSkills {
             } });
           });
         }
+        // Hồi máu MỘT LẦN mỗi lần tung (không phải mỗi đợt): Vạn Linh Quy Tụ hồi 12% ở m5.
+        if (sk.heal) this.skillHeal(sk.heal);
         break;
       }
     }

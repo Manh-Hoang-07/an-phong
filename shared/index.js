@@ -47,6 +47,15 @@ require('./data/skills/ult/ult-can-chien');
 require('./data/skills/ult/ult-tam-xa');
 require('./data/skills/ult/ult-ho-tro');
 require('./data/skills/ult/ult-dac-biet');
+// ---- Tuyệt Phẩm: trụ riêng (bậc trên tuyệt kỹ). Nạp SAU các file ult/ và TRƯỚC skills/index
+//      vì nó đẩy định nghĩa vào G.SKILL_PARTS để bảng SKILLS gộp chung. Mỗi chiêu một file,
+//      index.js gộp lại; thêm chiêu thì thêm file + require ở đây (và public/index.html).
+require('./data/super-ults/sinh-tu');
+require('./data/super-ults/tu-linh-dung-hop');
+require('./data/super-ults/thiet-bich');
+require('./data/super-ults/cam-chu');
+require('./data/super-ults/van-phap');
+require('./data/super-ults/index');
 require('./data/skills/index');
 require('./data/skills/perks');
 
@@ -67,7 +76,13 @@ require('./data/items/armor/dai_lung');//          đai lưng
 require('./data/items/armor/nhan');    //          nhẫn
 require('./data/items/armor/day_chuyen'); //       dây chuyền
 require('./data/items/armor/ngoc_boi');   //       ngọc bội
-require('./data/ky-nguyen');           // Kỳ Nguyên (5 phúc duyên, thay cho trang bị đặc biệt)
+// Kỳ Nguyên (5 phúc duyên, thay cho trang bị đặc biệt): mỗi cái một file, index.js gộp lại.
+require('./data/ky-nguyen/bat-tu');
+require('./data/ky-nguyen/sat-kiep');
+require('./data/ky-nguyen/phieu-dieu');
+require('./data/ky-nguyen/tu-linh');
+require('./data/ky-nguyen/tran-hon');
+require('./data/ky-nguyen/index');
 require('./data/items/index');         // gộp các phần + sinh vũ khí theo bậc + sách tuyệt kỹ
 require('./data/items/sets');          // ô trang bị và 10 bộ theo cấp
 
@@ -131,6 +146,15 @@ require('./data/quests/periodic');     // hằng số nhiệm vụ ngày / tuầ
 
 require('./logic/items');
 require('./logic/monsters');
+// Tuyệt Phẩm: logic trụ riêng. Nạp TRƯỚC logic/skills vì skillLevel() gọi ownsTuyetPham().
+// Thứ tự trong thư mục: identity → ownership → costs → index (index gắn bí danh tên cũ).
+require('./logic/super-ults/identity');
+require('./logic/super-ults/ownership');
+require('./logic/super-ults/costs');
+require('./logic/super-ults/index');
+// Kỳ Nguyên: logic trụ riêng, trước player.js. state.js gắn hàm, index.js là điểm vào.
+require('./logic/ky-nguyen/state');
+require('./logic/ky-nguyen/index');
 require('./logic/skills');
 require('./logic/player');
 require('./logic/quests');

@@ -29,7 +29,7 @@ const CONSUMED = {
   backstep: ['power', 'distance', 'count', 'slow', 'freeze', 'knock', 'stun'],
   sword_fall: ['power', 'radius', 'count', 'knock', 'stun'],
   arrow_rain: ['power', 'arrows', 'width', 'slow', 'knock', 'stun'],
-  meteor: ['power', 'radius', 'count', 'knock', 'chain', 'stun'],
+  meteor: ['power', 'radius', 'count', 'knock', 'chain', 'stun', 'heal'],
   summon: [],
   shadow_toggle: [],
   shadow_command: ['power', 'radius', 'freeze'],
@@ -44,7 +44,7 @@ const CONSUMED = {
 
 // Trường chung luôn được đọc ở mọi kỹ năng
 const COMMON = ['school', 'evolutionKey', 'icon', 'name', 'level', 'mp', 'cd', 'type', 'desc',
-  'm5', 't5', 'm10', 't10', 'ult', 'ultSchools', 'ultAny', 'lv', 'shopNgoc', 'superUlt',
+  'm5', 't5', 'm10', 't10', 'ult', 'ultSchools', 'ultAny', 'lv', 'shopNgoc', 'superUlt', 'cost',
   // priceLevel: không phải trường của engine chiến đấu, nhưng shared/data/items/index.js:88 đọc nó
   // để tính giá Linh Ngọc của sách tuyệt kỹ (tách "cấp học" khỏi "mốc giá").
   'priceLevel'];

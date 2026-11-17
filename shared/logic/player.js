@@ -5,18 +5,8 @@
   'use strict';
   const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats, baseSchool, setBonusOf, nhiemLoad, nhiemHpMul } = G;
 
-  // Kỳ Nguyên đang bật: trả về danh sách định nghĩa (đã lọc id hợp lệ).
-  // `active` là nguồn duy nhất có tác dụng — tháo ra (bỏ khỏi active) là mất chỉ số/hiệu ứng ngay.
-  function kyNguyenActive(player) {
-    const st = player.kyNguyen;
-    if (!st || !Array.isArray(st.active)) return [];
-    const out = [];
-    for (const id of st.active) {
-      const def = ITEMS[id];
-      if (def && def.kyNguyen) out.push(def);
-    }
-    return out;
-  }
+  // Kỳ Nguyên đang bật: logic nằm ở logic/ky-nguyen.js (trụ riêng, không phải chỉ số nhân vật).
+  // Ở đây chỉ gọi G.kyNguyenActive() trong calcStats / specialFx.
 
   function nextAwaken(player) {
     const next = (player.awakenTier || 0) + 1;
@@ -70,7 +60,7 @@
       for (const k in s) eq[k] = (eq[k] || 0) + s[k];
     }
     // Kỳ Nguyên đang bật: chỉ số cố định, cộng dồn như một tầng riêng (không qua phẩm chất / cường hóa).
-    for (const def of kyNguyenActive(player)) {
+    for (const def of G.kyNguyenActive(player)) {
       const s = def.stats || {};
       for (const k in s) eq[k] = (eq[k] || 0) + s[k];
     }
@@ -147,7 +137,7 @@
     // Đây là cái giá của việc mặc đồ nhiễm — ăn chỉ số thì mất máu.
     const nhiem = nhiemLoad(player);
     if (nhiem) hp *= nhiemHpMul(nhiem);
-    // Siêu tuyệt kỹ Tử Linh Dung Hợp: bóng ma đã dung hợp thì cộng thẳng chỉ số vào người.
+    // TUYỆT PHẨM Tử Linh Dung Hợp: bóng ma đã dung hợp thì cộng thẳng chỉ số vào người.
     // `player.fusion` do server ghi khi dùng chiêu (kèm bản sao bộ sưu tập, vì roster bị xoá ngay);
     // hết hạn thì điều kiện `until > now` tự loại. Cộng SAU các tầng nhân để không bị nhân lên.
     const fu = player.fusion && player.fusion.until > Date.now() ? G.shadowFusion(player, player.fusion.souls) : null;
@@ -200,7 +190,7 @@
       out[def.fx.kind] = def.fx;
     }
     // Kỳ Nguyên đang bật (chỉ những cái active mới có tác dụng).
-    for (const def of kyNguyenActive(player)) {
+    for (const def of G.kyNguyenActive(player)) {
       if (def.fx) out[def.fx.kind] = def.fx;
     }
     // Hiệu ứng của bộ trang bị (chỉ ở ngưỡng 10 món). Đặt sau cùng nên thắng nếu trùng loại.
@@ -224,6 +214,8 @@
       bag: [], storageByMap: {}, bagPlus: 0,   // storageByMap: kho riêng từng làng { mapId: [vật phẩm] }
       skillSlots: Array(SKILL_SLOTS).fill(null),
       skills: {}, skillPoints: 0, skillExpand: { normal: 0, ult: 0 },
+      // TUYỆT PHẨM: trụ riêng, không cấp, không điểm, không ô học. { id: true }
+      superUlts: {},
       unlocks: {}, redeemed: [], perks: [], boosts: {}, rank: 'E',
       mounts: { owned: [], active: null, summoned: [], skill: 'bite', skills: {} },   // giữ active / skill để đọc dữ liệu client cũ
       pets: {},
@@ -248,5 +240,5 @@
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, specialFx, kyNguyenActive, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
+  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, specialFx, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

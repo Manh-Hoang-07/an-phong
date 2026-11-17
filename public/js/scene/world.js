@@ -364,7 +364,7 @@ class WorldScene extends Phaser.Scene {
 
   talkTo(id, x) {
     // Đang mở bảng (cửa hàng, túi...) thì bấm xuyên qua bảng xuống NPC phía sau không được mở hội thoại,
-    // nếu không bấm tab "Siêu tuyệt kỹ" nằm đè lên NPC sẽ bị đá về menu nói chuyện.
+    // nếu không bấm tab "TUYỆT PHẨM" nằm đè lên NPC sẽ bị đá về menu nói chuyện.
     if (App.panelOpen) return;
     if (Math.abs(this.player.x - x) > 140) { UI.log('Hãy lại gần hơn để nói chuyện.', '#bdbdbd'); return; }
     this.facing = x > this.player.x ? 1 : -1;

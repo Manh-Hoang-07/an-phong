@@ -276,7 +276,7 @@ WorldScene.mix(class WorldPlayer {
     }    if (regenPct) App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * regenPct / 2);
     const maxHp = App.stats.maxHp, maxMp = App.stats.maxMp;
     // Cấm Chú Giải Phóng: đang phong ấn năng lượng thì KHÔNG hồi MP bằng bất kỳ đường nào
-    // (kể cả Dòng Chảy) — đây là cái giá thật của siêu tuyệt kỹ, xem castManaBurst.
+    // (kể cả Dòng Chảy) — đây là cái giá thật của TUYỆT PHẨM, xem castManaBurst.
     // Đọc cả mốc của SERVER (App.player.mpLock) vì mốc trên cảnh bị mất khi đổi bản đồ / hồi sinh.
     const lockUntil = Math.max(this.mpLockUntil || 0, (App.player && App.player.mpLock) || 0);
     const mpLocked = now < lockUntil;

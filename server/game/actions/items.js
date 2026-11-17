@@ -166,6 +166,16 @@ const actions = {
       if (!G.ultFits(p, sk)) fail('Tuyệt kỹ này không phù hợp với class của bạn.');
       if (G.skillLevel(p, id)) fail('Bạn đã học tuyệt kỹ này rồi.');
       if (sk.level > p.level) fail(`Cần đạt cấp ${sk.level} để học ${sk.name}.`);
+      // Tuyệt Phẩm là trụ riêng: mở ở p.superUlts, không tốn ô học tuyệt kỹ, không có cấp.
+      if (sk.superUlt) {
+        if (!G.ultFits(p, sk)) fail('Tuyệt Phẩm này không phù hợp với class của bạn.');
+        if (G.ownsSuperUlt(p, id)) fail('Bạn đã sở hữu Tuyệt Phẩm này rồi.');
+        e.qty--;
+        if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+        G.learnSuperUlt(p, id);
+        ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách Tuyệt Phẩm: đã sở hữu ${sk.name} (dùng được ngay, chỉ số cố định).`, color: '#d66cff' });
+        return;
+      }
       if (G.usedSkillSlots(p, true) >= G.skillCap(p, true)) fail('Đã hết ô học tuyệt kỹ. Dùng Sách Mở Rộng Ô Tuyệt Kỹ hoặc Sách Tẩy Kỹ Năng.');
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);

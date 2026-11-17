@@ -173,6 +173,13 @@
   <script src="/shared/data/skills/ult/ult-tam-xa.js"></script>
   <script src="/shared/data/skills/ult/ult-ho-tro.js"></script>
   <script src="/shared/data/skills/ult/ult-dac-biet.js"></script>
+  <!-- Tuyệt Phẩm: trụ riêng, mỗi chiêu một file, nạp trước skills/index.js để gộp vào SKILLS -->
+  <script src="/shared/data/super-ults/sinh-tu.js"></script>
+  <script src="/shared/data/super-ults/tu-linh-dung-hop.js"></script>
+  <script src="/shared/data/super-ults/thiet-bich.js"></script>
+  <script src="/shared/data/super-ults/cam-chu.js"></script>
+  <script src="/shared/data/super-ults/van-phap.js"></script>
+  <script src="/shared/data/super-ults/index.js"></script>
   <script src="/shared/data/skills/index.js"></script>
   <script src="/shared/data/skills/perks.js"></script>
   <!-- Vật phẩm: mỗi file một nhóm; items/index.js gộp lại rồi sinh vũ khí + sách tuyệt kỹ -->
@@ -191,8 +198,13 @@
   <script src="/shared/data/items/armor/nhan.js"></script>
   <script src="/shared/data/items/armor/day_chuyen.js"></script>
   <script src="/shared/data/items/armor/ngoc_boi.js"></script>
-  <!-- Kỳ Nguyên: 5 phúc duyên, nạp TRƯỚC items/index.js để ITEMS gộp được -->
-  <script src="/shared/data/ky-nguyen.js"></script>
+  <!-- Kỳ Nguyên: 5 phúc duyên, mỗi cái một file, nạp TRƯỚC items/index.js để ITEMS gộp được -->
+  <script src="/shared/data/ky-nguyen/bat-tu.js"></script>
+  <script src="/shared/data/ky-nguyen/sat-kiep.js"></script>
+  <script src="/shared/data/ky-nguyen/phieu-dieu.js"></script>
+  <script src="/shared/data/ky-nguyen/tu-linh.js"></script>
+  <script src="/shared/data/ky-nguyen/tran-hon.js"></script>
+  <script src="/shared/data/ky-nguyen/index.js"></script>
   <script src="/shared/data/items/index.js"></script>
   <script src="/shared/data/items/sets.js"></script>
   <script src="/shared/data/equipment.js"></script>
@@ -252,6 +264,14 @@
   <script src="/shared/data/quests/periodic.js"></script>
   <script src="/shared/logic/items.js"></script>
   <script src="/shared/logic/monsters.js"></script>
+  <!-- Tuyệt Phẩm: logic trụ riêng, nạp trước skills.js (skillLevel gọi ownsTuyetPham) -->
+  <script src="/shared/logic/super-ults/identity.js"></script>
+  <script src="/shared/logic/super-ults/ownership.js"></script>
+  <script src="/shared/logic/super-ults/costs.js"></script>
+  <script src="/shared/logic/super-ults/index.js"></script>
+  <!-- Kỳ Nguyên: logic trụ riêng, nạp trước player.js -->
+  <script src="/shared/logic/ky-nguyen/state.js"></script>
+  <script src="/shared/logic/ky-nguyen/index.js"></script>
   <script src="/shared/logic/skills.js"></script>
   <script src="/shared/logic/player.js"></script>
   <script src="/shared/logic/quests.js"></script>

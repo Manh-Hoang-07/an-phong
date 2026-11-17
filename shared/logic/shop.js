@@ -65,7 +65,7 @@
   }
 
   // ===== Lầu Trân Bảo: bán bằng Linh Ngọc =====
-  const NGOC_GROUPS = [['ky_nguyen', 'Kỳ Nguyên'], ['util', 'Tiện ích'], ['book', 'Sách'], ['ult', 'Tuyệt kỹ'], ['superult', 'Siêu tuyệt kỹ']];
+  const NGOC_GROUPS = [['ky_nguyen', 'Kỳ Nguyên'], ['util', 'Tiện ích'], ['book', 'Sách'], ['ult', 'Tuyệt kỹ'], ['superult', 'Tuyệt Phẩm']];
   const ngocRank = (id) => Math.max(0, NGOC_GROUPS.findIndex(g => g[0] === ITEMS[id].ngocGroup));
   // Hàng bán bằng ngọc: món trong n.shop có priceNgoc + 5 Kỳ Nguyên
   // + mọi sách tuyệt kỹ class (không lọc theo class, không gồm tuyệt kỹ chung ultAny)

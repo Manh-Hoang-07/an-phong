@@ -24,7 +24,7 @@ const SECTION_KEYS = {
   equip: ['equip'],
   storage: ['storageByMap'],                       // kho riêng từng làng { mapId: [...] }
   quest: ['quest', 'side'],
-  skills: ['skills', 'skillSlots', 'skillPoints', 'skillExpand', 'skillBookVer', 'skillBooks'],
+  skills: ['skills', 'skillSlots', 'skillPoints', 'skillExpand', 'skillBookVer', 'skillBooks', 'superUlts'],
   pets: ['mounts', 'pets', 'pet', 'petGear'],
   summons: ['summons'],
   shadows: ['shadows'],

@@ -81,7 +81,7 @@
   for (const [sid, sk] of Object.entries(G.SKILLS)) {
     if (!sk.ult) continue;
     const who = sk.ultAny ? 'mọi class' : (sk.ultSchools || [sk.school]).map(x => G.SCHOOLS[x]?.name || x).join(', ');
-    const label = sk.superUlt ? 'Siêu Tuyệt Kỹ' : 'Tuyệt Kỹ';
+    const label = sk.superUlt ? 'Tuyệt Phẩm' : 'Tuyệt Kỹ';
     ITEMS[G.ultBookId(sid)] = { name: `Sách ${label}: ${sk.name}`, kind: 'ult_book', skill: sid, level: sk.level, stack: true, price: 0,
       desc: `Đọc để học ${label.toLowerCase()} ${sk.name}. Dành cho: ${who}. Cần cấp ${sk.level}. ${sk.ultAny && !sk.shopNgoc ? 'Nhận từ nhiệm vụ Khảo hạch Tuyệt Kỹ.' : 'Mua ở Lầu Trân Bảo hoặc nhận qua mật mã.'}` };
     if (!sk.ultAny || sk.shopNgoc) {

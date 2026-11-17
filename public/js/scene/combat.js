@@ -174,7 +174,7 @@ WorldScene.mix(class WorldCombat {
       Realtime.send({
         t: 'hit', u: m.uid, d: dmg, c: crit ? 1 : 0, src: m.lastHitSource, dir: extra.dir || Math.sign(sp.x - this.player.x) || 1,
         slow: extra.slow || 0, freeze: extra.freeze || 0, stun: extra.stun || 0, knock: extra.knock || 90,
-        // k: loại đòn để server chọn trần sát thương — 0 đánh thường, 1 kỹ năng, 2 tuyệt kỹ, 3 siêu tuyệt kỹ.
+        // k: loại đòn để server chọn trần sát thương — 0 đánh thường, 1 kỹ năng, 2 tuyệt kỹ, 3 TUYỆT PHẨM.
         // Server không tin cờ này (client sửa được): nó chỉ dùng để chọn trần, còn chặn thật là ngân sách
         // sát thương mỗi giây (xem server/realtime/index.js onHit).
         k: extra.superUlt ? 3 : extra.ult ? 2 : extra.sk ? 1 : 0,

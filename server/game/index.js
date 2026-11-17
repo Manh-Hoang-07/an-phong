@@ -277,6 +277,21 @@ function migrate(p) {
   }
   while (p.skillSlots.length < G.SKILL_SLOTS) p.skillSlots.push(null);
   p.skillSlots = p.skillSlots.slice(0, G.SKILL_SLOTS).map(id => (id && G.SKILLS[id] && G.availableSkills(p).includes(id) ? id : null));
+  // TUYỆT PHẨM tách khỏi p.skills sang p.superUlts (trụ riêng, không cấp, không ô học).
+  // Chạy SAU các bước migrate trên để save cũ đã qua migrate vẫn được chuyển.
+  // Idempotent: đã có p.superUlts thì chỉ dọn phần còn sót trong p.skills.
+  if (!p.superUlts || typeof p.superUlts !== 'object' || Array.isArray(p.superUlts)) p.superUlts = {};
+  for (const id of Object.keys(p.superUlts)) {
+    // Id lạ hoặc không còn là TUYỆT PHẨM trong dữ liệu hiện tại: bỏ, không để rác trong save.
+    if (!G.isSuperUlt(id) || p.superUlts[id] !== true) delete p.superUlts[id];
+  }
+  for (const id of Object.keys(p.skills)) {
+    if (!G.isSuperUlt(id)) continue;
+    // Đã sở hữu trong p.skills nghĩa là đã đọc sách: chuyển sang trụ mới. Cấp cũ (nếu có) bỏ —
+    // TUYỆT PHẨM không dùng cấp, và giữ lại chỉ tạo ra trạng thái không có thật.
+    p.superUlts[id] = true;
+    delete p.skills[id];
+  }
   pruneLoot(p);
   return p;
 }

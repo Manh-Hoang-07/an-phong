@@ -104,6 +104,9 @@
   // Một thẻ kỹ năng
   function skillCard(p, id) {
     const base = G.SKILLS[id];
+    // TUYỆT PHẨM là trụ riêng: không cấp, không pips, không nút nâng, không "cấp tiếp theo".
+    // Nó có thẻ riêng (superUltCard) — vào đây là lỗi dữ liệu, nên thoát sớm thay vì vẽ thẻ kỹ năng sai.
+    if (base.superUlt) return superUltCard(p, id);
     const lv = G.skillLevel(p, id);
     const cur = G.skillAt(id, Math.max(1, lv));
     const next = lv && lv < G.SKILL_MAX ? G.skillAt(id, lv + 1) : null;
@@ -114,16 +117,14 @@
         const on = p.skillSlots[i] === id;
         return `<button class="btn small slotbtn${on ? ' on' : ''}" data-act="set_skill" data-slot="${i}" data-skill="${id}" ${on ? 'disabled' : ''}>${slotLabel(i)}</button>`;
       }).join('');
-    // Siêu tuyệt kỹ không cộng cấp: không có mốc cấp 5/10, không có "cấp tiếp theo", không nút nâng.
-    const isSuper = !!base.superUlt;
-    const ms = isSuper ? '' : [[5, base.t5], [10, base.t10]].filter(([, t]) => t)
+    const ms = [[5, base.t5], [10, base.t10]].filter(([, t]) => t)
       .map(([m, t]) => `<div class="sk-milestone${lv >= m ? ' on' : ''}">${lv >= m ? '✓' : '◇'} <b>Cấp ${m}</b>: ${esc(t)}</div>`).join('');
-    return `<div class="sk-card${base.superUlt ? ' is-ult is-superult' : base.ult ? ' is-ult' : ''}">
+    return `<div class="sk-card${base.ult ? ' is-ult' : ''}">
       <div class="sk-card-ic">${base.icon}</div>
       <div class="sk-card-main">
         <div class="sk-card-title">
           <b>${esc(base.name)}</b>
-          ${base.superUlt ? '<span class="tag-superult">SIÊU TUYỆT KỸ</span>' : base.ult ? '<span class="tag-ult">TUYỆT KỸ</span>' : ''}
+          ${base.ult ? '<span class="tag-ult">TUYỆT KỸ</span>' : ''}
           <span class="sk-lv">Cấp ${lv}/${G.SKILL_MAX}</span>
         </div>
         <div class="sk-pips">${pips}</div>
@@ -132,14 +133,44 @@
           <span>${skillNumbers(cur)}</span>
           <span class="muted">${Math.round(cur.mp * App.stats.costMul)} năng lượng · hồi ${Math.round(cur.cd * 10) / 10}s</span>
         </div>
-        ${next && !isSuper ? `<div class="sk-next">▲ Cấp ${lv + 1}: ${skillNumbers(next)}</div>` : ''}
+        ${next ? `<div class="sk-next">▲ Cấp ${lv + 1}: ${skillNumbers(next)}</div>` : ''}
         ${ms}
       </div>
       <div class="sk-card-act">
-        ${isSuper ? '<span class="gold sk-max">CỐ ĐỊNH</span>'
-          : lv >= G.SKILL_MAX ? '<span class="gold sk-max">TỐI ĐA</span>'
+        ${lv >= G.SKILL_MAX ? '<span class="gold sk-max">TỐI ĐA</span>'
           : `<button class="btn small${canUp ? ' primary' : ''}" data-act="learn_skill" data-skill="${id}" ${canUp ? '' : 'disabled'}>+1 cấp</button>`}
         ${lv ? `<div class="sk-slots">${slotGroup()}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // Thẻ TUYỆT PHẨM: bậc riêng, chỉ số CỐ ĐỊNH, cái giá hiện ngay cạnh hiệu ứng.
+  // Không có pips, không "Cấp x/10", không nút nâng — vì không có gì để nâng.
+  function superUltCard(p, id) {
+    const base = G.SKILLS[id];
+    const sk = G.skillAt(id, G.SUPER_ULT_LEVEL);
+    const slotGroup = () => G.ultSlotsOf(p).map(i => {
+      const on = p.skillSlots[i] === id;
+      return `<button class="btn small slotbtn${on ? ' on' : ''}" data-act="set_skill" data-slot="${i}" data-skill="${id}" ${on ? 'disabled' : ''}>${slotLabel(i)}</button>`;
+    }).join('');
+    const costs = G.superUltCosts(base);
+    return `<div class="sk-card is-ult is-superult">
+      <div class="sk-card-ic">${base.icon}</div>
+      <div class="sk-card-main">
+        <div class="sk-card-title">
+          <b>${esc(base.name)}</b>
+          <span class="tag-superult">TUYỆT PHẨM</span>
+        </div>
+        <small class="sk-desc">${esc(base.desc)}</small>
+        <div class="sk-nums">
+          <span>${skillNumbers(sk)}</span>
+          <span class="muted">${Math.round(sk.mp * App.stats.costMul)} năng lượng · hồi ${Math.round(sk.cd * 10) / 10}s</span>
+        </div>
+        ${costs.length ? `<div class="sk-cost">⚠ Cái giá: ${costs.map(esc).join(' · ')}</div>` : ''}
+        <div class="sk-superult-meta">Chỉ số cố định · không nâng cấp · tối đa 2 lần mỗi 60 giây</div>
+      </div>
+      <div class="sk-card-act">
+        <div class="sk-slots">${slotGroup()}</div>
       </div>
     </div>`;
   }
@@ -158,11 +189,14 @@
 
     const tn = G.baseSchool(p.school) === 'toan_nang';
     const all = G.availableSkills(p);
-    const learned = all.filter(id => G.skillLevel(p, id) > 0);
+    // TUYỆT PHẨM tách hẳn khỏi danh sách kỹ năng: nó là trụ riêng, không cấp, không ô học.
+    const learned = all.filter(id => !G.SKILLS[id].superUlt && G.skillLevel(p, id) > 0);
     const schoolOrder = [...new Set(all.map(id => G.SKILLS[id].school))];
     const bySchool = (a, b) => schoolOrder.indexOf(G.SKILLS[a].school) - schoolOrder.indexOf(G.SKILLS[b].school) || G.SKILLS[a].level - G.SKILLS[b].level;
     const normals = learned.filter(id => !G.SKILLS[id].ult).sort(bySchool);
     const ults = learned.filter(id => G.SKILLS[id].ult).sort(bySchool);
+    // TUYỆT PHẨM đã sở hữu — đọc từ trụ riêng, không từ p.skills.
+    const supers = G.superUltsOf(p).sort((a, b) => G.SKILLS[a].level - G.SKILLS[b].level);
 
     // Nội tại
     const passives = G.passivesOf(p);
@@ -188,6 +222,10 @@
     const ultHtml = ults.length ? `<div class="sk-section">
       <div class="sk-section-h">Tuyệt kỹ <small>gắn tối đa ${G.ultSlotsOf(p).length} vào ô ${G.ultSlotsOf(p).map(slotLabel).join(' / ')}</small></div>
       ${ults.map(id => skillCard(p, id)).join('')}</div>` : '';
+    // Trụ riêng: chỉ hiện khi đã sở hữu ít nhất một cái. Không có pips, không cấp, không nút nâng.
+    const superHtml = supers.length ? `<div class="sk-section sk-section-superult">
+      <div class="sk-section-h">Tuyệt Phẩm <small>bậc trên tuyệt kỹ · chỉ số cố định · gắn vào ô ${G.ultSlotsOf(p).map(slotLabel).join(' / ')}</small></div>
+      ${supers.map(id => superUltCard(p, id)).join('')}</div>` : '';
 
     const head = `<div class="sk-head">
       <div class="sk-points"><small>Điểm kỹ năng</small><b>${p.skillPoints}</b></div>
@@ -203,6 +241,7 @@
       ${passiveHtml}
       <div class="sk-section"><div class="sk-section-h">Kỹ năng chủ động</div>${normalHtml}</div>
       ${ultHtml}
+      ${superHtml}
     </div>`];
   }
 

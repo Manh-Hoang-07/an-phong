@@ -91,6 +91,9 @@ function setSchool(p, school, ev) {
   let refund = 0, lost = 0;
   for (const id of Object.keys(p.skills || {})) {
     if (usable.has(id)) continue;
+    // TUYỆT PHẨM không bị đổi class quét đi: nó là trụ riêng, đã mua bằng sách riêng.
+    // Chỉ mất quyền GẮN vào thanh nếu class mới không dùng được (ultFits lọc ở set_skill).
+    if (G.isSuperUlt(id)) continue;
     refund += Math.max(0, (p.skills[id] || 1) - 1);
     delete p.skills[id];
     lost++;

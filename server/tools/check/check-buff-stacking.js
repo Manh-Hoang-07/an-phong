@@ -134,7 +134,13 @@ function newScene() {
 function cast(s, id, lv = 10) {
   sandbox.App.player.skillSlots = [id];
   sandbox.App.player.school = G.SKILLS[id].school || 'kiem_si';
-  sandbox.App.player.skills = Object.assign({}, sandbox.App.player.skills, { [id]: lv });
+  // TUYỆT PHẨM sở hữu ở trụ riêng (p.superUlts), không phải p.skills — dùng đúng API như game.
+  // Viết thẳng p.skills[id] sẽ không còn tác dụng: skillLevel cố tình không đọc đường đó.
+  if (G.isSuperUlt(id)) {
+    sandbox.App.player.superUlts = Object.assign({}, sandbox.App.player.superUlts, { [id]: true });
+  } else {
+    sandbox.App.player.skills = Object.assign({}, sandbox.App.player.skills, { [id]: lv });
+  }
   sandbox.App.mp = 500; sandbox.App.hp = 1000;
   sandbox.App.sta = 1000; sandbox.App.staLocked = false;
   s.cooldowns = {};

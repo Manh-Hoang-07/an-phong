@@ -39,7 +39,11 @@ const actions = {
     if (!a.skill) { p.skillSlots[slot] = null; return; }
     const sk = G.SKILLS[a.skill];
     if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
-    if (!G.skillLevel(p, a.skill)) fail('Hãy học kỹ năng này trước.');
+    // Tuyệt Phẩm: sở hữu ở p.superUlts, không có cấp. Vẫn phải hợp class (ultFits) mới gắn được.
+    if (sk.superUlt) {
+      if (!G.ownsSuperUlt(p, a.skill)) fail('Hãy đọc Sách Tuyệt Phẩm trước.');
+      if (!G.ultFits(p, sk)) fail('Tuyệt Phẩm này không phù hợp với class của bạn.');
+    } else if (!G.skillLevel(p, a.skill)) fail('Hãy học kỹ năng này trước.');
     if (sk.ult && !G.isUltSlot(slot)) fail('Tuyệt kỹ chỉ đặt được ở ô tuyệt kỹ.');
     if (!sk.ult && G.isUltSlot(slot)) fail('Ô tuyệt kỹ chỉ dành cho tuyệt kỹ.');
     const other = p.skillSlots.indexOf(a.skill);
@@ -51,12 +55,11 @@ const actions = {
   learn_skill(p, a, ev) {
     const sk = G.SKILLS[a.skill];
     if (!sk || !G.availableSkills(p).includes(a.skill)) fail('Kỹ năng không thuộc class của bạn.');
+    // Tuyệt Phẩm không có cấp để nâng: chặn trước mọi thứ khác, kể cả khi đã sở hữu.
+    if (sk.superUlt) fail('Tuyệt Phẩm không cộng cấp — sở hữu là dùng được ngay, chỉ số cố định.');
     const lv = G.skillLevel(p, a.skill);
     if (!lv) fail(sk.ult ? 'Cần dùng Sách Tuyệt Kỹ để học tuyệt kỹ này.' : 'Cần đọc Sách Kỹ Năng để học kỹ năng này.');
     if (lv >= G.SKILL_MAX) fail('Kỹ năng đã đạt cấp tối đa.');
-    // Siêu tuyệt kỹ KHÔNG cộng cấp: chỉ số cố định, cấp không nhân gì (shared/logic/skills.js skillAt).
-    // Chặn ở đây để người chơi không tiêu điểm kỹ năng vào một nỗ lực vô ích.
-    if (sk.superUlt) fail('Siêu tuyệt kỹ không cộng cấp — đọc sách là dùng được ngay, chỉ số cố định.');
     if (p.skillPoints < 1) fail('Không còn điểm kỹ năng.');
     p.skillPoints -= 1;
     p.skills[a.skill] = lv + 1;
@@ -68,7 +71,8 @@ const actions = {
   // Tốn 1 Sách Tẩy Kỹ Năng + xu. Sách là điều kiện bắt buộc, không còn cách nào xóa kỹ năng trực tiếp.
   reset_skills(p, a, ev) {
     if (!onCurrentMapNpc(p, 'lao_su')) fail('Hãy đến gặp Hội trưởng Khải.');
-    const ids = Object.keys(p.skills).filter(id => G.skillLevel(p, id) > 0);
+    // Chỉ quét kỹ năng thật. TUYỆT PHẨM nằm ở p.superUlts nên không bị Sách Tẩy làm mất.
+    const ids = Object.keys(p.skills).filter(id => G.skillLevel(p, id) > 0 && !G.isSuperUlt(id));
     const spent = ids.reduce((x, id) => x + G.skillLevel(p, id) - 1, 0);
     if (!spent) fail('Bạn chưa cộng điểm kỹ năng nào.');
     if (countItem(p, 'sach_tay_ky_nang') < 1) fail('Cần 1 Sách Tẩy Kỹ Năng (mua bằng Linh Ngọc ở Lầu Trân Bảo).');
