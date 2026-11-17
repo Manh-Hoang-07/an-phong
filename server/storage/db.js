@@ -436,6 +436,10 @@ module.exports = {
     await query('UPDATE users SET pass = $1 WHERE id = $2', [pass, userId]);
   },
 
+  async setUsername(userId, username) {
+    await query('UPDATE users SET username = $2 WHERE id = $1', [username, userId]);
+  },
+
   async setBanned(userId, banned, reason = null) {
     await query('UPDATE users SET banned = $2, ban_reason = $3 WHERE id = $1', [userId, banned, banned ? reason : null]);
   },

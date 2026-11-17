@@ -4,7 +4,7 @@ Martial Hero 3, Huntress 2, Wizard Pack, EVil Wizard 2, Evil Wizard 3, Fantasy W
 Thú triệu hồi: ScratchIO, "Animated Wild Animals" (sói), giấy phép CC0:
 https://opengameart.org/content/animated-wild-animals
 Ngựa: alizard, "pixel horse", giấy phép CC0: https://opengameart.org/content/pixel-horse
-Hạc: rmazanek, "Bird" (sprite sheet 8 hoạt ảnh), giấy phép CC0: https://opengameart.org/content/bird-2
+Hắc Long và Dơi Huyết (pets/dragon-*, pets/bat-*): dùng lại sprite quái mobs/dragon (Shadow Demon Dragon Asset Pack) và mobs/ff_bat (Robert Pinero, "Free Foes", ghi công bắt buộc).
 Thằn lằn: Karmabub, "Lizard Sprite", giấy phép CC0: https://opengameart.org/content/lizard-sprite
 
 Bổ sung (thay hình vẽ bằng code và thú đồng hành độ phân giải thấp), lấy từ các gói hình trong thư mục Charactor:

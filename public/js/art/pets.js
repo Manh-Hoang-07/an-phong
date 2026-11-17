@@ -1,18 +1,21 @@
 'use strict';
 /* Sprite sheets thú đồng hành / linh thú: sói (Free Sprites), thằn lằn lửa hai đầu, cáo chín đuôi (Fox), linh trùng (Insect),
-   hạc rmazanek (CC0), ngựa alizard (CC0). Xem public/assets/CREDITS.txt. */
+   hạc rmazanek (CC0), ngựa alizard (CC0), hắc long và dơi lấy từ sprite quái dragon / ff_bat. Xem public/assets/CREDITS.txt. */
 const PetSprites = (() => {
   const DEF = {
     // scale: tỉ lệ vẽ trong game · hd: hình vẽ tay (lọc mượt) · lift: bay lơ lửng cao hơn mặt đất (px) · rate: khung/giây theo hoạt ảnh
     wolf: { fw: 174, fh: 98, frames: { run: 3, walk: 4, attack: 5 }, baseLeft: true, scale: 0.75, hd: true },
     horse: { fw: 82, frames: { run: 7, walk: 7 }, fh: 66, scale: 0.82, hd: true },
+    dragon: { fw: 454, fh: 249, frames: { run: 8, walk: 8, attack: 8 }, scale: 0.3, hd: true, lift: -6, rate: { walk: 10, run: 14, attack: 14 } },
+    bat: { fw: 150, fh: 147, frames: { run: 4, walk: 4, attack: 3 }, baseLeft: true, scale: 0.6, hd: true, lift: 30, rate: { walk: 8, run: 12, attack: 10 } },
     bird: { fw: 48, fh: 32, frames: { walk: 11, run: 11, attack: 11 }, rows: { walk: 2, run: 4, attack: 3 }, scale: 1.6, hd: true },
     lizard: { fw: 209, fh: 118, frames: { run: 8, walk: 8, attack: 8 }, scale: 0.55, hd: true },
     fox: { fw: 177, fh: 128, frames: { walk: 10, run: 12, attack: 10 }, scale: 0.55, hd: true, rate: { walk: 10, run: 16, attack: 14 } },
     insect: { fw: 136, fh: 117, frames: { walk: 10, run: 10, attack: 12 }, scale: 0.5, hd: true, lift: 20, rate: { walk: 14, run: 18, attack: 16 } },
   };
   const FILES = { wolf: { run: 'wolf-run', walk: 'wolf-walk', attack: 'wolf-attack' },
-    horse: { run: 'horse-walk', walk: 'horse-walk' }, bird: 'bird.png', lizard: { run: 'lizard-run', walk: 'lizard-walk', attack: 'lizard-attack' },
+    horse: { run: 'horse-walk', walk: 'horse-walk' }, dragon: { run: 'dragon-run', walk: 'dragon-run', attack: 'dragon-attack' },
+    bat: { run: 'bat-run', walk: 'bat-run', attack: 'bat-attack' }, bird: 'bird.png', lizard: { run: 'lizard-run', walk: 'lizard-walk', attack: 'lizard-attack' },
     fox: { run: 'fox-run', walk: 'fox-walk', attack: 'fox-attack' }, insect: { run: 'insect-run', walk: 'insect-walk', attack: 'insect-attack' } };
   function preload(scene, look) {
     const d = DEF[look], files = FILES[look];

@@ -16,6 +16,7 @@
     nav { display: flex; gap: 6px; }
     button, input, select { font: inherit; color: var(--text); background: #0d1530; border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; }
     button { cursor: pointer; }
+    input[type=checkbox] { width: auto; padding: 0; accent-color: #3fd0ff; }
     button:hover:not(:disabled) { border-color: var(--sys); }
     button:disabled { opacity: .45; cursor: default; }
     button.on { background: #17306a; border-color: var(--sys); }
@@ -56,6 +57,8 @@
       <h1>◆ ADMIN · THỨC TỈNH</h1>
       <nav>
         <button data-tab="players" class="on">Người chơi</button>
+        <button data-tab="revoke">Thu hồi</button>
+        <button data-tab="account">Tài khoản</button>
         <button data-tab="codes">Mật mã</button>
         <button data-tab="log">Nhật ký</button>
       </nav>
@@ -79,6 +82,52 @@
           <div class="row" style="margin-top:12px">
             <button id="g-send" class="primary">Tặng</button>
             <button id="g-ban" class="danger"></button>
+          </div>
+        </div>
+      </section>
+
+      <section id="t-revoke">
+        <div class="card">
+          <h2>TÌM NGƯỜI CHƠI ĐỂ THU HỒI</h2>
+          <div class="row">
+            <input id="r-q" placeholder="Tên đăng nhập hoặc tên nhân vật" style="flex:1;min-width:200px">
+            <button id="r-go" class="primary">Tìm</button>
+          </div>
+          <div id="r-found"></div>
+        </div>
+        <div class="card" id="revoke-card" style="display:none">
+          <h2>THU HỒI CỦA: <span id="r-who"></span></h2>
+          <div id="r-have" class="muted" style="font-size:12px;margin-bottom:10px"></div>
+          <div id="r-form"></div>
+          <div class="row" style="margin-top:12px">
+            <button id="r-send" class="danger">Thu hồi</button>
+          </div>
+          <p class="muted" style="font-size:12px;margin:8px 0 0">
+            Lấy đi là mất, không hoàn điểm. Thiếu thì lấy tới mức đang có và báo lại số thật đã lấy.
+          </p>
+        </div>
+      </section>
+
+      <section id="t-account">
+        <div class="card">
+          <h2>TÌM TÀI KHOẢN</h2>
+          <div class="row">
+            <input id="a-q" placeholder="Tên đăng nhập hoặc tên nhân vật" style="flex:1;min-width:200px">
+            <button id="a-go" class="primary">Tìm</button>
+          </div>
+          <div id="a-found"></div>
+        </div>
+        <div class="card" id="account-card" style="display:none">
+          <h2>ĐỔI TÀI KHOẢN: <span id="a-who"></span></h2>
+          <div class="grid">
+            <label class="f">Tên đăng nhập mới (để trống = giữ nguyên)<input id="a-name" maxlength="20" autocomplete="off"></label>
+            <label class="f">Mật khẩu mới (để trống = giữ nguyên)<input id="a-pass" type="password" maxlength="100" autocomplete="new-password"></label>
+          </div>
+          <label class="row" style="margin-top:10px;font-size:12px;color:var(--muted)">
+            <input type="checkbox" id="a-kick" checked style="width:auto"> Đăng xuất mọi phiên đang mở sau khi đổi mật khẩu
+          </label>
+          <div class="row" style="margin-top:12px">
+            <button id="a-send" class="primary">Lưu thay đổi</button>
           </div>
         </div>
       </section>
@@ -107,6 +156,9 @@
     </main>
   </div>
   <datalist id="dl-items"></datalist>
+  <datalist id="dl-skills"></datalist>
+  <datalist id="dl-ults"></datalist>
+  <datalist id="dl-mounts"></datalist>
   <script src="/js/admin.js"></script>
 </body>
 </html>
