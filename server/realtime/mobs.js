@@ -78,7 +78,9 @@ class World {
       aggro: false, state: 'move', stateUntil: 0, lungeDir: 1, lvx: 0, lvy: 0,
       nextAttack: 0, nextTurn: 0, nextJump: 0, nextSlam: 0, nextSpecial: 0, patrol: 0,
       slowUntil: 0, freezeUntil: 0, stunUntil: 0, knockUntil: 0, enraged: false, fled: false,
-      contrib: new Map(), lastSent: '',
+      contrib: new Map(),
+      // Trạng thái đã gửi lần trước. Dùng 6 trường số thay vì chuỗi join(',') — snapshot chạy 10 lần/giây.
+      sx: NaN, sy: NaN, sf: 0, ss: -1, sfl: -1,
     };
     if (opts.minion) m.aggro = true;
     this.mobs.push(m);
@@ -143,11 +145,12 @@ class World {
     const out = [];
     for (const m of this.mobs) {
       if (!m.alive) continue;
-      const row = [m.uid, Math.round(m.x), Math.round(m.y), m.f, ST[m.state], this.flags(m, now)];
-      const key = row.join(',');
-      if (key === m.lastSent) continue;
-      m.lastSent = key;
-      out.push(row);
+      const x = Math.round(m.x), y = Math.round(m.y), f = m.f, st = ST[m.state], fl = this.flags(m, now);
+      // So sánh trực tiếp thay vì tạo chuỗi `join(',')` rồi so sánh: hàm này chạy 10 lần/giây cho
+      // mỗi bản đồ có người, và bản đồ trùm có thể có hàng trăm quái. Cùng kết quả, không cấp phát chuỗi.
+      if (m.sx === x && m.sy === y && m.sf === f && m.ss === st && m.sfl === fl) continue;
+      m.sx = x; m.sy = y; m.sf = f; m.ss = st; m.sfl = fl;
+      out.push([m.uid, x, y, f, st, fl]);
     }
     return out;
   }
@@ -196,7 +199,7 @@ class World {
     m.alive = false;
     m.hp = 0;
     m.deaths++;
-    m.aggro = false; m.state = 'move'; m.lastSent = ''; m.threat.clear(); m.target = null;
+    m.aggro = false; m.state = 'move'; m.sx = NaN; m.sy = NaN; m.threat.clear(); m.target = null;
     this.dirty = true;
     const kid = `${this.mapId}.${m.uid}.${m.deaths}`;
     const assist = m.minion ? [] : this.hooks.kill(m, killerId, m.contrib, CONTRIB_SHARE, kid) || [];
@@ -212,7 +215,7 @@ class World {
     m.maxHp = m.baseHp; m.scale = 1; m.threat.clear(); m.target = null;
     m.hp = m.maxHp; m.alive = true; m.aggro = false; m.state = 'move'; m.enraged = false; m.fled = false;
     m.slowUntil = m.freezeUntil = m.stunUntil = m.knockUntil = 0; m.nextSpecial = m.nextSlam = 0; m.vy = 0;
-    m.x = m.homeX; m.y = m.homeY; m.lastSent = ''; m.respawnAt = 0;
+    m.x = m.homeX; m.y = m.homeY; m.sx = NaN; m.sy = NaN; m.respawnAt = 0;
     this.dirty = true;
     this.hooks.emit({ t: 'mresp', m: this.full(m) });
   }

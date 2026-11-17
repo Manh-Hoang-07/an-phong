@@ -67,7 +67,7 @@ require('./data/items/armor/dai_lung');//          đai lưng
 require('./data/items/armor/nhan');    //          nhẫn
 require('./data/items/armor/day_chuyen'); //       dây chuyền
 require('./data/items/armor/ngoc_boi');   //       ngọc bội
-require('./data/items/special');       // trang bị đặc biệt (chỉ mua bằng Linh Ngọc)
+require('./data/ky-nguyen');           // Kỳ Nguyên (5 phúc duyên, thay cho trang bị đặc biệt)
 require('./data/items/index');         // gộp các phần + sinh vũ khí theo bậc + sách tuyệt kỹ
 require('./data/items/sets');          // ô trang bị và 10 bộ theo cấp
 

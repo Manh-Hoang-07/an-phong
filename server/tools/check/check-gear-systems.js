@@ -71,10 +71,10 @@ head('1. Thưởng mặc đủ bộ — ngưỡng 6/10');
   const hp10 = G.calcStats(p).maxHp;
   ok(hp10 >= s6.maxHp, 'mặc thêm 4 món không làm yếu đi', `${s6.maxHp} → ${hp10}`);
 
-  // Đồ đặc biệt không được tính vào bộ
+  // Kỳ Nguyên không được tính vào bộ (không có slot, không thuộc SETS)
   const q = mkPlayer(50);
-  q.equip.bua = { uid: 1, id: 'bua_db_5', qty: 1, plus: 0 };
-  ok(Object.keys(G.setCounts(q)).length === 0, 'trang bị đặc biệt không tính vào bộ');
+  q.kyNguyen = { owned: ['kn_bat_tu'], active: ['kn_bat_tu'] };
+  ok(Object.keys(G.setCounts(q)).length === 0, 'Kỳ Nguyên không tính vào bộ');
 
   // Bộ mạnh nhất thắng: 6 món bộ 2 + 4 món bộ 3 → bộ 2
   const r = mkPlayer(30);
@@ -125,7 +125,7 @@ head('3. Khắc ấn cho đồ hoàn hảo');
 
   ok(G.canSeal({ ...perfect, seal: true }) === false, 'đã khắc ấn thì không khắc lại');
   ok(G.canSeal({ ...perfect, q: 1, aff: [] }) === false, 'đồ Thường không khắc ấn được');
-  ok(G.canSeal({ id: 'bua_db_5', qty: 1, q: 4, roll: 1.2, aff: [] }) === false, 'trang bị đặc biệt không khắc ấn được');
+  ok(G.canSeal({ id: 'kn_bat_tu', qty: 1, q: 4, roll: 1.2, aff: [] }) === false, 'Kỳ Nguyên không khắc ấn được');
   ok(G.canSeal({ id: 'kiem_bang_long', qty: 1, q: 2, roll: 0.8, aff: [['atk', 3, 0.1]] }) === false, 'đồ hoàn hảo thấp không khắc ấn được');
 
   // Khắc ấn phải thêm đúng 1 dòng phụ
@@ -208,10 +208,10 @@ head('5. Vết Nhiễm (nhiễm đỏ)');
   G.rollNhiem(clean, 'lang');
   ok(!clean.nhiem, 'đồ rơi ở làng không nhiễm');
 
-  // Đồ đặc biệt không nhiễm (hàng Linh Ngọc)
-  const sp = { id: 'bua_db_5', qty: 1, plus: 0 };
+  // Kỳ Nguyên không nhiễm (không phải trang bị, không đi qua rollNhiem)
+  const sp = { id: 'kn_bat_tu', qty: 1, plus: 0 };
   G.rollNhiem(sp, 'cong_do');
-  ok(!sp.nhiem, 'trang bị đặc biệt không nhiễm');
+  ok(!sp.nhiem, 'Kỳ Nguyên không nhiễm');
 
   // Bậc nhiễm trong khoảng 1..NHIEM_MAX
   let badTier = 0;

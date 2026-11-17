@@ -174,9 +174,12 @@ WorldScene.mix(class WorldCombat {
       Realtime.send({
         t: 'hit', u: m.uid, d: dmg, c: crit ? 1 : 0, src: m.lastHitSource, dir: extra.dir || Math.sign(sp.x - this.player.x) || 1,
         slow: extra.slow || 0, freeze: extra.freeze || 0, stun: extra.stun || 0, knock: extra.knock || 90,
-        // sk: đòn này đến từ kỹ năng (không phải đánh thường). Server dùng để chọn trần sát thương cao hơn
-        // và trừ ngân sách kỹ năng riêng — xem server/realtime/index.js onHit.
-        sk: extra.sk ? 1 : 0,
+        // k: loại đòn để server chọn trần sát thương — 0 đánh thường, 1 kỹ năng, 2 tuyệt kỹ, 3 siêu tuyệt kỹ.
+        // Server không tin cờ này (client sửa được): nó chỉ dùng để chọn trần, còn chặn thật là ngân sách
+        // sát thương mỗi giây (xem server/realtime/index.js onHit).
+        k: extra.superUlt ? 3 : extra.ult ? 2 : extra.sk ? 1 : 0,
+        // id kỹ năng: server đối chiếu với lần `cast` hợp lệ gần nhất (chống spam tầng 2).
+        id: extra.id || undefined,
       });
       this.damageChain(m, extra);
       return;

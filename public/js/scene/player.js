@@ -275,16 +275,21 @@ WorldScene.mix(class WorldPlayer {
       if (now < b.until && b.regen) regenPct += b.regen;
     }    if (regenPct) App.hp = Math.min(App.stats.maxHp, App.hp + App.stats.maxHp * regenPct / 2);
     const maxHp = App.stats.maxHp, maxMp = App.stats.maxMp;
+    // Cấm Chú Giải Phóng: đang phong ấn năng lượng thì KHÔNG hồi MP bằng bất kỳ đường nào
+    // (kể cả Dòng Chảy) — đây là cái giá thật của siêu tuyệt kỹ, xem castManaBurst.
+    // Đọc cả mốc của SERVER (App.player.mpLock) vì mốc trên cảnh bị mất khi đổi bản đồ / hồi sinh.
+    const lockUntil = Math.max(this.mpLockUntil || 0, (App.player && App.player.mpLock) || 0);
+    const mpLocked = now < lockUntil;
     // Nội tại Dòng Chảy (Pháp Sư): hồi 0,5% năng lượng tối đa mỗi giây ngay cả khi đang chiến đấu
     const flow = this.hasPassive('phap_su');
-    if (flow) App.mp = Math.min(maxMp, App.mp + maxMp * 0.005);
+    if (flow && !mpLocked) App.mp = Math.min(maxMp, App.mp + maxMp * 0.005);
     const fighting = now - (this.staUsedAt || -1e9) < R.calmMs || now - (this.lastHurt || -1e9) < R.calmMs;
     if (fighting) return;
     // Vết Nhiễm: đang mặc đồ nhiễm đỏ thì KHÔNG hồi máu ngoài giao chiến.
     // Đây là cái giá thật của đồ nhiễm — năng lượng vẫn hồi bình thường.
     const nhiem = App.stats.nhiem || 0;
     if (!nhiem) App.hp = Math.min(maxHp, App.hp + Math.max(R.hp, maxHp * 0.005));
-    App.mp = Math.min(maxMp, App.mp + Math.max(R.mp, maxMp * 0.005));
+    if (!mpLocked) App.mp = Math.min(maxMp, App.mp + Math.max(R.mp, maxMp * 0.005));
   }
 
   // ------------------------------------------------------------------ Thể lực (tách riêng với năng lượng)

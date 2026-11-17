@@ -31,7 +31,7 @@ const SECTION_KEYS = {
   // careerSlots / careerAwaken là dữ liệu cũ của cơ chế hai hình thái: vẫn khai báo để đọc được
   // và để migrate dọn đi, nhưng game không dùng nữa.
   advancement: ['advancement', 'awakenTier', 'formChoice', 'formActive', 'careerSlots', 'careerAwaken', 'hiddenNpcActive', 'perks', 'unlocks'],
-  world: ['villages', 'choices', 'titles', 'redeemed', 'boosts'],
+  world: ['villages', 'choices', 'titles', 'kyNguyen', 'redeemed', 'boosts'],
   misc: [],                                           // mọi khóa còn lại
 };
 

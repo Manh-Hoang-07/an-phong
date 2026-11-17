@@ -29,8 +29,9 @@
   };
   const unfitUlt = unfitItem;
 
-  const kindName = (d) => d.slot ? (G.SLOT_NAMES[d.slot] || 'Trang bị')
-    : d.kind === 'potion' ? 'Thuốc'
+  const kindName = (d) => d.kyNguyen ? 'Kỳ Nguyên'
+    : d.slot ? (G.SLOT_NAMES[d.slot] || 'Trang bị')
+      : d.kind === 'potion' ? 'Thuốc'
       : d.kind === 'boost' ? 'Bùa hỗ trợ'
         : (UI._.BOOK_KINDS || []).includes(d.kind) ? 'Sách'
           : d.kind === 'pet_gear' ? 'Trang bị thú'
@@ -110,11 +111,11 @@
     const p = App.player, d = G.ITEMS[entry.id], q = qOf(entry);
     const priceLine = where === 'shop' && ngocMode
       ? `<small class="ngoc">Giá: ${fmt(G.ngocPrice(d))} 💎${d.stack ? ' / cái' : ''}</small>
-        ${d.special ? `<small class="${d.level && d.level > p.level ? 'warn-line' : 'muted'}">${d.level ? `Mặc được từ cấp ${d.level}${d.level > p.level ? ` (bạn cấp ${p.level})` : ''}` : ''}</small>` : ''}
+        ${d.kyNguyen ? `<small class="${d.level && d.level > p.level ? 'warn-line' : 'muted'}">${d.level ? `Mở được từ cấp ${d.level}${d.level > p.level ? ` (bạn cấp ${p.level})` : ''}` : ''}</small>` : ''}
         ${unfitItem(p, entry.id) ? '<small class="warn-line">⚠ Không hợp class của bạn</small>' : ''}` : null;
     const price = where === 'shop' ? G.shopPrice(p, d) : G.sellPrice(entry);
     const discount = where === 'shop' && p.shopDiscount ? `<s class="muted">${fmt(d.price)}</s> ` : '';
-    const sub = [kindName(d), d.slot ? (d.special ? 'Đặc biệt · Bậc ' + ['I', 'II', 'III', 'IV', 'V'][(d.tier || 1) - 1] : G.QUALITY_NAMES[q]) : '', d.level ? 'Cấp ' + d.level : '', entry.qty > 1 ? '×' + entry.qty : '']
+    const sub = [kindName(d), d.kyNguyen ? 'Kỳ Nguyên' : (d.slot ? G.QUALITY_NAMES[q] : ''), d.level ? 'Cấp ' + d.level : '', entry.qty > 1 ? '×' + entry.qty : '']
       .filter(Boolean).join(' · ');
     return `<div class="bag-side-head">
         <span class="bag-side-ic">${itemIcon(entry.id)}</span>

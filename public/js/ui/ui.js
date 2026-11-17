@@ -603,30 +603,25 @@ const UI = (() => {
       (label ? `<span class="lbl">${esc(label)}</span>` : '') + '</div>';
   }
 
-  // Khối nâng bậc của trang bị đặc biệt: hiện bậc hiện tại, chi phí bậc kế, và nút bấm.
-  // Bậc là thuộc tính của CÙNG một món (giữ uid) — nâng tại chỗ, không mua món mới, không rác trong túi.
-  function specialUpgradeBox(entry, d) {
+  // Khối thông tin Kỳ Nguyên trong bảng chi tiết: chỉ số, hiệu ứng, trạng thái bật/tắt.
+  // Mua ở Lầu Trân Bảo; bật/tắt ở đây hoặc ở bảng Nhân vật. Tháo ra không mất quyền sở hữu.
+  function kyNguyenBox(d) {
     const p = App.player;
-    const tier = d.tier || 1;
-    const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
-    const cost = G.specialUpgradeCost(d);
-    let h = `<div class="sp-tier">Bậc <b>${ROMAN[tier - 1]}</b> / V</div>`;
-    if (!cost) return h + '<div class="muted">Đã đạt bậc V — bậc cao nhất.</div>';
-    const next = G.ITEMS[cost.id];
-    const haveStone = (p.bag || []).filter(e => e.id === 'huyen_tinh_thach').reduce((s, e) => s + e.qty, 0);
-    const haveNgoc = p.linhNgoc || 0;
-    const okStone = haveStone >= cost.stone, okNgoc = haveNgoc >= cost.ngoc;
-    // Cấp sử dụng gắn với bậc: chưa đủ cấp của bậc kế thì không nâng được
-    const okLevel = (next.level || 1) <= p.level;
-    // Xem trước bậc kế: chỉ số và hiệu ứng đổi thế nào
-    const now = G.instStats(entry).main, nx = next.stats || {};
-    const diff = Object.keys(nx).filter(k => (now[k] || 0) !== nx[k])
-      .map(k => `${G.statLabel(k)} ${now[k] || 0}→<b>${nx[k]}${G.statUnit(k)}</b>`).join(' · ');
-    h += `<div class="sp-next">Bậc ${ROMAN[cost.tier - 1]}: ${diff || 'chỉ số giữ nguyên'}</div>`;
-    if (next.level) h += `<div class="sp-next ${okLevel ? '' : 'bad'}">Cần cấp ${next.level}${okLevel ? '' : ` (bạn cấp ${p.level})`}</div>`;
-    h += `<div class="sp-cost ${okStone && okNgoc && okLevel ? '' : 'bad'}">Cần <b>${cost.stone}</b> Huyền Tinh Thạch (có ${haveStone}) · <b>${fmt(cost.ngoc)}</b> 💎 (có ${fmt(haveNgoc)})</div>`;
-    h += `<button class="btn sp-up" data-act="upgrade_special" data-uid="${entry.uid != null ? entry.uid : ''}" data-slot="${d.slot}"${okStone && okNgoc && okLevel ? '' : ' disabled'}>Nâng bậc — ${cost.stone} đá · ${fmt(cost.ngoc)} 💎</button>`;
-    return h;
+    const kn = p.kyNguyen || { owned: [], active: [] };
+    const owned = (kn.owned || []).includes(d.id);
+    const on = (kn.active || []).includes(d.id);
+    const st = d.stats || {};
+    const statLine = Object.keys(st).map(k => `${G.statLabel(k)} <b>+${st[k]}${G.statUnit(k)}</b>`).join(' · ');
+    let h = `<div class="kn-box">`;
+    if (statLine) h += `<div class="stats">${statLine}</div>`;
+    if (d.fxText) h += `<div class="kn-fx">✦ ${esc(d.fxText)}</div>`;
+    if (!owned) {
+      h += `<div class="kn-state muted">Chưa mở. Mua ở Lầu Trân Bảo bằng 💎 Linh Ngọc${(d.level || 1) > p.level ? ` — cần đạt cấp ${d.level}` : ''}.</div>`;
+    } else {
+      h += `<div class="kn-state ${on ? 'okc' : 'muted'}">${on ? '● Đang bật' : '○ Đang tháo — không có tác dụng'}</div>`;
+      h += `<button class="btn ${on ? '' : 'primary'} kn-toggle" data-act="toggle_ky_nguyen" data-id="${d.id}">${on ? '⏻ Tháo ra' : '⏻ Bật lên'}</button>`;
+    }
+    return h + '</div>';
   }
   function itemInfo(entry, opts = {}) {
     const d = G.ITEMS[entry.id];
@@ -634,13 +629,13 @@ const UI = (() => {
     const q = qOf(entry);
     let h = opts.noTitle ? '' : `<h3 class="q${q}">${itemIcon(entry.id)} ${esc(d.name)}${entry.plus ? ' +' + entry.plus : ''}</h3>`;
     const tags = [];
-    // Trang bị đặc biệt: chỉ số cố định, không phẩm chất, không độ hoàn hảo → gắn nhãn riêng
-    if (d.slot && d.special) tags.push('<span class="q4">Đặc biệt</span>', `Bậc ${['I', 'II', 'III', 'IV', 'V'][(d.tier || 1) - 1]}`);
+    // Kỳ Nguyên: không phải trang bị, không phẩm chất, không độ hoàn hảo → nhãn riêng
+    if (d.kyNguyen) tags.push('<span class="q4">Kỳ Nguyên</span>');
     else if (d.slot) tags.push(`<span class="q${q}">${G.QUALITY_NAMES[q]}</span>`, G.SLOT_NAMES[d.slot]);
     if (d.level) tags.push(`<span class="${d.level > p.level ? 'bad' : ''}">Cấp ${d.level}</span>`);
     const set = G.setOfItem(d);
     if (set) tags.push(`<span class="muted">Bộ ${set.name} (cấp ${set.min}–${set.max})</span>`);
-    if (d.slot && !d.special && entry.seal) tags.push('<span class="q4">🔏 Đã khắc ấn</span>');
+    if (d.slot && entry.seal) tags.push('<span class="q4">🔏 Đã khắc ấn</span>');
     if (entry.nhiem > 0) tags.push(`<span class="bad">☣ Nhiễm đỏ bậc ${entry.nhiem}</span>`);
     if (d.slot === 'weapon' && d.wtype) tags.push(`<span class="${G.canUseItem({ ...p, level: 99 }, d) ? '' : 'bad'}">${esc(G.WEAPON_TYPES[d.wtype].name)} · ${d.school ? G.SCHOOLS[d.school].name : 'chưa chọn class'}</span>`);
     else if (d.school) tags.push(`<span class="${G.canUseItem({ ...p, level: 99 }, d) ? '' : 'bad'}">${G.SCHOOLS[d.school].name}</span>`);
@@ -652,13 +647,10 @@ const UI = (() => {
         h += '<div class="affix">' + entry.aff.map(([k, v, pp]) =>
           `<div>◆ ${statText(k, v)} <span class="muted">${pp >= 0.8 ? '★' : ''}</span></div>`).join('') + '</div>';
       }
-      // Đồ đặc biệt: chỉ số cố định, không có độ hoàn hảo để hiện
-      if (!d.special) {
-        const pf = G.perfection(entry);
-        const sealable = G.canSeal(entry);
-        h += `<div class="perf">Độ hoàn hảo: <b class="${pf >= 80 ? 'q4' : pf >= 50 ? 'okc' : 'muted'}">${pf}%</b>`
-          + (sealable ? ` <span class="q4">— khắc ấn được ở Thợ rèn</span>` : '') + '</div>';
-      }
+      const pf = G.perfection(entry);
+      const sealable = G.canSeal(entry);
+      h += `<div class="perf">Độ hoàn hảo: <b class="${pf >= 80 ? 'q4' : pf >= 50 ? 'okc' : 'muted'}">${pf}%</b>`
+        + (sealable ? ` <span class="q4">— khắc ấn được ở Thợ rèn</span>` : '') + '</div>';
       // So sánh với món đang mặc cùng ô
       const cur = p.equip[d.slot];
       if (opts.compare && cur && cur.uid !== entry.uid) {
@@ -694,8 +686,8 @@ const UI = (() => {
         <div class="muted">${esc(gs.desc)}</div>
         <div class="muted" style="font-size:11px">${equipped ? `Đang bật ở ô <b>${G.GEAR_SKILL_KEY}</b>.` : `Mặc vào là dùng được ở ô <b>${G.GEAR_SKILL_KEY}</b>.`} Tháo ra là mất, không tốn điểm kỹ năng.</div></div>`;
     }
-    // Trang bị đặc biệt: khối nâng bậc. Bậc là thuộc tính của món nên nâng tại chỗ, không mua món mới.
-    if (d.special) h += specialUpgradeBox(entry, d);
+    // Kỳ Nguyên: chỉ số + hiệu ứng + nút bật/tắt (thay cho khối nâng bậc cũ)
+    if (d.kyNguyen) h += kyNguyenBox(d);
     if (d.kind === 'skill_book' || d.kind === 'ult_book') h += bookSkillInfo(d, p);
     // Sách kỹ năng: cho thấy đã đọc bao nhiêu trên trần 7 cuốn
     if (d.kind === 'book') {

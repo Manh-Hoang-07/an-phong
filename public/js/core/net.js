@@ -211,6 +211,12 @@ App.onEvent = function (ev) {
       Sound.play('quest');
       break;
     case 'upgrade': UI.upgradeResult(ev); break;
+    case 'ky_nguyen': {
+      // Mua / bật / tháo Kỳ Nguyên: báo ngắn, không cần vẽ lại cả màn hình
+      const d = GameData.ITEMS[ev.id];
+      if (d) UI.banner((ev.on ? 'Kỳ Nguyên · ' : 'THÁO KỲ NGUYÊN · ') + d.name.replace(/^Kỳ Nguyên · /, '').toUpperCase(), 1600);
+      break;
+    }
     case 'school': App.hp = App.player.hp; App.mp = App.player.mp; break;
     case 'awaken': {
       App.hp = App.player.hp; App.mp = App.player.mp;

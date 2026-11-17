@@ -10,9 +10,9 @@
     const lv = Math.max(1, Math.floor(level || 1));
     return SETS[Math.min(SETS.length - 1, Math.floor((lv - 1) / SET_LEVELS))];
   }
-  // Bộ của một món trang bị (vật phẩm không phải trang bị thì trả về null)
-  // Trang bị đặc biệt (special) không thuộc bộ theo cấp nào: trả null để bảng chi tiết không hiện "Bộ ..."
-  function setOfItem(def) { return def && def.slot && !def.special ? setOfLevel(def.level || 1) : null; }
+  // Bộ của một món trang bị (vật phẩm không phải trang bị thì trả về null).
+  // Kỳ Nguyên không có `slot` nên tự động trả null — không cần special-case nữa.
+  function setOfItem(def) { return def && def.slot ? setOfLevel(def.level || 1) : null; }
 
   // ---------------------------------------------------------------- Đếm món cùng bộ đang mặc
   // Trả về { [setId]: số món }. Chỉ đếm 10 ô trang bị thường; ô đặc biệt và đồ độc nhất (có desc,
@@ -57,26 +57,6 @@
   }
   // Thất bại khi nâng lên +8 trở lên thì bị giảm 1 cấp
   function upgradeFailDrops(plus) { return plus + 1 >= 8; }
-
-  // ---------------------------------------------------------------- Nâng bậc trang bị đặc biệt
-  // Bậc I→V là thuộc tính của CÙNG một món (giữ uid), không phải mua món mới.
-  // Chi phí nâng lên bậc n: 2^(n-1) Huyền Tinh Thạch + priceNgoc của bậc đó (1/2/4/8/16 đá · 40/90/180/320/500 ngọc).
-  const SPECIAL_TIER_MAX = 5;
-  const specialStoneCost = (tier) => Math.pow(2, Math.max(1, Math.min(SPECIAL_TIER_MAX, Math.floor(tier || 1))) - 1);
-  // Mã món của bậc kế tiếp trong cùng một ô, hoặc null nếu đã ở bậc V
-  function specialNextId(def) {
-    if (!def || !def.special || !def.slot) return null;
-    const tier = Math.floor(def.tier || 1);
-    if (tier >= SPECIAL_TIER_MAX) return null;
-    return `${def.slot}_db_${tier + 1}`;
-  }
-  // Toàn bộ chi phí để nâng một món lên bậc kế: { tier, stone, ngoc, id } hoặc null nếu đã tối đa
-  function specialUpgradeCost(def) {
-    const id = specialNextId(def);
-    if (!id || !ITEMS[id]) return null;
-    const next = ITEMS[id];
-    return { tier: next.tier, stone: specialStoneCost(next.tier), ngoc: next.priceNgoc || 0, id };
-  }
 
   // ---------------------------------------------------------------- Trang bị theo từng món
   // Mỗi món trang bị trong túi: { uid, id, qty, plus, q (phẩm chất), roll (0.8–1.2), aff: [[dòng phụ, giá trị, độ tốt 0..1]] }
@@ -249,6 +229,6 @@
   }
 
   Object.assign(G, { setOfLevel, setOfItem, setCounts, setBonusOf, statLabel, statUnit, upgradeCost, upgradeFailDrops, normalizeInst, instStats, rollQuality, rollAffixes, makeInst, perfection, sellPrice,
-    SPECIAL_TIER_MAX, specialStoneCost, specialNextId, specialUpgradeCost, PERFECT_MIN, SEAL_AFFIX_COUNT, canSeal, sealCost,
+    PERFECT_MIN, SEAL_AFFIX_COUNT, canSeal, sealCost,
     NHIEM_STAT_MUL, NHIEM_HP_PENALTY, NHIEM_MAX, NHIEM_CHANCE, isRedGate, rollNhiem, isNhiem, nhiemLoad, nhiemHpMul, cleanseNhiem, nhiemText });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

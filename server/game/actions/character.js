@@ -54,6 +54,9 @@ const actions = {
     const lv = G.skillLevel(p, a.skill);
     if (!lv) fail(sk.ult ? 'Cần dùng Sách Tuyệt Kỹ để học tuyệt kỹ này.' : 'Cần đọc Sách Kỹ Năng để học kỹ năng này.');
     if (lv >= G.SKILL_MAX) fail('Kỹ năng đã đạt cấp tối đa.');
+    // Siêu tuyệt kỹ KHÔNG cộng cấp: chỉ số cố định, cấp không nhân gì (shared/logic/skills.js skillAt).
+    // Chặn ở đây để người chơi không tiêu điểm kỹ năng vào một nỗ lực vô ích.
+    if (sk.superUlt) fail('Siêu tuyệt kỹ không cộng cấp — đọc sách là dùng được ngay, chỉ số cố định.');
     if (p.skillPoints < 1) fail('Không còn điểm kỹ năng.');
     p.skillPoints -= 1;
     p.skills[a.skill] = lv + 1;

@@ -93,9 +93,19 @@ WorldScene.mix(class WorldSkills {
       .setDepth(9).setBlendMode(Phaser.BlendModes.ADD).setAngle(Math.atan2(ty - pl.y, tx - pl.x) * 57.2958);
     this.tweens.add({ targets: line, alpha: 0, scaleY: 3, duration: 420, onComplete: () => line.destroy() });
     this.ringFx(tx, ty, 0xffffff, 3.4);
+    // Mục tiêu cao hơn nhân vật TRÊN 20 cấp thì không gục ngay: chỉ mất 50% sinh lực tối đa.
+    // Cái giá của người dùng chiêu không đổi — vẫn về 0 máu (Bùa giữ 1 máu).
+    const overLevel = !!sk.execOverLevel
+      && ((target.def && target.def.level) || 1) - (App.player.level || 1) > sk.execOverLevel;
     // Mục tiêu chết. Quái do server quản lý thì để server giết: thưởng chảy đúng đường mdie/kid.
     if (target.net) Realtime.send({ t: 'exec', u: target.uid, bua: bua ? 1 : 0 });
-    else { target.hp = 0; this.killMonster(target); }
+    else if (overLevel) {
+      const dmg = Math.min(target.hp, Math.round((target.maxHp || target.hp) * (sk.execOverHp || 0.5)));
+      target.hp -= dmg;
+      this.floatText(tx, ty - 26, '💀 ' + dmg, '#ff8a80', 18);
+      if (target.hp > 0) this.drawMonsterBar(target);
+      else this.killMonster(target);
+    } else { target.hp = 0; this.killMonster(target); }
     // Trả giá: bùa cứu thì 1 máu + bất tử, không bùa thì chết theo.
     if (sk.buaSaves && bua) {
       App.hp = 1;
@@ -142,6 +152,57 @@ WorldScene.mix(class WorldSkills {
     Realtime.send({ t: 'fusion' });
   }
 
+  // ---------------------------------------------------------------- Cấm Chú Giải Phóng
+  // Đốt TOÀN BỘ năng lượng thành một vụ nổ. Sát thương = MP đã đốt × mpPower, KHÔNG nhân skillMul
+  // (vì đã nhân theo lượng MP thật của người chơi — nhân thêm skillMul là tính hai lần cùng một nguồn sức mạnh).
+  // Cái giá: về 0 MP + `lockSec` giây không hồi năng lượng, vô hiệu luôn nội tại Dòng Chảy.
+  // Server giữ hồi chiêu và khoá MP (server/realtime/index.js onManaBurst) — client chỉ kiểm và vẽ.
+  castManaBurst(id, sk, time) {
+    const p = App.player;
+    if (this.mpLockUntil && time < this.mpLockUntil) {
+      UI.log(`Cấm chú đang phong ấn năng lượng (còn ${Math.ceil((this.mpLockUntil - time) / 1000)} giây).`, '#bdbdbd');
+      return;
+    }
+    const spend = Math.floor(App.mp || 0);
+    if (spend < 50) { UI.log('Cần ít nhất 50 năng lượng để giải phóng.', '#64b5f6'); return; }
+    const sta = this.skillStaminaCost(sk);
+    if (!this.canSpendStamina(sta)) return;
+    this.spendStamina(sta);
+    const cdMs = sk.cd * 1000 * (1 - (App.stats.cdr || 0) / 100);
+    this.cooldowns[id] = time + cdMs;
+    this.cooldownLen[id] = cdMs;
+    const pl = this.player;
+    const power = sk.mpPower || 5.5;
+    // Sát thương tính từ MP đã đốt; trừ giảm trừ phòng thủ của từng quái do damageMonster lo (mult là bội số ATK).
+    // Nên quy đổi: mult = MP × mpPower / ATK, để damageMonster ra đúng con số đã thiết kế.
+    const atk = Math.max(1, App.stats.atk || 1);
+    const mult = (spend * power) / atk;
+    App.mp = 0;
+    this.mpLockUntil = time + (sk.lockSec || 10) * 1000;
+    this.floatText(pl.x, pl.y - 52, sk.name, '#ff8a80', 18);
+    this.attackAnim(time, 560, 'skill');
+    Sound.play('ult');
+    this.cameras.main.flash(300, 255, 120, 90);
+    this.cameras.main.shake(340, 0.016);
+    this.hitstop(160);
+    // Hiệu ứng: vòng đỏ-cam bùng ra theo bán kính thật của đòn
+    const g = this.add.graphics().setDepth(7.5);
+    let t = 0;
+    this.time.addEvent({ delay: 16, repeat: 24, callback: () => {
+      t++; g.clear();
+      const r = sk.radius * (t / 25);
+      g.fillStyle(0xff7043, 0.30 * (1 - t / 25)).fillCircle(pl.x, pl.y, r);
+      g.lineStyle(5, 0xffd180, 1 - t / 25).strokeCircle(pl.x, pl.y, r);
+      if (t >= 25) g.destroy();
+    } });
+    this.floatText(pl.x, pl.y - 78, `-${Math.round(spend)} MP`, '#64b5f6', 15);
+    this.hitCircle(pl.x, pl.y, sk.radius || 300, mult, { sk: 1, superUlt: 1, id, knock: 260 });
+    // Server kiểm lại class / đã học / hồi chiêu / MP rồi mới ghi p.mp = 0 và p.mpLock.
+    // Gói `cast` mở cửa sổ đòn cho onHit (đòn k=3 ở trên phải có cast hợp lệ).
+    Realtime.send({ t: 'cast', id });
+    Realtime.send({ t: 'manaburst' });
+  }
+
   // Chết vì cái giá của Lấy Mạng Đổi Mạng.
   // KHÁC die() ở một điểm quan trọng: KHÔNG gọi Net.action('die').
   // Server đã tự chạy luật chết (mất 5% kinh nghiệm, hồi sinh ở làng) ngay trong onExec, và đẩy bản vá
@@ -171,8 +232,89 @@ WorldScene.mix(class WorldSkills {
     }, 1800);
   }
 
+  // ---------------------------------------------------------------- Vạn Pháp Quy Nhất
+  // Tung CẢ BA tuyệt kỹ chung cùng một nhịp, mỗi cái chạy nguyên hiệu ứng gốc của nó, cộng thêm
+  // một vụ nổ tổng hợp có power riêng (sk.power). Sau đó tự phong ấn toàn bộ kỹ năng `lockSec` giây.
+  //
+  // Không gọi lại useSkill cho từng kỹ năng: useSkill sẽ tự trừ MP / thể lực / hồi chiêu của từng cái,
+  // và ba kỹ năng đó có thể chưa được học. Ở đây đọc thẳng dữ liệu cấp 10 của chúng và tự vẽ hiệu ứng.
+  castAllIn(id, sk, time) {
+    const cost = Math.round(sk.mp * App.stats.costMul);
+    if (App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }
+    const sta = this.skillStaminaCost(sk);
+    if (!this.canSpendStamina(sta)) return;
+    App.mp -= cost;
+    this.spendStamina(sta);
+    const cdMs = sk.cd * 1000 * (1 - (App.stats.cdr || 0) / 100);
+    this.cooldowns[id] = time + cdMs;
+    this.cooldownLen[id] = cdMs;
+    const pl = this.player, f = this.facing;
+    const pw = sk.power * App.stats.skillMul;
+    this.floatText(pl.x, pl.y - 52, sk.name, '#b388ff', 19);
+    this.attackAnim(time, 700, 'skill');
+    Sound.play('ult');
+    this.cameras.main.flash(340, 200, 160, 255);
+    this.cameras.main.shake(420, 0.020);
+    this.hitstop(200);
+    // --- 1. Vụ nổ tổng hợp ở giữa (power riêng của siêu tuyệt kỹ)
+    const g = this.add.graphics().setDepth(7.5);
+    let t = 0;
+    this.time.addEvent({ delay: 16, repeat: 26, callback: () => {
+      t++; g.clear();
+      const r = sk.radius * (t / 27);
+      g.fillStyle(0xb388ff, 0.32 * (1 - t / 27)).fillCircle(pl.x, pl.y, r);
+      g.lineStyle(5, 0xe1d4ff, 1 - t / 27).strokeCircle(pl.x, pl.y, r);
+      if (t >= 27) g.destroy();
+    } });
+    this.hitCircle(pl.x, pl.y, sk.radius, pw, { sk: 1, superUlt: 1, id, knock: 300 });
+    // --- 2. Thiên Địa Chấn Động: nổ lan quanh người
+    const chung1 = GameData.skillAt('ulChung1', 10);
+    this.time.delayedCall(90, () => {
+      if (!this.sys || !this.sys.isActive()) return;
+      const p1 = chung1.power * App.stats.skillMul;
+      this.hitCircle(pl.x, pl.y, chung1.radius, p1, { sk: 1, superUlt: 1, id, knock: 260 });
+      this.ringFx(pl.x, pl.y, 0xff7043, 3);
+    });
+    // --- 3. Hư Không Tuyệt Trảm: ba nhát chém hư không đánh xuống phía trước
+    const chung3 = GameData.skillAt('ulChung3', 10);
+    const gy = pl.body.bottom;
+    for (let k = 0; k < (chung3.count || 3); k++) {
+      this.time.delayedCall(180 + k * 200, () => {
+        if (!this.sys || !this.sys.isActive()) return;
+        const x = Phaser.Math.Clamp(pl.x + f * (140 + k * 130), 30, this.worldW - 30);
+        this.telegraph(x, gy, chung3.radius, 0xb388ff, 260);
+        const sw = this.add.image(x, gy - 420, 'fx_bigsword').setOrigin(0.5, 1).setDepth(8).setAlpha(0.95).setTint(0xd9c2ff);
+        this.tweens.add({ targets: sw, y: gy + 20, duration: 280, ease: 'Quad.in', onComplete: () => {
+          this.cameras.main.shake(180, 0.010);
+          this.hitCircle(x, gy - 30, chung3.radius, chung3.power * App.stats.skillMul, { sk: 1, superUlt: 1, id, knock: 300 });
+          this.tweens.add({ targets: sw, alpha: 0, duration: 420, delay: 200, onComplete: () => sw.destroy() });
+        } });
+      });
+    }
+    // --- 4. Ý Chí Bất Diệt: buff tấn công / chí mạng / tốc đánh, cùng ô riêng như dùng bình thường
+    const chung2 = GameData.skillAt('ulChung2', 10);
+    this.buffs['ulChung2'] = { name: 'awaken', until: time + chung2.duration * 1000, dur: chung2.duration * 1000,
+      skill: 'ulChung2', atk: chung2.atkBuff || 0, crit: chung2.critBuff || 0, speed: chung2.speedBuff || 0,
+      regen: chung2.regen || 0, exec: chung2.exec || null };
+    this.floatText(pl.x, pl.y - 78, 'Ý Chí Bất Diệt', '#ffd54f', 15);
+    // --- 5. Cái giá: phong ấn toàn bộ kỹ năng
+    this.skillLockUntil = time + (sk.lockSec || 60) * 1000;
+    this.floatText(pl.x, pl.y - 100, `🔒 Phong ấn ${sk.lockSec || 60}s`, '#bdbdbd', 15);
+    // Server giữ mốc phong ấn (p.skillLock) và hồi chiêu — client không được quyết.
+    // `cast` mở cửa sổ đòn cho onHit (các đòn k=3 ở trên phải có cast hợp lệ).
+    Realtime.send({ t: 'cast', id });
+    Realtime.send({ t: 'allin' });
+  }
+
   useSkill(slot, time) {
     const p = App.player;
+    // Vạn Pháp Quy Nhất: đang phong ấn kỹ năng thì không dùng được ô nào (kể cả ô trang bị).
+    // Mốc do SERVER giữ (p.skillLock) nên đổi bản đồ hay hồi sinh cũng không xoá được.
+    const lockUntil = Math.max(this.skillLockUntil || 0, (p && p.skillLock) || 0);
+    if (time < lockUntil) {
+      UI.log(`Kỹ năng đang bị phong ấn (còn ${Math.ceil((lockUntil - time) / 1000)} giây).`, '#bdbdbd');
+      return;
+    }
     // Ô thứ 9 (GEAR_SKILL_SLOT): kỹ năng do TRANG BỊ cấp, không nằm trong p.skillSlots.
     // Mặc đồ thì có, tháo đồ thì mất — xem gearSkill trong shared/logic/skills.js.
     const gear = slot === GameData.GEAR_SKILL_SLOT ? GameData.gearSkill(p) : null;
@@ -190,6 +332,11 @@ WorldScene.mix(class WorldSkills {
     if (sk.type === 'execute') { this.castExecute(id, sk, time); return; }
     // Tử Linh Dung Hợp: cần có bóng ma trong bộ sưu tập, không có thì không mất gì (không tốn MP, không hồi chiêu).
     if (sk.type === 'fusion') { this.castFusion(id, sk, time); return; }
+    // Cấm Chú Giải Phóng: cái giá là TOÀN BỘ năng lượng, nên phải tự kiểm MP tối thiểu
+    // (không dùng bảng giá `sk.mp` như kỹ năng khác — xem castManaBurst).
+    if (sk.type === 'manaburst') { this.castManaBurst(id, sk, time); return; }
+    // Vạn Pháp Quy Nhất: tung cả ba tuyệt kỹ chung cùng lúc rồi tự phong ấn kỹ năng.
+    if (sk.type === 'allin') { this.castAllIn(id, sk, time); return; }
     const cost = Math.round(sk.mp * App.stats.costMul);
     // Bộ Lưu Trữ 10 món — Cổ Ngữ: kỹ năng ĐẦU TIÊN mỗi trận không tốn năng lượng.
     // Cờ reset ở resetCombatFlags() khi vào bản đồ mới hoặc hồi sinh.
@@ -207,6 +354,8 @@ WorldScene.mix(class WorldSkills {
     const cdMs = sk.cd * 1000 * (1 - (App.stats.cdr || 0) / 100);
     this.cooldowns[id] = time + cdMs;
     this.cooldownLen[id] = cdMs;
+    // Báo server lần dùng chiêu hợp lệ để nó giữ hồi chiêu + đếm số lần (chống spam). Gửi TRƯỚC khi bắn đòn.
+    Realtime.send({ t: 'cast', id });
     const pw = sk.power ? sk.power * App.stats.skillMul : 0;
     const pl = this.player, f = this.facing;
     // Nhịp giữa các nhát: đủ thưa để người chơi ĐẾM được số nhát, đủ nhanh để không thành đòn chậm chạp
@@ -222,6 +371,12 @@ WorldScene.mix(class WorldSkills {
       if (sk.freeze) o.freeze = sk.freeze;
       if (sk.shred) o.shred = sk.shred;
       if (sk.vsSlowed) o.vsSlowed = sk.vsSlowed;
+      // Loại đòn để server chọn đúng trần sát thương: 1 kỹ năng, 2 tuyệt kỹ, 3 siêu tuyệt kỹ.
+      // Server KHÔNG tin cờ này (client sửa được) — nó chỉ chọn trần, còn chặn thật là ngân sách mỗi giây.
+      o.sk = 1;
+      o.id = id;                       // server đối chiếu đòn với lần cast hợp lệ
+      if (sk.ult) o.ult = 1;
+      if (sk.superUlt) o.superUlt = 1;
       return Object.assign(o, over);
     };
     if (sk.ult && (p.school === 'tu_linh_thuat_su' || p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su)) this.shadowPowerUntil = time + 8000;

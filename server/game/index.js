@@ -62,26 +62,52 @@ function migrate(p) {
   if (!p.advancement.done) p.advancement.done = {};
   if (!p.advancement.unlocked) p.advancement.unlocked = {};
   p.hiddenNpcActive = false; // lần nạp lại hoặc đổi map đều cần gọi NPC lại
-  // Trang bị đặc biệt: từ nay mỗi ô chỉ giữ MỘT món (bậc là thuộc tính, nâng tại chỗ).
-  // Người chơi cũ có thể đang giữ nhiều bậc cùng một ô: giữ bậc cao nhất, trả phần dư về túi thì mất —
-  // nên thay vào đó chỉ bỏ khỏi túi những bậc thấp hơn bậc đang mặc/còn lại, và ghi log để đối soát.
-  if (Array.isArray(p.bag)) {
-    const keep = {};
-    for (const sl of G.SPECIAL_SLOTS) {
+  // ---------------------------------------------------------------- Migrate: trang bị đặc biệt → Kỳ Nguyên
+  // Save cũ có thể đang giữ các món *_db_N (bua_db_1 … chuong_db_5) trong túi / đang mặc / kho / đất,
+  // cùng Huyền Tinh Thạch. Cơ chế mới không còn các id này trong ITEMS, nên phải đổi sang quyền sở hữu
+  // Kỳ Nguyên TRƯỚC khi dòng lọc `filter(e => G.ITEMS[e.id])` ở dưới chạy (nếu không sẽ mất sạch).
+  // Quy tắc: mỗi ô cũ có BẤT KỂ món nào (bậc nào) → cấp id Kỳ Nguyên tương ứng vào owned + active.
+  // Cấp người chơi cũ có thể chưa đủ mốc (vd có chuong_db_5 ở cấp 60) — vẫn cấp quyền để không mất lợi ích.
+  {
+    p.kyNguyen = p.kyNguyen || { owned: [], active: [] };
+    if (!Array.isArray(p.kyNguyen.owned)) p.kyNguyen.owned = [];
+    if (!Array.isArray(p.kyNguyen.active)) p.kyNguyen.active = [];
+    const SLOT_TO_KN = G.OLD_SPECIAL_SLOT_TO_KY_NGUYEN || {};
+    // Nhận diện id cũ theo regex: <slot>_db_<bậc>. Không phụ thuộc vào ITEMS (đã xóa các id này).
+    const knOfOldId = (id) => {
+      if (typeof id !== 'string') return null;
+      const m = /^(bua|an|canh|linh_dan|chuong)_db_[1-5]$/.exec(id);
+      return m ? (SLOT_TO_KN[m[1]] || null) : null;
+    };
+    const grant = (id) => {
+      if (!id) return;
+      if (!p.kyNguyen.owned.includes(id)) p.kyNguyen.owned.push(id);
+      if (!p.kyNguyen.active.includes(id)) p.kyNguyen.active.push(id);
+    };
+    // 1. Đang mặc ở 5 ô cũ (nằm trong p.equip dù SLOTS mới đã bỏ chúng).
+    for (const sl of Object.keys(SLOT_TO_KN)) {
       const it = p.equip && p.equip[sl];
-      if (it && G.ITEMS[it.id] && G.ITEMS[it.id].special) keep[sl] = G.ITEMS[it.id].tier || 1;
+      if (it && knOfOldId(it.id)) grant(SLOT_TO_KN[sl]);
+      if (p.equip) delete p.equip[sl];
     }
-    for (const e of p.bag) {
-      const d = G.ITEMS[e.id];
-      if (!d || !d.special) continue;
-      const t = d.tier || 1;
-      if (!keep[d.slot] || t > keep[d.slot]) keep[d.slot] = t;
+    // 2. Trong túi / kho từng làng / đất: ghi nhận rồi bỏ instance cũ đi.
+    const strip = (arr) => (Array.isArray(arr) ? arr.filter(e => {
+      const kn = e && knOfOldId(e.id);
+      if (kn) { grant(kn); return false; }
+      return !(e && e.id === 'huyen_tinh_thach');   // xóa luôn đá nâng bậc đã vô dụng
+    }) : arr);
+    p.bag = strip(p.bag);
+    for (const mapId of Object.keys(p.storageByMap || {})) p.storageByMap[mapId] = strip(p.storageByMap[mapId]);
+    if (Array.isArray(p.loot)) {
+      p.loot = p.loot.filter(l => {
+        const kn = l && l.inst && knOfOldId(l.inst.id);
+        if (kn) { grant(kn); return false; }
+        return !(l && l.inst && l.inst.id === 'huyen_tinh_thach');
+      });
     }
-    p.bag = p.bag.filter(e => {
-      const d = G.ITEMS[e.id];
-      if (!d || !d.special) return true;
-      return (d.tier || 1) === keep[d.slot];   // chỉ giữ đúng bậc cao nhất của ô đó
-    });
+    // active ⊆ owned, và chỉ giữ id Kỳ Nguyên còn hợp lệ
+    p.kyNguyen.active = [...new Set(p.kyNguyen.active.filter(id => p.kyNguyen.owned.includes(id) && G.ITEMS[id] && G.ITEMS[id].kyNguyen))];
+    p.kyNguyen.owned = [...new Set(p.kyNguyen.owned.filter(id => G.ITEMS[id] && G.ITEMS[id].kyNguyen))];
   }
   // `arrive` là điểm tới của lần đổi bản đồ gần nhất, chỉ có nghĩa trong đúng phiên đó. Nếu đã có vị trí
   // đứng thật (x/y) thì cờ này là dấu vết cũ: giữ lại sẽ khiến lần vào game sau client ném nhân vật về cổng

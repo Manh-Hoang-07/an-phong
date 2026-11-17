@@ -117,95 +117,6 @@ const ItemArt = (() => {
   // ------------------------------------------------------------------ Trang bị đặc biệt: 5 dáng mỗi ô
   // Vẽ riêng, KHÔNG dùng bảng ARMOR: màu lấy theo bậc (bạc → đồng → vàng → lam ngọc → tím),
   // dáng đổi theo bậc nên 5 bậc của cùng một ô nhìn ra ngay là khác nhau.
-  const SPECIAL = {
-    // Bùa Hộ Mệnh: tấm bùa giấy vàng, tua rua, ấn son ở giữa
-    bua: (c, k) => {
-      const body = [
-        rect(20, 8, 24, 44, c.base, 2) + rect(24, 14, 16, 12, c.dark, 1.5) + gem(32, 40, 4, c.gem),
-        path('M20 8 H44 V44 Q32 54 20 44 Z', c.base) + circ(32, 26, 7, c.dark, 1.6) + gem(32, 26, 3.4, c.gem) + [0, 1, 2].map(i => line(26, 38 + i * 4, 38, 38 + i * 4, c.acc, 1.6)).join(''),
-        path('M18 6 Q32 2 46 6 V46 Q32 58 18 46 Z', c.base) + path('M26 20 L32 14 L38 20 L32 26 Z', c.acc, 1.6) + gem(32, 34, 3.6, c.gem) + line(32, 38, 32, 48, c.acc, 1.8),
-        rect(19, 7, 26, 46, c.base, 2) + path('M32 12 L40 22 L32 32 L24 22 Z', c.acc, 1.8) + circ(32, 22, 2.4, c.gem, 1.2) + [0, 1, 2, 3].map(i => line(24, 38 + i * 4, 40, 38 + i * 4, c.dark, 1.4)).join(''),
-        path('M16 4 Q32 0 48 4 V48 Q32 60 16 48 Z', c.base) + glow(c.acc, 20) + path('M32 10 L42 24 L32 38 L22 24 Z', c.acc, 2) + gem(32, 24, 4.4, c.gem) + path('M24 44 H40 M26 48 H38', c.dark, 1.6),
-      ][k];
-      return body + [0, 1, 2, 3, 4].map(i => line(24 + i * 4, 50, 23 + i * 4, 58, c.acc, 1.2)).join('');
-    },
-    // Ấn: con dấu vuông, mặt dưới chạm nổi hình thú, tay cầm ở trên
-    an: (c, k) => {
-      const seal = [
-        rect(14, 34, 36, 22, c.base, 3) + rect(20, 40, 24, 10, c.dark, 2) + gem(32, 45, 3, c.gem),
-        rect(12, 32, 40, 24, c.base, 4) + path('M22 44 L32 36 L42 44 L32 52 Z', c.acc, 1.8) + gem(32, 44, 3, c.gem),
-        rect(10, 30, 44, 26, c.base, 4) + circ(32, 43, 8, c.dark, 2) + path('M26 43 H38 M32 37 V49', c.acc, 2),
-        rect(12, 32, 40, 24, c.base, 4) + path('M18 38 Q32 30 46 38 Q46 50 32 52 Q18 50 18 38Z', c.acc, 1.8) + gem(32, 43, 3.4, c.gem),
-        rect(8, 28, 48, 28, c.base, 5) + glow(c.acc, 20) + path('M32 32 L40 40 L32 48 L24 40 Z', c.acc, 2.2) + gem(32, 40, 4.2, c.gem),
-      ][k];
-      const knob = [rect(28, 16, 8, 18, c.dark, 3) + circ(32, 14, 7, c.acc, 2),
-        rect(28, 18, 8, 16, c.dark, 3) + path('M32 4 L38 14 H26 Z', c.acc, 1.8),
-        rect(28, 16, 8, 18, c.dark, 3) + circ(32, 13, 8, c.acc, 2) + gem(32, 13, 3, c.gem),
-        rect(28, 18, 8, 16, c.dark, 3) + path('M24 14 Q32 2 40 14 Q32 20 24 14Z', c.acc, 1.8),
-        rect(28, 14, 8, 20, c.dark, 3) + circ(32, 10, 9, c.acc, 2.2) + gem(32, 10, 4, c.gem) + path('M22 6 L24 0 L28 4 L32 -2 L36 4 L40 0 L42 6Z', c.acc, 1.2)][k];
-      return knob + seal;
-    },
-    // Cánh: hai cánh lớn hình lá xoè lên, có đường lông chia trong, viên ngọc ở gốc
-    canh: (c, k) => {
-      // Một cánh hình lá: gốc ở (32,38), đầu nhọn xoè lên trên và ra ngoài
-      // dir = -1 (trái) / 1 (phải); len càng lớn cánh càng dài
-      const wing = (dir, len, col) => {
-        const tipX = 32 + dir * len, tipY = 38 - len * 0.95;
-        const outX = 32 + dir * (len + 4), outY = 38 - len * 0.25;
-        return path(`M32 38 Q${32 + dir * len * 0.35} ${38 - len * 1.05} ${tipX} ${tipY} Q${outX} ${outY} 32 42 Z`, col, 1.8);
-      };
-      // Đường lông trong cánh: chia cánh thành các dải
-      const ribs = (dir, len, n, col) => {
-        let s = '';
-        for (let i = 1; i <= n; i++) {
-          const t = i / (n + 1);
-          s += line(32, 39, 32 + dir * len * (0.55 + t * 0.5), 38 - len * (0.95 - t * 0.75), col, 1.2);
-        }
-        return s;
-      };
-      const L = 20 + k * 2.5;                       // độ dài cánh theo bậc
-      const layers = k >= 3 ? 2 : 1;                // bậc cao có thêm lớp cánh dưới
-      let out = '';
-      for (let l = layers; l >= 1; l--) {
-        const len = L - (l - 1) * 7;
-        const col = l === 1 ? c.base : c.light;
-        out += wing(-1, len, col) + wing(1, len, col);
-        out += ribs(-1, len, 2 + k, c.dark) + ribs(1, len, 2 + k, c.dark);
-      }
-      const spine = line(32, 30, 32, 52, c.dark, 2.2);
-      const gemBase = gem(32, 40, 4, c.gem) + circ(32, 40, 6.5, c.acc, 1.5);
-      const crown = k >= 2 ? path('M28 26 L32 17 L36 26Z', c.acc, 1.6) : '';
-      return (k >= 2 ? glow(c.acc, 20) : '') + out + spine + gemBase + crown;
-    },
-    // Linh Đan: viên đan tròn phát sáng, quầng sáng, tia linh khí
-    linh_dan: (c, k) => {
-      const orb = [
-        circ(32, 34, 16, c.base, 2.4) + gem(32, 34, 7, c.gem),
-        circ(32, 34, 18, c.base, 2.4) + path('M32 18 Q44 34 32 50 Q20 34 32 18Z', c.acc, 1.6) + gem(32, 34, 6, c.gem),
-        circ(32, 34, 19, c.base, 2.6) + glow(c.acc, 24) + circ(32, 34, 11, c.dark, 1.6) + gem(32, 34, 6.4, c.gem),
-        circ(32, 34, 20, c.base, 2.6) + glow(c.acc, 26) + path('M32 14 L38 34 L32 54 L26 34Z', c.acc, 1.8) + gem(32, 34, 7, c.gem) + shine('M24 24 Q32 16 40 24', 0.6, 1.6),
-        circ(32, 34, 21, c.base, 2.8) + glow(c.acc, 28) + circ(32, 34, 13, c.dark, 1.8) + path('M32 12 L40 34 L32 56 L24 34Z', c.acc, 2) + gem(32, 34, 8, c.gem) + shine('M22 22 Q32 12 42 22', 0.7, 1.8),
-      ][k];
-      // Vòng sáng lan quanh viên đan: bậc càng cao càng nhiều vòng
-      const ring = Array.from({ length: k + 1 }, (_, i) =>
-        `<circle cx="32" cy="34" r="${22 + i * 2}" fill="none" stroke="${c.acc}" stroke-width="1" opacity="${0.35 - i * 0.06}"/>`).join('');
-      return orb + ring;
-    },
-    // Chuông Trấn Hồn: quả chuông, quai xách, lưỡi gõ, sóng âm lan ra
-    chuong: (c, k) => {
-      const bell = [
-        path('M20 46 Q18 20 32 14 Q46 20 44 46 Z', c.base) + rect(16, 46, 32, 6, c.dark, 2) + circ(32, 56, 4, c.acc, 1.6),
-        path('M18 46 Q16 18 32 12 Q48 18 46 46 Z', c.base) + rect(14, 46, 36, 6, c.dark, 2) + line(32, 12, 32, 6, c.acc, 2.4) + circ(32, 56, 4, c.acc, 1.6),
-        path('M16 46 Q14 16 32 10 Q50 16 48 46 Z', c.base) + rect(12, 46, 40, 7, c.dark, 2.4) + line(32, 10, 32, 4, c.acc, 2.6) + circ(32, 57, 4.4, c.acc, 1.8) + gem(32, 32, 3.4, c.gem),
-        path('M14 46 Q12 14 32 8 Q52 14 50 46 Z', c.base) + rect(10, 46, 44, 8, c.dark, 2.6) + line(32, 8, 32, 2, c.acc, 2.8) + circ(32, 58, 4.8, c.acc, 2) + [0, 1, 2].map(i => line(24 + i * 8, 22, 24 + i * 8, 42, c.acc, 1.2)).join(''),
-        path('M12 46 Q10 12 32 6 Q54 12 52 46 Z', c.base) + glow(c.acc, 24) + rect(8, 46, 48, 9, c.dark, 3) + line(32, 6, 32, 0, c.acc, 3) + circ(32, 59, 5.2, c.acc, 2.2) + path('M32 20 L38 32 L32 44 L26 32Z', c.acc, 1.8) + gem(32, 32, 3.6, c.gem),
-      ][k];
-      const waves = [0, 1, 2, 3, 4].slice(0, k).map(i => `<path d="M${6 - i * 2} 30 Q${2 - i * 2} 38 ${6 - i * 2} 46" fill="none" stroke="${c.acc}" stroke-width="1.6" opacity="${0.5 - i * 0.08}"/><path d="M${58 + i * 2} 30 Q${62 + i * 2} 38 ${58 + i * 2} 46" fill="none" stroke="${c.acc}" stroke-width="1.6" opacity="${0.5 - i * 0.08}"/>`).join('');
-      return waves + bell;
-    },
-  };
-  // Màu theo bậc của trang bị đặc biệt: bạc, đồng, vàng, lam ngọc, tím
-  const SPECIAL_TIERS = [['#a8b2c4', '#dfe6f2'], ['#c08a52', '#f0c68a'], ['#e0b23c', '#fff0a8'], ['#4fb8e8', '#c8f2ff'], ['#b06ae8', '#f0d0ff']];
 
   // ------------------------------------------------------------------ Giáp: 4 dáng mỗi ô
   const ARMOR = {
@@ -292,8 +203,25 @@ const ItemArt = (() => {
     da_cuong_hoa: () => crystal('#9fb0c8', 0.9), da_cuong_hoa_trung: () => crystal('#5aa0ff', 0.95), da_cuong_hoa_cao: () => crystal('#b068f0', 1),
     da_cuong_hoa_than_thoai: () => glow('#ffd24a', 26) + crystal('#ffc83a', 1.02),
     loi_tinh_van: () => orb('#b45cf0', '#ffd6ff'),
-    // Huyền Tinh Thạch: đá riêng của trang bị đặc biệt, tím ánh sao để khác hẳn 4 loại đá cường hóa
-    huyen_tinh_thach: () => glow('#c08cff', 24) + crystal('#8a4cf0', 1.04) + circ(32, 30, 3, '#f0d8ff', 1.2),
+    // ===== Kỳ Nguyên: 5 phúc duyên, mỗi cái một biểu tượng riêng, quầng sáng theo màu
+    // Bất Tử: vòng bất diệt — vòng tròn khép kín có viên ngọc giữa (giữ được 1 máu)
+    kn_bat_tu: () => glow('#ffd24a', 26) + circ(32, 32, 20, '#c8a02a', 2.6) + circ(32, 32, 13, '#ffe9a0', 1.8)
+      + path('M32 20 V44 M20 32 H44', 'none', 2.2).replace(OUT, '#7a5a10') + gem(32, 32, 5, '#fff6c8'),
+    // Sát Kiếp: lưỡi đao chéo có tia sét — đòn thứ 5 nặng hơn
+    kn_sat_kiep: () => glow('#ff6a3c', 24) + path('M12 52 L44 20 L50 26 L18 58Z', '#d84a24', 2.2)
+      + path('M48 8 L36 28 L44 30 L30 52', 'none', 2.6).replace(OUT, '#ffd24a') + gem(32, 32, 4, '#ffd9a0'),
+    // Phiêu Diêu: đôi cánh nhẹ + gió — né đòn
+    kn_phiu_dieu: () => glow('#7fe0ff', 26) + path('M32 40 C12 20 6 44 24 48Z', '#4fb8e8', 2)
+      + path('M32 40 C52 20 58 44 40 48Z', '#8fe4ff', 2) + line(32, 34, 32, 54, '#2a6a8a', 2.2)
+      + path('M8 30 Q18 26 26 30 M38 30 Q46 26 56 30', 'none', 1.6).replace(OUT, '#c8f2ff'),
+    // Tụ Linh: viên đan xoáy linh khí — kỹ năng mạnh hơn
+    kn_tu_linh: () => glow('#b06ae8', 28) + circ(32, 32, 18, '#7a3ac0', 2.4)
+      + path('M32 14 Q46 32 32 50 Q18 32 32 14Z', '#d0a0ff', 1.8) + gem(32, 32, 6, '#f0d8ff')
+      + circ(32, 32, 22, '#b06ae8', 1.2),
+    // Trấn Hồn: quả chuông có sóng âm — hạ quái hồi máu / năng lượng
+    kn_tran_hon: () => glow('#ffb347', 24) + path('M18 46 Q16 18 32 12 Q48 18 46 46Z', '#c88a2a', 2.4)
+      + rect(14, 46, 36, 6, '#8a5a10', 2) + circ(32, 56, 4, '#ffd24a', 1.6) + line(32, 12, 32, 6, '#ffd24a', 2.4)
+      + path('M6 30 Q2 38 6 46 M58 30 Q62 38 58 46', 'none', 1.6).replace(OUT, '#ffe0a0'),
     // sách
     sach_ky_nang: () => book('#3b78d8', circ(32, 32, 6, '#f2d98a', 1.6)),
     sach_bien_hinh_1: () => book('#3da05a', path('M24 36 Q32 20 40 36 Q32 32 24 36Z', '#f2d98a', 1.4)), sach_bien_hinh_2: () => book('#2a8d9e', path('M22 38 Q32 16 42 38 Q32 32 22 38Z', '#f2d98a', 1.4) + circ(32, 24, 3, '#ffffff', 1)),
@@ -348,13 +276,6 @@ const ItemArt = (() => {
       return wrap(book(col, `<path d="M32 22 l3 7 7.6.7-5.8 5 1.8 7.6-6.6-4-6.6 4 1.8-7.6-5.8-5 7.6-.7z" fill="#ffd24a" stroke="${OUT}" stroke-width="1.2"/>`));
     }
     if (d.slot) {
-      // Trang bị đặc biệt: màu theo bậc, dáng theo bậc (5 bậc = 5 dáng khác nhau)
-      if (d.special && SPECIAL[d.slot]) {
-        const tier = Math.max(0, Math.min(4, (d.tier || 1) - 1));
-        const pal = SPECIAL_TIERS[tier];
-        const c = { base: mix(pal[0], 0), dark: mix(pal[0], -0.45), light: mix(pal[0], 0.42), acc: pal[1], gem: mix(pal[1], -0.08), v: tier };
-        return wrap(glow(pal[1], 26) + SPECIAL[d.slot](c, tier));
-      }
       const r = ranks()[id] || { v: 0, set: 0 }, pal = SETS[r.set] || SETS[0], k = (r.v + r.set) % 4;   // dáng đổi theo cả thứ tự trong bộ lẫn bộ, nên các bộ khác nhau cũng khác dáng
       const c = { base: mix(pal[0], r.v * 0.06 - 0.03), dark: mix(pal[0], -0.45), light: mix(pal[0], 0.42), acc: pal[1], gem: mix(pal[1], -0.08), v: r.v };
       const halo = r.set >= 6 || r.v >= 2 ? glow(pal[1], 27) : '';

@@ -30,6 +30,22 @@
     if (s.exec) out.push(`×${s.exec.mult} lên quái dưới ${Math.round(s.exec.below * 100)}% máu`);
     // Lấy Mạng Đổi Mạng: cái giá là MÁU, phải hiện rõ chứ không để người chơi tự phát hiện
     if (s.selfZero) out.push(s.buaSaves ? 'giết ngay · mình về 0 máu (Bùa giữ 1 máu)' : 'giết ngay · mình về 0 máu');
+    if (s.execOverLevel) out.push(`mục tiêu trên ${s.execOverLevel} cấp chỉ mất ${Math.round((s.execOverHp || 0.5) * 100)}% máu`);
+    // Cấm Chú Giải Phóng: sát thương tính theo NĂNG LƯỢNG đã đốt, không theo % sức mạnh
+    if (s.type === 'manaburst') {
+      out.push(`nổ ${s.radius || 300} · sát thương = năng lượng đốt × ${s.mpPower || 5.5}`);
+      out.push(`đốt sạch MP · phong ấn hồi năng lượng ${s.lockSec || 10}s`);
+    }
+    // Vạn Pháp Quy Nhất: tung cả ba tuyệt kỹ chung, rồi tự phong ấn kỹ năng
+    if (s.type === 'allin') {
+      out.push(`tung Thiên Địa Chấn Động + Hư Không Tuyệt Trảm + Ý Chí Bất Diệt`);
+      out.push(`nổ tổng hợp ${s.radius || 340} · phong ấn mọi kỹ năng ${s.lockSec || 60}s`);
+    }
+    // Thiết Bích Vĩnh Cửu: miễn nhiễm nhưng tấn công về 0 — cái giá phải hiện ngay cạnh hiệu ứng
+    if (s.type === 'guard' && s.reduce >= 1) {
+      out.push(`${s.duration || 15}s miễn nhiễm sát thương`);
+      if (s.atkBuff <= -1) out.push('tấn công về 0 trong suốt thời gian đó');
+    }
   // Tử Linh Dung Hợp: cộng dồn chỉ số của mỗi bóng ma trong bộ sưu tập
   if (s.type === 'fusion') {
     const F = G.FUSION || { hp: 0.1, mp: 0.05, sta: 0.05, def: 0.05 };
@@ -98,7 +114,9 @@
         const on = p.skillSlots[i] === id;
         return `<button class="btn small slotbtn${on ? ' on' : ''}" data-act="set_skill" data-slot="${i}" data-skill="${id}" ${on ? 'disabled' : ''}>${slotLabel(i)}</button>`;
       }).join('');
-    const ms = [[5, base.t5], [10, base.t10]].filter(([, t]) => t)
+    // Siêu tuyệt kỹ không cộng cấp: không có mốc cấp 5/10, không có "cấp tiếp theo", không nút nâng.
+    const isSuper = !!base.superUlt;
+    const ms = isSuper ? '' : [[5, base.t5], [10, base.t10]].filter(([, t]) => t)
       .map(([m, t]) => `<div class="sk-milestone${lv >= m ? ' on' : ''}">${lv >= m ? '✓' : '◇'} <b>Cấp ${m}</b>: ${esc(t)}</div>`).join('');
     return `<div class="sk-card${base.superUlt ? ' is-ult is-superult' : base.ult ? ' is-ult' : ''}">
       <div class="sk-card-ic">${base.icon}</div>
@@ -114,11 +132,12 @@
           <span>${skillNumbers(cur)}</span>
           <span class="muted">${Math.round(cur.mp * App.stats.costMul)} năng lượng · hồi ${Math.round(cur.cd * 10) / 10}s</span>
         </div>
-        ${next ? `<div class="sk-next">▲ Cấp ${lv + 1}: ${skillNumbers(next)}</div>` : ''}
+        ${next && !isSuper ? `<div class="sk-next">▲ Cấp ${lv + 1}: ${skillNumbers(next)}</div>` : ''}
         ${ms}
       </div>
       <div class="sk-card-act">
-        ${lv >= G.SKILL_MAX ? '<span class="gold sk-max">TỐI ĐA</span>'
+        ${isSuper ? '<span class="gold sk-max">CỐ ĐỊNH</span>'
+          : lv >= G.SKILL_MAX ? '<span class="gold sk-max">TỐI ĐA</span>'
           : `<button class="btn small${canUp ? ' primary' : ''}" data-act="learn_skill" data-skill="${id}" ${canUp ? '' : 'disabled'}>+1 cấp</button>`}
         ${lv ? `<div class="sk-slots">${slotGroup()}</div>` : ''}
       </div>

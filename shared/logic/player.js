@@ -3,7 +3,20 @@
  */
 (function (G) {
   'use strict';
-  const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, SPECIAL_SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats, baseSchool, setBonusOf, nhiemLoad, nhiemHpMul } = G;
+  const { BAG_SIZE, r1, SCHOOLS, AWAKENS, PASSIVES, PERKS, SKILL_SLOTS, ITEMS, SLOTS, NEW_PLAYER_MAP, QUEST_VERSION, normalizeInst, instStats, baseSchool, setBonusOf, nhiemLoad, nhiemHpMul } = G;
+
+  // Kỳ Nguyên đang bật: trả về danh sách định nghĩa (đã lọc id hợp lệ).
+  // `active` là nguồn duy nhất có tác dụng — tháo ra (bỏ khỏi active) là mất chỉ số/hiệu ứng ngay.
+  function kyNguyenActive(player) {
+    const st = player.kyNguyen;
+    if (!st || !Array.isArray(st.active)) return [];
+    const out = [];
+    for (const id of st.active) {
+      const def = ITEMS[id];
+      if (def && def.kyNguyen) out.push(def);
+    }
+    return out;
+  }
 
   function nextAwaken(player) {
     const next = (player.awakenTier || 0) + 1;
@@ -32,7 +45,6 @@
 
   function canUseItem(player, def) {
     if (!def || !def.slot) return false;
-    // Trang bị đặc biệt cũng có cấp sử dụng, gắn với bậc (I=10 … V=90)
     if ((def.level || 1) > player.level) return false;
     if (def.slot === 'weapon') return canUseWeapon(player, def);
     return true;
@@ -57,6 +69,11 @@
       const s = instStats(normalizeInst(it)).all;
       for (const k in s) eq[k] = (eq[k] || 0) + s[k];
     }
+    // Kỳ Nguyên đang bật: chỉ số cố định, cộng dồn như một tầng riêng (không qua phẩm chất / cường hóa).
+    for (const def of kyNguyenActive(player)) {
+      const s = def.stats || {};
+      for (const k in s) eq[k] = (eq[k] || 0) + s[k];
+    }
     // Chỉ số gốc theo đường cong RIÊNG của từng class: [cơ bản, mỗi cấp] (chưa chọn class dùng NOVICE_CURVE).
     // Chức nghiệp 2 không khai báo curve riêng: lấy đường cong class nền rồi nhân EVOLUTION_MUL (×1.3).
     const sc = player.school && SCHOOLS[player.school];
@@ -78,7 +95,7 @@
     }
     // Sức mạnh kỹ năng theo Tinh thần: có trần ×2 (SPI/(SPI+150)), không tăng vô hạn như trước. Chỉ nhân vào sát thương kỹ năng (không nhân hồi máu / buff).
     let skillMul = 1 + p.spi / (p.spi + 150);
-    // Linh Đan (trang bị đặc biệt): cộng thẳng % sát thương kỹ năng, ngoài điểm Tinh thần
+    // Kỳ Nguyên Tụ Linh: cộng thẳng % sát thương kỹ năng, ngoài điểm Tinh thần
     if (eq.skill) skillMul *= 1 + eq.skill / 100;
     let costMul = 1;
     if (sc) {
@@ -158,11 +175,11 @@
   // ---------------------------------------------------------------- Hiệu ứng trang bị
   // Gom hiệu ứng (trường fx) của MỌI món đang mặc thành một bảng theo loại hiệu ứng.
   // Mỗi ô chỉ có một món nên không cộng dồn trong cùng một loại; gom hết để client đọc một chỗ.
-  //   undying    { dur, cd }           máu cạn thì không chết, giữ 1 máu `dur` giây (Bùa Hộ Mệnh)
-  //   everyNth   { n, mult }           đòn thứ n nặng hơn (Ấn)
-  //   dodge      { chance }            né đòn (Cánh)
-  //   skillPower { mul }               % sát thương kỹ năng (Linh Đan) — đã cộng vào skillMul
-  //   onKill     { hp, mp }            hồi theo % tối đa khi hạ quái (Chuông Trấn Hồn)
+  //   undying    { dur, cd }           máu cạn thì không chết, giữ 1 máu `dur` giây (Kỳ Nguyên Bất Tử)
+  //   everyNth   { n, mult }           đòn thứ n nặng hơn (Kỳ Nguyên Sát Kiếp)
+  //   dodge      { chance }            né đòn (Kỳ Nguyên Phiêu Diêu)
+  //   skillPower { mul }               % sát thương kỹ năng (Kỳ Nguyên Tụ Linh) — đã cộng vào skillMul
+  //   onKill     { hp, mp }            hồi theo % tối đa khi hạ quái (Kỳ Nguyên Trấn Hồn)
   //   pierce     { minLevel, maxLevel } bỏ qua phòng thủ quái trong khoảng cấp (Thần Kiếm Vĩnh Hằng)
   //   slowAura   { range, mul }        quái trong tầm bị giảm tốc (Thượng Băng Sương)
   //   setStone   { cd }                khiên đá: đỡ trọn 1 đòn mỗi `cd` giây (bộ Thạch Vương 10 món)
@@ -170,8 +187,9 @@
   //   setFreeCast{ }                   kỹ năng đầu tiên mỗi trận không tốn năng lượng (bộ Lưu Trữ 10 món)
   //   setPhase   { cd }                lướt qua đòn đánh mỗi `cd` giây (bộ Vĩnh Hằng 10 món)
   //
-  // Quét CẢ 15 ô, không chỉ 5 ô đặc biệt: đồ độc nhất rơi từ trùm cũng thiết kế được bằng fx.
-  // Ô đặc biệt nằm CUỐI mảng SLOTS nên nếu trùng loại hiệu ứng thì đồ đặc biệt thắng.
+  // Quét 10 ô trang bị: đồ độc nhất rơi từ trùm cũng thiết kế được bằng fx (pierce, slowAura...).
+  // Sau đó thêm fx của Kỳ Nguyên đang bật. Kỳ Nguyên được xét SAU trang bị nên nếu trùng loại
+  // hiệu ứng thì Kỳ Nguyên thắng (giữ đúng thứ tự cũ: đồ đặc biệt từng nằm cuối SLOTS).
   function specialFx(player) {
     const out = {};
     for (const slot of SLOTS) {
@@ -180,6 +198,10 @@
       const def = ITEMS[it.id];
       if (!def || !def.fx) continue;
       out[def.fx.kind] = def.fx;
+    }
+    // Kỳ Nguyên đang bật (chỉ những cái active mới có tác dụng).
+    for (const def of kyNguyenActive(player)) {
+      if (def.fx) out[def.fx.kind] = def.fx;
     }
     // Hiệu ứng của bộ trang bị (chỉ ở ngưỡng 10 món). Đặt sau cùng nên thắng nếu trùng loại.
     const setB = setBonusOf(player);
@@ -193,6 +215,7 @@
       level: 1, exp: 0, gold: 50, linhNgoc: 0,
       school: null,
       awakenTier: 0, formChoice: 'awaken1', formActive: false, hiddenNpcActive: false, villages: ['lang'], titles: [], choices: {},
+      kyNguyen: { owned: [], active: [] },   // 5 phúc duyên: đã mua / đang bật (active ⊆ owned)
       advancement: { quest: null, done: {}, unlocked: {} },
       points: { str: 5, vit: 5, agi: 5, spi: 5 }, freePoints: 0,
       hp: null, mp: null,
@@ -225,5 +248,5 @@
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, specialFx, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
+  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, specialFx, kyNguyenActive, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

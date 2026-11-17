@@ -1,7 +1,7 @@
 'use strict';
 /* UI · Bảng nhân vật: chỉ số, điểm tiềm năng, hình thái, nội tại cốt truyện. Cấu hình âm thanh/đồ họa ở tab Cấu hình. */
 (() => {
-  const { G, esc, fmt } = UI._;
+  const { G, esc, fmt, itemIcon } = UI._;
 
   // Nhóm chỉ số để đọc nhanh: tấn công / phòng thủ / hỗ trợ
   const STAT_GROUPS = [
@@ -69,6 +69,31 @@
     const setBox = setRows ? `<div class="ch-group"><div class="ch-group-h">Bộ trang bị</div>
       <table class="stat-table">${setRows}</table></div>` : '';
 
+    // ---------- Kỳ Nguyên: 5 phúc duyên, mua ở Lầu Trân Bảo, bật/tắt tại đây.
+    // Hiện cả 5 để người chơi thấy mốc cấp còn thiếu; cái đã mở thì có nút Tháo / Bật.
+    const knState = p.kyNguyen || { owned: [], active: [] };
+    const knOwned = knState.owned || [], knActive = knState.active || [];
+    const knRows = (G.KY_NGUYEN || []).map(id => {
+      const d = G.ITEMS[id];
+      if (!d) return '';
+      const owned = knOwned.includes(id), on = knActive.includes(id);
+      const locked = (d.level || 1) > p.level;
+      const st = d.stats || {};
+      const statTxt = Object.keys(st).map(k => `${G.statLabel(k)} +${st[k]}${G.statUnit(k)}`).join(' · ');
+      const state = !owned
+        ? `<span class="${locked ? 'muted' : 'okc'}">${locked ? `cần cấp ${d.level}` : 'mua được ở Lầu Trân Bảo'}</span>`
+        : on ? '<span class="okc">● đang bật</span>' : '<span class="muted">○ đang tháo</span>';
+      const btn = owned
+        ? `<button class="btn small${on ? '' : ' primary'}" data-act="toggle_ky_nguyen" data-id="${id}">${on ? 'Tháo' : 'Bật'}</button>`
+        : '';
+      return `<div class="kn-row${owned ? (on ? ' on' : '') : ' locked'}">
+        <span class="kn-ic">${itemIcon(id)}</span>
+        <div class="kn-main"><b>${esc(d.name)}</b><small>${esc(statTxt)}</small></div>
+        <div class="kn-side">${state}${btn}</div></div>`;
+    }).join('');
+    const knBox = `<div class="ch-group"><div class="ch-group-h">Kỳ Nguyên <small>${knOwned.length}/${(G.KY_NGUYEN || []).length} đã mở</small></div>
+      <div class="kn-list">${knRows}</div></div>`;
+
     // ---------- Điểm tiềm năng
     const pts = `<div class="ch-group">
       <div class="ch-group-h">Điểm tiềm năng <b class="gold">${p.freePoints}</b></div>
@@ -100,7 +125,7 @@
     const desc = school ? `<p class="ch-desc muted">${esc(school.desc)}</p>` : '';
 
     return ['Nhân vật', `<div class="ch-wrap">
-      <div class="ch-col">${head}${stats}${setBox}${info}${desc}</div>
+      <div class="ch-col">${head}${stats}${setBox}${knBox}${info}${desc}</div>
       <div class="ch-col">${pts}${formHtml}${perkHtml}</div>
     </div>`];
   }

@@ -33,14 +33,21 @@ const CONSUMED = {
   summon: [],
   shadow_toggle: [],
   shadow_command: ['power', 'radius', 'freeze'],
-  execute: ['selfZero', 'buaSaves', 'range', 'reach', 'execPvp'],
+  execute: ['selfZero', 'buaSaves', 'range', 'reach', 'execPvp', 'execOverLevel', 'execOverHp'],
   // Tử Linh Dung Hợp: cộng dồn chỉ số bóng ma (shared/data/pets/shadow.js) trong fusionSec giây
   fusion: ['fusionSec', 'fusionCost'],
+  // Cấm Chú Giải Phóng: đốt toàn bộ MP, sát thương = MP × mpPower, phong ấn hồi MP lockSec giây
+  manaburst: ['radius', 'mpPower', 'lockSec', 'knock'],
+  // Vạn Pháp Quy Nhất: tung cả ba tuyệt kỹ chung, power riêng cho vụ nổ, phong ấn kỹ năng lockSec giây
+  allin: ['power', 'radius', 'lockSec', 'knock'],
 };
 
 // Trường chung luôn được đọc ở mọi kỹ năng
 const COMMON = ['school', 'evolutionKey', 'icon', 'name', 'level', 'mp', 'cd', 'type', 'desc',
-  'm5', 't5', 'm10', 't10', 'ult', 'ultSchools', 'ultAny', 'lv', 'shopNgoc', 'superUlt'];
+  'm5', 't5', 'm10', 't10', 'ult', 'ultSchools', 'ultAny', 'lv', 'shopNgoc', 'superUlt',
+  // priceLevel: không phải trường của engine chiến đấu, nhưng shared/data/items/index.js:88 đọc nó
+  // để tính giá Linh Ngọc của sách tuyệt kỹ (tách "cấp học" khỏi "mốc giá").
+  'priceLevel'];
 
 // Type mà bản thân nó đã đánh trúng MỌI quái trong vùng quét → "xuyên" là đúng sẵn,
 // không cần trường `pierce` (hitBox/hitCircle không dừng ở mục tiêu đầu tiên).
@@ -56,8 +63,9 @@ const DESC_CLAIMS = [
   { re: /làm chậm/i, any: ['slow'], label: 'làm chậm' },
   { re: /đóng băng/i, any: ['freeze'], label: 'đóng băng' },
   { re: /hồi .*máu|hồi phục sinh lực|hút.*sinh lực/i, any: ['heal', 'regen'], label: 'hồi máu' },
-  // "năng lượng" trong kỹ năng khiên là chuyện LẤY năng lượng ra đỡ đòn, không phải hồi năng lượng
-  { re: /hồi .*năng lượng/i, any: ['mpHeal'], except: ['manashield'], label: 'hồi năng lượng' },
+  // "năng lượng" trong kỹ năng khiên là chuyện LẤY năng lượng ra đỡ đòn, không phải hồi năng lượng.
+  // Cấm Chú Giải Phóng thì nói ngược lại: nó CHẶN hồi năng lượng — cũng không cần mpHeal.
+  { re: /hồi .*năng lượng/i, any: ['mpHeal'], except: ['manashield', 'manaburst'], label: 'hồi năng lượng' },
   { re: /nhát cuối|đòn cuối|kết liễu/i, any: ['finisher'], label: 'nhát cuối mạnh hơn' },
   // Nhiều nhát: hits, hoặc count (nhiều đợt/nhiều thanh), hoặc arrows, hoặc after (chém bồi)
   { re: /liên tiếp|liên hoàn|dồn dập|nhiều nhát|\d+ nhát|hai nhát|ba nhát/i, any: ['hits', 'count', 'arrows', 'after'], label: 'nhiều nhát' },

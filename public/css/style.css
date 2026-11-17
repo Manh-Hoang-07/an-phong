@@ -310,12 +310,11 @@ input { font: inherit; }
 .detail .stats { margin: 4px 0 6px; }
 .affix { margin: 2px 0 6px; color: #d4b8ff; font-size: 13px; }
 .perf { font-size: 12.5px; margin-bottom: 4px; }
-/* Trang bị đặc biệt: khối nâng bậc trong bảng chi tiết */
-.sp-tier { font-size: 13px; margin: 6px 0 2px; }
-.sp-next { font-size: 12.5px; color: var(--muted); margin-bottom: 3px; }
-.sp-cost { font-size: 12.5px; margin-bottom: 6px; }
-.sp-cost.bad { color: var(--bad); }
-.sp-up { width: 100%; padding: 7px 10px; font-size: 13px; }
+/* Kỳ Nguyên: khối thông tin + bật/tắt trong bảng chi tiết */
+.kn-box { margin: 8px 0 4px; padding: 8px 10px; border-radius: 9px; background: rgba(179,136,255,.07); border: 1px solid rgba(179,136,255,.22); }
+.kn-fx { font-size: 12.5px; color: #d4b8ff; line-height: 1.5; margin: 4px 0; }
+.kn-state { font-size: 12px; margin: 5px 0; }
+.kn-toggle { width: 100%; padding: 7px 10px; font-size: 13px; }
 .cmp { font-size: 12.5px; margin: 4px 0 6px; line-height: 1.6; }
 .cmp .up, .cmp.up { color: var(--ok); }
 .cmp .down { color: var(--bad); }
@@ -1068,24 +1067,18 @@ body.touch .tb-talk { bottom: 300px; }
 .eq-stats b { font-size: 12px; color: #f6e6c8; }
 .eq-stats small { color: var(--muted); font-size: 10px; margin-left: auto; }
 
-/* Hàng 5 ô trang bị đặc biệt (chỉ mua bằng Linh Ngọc) */
-.eq-future { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.2); border: 1px dashed rgba(231,182,107,.22); }
-.eq-future-h { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; letter-spacing: .3px; }
-.eq-future-h small { opacity: .7; }
-/* 5 ô chia đều, không co theo nội dung: tên "Chuông Trấn Hồn" phải đọc được */
-.eq-future-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.eq-future-cell {
-  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px;
-  border-radius: 9px; background: rgba(10,10,11,.5); border: 1px dashed rgba(255,255,255,.1);
-  opacity: .55;
-}
-.eq-future-cell span { font-size: 18px; filter: grayscale(.6); }
-.eq-future-cell small { font-size: 9.5px; color: var(--muted); }
-/* Ô đặc biệt đã có đồ: sáng lên, không còn mờ */
-.eq-future-row .eq-slot.has, .eq-future-row .eq-slot.filled { opacity: 1; }
-.eq-future-row .eq-slot { min-width: 0; }
-.eq-future-row .eq-slot-txt { min-width: 0; }
-.eq-future-row .eq-slot-txt b { font-size: 11px; line-height: 1.2; word-break: break-word; }
+/* Danh sách Kỳ Nguyên trong bảng Nhân vật */
+.kn-list { display: flex; flex-direction: column; gap: 5px; }
+.kn-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 9px;
+  background: rgba(10,10,11,.4); border: 1px solid rgba(255,255,255,.07); }
+.kn-row.on { border-color: rgba(179,136,255,.4); background: rgba(179,136,255,.08); }
+.kn-row.locked { opacity: .55; }
+.kn-ic { flex: 0 0 30px; display: flex; align-items: center; justify-content: center; }
+.kn-ic img { width: 30px; height: 30px; }
+.kn-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.kn-main b { font-size: 12.5px; }
+.kn-main small { font-size: 10.5px; color: var(--muted); line-height: 1.3; }
+.kn-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 10.5px; }
 .eq-detail {
   margin-top: 12px; padding: 11px 13px; border-radius: 11px; font-size: 12.5px;
   background: linear-gradient(160deg, rgba(20,19,20,.72), rgba(28,26,25,.6));
@@ -1418,7 +1411,6 @@ html.narrow .cfg-slider input[type=range] { flex: 1; width: auto; }
 /* Khung thấp (điện thoại nằm ngang / xoay): thu nhỏ hình và khoảng đệm để bảng vẫn vừa */
 html.compact .eq-portrait { height: 118px; }
 html.compact .eq-slot { min-height: 40px; }
-html.compact .eq-future { margin-top: 8px; padding: 8px 10px; }
 html.compact .panel-box.fixed #panel-body { padding: 12px; }
 html.compact .sk-card { padding: 9px 10px; }
 html.compact .pet-card { padding: 9px 11px; }

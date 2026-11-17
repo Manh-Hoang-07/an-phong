@@ -27,6 +27,21 @@
       type: 'aoe', power: 7.93, radius: 330, freeze: 3, desc: 'Đóng băng mọi thứ xung quanh trong biển băng giá.',
       m5: { radius: 400 }, t5: 'Vùng băng rộng hơn.',
       m10: { freeze: 4.5 }, t10: 'Đóng băng lâu hơn.' },
+
+    // ===== SIÊU TUYỆT KỸ: Cấm Chú Giải Phóng (Pháp Sư / Đại Pháp Sư) =====
+    // Đốt TOÀN BỘ năng lượng đang có thành một đòn duy nhất. Sát thương = MP đã đốt × mpPower.
+    // Cân bằng: Đại Pháp Sư cấp 70 có 1.108 MP (không đồ) → 1.108 × 5,5 ≈ 6.100 sát thương trước giảm trừ.
+    // So với Băng Hải Phong Thiên cấp 10 đánh trùm lv80: 5.819. Ngang bậc, nhưng đổi bằng cả bình năng lượng.
+    // Cái giá KHÔNG phải hồi chiêu (hồi chiêu chỉ 90 giây): đốt sạch MP, và 10 giây không hồi được năng lượng
+    // → vô hiệu luôn nội tại Dòng Chảy của Pháp Sư. Đó mới là thứ làm nó đau.
+    ulPhapSuper: { school: 'phap_su', ultSchools: ['phap_su', 'dai_phap_su'], icon: '📕', name: 'Cấm Chú Giải Phóng', level: 70, priceLevel: 60, /* giá sách theo mốc 60 → 420 Linh Ngọc như hai siêu tuyệt kỹ kia */ mp: 0, cd: 90, ult: true,
+      superUlt: true, type: 'manaburst', shopNgoc: true, radius: 340, mpPower: 6.6, lockSec: 10,
+      desc: 'Cấm chú cuối cùng của pháp sư: đốt sạch toàn bộ năng lượng đang có thành một vụ nổ. Sát thương bằng '
+        + 'năng lượng đã đốt × 6,6, lan ra mọi thứ trong bán kính 340. Đổi lại bạn về 0 năng lượng và 10 giây '
+        + 'không hồi được năng lượng — kể cả Dòng Chảy. Đốt càng nhiều, nổ càng lớn.',
+      // Siêu tuyệt kỹ KHÔNG cộng cấp — m5/m10 đã gộp vào gốc.
+      // radius 340 và mpPower 6,6 là con số cấp 10 cũ, lấy làm chuẩn.
+    },
   };
 
   (G.SKILL_PARTS = G.SKILL_PARTS || []).push(PART);

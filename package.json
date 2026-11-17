@@ -27,7 +27,8 @@
     "check:player-pos-restart": "node --env-file-if-exists=.env server/tools/check/check-player-pos-restart.js",
     "player:pos": "node --env-file-if-exists=.env server/tools/check/peek-player-pos.js",
     "player:fix-arrive": "node --env-file-if-exists=.env server/tools/ops/fix-arrive.js",
-    "check:special-gear": "node server/tools/check/check-special-gear.js"
+    "check:ky-nguyen": "node server/tools/check/check-ky-nguyen.js",
+    "check:gear": "node server/tools/check/check-gear-systems.js"
   },
   "engines": {
     "node": ">=22.13"

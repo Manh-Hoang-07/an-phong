@@ -34,14 +34,20 @@ const actions = {
     if (!def.stack && qty > 1) fail('Món này chỉ mua từng cái.');
     const cost = G.ngocPrice(def, qty);
     if ((p.linhNgoc || 0) < cost) fail('Không đủ Linh Ngọc.');
-    // Trang bị đặc biệt: mỗi ô chỉ cần MỘT món (bậc là thuộc tính của món, nâng tại chỗ bằng 'upgrade_special').
-    // Đã có món của ô đó — đang mặc hay trong túi — thì không mua lại, kẻo mất ngọc oan.
-    if (def.special) {
-      const owned = G.SPECIAL_SLOTS.some(sl => p.equip[sl] && G.ITEMS[p.equip[sl].id] && G.ITEMS[p.equip[sl].id].slot === def.slot)
-        || p.bag.some(e => G.ITEMS[e.id] && G.ITEMS[e.id].slot === def.slot && G.ITEMS[e.id].special);
-      if (owned) fail(`Đã có ${def.name} rồi. Muốn mạnh hơn thì nâng bậc, đừng mua thêm.`);
-      // Mua bậc I KHÔNG cần đá: đá là chi phí của lần NÂNG bậc, không phải của lần mua.
-      // Mua cũng không cần cấp — cấp là điều kiện MẶC (bậc I cần cấp 10), nên mua trước cất túi được.
+    // Kỳ Nguyên: mua là sở hữu + tự bật, KHÔNG vào túi (không chiếm ô, không cần chỗ trống).
+    // Cần đủ cấp ngay khi mua; đã sở hữu thì không mua lại.
+    if (def.kyNguyen) {
+      p.kyNguyen = p.kyNguyen || { owned: [], active: [] };
+      if (!Array.isArray(p.kyNguyen.owned)) p.kyNguyen.owned = [];
+      if (!Array.isArray(p.kyNguyen.active)) p.kyNguyen.active = [];
+      if (p.kyNguyen.owned.includes(a.item)) fail(`Bạn đã có ${def.name} rồi.`);
+      if ((def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level} để mở ${def.name}.`);
+      p.linhNgoc -= cost;
+      p.kyNguyen.owned.push(a.item);
+      p.kyNguyen.active.push(a.item);   // mua xong bật luôn; tắt được ở bảng Nhân vật
+      ev.push({ t: 'ky_nguyen', id: a.item, on: true });
+      ev.push({ t: 'msg', text: `[Kỳ Nguyên] Đã mở ${def.name} (-${fmt(cost)} Linh Ngọc). Đang bật — tắt/mở lại ở bảng Nhân vật.`, color: '#b388ff' });
+      return;
     }
     if (bagFree(p) < slotsNeeded(p, a.item, qty)) fail('Túi đã đầy.');
     p.linhNgoc -= cost;
@@ -49,29 +55,23 @@ const actions = {
     ev.push({ t: 'msg', text: `Đã mua ${def.name}${qty > 1 ? ' ×' + qty : ''} (-${fmt(cost)} Linh Ngọc).`, color: '#b388ff' });
   },
 
-  // Nâng bậc trang bị đặc biệt TẠI CHỖ: giữ nguyên uid, chỉ đổi bậc. Không sinh món mới, không rác trong túi.
-  // Chi phí: 2^(bậc-1) Huyền Tinh Thạch + priceNgoc của bậc đích. Làm được ở bất kỳ đâu (không cần Lầu Trân Bảo / Thợ rèn).
-  upgrade_special(p, a, ev) {
-    let target = null;
-    if (a.slot) target = p.equip[a.slot];
-    else if (a.uid != null) target = p.bag.find(e => e.uid === Number(a.uid)) || null;
-    if (!target) fail('Không có trang bị.');
-    const def = G.ITEMS[target.id];
-    if (!def || !def.special) fail('Chỉ nâng bậc được trang bị đặc biệt.');
-    const cost = G.specialUpgradeCost(def);
-    if (!cost) fail('Đã đạt bậc V, không nâng được nữa.');
-    // Cấp sử dụng gắn với bậc: nâng lên bậc nào thì phải đủ cấp của bậc đó (I=10 … V=90)
-    const nextDef = G.ITEMS[cost.id];
-    if ((nextDef.level || 1) > p.level) fail(`Cần đạt cấp ${nextDef.level} để nâng lên bậc ${['I', 'II', 'III', 'IV', 'V'][nextDef.tier - 1]}.`);
-    if (countItem(p, 'huyen_tinh_thach') < cost.stone) fail(`Cần ${cost.stone} Huyền Tinh Thạch.`);
-    if ((p.linhNgoc || 0) < cost.ngoc) fail('Không đủ Linh Ngọc.');
-    removeItem(p, 'huyen_tinh_thach', cost.stone);
-    p.linhNgoc -= cost.ngoc;
-    target.id = cost.id;                       // giữ uid, giữ vị trí (đang mặc hay trong túi)
-    target.plus = 0; target.q = 1; target.roll = 1; target.aff = [];
-    const next = G.ITEMS[cost.id];
-    ev.push({ t: 'upgrade_special', tier: next.tier, slot: next.slot });
-    ev.push({ t: 'msg', text: `Nâng bậc thành công! ${def.name} lên bậc ${['I', 'II', 'III', 'IV', 'V'][next.tier - 1]} (-${cost.stone} Huyền Tinh Thạch, -${fmt(cost.ngoc)} Linh Ngọc).`, color: '#69f0ae' });
+  // Bật / tháo một Kỳ Nguyên. Tháo = tắt tác dụng, KHÔNG mất quyền sở hữu, mở lại được bất cứ lúc nào.
+  // Chỉ nhận id đã mua. Không giới hạn số cái bật cùng lúc.
+  toggle_ky_nguyen(p, a, ev) {
+    const id = String(a.id || '');
+    const def = G.ITEMS[id];
+    if (!def || !def.kyNguyen) fail('Không phải Kỳ Nguyên.');
+    p.kyNguyen = p.kyNguyen || { owned: [], active: [] };
+    if (!Array.isArray(p.kyNguyen.owned)) p.kyNguyen.owned = [];
+    if (!Array.isArray(p.kyNguyen.active)) p.kyNguyen.active = [];
+    if (!p.kyNguyen.owned.includes(id)) fail(`Bạn chưa mở ${def.name}.`);
+    const i = p.kyNguyen.active.indexOf(id);
+    const on = i < 0;
+    if (on) p.kyNguyen.active.push(id);
+    else p.kyNguyen.active.splice(i, 1);
+    clampHpMp(p);
+    ev.push({ t: 'ky_nguyen', id, on });
+    ev.push({ t: 'msg', text: `[Kỳ Nguyên] ${on ? 'Bật' : 'Tháo'} ${def.name}.`, color: on ? '#69f0ae' : '#b0bec5' });
   },
 
   sell(p, a, ev) {
@@ -103,7 +103,6 @@ const actions = {
     const e = bagEntry(p, a.uid);
     const def = G.ITEMS[e.id];
     if (!def.slot) fail('Không trang bị được.');
-    // Mọi trang bị đều có cấp sử dụng, kể cả trang bị đặc biệt (cấp gắn với bậc: I=10 … V=90)
     if ((def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level}.`);
     if (!G.canUseItem(p, def)) {
       if (def.slot === 'weapon' && !p.school) fail('Chưa chọn class: chỉ dùng được vũ khí luyện tập.');

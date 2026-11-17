@@ -65,29 +65,27 @@
   }
 
   // ===== Lầu Trân Bảo: bán bằng Linh Ngọc =====
-  const NGOC_GROUPS = [['gear', 'Trang bị đặc biệt'], ['util', 'Tiện ích'], ['book', 'Sách'], ['ult', 'Tuyệt kỹ'], ['superult', 'Siêu tuyệt kỹ']];
+  const NGOC_GROUPS = [['ky_nguyen', 'Kỳ Nguyên'], ['util', 'Tiện ích'], ['book', 'Sách'], ['ult', 'Tuyệt kỹ'], ['superult', 'Siêu tuyệt kỹ']];
   const ngocRank = (id) => Math.max(0, NGOC_GROUPS.findIndex(g => g[0] === ITEMS[id].ngocGroup));
-  // Hàng bán bằng ngọc: món trong n.shop có priceNgoc + mọi trang bị đặc biệt (ngocGroup 'gear')
+  // Hàng bán bằng ngọc: món trong n.shop có priceNgoc + 5 Kỳ Nguyên
   // + mọi sách tuyệt kỹ class (không lọc theo class, không gồm tuyệt kỹ chung ultAny)
   function ngocShopItems(player, npcId) {
     const n = NPCS[npcId];
     if (!n || !n.ngocShop) return [];
     const list = (n.shop || []).filter(id => ITEMS[id] && ITEMS[id].priceNgoc > 0);
-    // Trang bị đặc biệt: quầy chỉ bày BẬC I của mỗi ô (5 món). Bậc cao hơn là nâng cấp tại chỗ,
-    // không bán rời — xem action 'upgrade_special'. Bày đủ 25 món như trước là mua rồi vứt.
-    for (const id of Object.keys(ITEMS)) {
-      const d = ITEMS[id];
-      if (d.ngocGroup === 'gear' && d.priceNgoc > 0 && (d.tier || 1) === 1 && !list.includes(id)) list.push(id);
+    // 5 Kỳ Nguyên: bán rời, mua cái nào sở hữu cái đó. Không còn bậc / nâng cấp tại chỗ.
+    for (const id of (G.KY_NGUYEN || [])) {
+      if (ITEMS[id] && ITEMS[id].priceNgoc > 0 && !list.includes(id)) list.push(id);
     }
     for (const sid of Object.keys(G.SKILLS)) {
       const sk = G.SKILLS[sid];
       const id = G.ultBookId(sid);
       if (sk.ult && ITEMS[id] && ITEMS[id].priceNgoc > 0 && !list.includes(id)) list.push(id);
     }
-    const lv = (id) => ITEMS[id].tier || ITEMS[id].level || 0;
-    // Trong nhóm trang bị đặc biệt: xếp theo ô (Bùa, Ấn, Cánh, Linh Đan, Chuông) rồi mới theo bậc
-    const slotRank = (id) => { const s = ITEMS[id].slot; const i = G.SPECIAL_SLOTS.indexOf(s); return i < 0 ? 99 : i; };
-    return list.sort((a, b) => ngocRank(a) - ngocRank(b) || (ITEMS[a].special && ITEMS[b].special ? slotRank(a) - slotRank(b) : 0) || lv(a) - lv(b) || ITEMS[a].name.localeCompare(ITEMS[b].name, 'vi'));
+    const lv = (id) => ITEMS[id].level || 0;
+    // Trong nhóm Kỳ Nguyên: xếp theo cấp mở khóa (10/30/50/70/90).
+    const knRank = (id) => { const i = (G.KY_NGUYEN || []).indexOf(id); return i < 0 ? 99 : i; };
+    return list.sort((a, b) => ngocRank(a) - ngocRank(b) || (ITEMS[a].kyNguyen && ITEMS[b].kyNguyen ? knRank(a) - knRank(b) : 0) || lv(a) - lv(b) || ITEMS[a].name.localeCompare(ITEMS[b].name, 'vi'));
   }
   // Giá ngọc không chịu giảm giá khách quen (chỉ giảm giá xu)
   function ngocPrice(def, qty = 1) { return def.priceNgoc * qty; }

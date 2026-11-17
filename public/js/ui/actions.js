@@ -180,10 +180,9 @@
         renderPanel();
         break;
       }
-      case 'upgrade_special': {
-        // Nâng bậc tại chỗ: ưu tiên uid (món trong túi), không có thì theo ô đang mặc
-        const a = ds.uid ? { uid: Number(ds.uid) } : { slot: ds.slot };
-        await act('upgrade_special', a);
+      case 'toggle_ky_nguyen': {
+        // Bật / tháo Kỳ Nguyên. Không mất quyền, bật lại được.
+        await act('toggle_ky_nguyen', { id: ds.id });
         renderPanel();
         break;
       }

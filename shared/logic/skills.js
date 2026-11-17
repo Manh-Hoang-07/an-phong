@@ -15,6 +15,13 @@
     if (!base) return null;
     lv = Math.max(1, Math.min(SKILL_MAX, lv || 1));
     const s = { ...base };
+    // SIÊU TUYỆT KỸ: chỉ số CỐ ĐỊNH, cấp không nhân gì cả.
+    // Lý do: chúng đã ở tầm giết-trùm-một-đòn hoặc ×28 sinh lực; +45% sát thương và −15% hồi chiêu
+    // không đổi được lối chơi, chỉ phá cân bằng. Điểm kỹ năng = cấp − 1 (cấp 100 có 99 điểm) nên
+    // nâng cấp gần như miễn phí — càng không có lý do cho nó mạnh thêm.
+    // Cấp 1–10 vẫn tồn tại như mốc SỞ HỮU (đọc sách là có), nhưng không có bậc trung gian:
+    // dữ liệu siêu tuyệt kỹ đã gộp m5/m10 vào chỉ số gốc, nên ở đây trả về nguyên bản.
+    if (base.superUlt) { s.lv = lv; return s; }
     if (lv >= 5 && base.m5) Object.assign(s, base.m5);
     if (lv >= 10 && base.m10) Object.assign(s, base.m10);
     const mul = 1 + 0.05 * (lv - 1);   // sát thương +5% mỗi cấp (cả kỹ năng thường và tuyệt kỹ)
@@ -23,6 +30,9 @@
     if (s.finisher) s.finisher *= mul;
     if (s.heal) s.heal = Math.min(0.9, s.heal * (1 + 0.03 * (lv - 1)));
     if (s.atkBuff) s.atkBuff *= (1 + 0.05 * (lv - 1));
+    // atkBuff ÂM là hình phạt (vd Thiết Bích Vĩnh Cửu: tấn công về 0), không phải buff nên KHÔNG được
+    // lớn thêm theo cấp — nhân lên sẽ thành −1,45 và hệ số tấn công âm. Kẹp sàn ở −1 = sát thương 0.
+    if (s.atkBuff) s.atkBuff = Math.max(-1, s.atkBuff);
     s.mp = Math.round(base.mp * (1 + 0.04 * (lv - 1)));
     if (lv >= 10) s.cd = s.cd * 0.85;
     s.lv = lv;

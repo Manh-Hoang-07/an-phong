@@ -36,18 +36,59 @@ const MAX_HITS_PER_SEC = 16;
 // Kỹ năng thưa nhất là 1 lần/giây; 20 đòn/giây đủ cho kỹ năng nhiều nhát nhất trong lúc chờ hồi chiêu.
 const MAX_SKILL_HITS_PER_SEC = 20;
 // Hệ số trần sát thương một đòn, tính từ ATK của chính nhân vật (server tự đọc, client không sửa được).
-// Đánh thường: vũ khí mạnh nhất mult 1,25 × chí mạng 2,5 × ngẫu nhiên 1,1 × buff ATK 1,41 × shred 1,25 ≈ 6,1.
+//
+// BỐN MỨC, vì bốn loại đòn chênh nhau tới 140 lần (đánh thường 1,25 → siêu tuyệt kỹ 176,3).
+// Dùng chung một mức thì hoặc cắt oan loại mạnh, hoặc thả cửa loại yếu.
+//
+// Hệ số nhân THỰC TẾ áp lên một đòn (đọc từ engine, không phải cộng dồn lý thuyết):
+//   chí mạng 2,5 (Sát Thủ "Bóng Tối") × ngẫu nhiên 1,1 × sát thương trùm 1,8 = 4,95
+// Các buff sau KHÔNG tính vào trần vì không ai bật được cùng lúc một cách ổn định:
+//   atkBuff 1,87 (vn1) × shred 1,4 (xa32) × exec 1,6 (av38) → cộng dồn thành 51,84
+// Bảo vệ tổ hợp 51,84 là bảo vệ thứ không tồn tại; nó cần quái vừa dưới 40% máu, vừa bị phá giáp,
+// vừa đúng đòn chí mạng bóng tối. Trần tính theo 4,95 rồi chừa biên 15%.
+//
+// mult THỰC TẾ lớn nhất đo được (đã gồm skillMul và vsSlowed, trên mọi class ở cấp 70 và 100):
+//   đánh thường 1,25  (vũ khí mạnh nhất)              × 4,95 =   6 → trần 8
+//   kỹ năng     19,42 (Sát Thủ st10 Tử Huyệt)          × 4,95 =  96 → trần 111
+//   tuyệt kỹ    16,57 (Tử Linh Thuật Sư ulChung1)      × 4,95 =  82 → trần 95
+//   siêu tuyệt 125,89 (Toàn Năng ulToanNangSuper)      × 4,95 = 623 → trần 717
+// Lưu ý: st10 là kỹ năng THƯỜNG nhưng mạnh hơn mọi tuyệt kỹ, vì finisher 5,51 × vsSlowed 2,5.
+// Đó là lý do trần kỹ năng (111) cao hơn trần tuyệt kỹ (95) — phản ánh thực tế, không sửa dữ liệu.
+// Chặn thật vẫn là NGÂN SÁCH mỗi giây bên dưới, không phải trần này.
 const CAP_MUL_BASIC = 8;
-// Kỹ năng: power 7,93 × skillMul 1,13 × chí mạng 2,5 × ngẫu nhiên 1,1 × buff 1,41 × vsSlowed 2 × shred 1,25
-// ≈ 87. Lấy 90 để tuyệt kỹ mạnh nhất của người chơi mạnh nhất (ATK 1.856) vẫn lọt.
-// Lưu ý: trần CŨ (60×) thực ra đã CẮT OAN tuyệt kỹ — 111.860 so với 161.221 thật, hụt 28%.
-const CAP_MUL_SKILL = 90;
-// Ngân sách SÁT THƯƠNG kỹ năng mỗi giây. Cần thiết vì cờ `sk` do client gửi: kẻ gian có thể giả nó cho
-// đánh thường để lấy trần 90×. Ngân sách này chặn tổng sát thương, không chỉ số đòn.
-// Tuyệt kỹ AoE trúng 6 quái ≈ 6 × 167.540 = 1,0M, nên tốc độ nạp 6×ATK×90/giây và tích tối đa 2 giây
-// (2,0M) để một lần dùng AoE thật luôn lọt, còn spam liên tục bị ghì ở 1,0M/giây.
+const CAP_MUL_SKILL = 111;
+const CAP_MUL_ULT = 95;
+const CAP_MUL_SUPERULT = 717;
+// Ngân sách SÁT THƯƠNG kỹ năng mỗi giây. Cần thiết vì cờ loại đòn do client gửi: kẻ gian có thể giả nó
+// để lấy trần cao hơn. Ngân sách này chặn TỔNG sát thương, không chỉ số đòn.
+//
+// Tách làm hai: kỹ năng/tuyệt kỹ dùng chung một ngân sách, siêu tuyệt kỹ có ngân sách riêng.
+// Lý do tách: một siêu tuyệt kỹ thật (Vạn Pháp Quy Nhất, 1.009.670 sát thương ở ATK 1.157) LỚN HƠN
+// ngân sách chung cũ (atk × 1.080 = 1.249.560 chỉ vừa đủ một đòn), nên nếu để chung thì hai siêu tuyệt kỹ
+// liên tiếp sẽ bị ghì, còn một siêu tuyệt kỹ cộng thêm kỹ năng thường thì không. Tách ra thì mỗi loại có
+// hạn mức riêng, đúng bản chất.
 const SKILL_DMG_RATE_MUL = 6;
 const SKILL_DMG_BURST_SEC = 2;
+// Siêu tuyệt kỹ: mỗi 60 giây chỉ cho dùng 2 lần. Đếm SỐ LẦN, không đếm sát thương — đếm sát thương
+// thì một đòn nhỏ (Cấm Chú với ít MP) lại cho lọt nhiều lần hơn một đòn lớn, sai ý đồ.
+// Đây là lớp chặn CUỐI, không phụ thuộc client: sửa đồng hồ hồi chiêu cũng không spam được.
+const SUPERULT_USES_MAX = 2;
+const SUPERULT_WINDOW_MS = 60000;
+// ---------------------------------------------------------------- Chống spam theo SỐ LẦN DÙNG CHIÊU
+// Client tự giữ hồi chiêu/MP/thể lực, nhưng sửa được đồng hồ. Server giữ thêm một bộ đếm riêng:
+// mỗi lần bấm chiêu gửi gói `cast` kèm id; server kiểm đã học / đang gắn / hồi chiêu / số lần dùng.
+// Ba mức theo đúng câu hỏi "kỹ năng x lần/s, tuyệt kỹ y lần/s, siêu tuyệt kỹ z lần/phút":
+//   kỹ năng thường 4 lần/giây (xoay vòng 8 ô tối đa ~2-3 lần/giây, chừa dư cho lag)
+//   tuyệt kỹ       1 lần/2 giây (thực tế 2 ô xoay ~0,06 lần/giây, đặt rộng gấp ~30 lần)
+//   siêu tuyệt kỹ  2 lần/60 giây (khớp SUPERULT_USES_MAX ở trên)
+// Đặt rộng là có chủ đích: không ghì người chơi bình thường, chỉ chặn kẻ sửa client spam liên tục.
+const CAST_RATE = {
+  skill:    { max: 4, windowMs: 1000 },
+  ult:      { max: 1, windowMs: 2000 },
+  superUlt: { max: 2, windowMs: 60000 },
+};
+const CAST_HIT_WINDOW_MS = 2000;   // một đòn kỹ năng phải có lần dùng hợp lệ trong 2 giây qua
+const CAST_DENY_MS = 1000;         // sau một lần dùng bị từ chối, bỏ qua đòn kỹ năng trong 1 giây
 const CHAT_MAX_LEN = 100;
 const CHAT_GAP_MS = { map: 1200, world: 8000, party: 800 };
 const WORLD_BOUND = 100000;
@@ -94,13 +135,24 @@ async function refreshLook(conn) {
   try {
     const st = G.calcStats(p, { form: !!p.formActive });
     // Trần sát thương một đòn, tính từ ATK của chính nhân vật: chặn client gửi số tuỳ ý.
-    // Hai trần vì đòn thường và tuyệt kỹ khác nhau hơn 10 lần (xem CAP_MUL_* ở đầu file).
-    // dmgCap giữ lại cho tương thích; capBasic/capSkill là thứ onHit dùng.
+    // Bốn trần vì bốn loại đòn chênh nhau tới 140 lần (xem CAP_MUL_* ở đầu file).
+    // dmgCap giữ lại cho tương thích; capBasic/capSkill/capUlt/capSuperUlt là thứ onHit dùng.
     conn.dmgCap = Math.max(st.atk, 30) * 60 + 500;
     conn.atk = Math.max(st.atk, 30);
     conn.capBasic = conn.atk * CAP_MUL_BASIC + 50;
     conn.capSkill = conn.atk * CAP_MUL_SKILL + 500;
-  } catch { conn.dmgCap = 5000; conn.atk = 30; conn.capBasic = 5000; conn.capSkill = 20000; }
+    conn.capUlt = conn.atk * CAP_MUL_ULT + 500;
+    conn.capSuperUlt = conn.atk * CAP_MUL_SUPERULT + 500;
+    conn.cdr = st.cdr || 0;   // giảm hồi chiêu: server phải áp cùng tỉ lệ với client (tối đa 30%)
+  } catch { conn.dmgCap = 5000; conn.atk = 30; conn.capBasic = 5000; conn.capSkill = 20000; conn.capUlt = 40000; conn.capSuperUlt = 400000; conn.cdr = 0; }
+  // Cache danh sách kỹ năng đã học + đang gắn để onCast đối chiếu (server tự đọc, không tin client).
+  // Chỉ lấy id + cấp + cờ loại; refresh mỗi LOOK_REFRESH_MS nên thay đổi sách/ô được cập nhật trong vài giây.
+  conn.skillLevels = {};
+  for (const id of Object.keys(p.skills || {})) if (G.SKILLS[id] && p.skills[id] > 0) conn.skillLevels[id] = p.skills[id];
+  conn.skillEquipped = Array.isArray(p.skillSlots) ? p.skillSlots.filter(Boolean) : [];
+  // Kỹ năng do trang bị cấp (ô thứ 9) — cache riêng để onCast không từ chối nhầm.
+  conn.gearSkillId = null;
+  try { const gs = G.gearSkill(p); if (gs && gs.id) { conn.gearSkillId = gs.id; conn.skillLevels[gs.id] = conn.skillLevels[gs.id] || gs.level || 1; } } catch { /* bỏ qua */ }
   const changed = name !== conn.name || school !== conn.school || level !== conn.level || weapon !== conn.weapon;
   conn.name = name; conn.school = school; conn.level = level; conn.weapon = weapon;
   return changed;
@@ -208,17 +260,85 @@ function mobTick() {
   }
 }
 
+// ---------------------------------------------------------------- Nhận lệnh dùng chiêu (chống spam)
+// Client gửi gói `cast` NGAY TRƯỚC khi bắn đòn. Server kiểm ba thứ nó tự biết:
+//   1. kỹ năng đã học VÀ đang gắn trên thanh (cache từ refreshLook, client sửa không được)
+//   2. hồi chiêu do SERVER giữ (conn.skillCds), có áp cdr như client
+//   3. số lần dùng mỗi giây/phút theo CAST_RATE
+// Hợp lệ thì mở một "cửa sổ đòn" trong CAST_HIT_WINDOW_MS: onHit chỉ nhận đòn kỹ năng có id này.
+// Không hợp lệ thì đánh dấu castDenyUntil để onHit bỏ qua đòn trong 1 giây.
+// Không kiểm MP/thể lực: hai thứ đó tự hồi theo thời gian và chỉ có ở client; đưa về server là việc lớn
+// gấp ba mà không chặn được vector spam chính (sửa đồng hồ hồi chiêu).
+function onCast(conn, m) {
+  const id = String(m.id || '').slice(0, 40);
+  const now = Date.now();
+  const sk = G.SKILLS[id];
+  if (!sk) return;
+  const lv = (conn.skillLevels || {})[id] || 0;
+  const equipped = (conn.skillEquipped || []).includes(id);
+  // Kỹ năng do TRANG BỊ cấp (GEAR_SKILL_SLOT) không nằm trong p.skills/p.skillSlots nên không có trong cache.
+  // Với chúng ta chỉ áp hồi chiêu + rate limit (không chặn theo học/gắn), còn kỹ năng thường phải đã học VÀ gắn.
+  // Không có cờ "grantsSkill" trong dữ liệu nên không đoán; skill do gear tự chịu trách nhiệm ở client.
+  const known = lv > 0;
+  if (!known) return;                                       // không có trong cache → chưa học / không thuộc class
+  const isGear = id === conn.gearSkillId;
+  if (!isGear && !equipped) return;                         // đã học nhưng không gắn trên thanh → không được dùng
+  const kind = sk.superUlt ? 'superUlt' : sk.ult ? 'ult' : 'skill';
+  // 1) Hồi chiêu do server giữ. Áp cdr y hệt client: cd_ms × (1 - cdr/100).
+  const cdMs = (sk.cd || 0) * 1000 * (1 - (conn.cdr || 0) / 100);
+  if (now < (conn.skillCds[id] || 0)) { conn.castDenyUntil = now + CAST_DENY_MS; return; }
+  // 2) Giới hạn số lần dùng theo từng loại (cửa sổ trượt).
+  const rate = CAST_RATE[kind];
+  if (!conn.castWinAt[kind]) { conn.castN[kind] = 0; conn.castWinAt[kind] = now; }
+  else {
+    const add = ((now - conn.castWinAt[kind]) / rate.windowMs) * rate.max;
+    conn.castN[kind] = Math.max(0, (conn.castN[kind] || 0) - add);
+    conn.castWinAt[kind] = now;
+  }
+  if (conn.castN[kind] >= rate.max) { conn.castDenyUntil = now + CAST_DENY_MS; return; }
+  conn.castN[kind] = (conn.castN[kind] || 0) + 1;
+  // Hợp lệ: ghi hồi chiêu server + mở cửa sổ cho đòn của lần dùng này.
+  conn.skillCds[id] = now + cdMs;
+  conn.lastCastAt = now;
+  conn.lastCastId = id;
+  // Giữ TẤT CẢ lần dùng trong cửa sổ: kỹ năng bắn nhiều nhát có thể còn đòn rơi sau khi đã bấm chiêu khác.
+  (conn.recentCasts || (conn.recentCasts = [])).push({ id, at: now });
+  if (conn.recentCasts.length > 32) conn.recentCasts.splice(0, conn.recentCasts.length - 32);
+  conn.castDenyUntil = 0;
+}
+
 function onHit(conn, m) {
   const w = conn.map && worlds.get(conn.map);
   if (!w) return;
   const now = Date.now();
   if (conn.dead && now - conn.deadAt > 1500) return;
+  // Loại đòn do client khai: 0 đánh thường, 1 kỹ năng, 2 tuyệt kỹ, 3 siêu tuyệt kỹ.
+  // Cờ này KHÔNG đáng tin (client sửa được), nên nó chỉ dùng để CHỌN TRẦN; chặn thật là ngân sách bên dưới.
+  // Giữ tương thích cũ: gói chỉ có `sk: 1` thì coi là kỹ năng.
+  const kind = Number.isFinite(m.k) ? Math.max(0, Math.min(3, m.k | 0)) : (m.sk === 1 ? 1 : 0);
+  const isSkill = kind > 0;
+  const isSuper = kind === 3;
+  // TẦNG 2: đòn kỹ năng do CHÍNH NGƯỜI CHƠI gửi phải có một lần `cast` hợp lệ trong cửa sổ 2 giây.
+  // Pet / bóng ma / phản đòn không đi qua cast (chúng không tiêu MP/hồi chiêu) nên được miễn.
+  // Nếu client gửi `id`, phải khớp MỘT lần dùng gần đây (không chỉ lần cuối — nhiều nhát có thể còn rơi
+  // sau khi đã bấm chiêu khác). Nếu không gửi id thì chấp nhận đòn trong cửa sổ (tương thích client cũ).
+  // Bị từ chối cast gần đây → bỏ qua đòn trong CAST_DENY_MS.
+  if (isSkill && m.src !== 'pet' && m.src !== 'shadow') {
+    if (now < (conn.castDenyUntil || 0)) return;
+    const casts = conn.recentCasts || [];
+    if (!casts.length || now - casts[casts.length - 1].at > CAST_HIT_WINDOW_MS) return;
+    if (m.id) {
+      const want = String(m.id).slice(0, 40);
+      if (!casts.some((c) => c.id === want && now - c.at <= CAST_HIT_WINDOW_MS)) return;
+    }
+  }
   // Hai ngân sách riêng: đánh thường và kỹ năng. Kỹ năng bắn nhiều đòn một lần nên cần ngân sách rộng hơn,
   // nhưng không được dùng chung với đánh thường (nếu không thì đánh thường thành cửa sau).
-  const isSkill = m.sk === 1;
   if (now - conn.hitAt >= 1000) { conn.hitAt = now; conn.hitN = 0; conn.skillHitN = 0; }
   if (isSkill) {
-    if (++conn.skillHitN > MAX_SKILL_HITS_PER_SEC) return;
+    // Siêu tuyệt kỹ bắn ít đòn nhưng mỗi đòn rất lớn, nên đếm riêng để không giành hạn mức với kỹ năng thường.
+    if (isSuper) { conn.superHitN = (conn.superHitN || 0) + 1; if (conn.superHitN > MAX_SKILL_HITS_PER_SEC) return; }
+    else if (++conn.skillHitN > MAX_SKILL_HITS_PER_SEC) return;
   } else if (++conn.hitN > MAX_HITS_PER_SEC) return;
   const mob = w.byUid.get(m.u | 0);
   if (!mob || !mob.alive) return;
@@ -227,21 +347,48 @@ function onHit(conn, m) {
   if (!(dmg >= 1)) return;
   const f = (v, max) => (Number.isFinite(v) && v > 0 ? Math.min(v, max) : 0);
   const atk = Math.max(conn.atk || 30, 30);
-  let cap = isSkill ? (conn.capSkill || atk * CAP_MUL_SKILL + 500) : (conn.capBasic || atk * CAP_MUL_BASIC + 50);
-  // Cờ `sk` do client gửi nên không đáng tin: kỹ năng còn bị ghì thêm bằng ngân sách SÁT THƯƠNG mỗi giây,
+  const capOf = (k) => {
+    if (k === 3) return conn.capSuperUlt || atk * CAP_MUL_SUPERULT + 500;
+    if (k === 2) return conn.capUlt || atk * CAP_MUL_ULT + 500;
+    if (k === 1) return conn.capSkill || atk * CAP_MUL_SKILL + 500;
+    return conn.capBasic || atk * CAP_MUL_BASIC + 50;
+  };
+  let cap = capOf(kind);
+  // Cờ loại đòn do client gửi nên không đáng tin: kỹ năng còn bị ghì thêm bằng ngân sách SÁT THƯƠNG mỗi giây,
   // để giả cờ cũng không đổi được nhiều hơn một lượng nhỏ.
   if (isSkill) {
-    const rate = atk * CAP_MUL_SKILL * SKILL_DMG_RATE_MUL;
-    const pool = rate * SKILL_DMG_BURST_SEC;
-    // Lần dùng kỹ năng đầu tiên phải có ngân sách đầy, nếu không đòn đầu tiên bị chặn oan.
-    if (!conn.skillDmgAt) { conn.skillDmg = pool; conn.skillDmgAt = now; }
-    else {
-      conn.skillDmg = Math.min(pool, (conn.skillDmg || 0) + ((now - conn.skillDmgAt) / 1000) * rate);
-      conn.skillDmgAt = now;
+    if (isSuper) {
+      // Ngân sách siêu tuyệt kỹ: cửa sổ trượt 60 giây, tối đa SUPERULT_USES_MAX lần dùng.
+      // Đếm SỐ LẦN chứ không đếm sát thương — xem chú thích hằng số ở đầu file.
+      // Một lần dùng siêu tuyệt kỹ bắn nhiều đòn (AoE nhiều quái) trong vài trăm ms, nên các đòn
+      // trong cùng một đợt chỉ tính là MỘT lần. Đợt mới phải cách đợt trước ít nhất 1,5 giây —
+      // ngắn hơn thì đó là cùng một lần dùng (đòn thứ 2, 3 của cùng AoE), không phải lần dùng mới.
+      const newCast = !conn.superCastAt || now - conn.superCastAt >= 1500;
+      if (newCast) {
+        if (!conn.superWinAt) { conn.superUses = 0; conn.superWinAt = now; }
+        else {
+          // Nạp lại theo tỉ lệ thời gian trôi qua: 60 giây hoàn lại đủ 2 lần.
+          const add = ((now - conn.superWinAt) / SUPERULT_WINDOW_MS) * SUPERULT_USES_MAX;
+          conn.superUses = Math.max(0, (conn.superUses || 0) - add);
+          conn.superWinAt = now;
+        }
+        if (conn.superUses >= SUPERULT_USES_MAX) return;
+        conn.superUses = (conn.superUses || 0) + 1;
+      }
+      conn.superCastAt = now;
+    } else {
+      const rate = atk * CAP_MUL_SKILL * SKILL_DMG_RATE_MUL;
+      const pool = rate * SKILL_DMG_BURST_SEC;
+      // Lần dùng kỹ năng đầu tiên phải có ngân sách đầy, nếu không đòn đầu tiên bị chặn oan.
+      if (!conn.skillDmgAt) { conn.skillDmg = pool; conn.skillDmgAt = now; }
+      else {
+        conn.skillDmg = Math.min(pool, (conn.skillDmg || 0) + ((now - conn.skillDmgAt) / 1000) * rate);
+        conn.skillDmgAt = now;
+      }
+      if (conn.skillDmg < 1) return;
+      cap = Math.min(cap, conn.skillDmg);
+      conn.skillDmg -= Math.min(dmg, cap);
     }
-    if (conn.skillDmg < 1) return;
-    cap = Math.min(cap, conn.skillDmg);
-    conn.skillDmg -= Math.min(dmg, cap);
   }
   w.applyHit(mob, conn.id, {
     dmg: Math.min(dmg, cap), crit: m.c === 1,
@@ -278,6 +425,7 @@ async function onExec(conn, m) {
 
   let buaUsed = false;
   let applied = false;
+  let overLevel = false;
   await xplayer.mutate(conn.userId, (p) => {
     // Đã học và ĐANG GẮN trên thanh kỹ năng. Không có trên thanh thì không dùng được.
     if (!(p.skills && p.skills.ulSinhTu > 0)) return;
@@ -291,6 +439,9 @@ async function onExec(conn, m) {
     p.hp = bua ? 1 : 0;
     p.execCd = now + (sk.cd || 180) * 1000;
     if (bua) { p.buaCd = now + 60000; buaUsed = true; }
+    // Mục tiêu cao hơn nhân vật TRÊN 20 cấp thì không gục ngay, chỉ mất 50% sinh lực tối đa.
+    // Cái giá của người dùng chiêu không đổi: vẫn về 0 máu (Bùa giữ 1 máu).
+    overLevel = !!sk.execOverLevel && (mob.def.level || 1) - (p.level || 1) > sk.execOverLevel;
     // Chết theo: dùng đúng luật chết của game (mất 5% kinh nghiệm, hồi sinh ở làng).
     // Gọi SAU khi đã ghi hp = 0 để không bị ghi đè.
     if (!bua) gameActions.die(p, {}, []);
@@ -300,8 +451,11 @@ async function onExec(conn, m) {
   if (!applied) return;
   // Giết quái SAU khi nhân vật đã ghi xong: applyHit → die → hooks.kill → phiếu thưởng → client nhận mdie.
   // dmg = mob.hp nên máu về đúng 0, không phụ thuộc trần sát thương.
-  w.applyHit(mob, conn.id, { dmg: mob.hp, crit: true, src: 'player', dir: 1 }, now);
+  // Mục tiêu trên 20 cấp: chỉ ăn 50% máu tối đa (kẹp theo máu còn lại để đòn vét vẫn hạ được).
+  const dmg = overLevel ? Math.min(mob.hp, Math.round(mob.maxHp * 0.5)) : mob.hp;
+  w.applyHit(mob, conn.id, { dmg, crit: true, src: 'player', dir: 1 }, now);
   if (buaUsed) send(conn, { t: 'sys', text: '🪬 Bùa Hộ Mệnh giữ bạn lại 1 máu. Hồi chiêu bùa 60 giây.' });
+  if (overLevel) send(conn, { t: 'sys', text: `💀 Mục tiêu cao hơn bạn trên 20 cấp: chỉ mất 50% sinh lực, không gục.` });
 }
 
 // ===== Siêu tuyệt kỹ Tử Linh Dung Hợp =====
@@ -318,6 +472,62 @@ async function onFusion(conn) {
     const r = combatActions.applyFusion(p);
     msg = r.ok ? r.text : r.msg;
   }).catch((e) => console.error('Dung hợp lỗi:', e.message));
+  if (msg) send(conn, { t: 'sys', text: msg });
+}
+
+
+// ===== Siêu tuyệt kỹ Cấm Chú Giải Phóng =====
+// Client đã tự vẽ vụ nổ và gửi đòn lên đường `hit` như kỹ năng thường (có trần sát thương + ngân sách).
+// Ở đây server chỉ giữ HAI thứ mà client không được phép quyết:
+//   - hồi chiêu (p.manaBurstCd), nếu không sửa đồng hồ là dùng liên tục;
+//   - cái giá: đốt sạch MP và phong ấn hồi năng lượng `lockSec` giây (p.mpLock).
+// Không tự tính sát thương ở đây: đòn đã đi qua onHit với trần CAP_MUL_SKILL, và MP thật do server
+// đọc từ nhân vật nên không thể khai khống lượng MP đã đốt.
+async function onManaBurst(conn) {
+  const now = Date.now();
+  let msg = null;
+  await xplayer.mutate(conn.userId, (p) => {
+    if (!Array.isArray(p.skillSlots) || !p.skillSlots.includes('ulPhapSuper')) {
+      msg = 'Kỹ năng chưa được gắn lên thanh.';
+      return;
+    }
+    const lv = G.skillLevel(p, 'ulPhapSuper') || 0;
+    if (!lv) { msg = 'Bạn chưa học Cấm Chú Giải Phóng.'; return; }
+    const sk = G.skillAt('ulPhapSuper', lv);
+    if (now < (p.mpLock || 0)) { msg = `Cấm chú đang phong ấn năng lượng (còn ${Math.ceil((p.mpLock - now) / 1000)} giây).`; return; }
+    if (now < (p.manaBurstCd || 0)) { msg = `Chưa hồi chiêu (còn ${Math.ceil((p.manaBurstCd - now) / 1000)} giây).`; return; }
+    if ((p.mp || 0) < 50) { msg = 'Cần ít nhất 50 năng lượng để giải phóng.'; return; }
+    p.mp = 0;
+    p.mpLock = now + (sk.lockSec || 10) * 1000;
+    p.manaBurstCd = now + (sk.cd || 90) * 1000;
+    msg = `📕 Cấm Chú Giải Phóng: năng lượng phong ấn ${sk.lockSec || 10} giây.`;
+  }).catch((e) => console.error('Cấm chú lỗi:', e.message));
+  if (msg) send(conn, { t: 'sys', text: msg });
+}
+
+
+// ===== Siêu tuyệt kỹ Vạn Pháp Quy Nhất =====
+// Client đã tung ba tuyệt kỹ chung và gửi đòn lên đường `hit` (có trần + ngân sách như mọi kỹ năng).
+// Server giữ hai thứ client không được quyết: hồi chiêu (p.allinCd) và cái giá — phong ấn kỹ năng
+// `lockSec` giây (p.skillLock). Client chặn ở useSkill, nhưng mốc thật nằm ở đây để đổi bản đồ
+// hay hồi sinh cũng không xoá được.
+async function onAllIn(conn) {
+  const now = Date.now();
+  let msg = null;
+  await xplayer.mutate(conn.userId, (p) => {
+    if (!Array.isArray(p.skillSlots) || !p.skillSlots.includes('ulToanNangSuper')) {
+      msg = 'Kỹ năng chưa được gắn lên thanh.';
+      return;
+    }
+    const lv = G.skillLevel(p, 'ulToanNangSuper') || 0;
+    if (!lv) { msg = 'Bạn chưa học Vạn Pháp Quy Nhất.'; return; }
+    const sk = G.skillAt('ulToanNangSuper', lv);
+    if (now < (p.skillLock || 0)) { msg = `Kỹ năng đang bị phong ấn (còn ${Math.ceil((p.skillLock - now) / 1000)} giây).`; return; }
+    if (now < (p.allinCd || 0)) { msg = `Chưa hồi chiêu (còn ${Math.ceil((p.allinCd - now) / 1000)} giây).`; return; }
+    p.skillLock = now + (sk.lockSec || 60) * 1000;
+    p.allinCd = now + (sk.cd || 240) * 1000;
+    msg = `🌀 Vạn Pháp Quy Nhất: kỹ năng phong ấn ${sk.lockSec || 60} giây.`;
+  }).catch((e) => console.error('Vạn pháp lỗi:', e.message));
   if (msg) send(conn, { t: 'sys', text: msg });
 }
 
@@ -383,8 +593,11 @@ function onMessage(conn, data) {
   else if (m.t === 'chat') onChat(conn, m);
   else if (m.t === 'who') onWho(conn);
   else if (m.t === 'hit') onHit(conn, m);
+  else if (m.t === 'cast') onCast(conn, m);
   else if (m.t === 'exec') onExec(conn, m).catch((e) => console.error('Đổi mạng lỗi:', e.message));
   else if (m.t === 'fusion') onFusion(conn).catch((e) => console.error('Dung hợp lỗi:', e.message));
+  else if (m.t === 'manaburst') onManaBurst(conn).catch((e) => console.error('Cấm chú lỗi:', e.message));
+  else if (m.t === 'allin') onAllIn(conn).catch((e) => console.error('Vạn pháp lỗi:', e.message));
   else if (m.t === 'fusion_end') xplayer.mutate(conn.userId, (p) => {
     if (p.fusion && p.fusion.until <= Date.now()) delete p.fusion;
   }).catch(() => {});
@@ -494,6 +707,10 @@ async function connect(ws, token, session) {
     map: null, x: 0, y: 0, f: 1, a: 'idle', dirty: false, hpPct: 100,
     dmgCap: 5000, atk: 30, capBasic: 5000, capSkill: 20000, skillDmg: 0, skillDmgAt: now,
     hitAt: now, hitN: 0, skillHitN: 0, dead: false, deadAt: 0,
+    // Chống spam: hồi chiêu do server giữ, bộ đếm số lần dùng, và cửa sổ đòn hợp lệ sau một lần cast.
+    skillCds: {}, castN: { skill: 0, ult: 0, superUlt: 0 }, castWinAt: { skill: now, ult: now, superUlt: now },
+    lastCastAt: 0, lastCastId: null, recentCasts: [], castDenyUntil: 0,
+    skillLevels: {}, skillEquipped: [], gearSkillId: null, cdr: 0,
     alive: true, rateAt: now, rateN: 0, lastChat: {}, checkedAt: now, lookAt: now,
   };
   const old = byUser.get(conn.userId);
