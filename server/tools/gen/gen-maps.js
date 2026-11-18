@@ -242,12 +242,23 @@ function addWater(g, spec, rng) {
       for (let r = r0; r < G - 1; r++) if (g.get(r, c + k) === '.') g.set(r, c + k, '%');
     }
   }
-  // Hồ: 1–2 vũng nước nông trên mặt đất, mỗi vũng 6–12 ô liên tiếp.
+  // Hồ: ĐÀO HỐ nông vào mặt đất — nước nằm TRONG hố, không phủ lên nền đất.
+  // Xóa mặt đất ở hàng G, đặt '"' vào đó; đáy G+1 vẫn là '#' để nhân vật đứng lội và nhảy lên.
   const pools = spec.pools != null ? spec.pools : (rng() < 0.5 ? 1 : 2);
   for (let i = 0; i < pools; i++) {
     const len = 6 + Math.floor(rng() * 7);
-    const c0 = 15 + Math.floor(rng() * Math.max(1, W - 30 - len));
-    for (let c = c0; c < c0 + len; c++) if (g.get(G - 1, c) === '.') g.set(G - 1, c, '"');
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const c0 = 15 + Math.floor(rng() * Math.max(1, W - 30 - len));
+      let ok = true;
+      for (let c = c0; c < c0 + len && ok; c++) {
+        // Cần mặt đất liền, đáy liền, và 3 ô phía trên TRỐNG — né mọi NPC/S/cổng/quái (kể cả quái bay).
+        if (g.get(G, c) !== '#' || g.get(G + 1, c) !== '#') { ok = false; break; }
+        for (let d = 1; d <= 2; d++) if (g.get(G - d, c) !== '.') { ok = false; break; }
+      }
+      if (!ok) continue;
+      for (let c = c0; c < c0 + len; c++) g.set(G, c, '"');
+      break;
+    }
   }
 }
 
@@ -316,8 +327,6 @@ function build(id, spec, counts) {
   const G = g.G;
   g.fill(G, H - 1, 0, W - 1, '#');
   ARCH[spec.arch](g, spec, rng);
-  // RNG RIÊNG cho nước: không tiêu thụ RNG chính, giữ nguyên vị trí quái/NPC vốn đã sạch.
-  addWater(g, spec, rngOf(id + '-water'));
   // ---- cổng, điểm xuất hiện, NPC trên mặt đất
   const ports = Object.keys(meta.portals || {});
   if (ports.includes('<')) g.set(G - 1, 1, '<');
@@ -404,6 +413,8 @@ function build(id, spec, counts) {
     const n = counts[ch];
     place(letters.length === 1 ? pos : (i === 0 ? low : i === 1 ? high : pos), ch, n);
   });
+  // Nước đặt SAU khi NPC/quái đã đứng → hồ né được cột có NPC/quái, không chèn nước dưới chân ai.
+  addWater(g, spec, rngOf(id + '-water'));
   // ---- trang trí
   const free2 = runs.filter(r => r.len >= 4);
   const deco = (ch, n, pred) => {
@@ -570,11 +581,21 @@ function buildVillage(id, spec, counts) {
   for (const [r, a, b] of ledges) g.ledge(r, Math.max(1, a), Math.min(W - 2, b));
   const lamps = [[12, 16], [24, 13], [mid - 2, 7], [mid + 10, 10], [mid + 20, 13], [mid + 30, 16], [W - 16, 13]];
   for (const [c, r] of lamps) if (g.empty(r, c)) g.set(r, c, '!');
-  // Hồ nước nông rải ở mặt đất, tránh 10 cột đầu (S/NPC) và 10 cột cuối (cổng/quái).
+  // Hồ đào xuống mặt đất (hàng G), né cột có NPC/quái/S/cổng đã đặt ở trên.
   const poolRng = rngOf('village-water-' + id), npool = poolRng() < 0.5 ? 1 : 2;
   for (let i = 0; i < npool; i++) {
-    const len = 5 + Math.floor(poolRng() * 6), c0 = 11 + Math.floor(poolRng() * Math.max(1, W - 24 - len));
-    for (let c = c0; c < c0 + len; c++) if (g.get(G - 1, c) === '.') g.set(G - 1, c, '"');
+    const len = 5 + Math.floor(poolRng() * 6);
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const c0 = 11 + Math.floor(poolRng() * Math.max(1, W - 24 - len));
+      let ok = true;
+      for (let c = c0; c < c0 + len && ok; c++) {
+        if (g.get(G, c) !== '#' || g.get(G + 1, c) !== '#') { ok = false; break; }
+        for (let d = 1; d <= 2; d++) if (g.get(G - d, c) !== '.') { ok = false; break; }
+      }
+      if (!ok) continue;
+      for (let c = c0; c < c0 + len; c++) g.set(G, c, '"');
+      break;
+    }
   }
   const rr = surfaces(g), start = rr.find(r => r.r === G && r.c0 <= 4 && r.c1 >= 4), seen = reachable(g, rr, start);
   return { text: g.text(), bad: rr.filter(r => !seen.has(r) && r.len >= 4) };
