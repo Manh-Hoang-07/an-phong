@@ -29,6 +29,14 @@ WorldScene.mix(class WorldMap {
     // Chỉ thêm vừa đủ hàng đất để lấp kín khung hình (đỡ trơ và không bị nút cảm ứng che)
     const extraRows = Math.max(0, 17 - this.grid.length);
     for (let i = 0; i < extraRows; i++) this.grid.push(Array(this.cols).fill('#'));
+    // Bỏ bục '=' nằm ngay trên đất đặc '#'. Những ô này bị sinh ra ở dáng dốc/bậc:
+    // thanh gỗ được vẽ ở ĐỈNH ô (cao hơn mặt đất bên dưới đúng 1 ô = 32px), cắt ngang
+    // thân nhân vật đang đứng trên nền đất → trông như "tường ảo ngay trên mặt đất".
+    // Mặt đất '#' bên dưới đã đi được rồi nên bục này thừa; bỏ ở đây sửa cả va chạm lẫn hình vẽ.
+    for (let r = 0; r < this.grid.length - 1; r++) {
+      const row = this.grid[r], below = this.grid[r + 1];
+      for (let c = 0; c < this.cols; c++) if (row[c] === '=' && below[c] === '#') row[c] = '.';
+    }
     this.rows = this.grid.length;
     this.worldW = this.cols * T;
     this.worldH = this.rows * T;

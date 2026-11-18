@@ -31,6 +31,12 @@ function load(mapId) {
     });
     const extra = Math.max(0, 17 - grid.length);
     for (let i = 0; i < extra; i++) grid.push(Array(cols).fill('#'));
+    // Đồng bộ với WorldScene.parseMap(): bỏ bục '=' nằm ngay trên đất đặc '#'.
+    // Nếu không, server tính groundY ở đỉnh bục đã bị client xóa → spawn quái lơ lửng.
+    for (let r = 0; r < grid.length - 1; r++) {
+      const row = grid[r], below = grid[r + 1];
+      for (let c = 0; c < cols; c++) if (row[c] === '=' && below[c] === '#') row[c] = '.';
+    }
   } catch (e) {
     console.error(`Không đọc được bản đồ ${mapId}:`, e.message);
   }

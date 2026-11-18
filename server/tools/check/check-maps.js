@@ -18,6 +18,8 @@ function load(id) {
   const markers = new Set(['S', ...Object.keys(meta.spawns || {}), ...Object.keys(meta.npcs || {}), ...Object.keys(meta.portals || {}), meta.gate].filter(Boolean));
   const grid = raw.map(line => { const s = line.padEnd(sc, '.').split(''); return Array.from({ length: cols }, (_, col) => { const o = Math.min(sc - 1, Math.floor(col / 1.5)); const ch = s[o]; return markers.has(ch) && col !== Math.ceil(o * 1.5) ? '.' : ch; }); });
   while (grid.length < 17) grid.push(Array(cols).fill('#'));
+  // Đồng bộ với WorldMap.parseMap(): bỏ bục '=' nằm ngay trên đất đặc '#' (tường ảo).
+  for (let r = 0; r < grid.length - 1; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === '=' && grid[r + 1][c] === '#') grid[r][c] = '.';
   return { meta, grid, rows: grid.length, cols, raw };
 }
 
