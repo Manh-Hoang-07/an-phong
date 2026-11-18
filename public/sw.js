@@ -8,7 +8,25 @@
  */
 const CACHE = 'thuc-tinh-v1';
 
-self.addEventListener('install', () => self.skipWaiting());
+// Precache "shell": lấy HTML (network) để biết mã bundle mới nhất, rồi lưu bundle + font trước khi cần.
+// Không cache index.html hay /api/ → vẫn luôn lấy trang mới nhất từ server, không kẹt phiên bản.
+self.addEventListener('install', (e) => {
+  e.waitUntil((async () => {
+    try {
+      const html = await (await fetch('/', { cache: 'no-store' })).text();
+      const m = html.match(/\/app\.[\w-]+\.js/);
+      const cache = await caches.open(CACHE);
+      const urls = [];
+      if (m) urls.push(m[0]);
+      // Font tiếng Việt/latin 400 được preload trong <head> — lưu sẵn để lần sau không chờ mạng.
+      for (const fm of html.matchAll(/\/fonts\/[^"']+\.woff2/g)) if (!urls.includes(fm[0])) urls.push(fm[0]);
+      await Promise.all(urls.map(async (u) => {
+        try { const r = await fetch(u); if (r.ok) await cache.put(u, r); } catch { /* bỏ qua từng file */ }
+      }));
+    } catch { /* offline lần đầu thì thôi, cache theo request vẫn hoạt động */ }
+    await self.skipWaiting();
+  })());
+});
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     for (const k of await caches.keys()) if (k !== CACHE) await caches.delete(k);

@@ -17,24 +17,34 @@ const PetSprites = (() => {
     horse: { run: 'horse-walk', walk: 'horse-walk' }, dragon: { run: 'dragon-run', walk: 'dragon-run', attack: 'dragon-attack' },
     bat: { run: 'bat-run', walk: 'bat-run', attack: 'bat-attack' }, bird: 'bird.png', lizard: { run: 'lizard-run', walk: 'lizard-walk', attack: 'lizard-attack' },
     fox: { run: 'fox-run', walk: 'fox-walk', attack: 'fox-attack' }, insect: { run: 'insect-run', walk: 'insect-walk', attack: 'insect-attack' } };
+  // Rồng/dơi lấy từ sprite quái (nội dung Y HỆT, đã verify MD5) → trỏ chung URL để browser tải 1 lần thay vì 2.
+  // Texture key (pet_dragon_run, ...) giữ nguyên nên không đụng anim/logic; chỉ đổi đường dẫn file.
+  const SHARED_WITH_MOB = {
+    'dragon-run': 'mobs/dragon/run', 'dragon-attack': 'mobs/dragon/attack',
+    'bat-run': 'mobs/ff_bat/run', 'bat-attack': 'mobs/ff_bat/attack',
+  };
+  const vGroup = (g) => window.assetV ? assetV(g) : (window.BUILD ? '?v=' + BUILD.assets : '');
   function preload(scene, look) {
     const d = DEF[look], files = FILES[look];
     if (!d || !files) return;
     if (d.static) {
-      const version = window.BUILD ? `?v=${BUILD.assets}` : '';
+      const version = vGroup('pets');
       scene.load.image(`pet_${look}_static`, `/assets/pets/${files}${version}`);
       return;
     }
     if (look === 'bird') {
-      const version = window.BUILD ? `?v=${BUILD.assets}` : '';
+      const version = vGroup('pets');
       scene.load.spritesheet('pet_bird_sheet', `/assets/pets/${files}${version}`, { frameWidth: d.fw, frameHeight: d.fh });
       return;
     }
     for (const a of Object.keys(files)) {
       const key = `pet_${look}_${a}`;
       if (scene.textures.exists(key)) continue;
-      const version = window.BUILD ? `?v=${BUILD.assets}` : '';
-      const path = `/assets/pets/${files[a]}.png${version}`;
+      const name = files[a];
+      const shared = SHARED_WITH_MOB[name];
+      const rel = shared || `pets/${name}`;
+      const version = vGroup(shared ? 'mobs' : 'pets');
+      const path = `/assets/${rel}.png${version}`;
       scene.load.spritesheet(key, path, { frameWidth: d.fw, frameHeight: d.fh });
     }
   }
@@ -88,5 +98,32 @@ const PetSprites = (() => {
     const same = looks.filter((_, i) => (i % 2 === 0) === (side === 1));
     return { side, dist: gap(same, Math.floor(index / 2)) + (side < 0 ? otherBase : 0) };
   }
-  return { preload, createAnims, textureKey, gap, rowWidth, slot, def: (look) => DEF[look] };
+  // Look thú người chơi ĐANG có (để preload chỉ mấy cái cần ngay). Phần còn lại nạp dần qua background().
+  function ownedLooks() {
+    const out = new Set();
+    const p = (typeof App !== 'undefined' && App.player) || null;
+    if (!p) return out;
+    for (const id of (p.mounts && p.mounts.owned) || []) { const d = GameData.MOUNTS[id]; if (d) out.add(d.look); }
+    if (p.summons && p.summons.enabled && GameData.summonCount && GameData.summonCount(p)) {
+      const id = GameData.summonChoice ? GameData.summonChoice(p) : null;
+      const d = id && GameData.SUMMONS[id];
+      if (d) out.add(d.look);
+    }
+    return out;
+  }
+  // Một look chưa có texture (để loadRestAssets nạp dần). Trả {look} hoặc null.
+  function background(scene) {
+    const tried = (scene && scene._petTried) || null;
+    for (const look of Object.keys(DEF)) {
+      if (ownedLooks().has(look)) continue;
+      if (tried && tried.has(look)) continue;
+      const d = DEF[look], files = FILES[look];
+      if (!d || !files || d.static) continue;
+      const a = Object.keys(files)[0];
+      const key = look === 'bird' ? 'pet_bird_sheet' : `pet_${look}_${a}`;
+      if (!scene.textures.exists(key)) return { look };
+    }
+    return null;
+  }
+  return { preload, createAnims, textureKey, gap, rowWidth, slot, ownedLooks, background, def: (look) => DEF[look] };
 })();

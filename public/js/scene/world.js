@@ -13,30 +13,36 @@ class WorldScene extends Phaser.Scene {
   }
 
   preload() {
-    // Bản đồ đã nằm sẵn trong file gộp (window.MAP_TEXT); chạy kiểu từng file riêng (NO_BUNDLE) thì tải như cũ
-    for (const id in GameData.MAPS) {
-      if (this.cache.text.exists('map_' + id)) continue;
+    // Bản đồ tải theo yêu cầu qua /shared/maps/<id>.txt (có ?v= → cache immutable).
+    // MAP_TEXT chỉ còn dùng khi chạy NO_BUNDLE hoặc bản cũ nhúng; giữ tương thích.
+    const mapV = window.BUILD && BUILD.mapVer ? '?v=' + BUILD.mapVer : '';
+    const id = this.mapId;   // chỉ map hiện tại; scene.restart() khi chuyển map sẽ tải map mới (cache.text giữ qua restart)
+    if (!this.cache.text.exists('map_' + id)) {
       if (window.MAP_TEXT && MAP_TEXT[id] != null) this.cache.text.add('map_' + id, MAP_TEXT[id]);
-      else this.load.text('map_' + id, '/shared/maps/' + id + '.txt');
+      else this.load.text('map_' + id, '/shared/maps/' + id + '.txt' + mapV);
     }
     this.load.on('loaderror', () => { /* thiếu ảnh thì dùng hình vẽ bằng code */ });
     // Ảnh NPC (nếu có): nạp trước Art.makeAll; make() thấy texture đã có thì không vẽ code đè lên
-    const assetV = window.BUILD ? '?v=' + BUILD.assets : '';
-    const npcV = assetV;
+    const vOf = (g) => window.assetV ? assetV(g) : (window.BUILD ? '?v=' + BUILD.assets : '');
+    const npcV = vOf('npcs'), bgV = vOf('bg'), propV = vOf('props');
     for (const id of Object.keys(Art._.NPC_IMAGES || {})) if (!this.textures.exists('npc_' + id)) this.load.image('npc_' + id, `/assets/npcs/${id}.png` + npcV);
     // Chỉ tải hình cần ngay: class của mình + quái trên bản đồ này. Phần còn lại tải ngầm sau khi vào game.
     Sprites.preload(this, Sprites.needed(this.mapId, App.player.school || 'none'));
-    for (const look of new Set([...Object.values(GameData.MOUNTS), ...Object.values(GameData.SUMMONS)].map(def => def.look))) PetSprites.preload(this, look);
+    // Chỉ preload thú đang sở hữu (~15 sprite / 1MB trước đây cho mọi look). Phần còn lại nạp dần ở loadRestAssets().
+    for (const look of PetSprites.ownedLooks()) PetSprites.preload(this, look);
     // Nền ảnh của map (nếu map khai báo pack): thiếu file thì loaderror ở trên nuốt lỗi → nền vẽ code
     const look = MapLooks.get(this.mapId, GameData.MAPS[this.mapId].theme);
+    // Đồ họa Thấp không tạo bgMid (map.js:176) → khỏi tải lớp mid (0.4–0.8MB/map, nhóm low-end nhạy băng thông).
+    // Nếu người chơi bật Cao trong phiên, ensureMidLayer() sẽ nạp bù theo yêu cầu.
     for (const d of MapLooks.needs(look)) {
+      if (Quality.low && d.layer === 'mid') continue;
       const key = `bgimg_${d.pack}_${d.layer}`;
-      if (!this.textures.exists(key)) this.load.image(key, `/assets/bg/${d.pack}/${d.layer}.${MapLooks.PACKS[d.pack].ext}` + assetV);
+      if (!this.textures.exists(key)) this.load.image(key, `/assets/bg/${d.pack}/${d.layer}.${MapLooks.PACKS[d.pack].ext}` + bgV);
     }
     // Cảnh trí ảnh của map (MapDecor): nạp các bộ tree / ceil / floor / bits được khai báo
     for (const set of MapLooks.propSets(look)) for (let i = 1; i <= MapProps.SETS[set].n; i++) {
       const key = `prop_${set}_${i}`;
-      if (!this.textures.exists(key)) this.load.image(key, `/assets/props/${set}/${i}.png` + assetV);
+      if (!this.textures.exists(key)) this.load.image(key, `/assets/props/${set}/${i}.png` + propV);
     }
     this.load.on('progress', (v) => Loading.set(0.2 + v * 0.7));
   }
@@ -132,12 +138,63 @@ class WorldScene extends Phaser.Scene {
     this.time.delayedCall(2500, () => this.prewarmForm());   // đã có ấn thức tỉnh: tạo sẵn hình biến hình
   }
 
+  // Bật đồ họa Cao trong phiên: nạp bù lớp mid đã bỏ lúc vào map với Quality.low.
+  ensureMidLayer() {
+    if (!this.sys.isActive() || this.bgMid || !this._bgTile) return;
+    const look = MapLooks.get(this.mapId, this.theme);
+    const defs = MapLooks.layerDefs(look);
+    const d = defs.mid;
+    if (!d) return;
+    const key = `bgimg_${d.pack}_${d.layer}`;
+    const add = () => {
+      if (!this.sys.isActive() || this.bgMid || !this.textures.exists(key)) return;
+      if (MapLooks.needsGrade(d) && !this.textures.exists(`bgg_${this.mapId}_mid`)) {
+        try {
+          const P = MapLooks.PACKS[d.pack];
+          const graded = MapLooks.gradeCanvas(this.textures.get(key).getSourceImage(), d);
+          this.textures.addCanvas(`bgg_${this.mapId}_mid`, graded);
+          this.textures.get(`bgg_${this.mapId}_mid`).setFilter(P.filter === 'nearest' ? Phaser.Textures.FilterMode.NEAREST : Phaser.Textures.FilterMode.LINEAR);
+        } catch { /* lỗi canvas thì bỏ qua lớp mid */ }
+      }
+      const ts = this._bgTile('mid', -15);
+      if (ts) {
+        ts.setDepth(-15);
+        this.screenLayers.splice(3, 0, ts);   // mid nằm giữa near/far và haze/grade
+      }
+    };
+    if (this.textures.exists(key)) { add(); return; }
+    const v = window.assetV ? assetV('bg') : (window.BUILD ? '?v=' + BUILD.assets : '');
+    this.load.image(key, `/assets/bg/${d.pack}/${d.layer}.${MapLooks.PACKS[d.pack].ext}` + v);
+    this.load.once('complete', add);
+    this.load.start();
+  }
+
   // Tải ngầm NHỎ GIỌT: mỗi lượt 1 ảnh, nghỉ giữa các lượt.
   // Trước đây xếp hàng ~80 ảnh một lúc: trình duyệt giải mã + đẩy lên GPU dồn vào vài khung hình liền nhau
   // ngay sau khi vào game → khựng 1–2 giây trên điện thoại. Giờ mỗi khung hình nhiều nhất một ảnh.
   loadRestAssets() {
     if (!this.sys.isActive()) return;
     if (this.load.isLoading()) { this.time.delayedCall(500, () => this.loadRestAssets()); return; }
+    const again = () => this.time.delayedCall(Quality.low ? 400 : 150, () => this.loadRestAssets());
+
+    // Ưu tiên nạp dần các look thú chưa có (bỏ qua lúc preload để đỡ ~1MB/ lần vào map). Mỗi lượt 1 look.
+    const pet = PetSprites.background(this);
+    if (pet) {
+      if (!this._petTried) this._petTried = new Set();
+      this._petTried.add(pet.look);
+      PetSprites.preload(this, pet.look);
+      const done = () => {
+        if (!this.sys.isActive()) return;
+        for (const look of PetSprites.ownedLooks()) PetSprites.createAnims(this, look);
+        PetSprites.createAnims(this, pet.look);
+        again();
+      };
+      if (!this.load.pending || !this.load.pending.size) { done(); return; }   // đã có texture → không có gì để load
+      this.load.once('complete', done);
+      this.load.start();
+      return;
+    }
+
     const next = Sprites.background(this, this.mapId, App.player.school || 'none')[0];
     if (!next) return;
     this.load.spritesheet(next.key, next.url, { frameWidth: next.fw, frameHeight: next.fh });
@@ -147,7 +204,7 @@ class WorldScene extends Phaser.Scene {
       Sprites.createAnims(this);
       Sprites.applyFilters(this, View.k);
       if (this.player) this.refreshPlayerLook();   // class vừa đổi mà lúc nãy chưa có hình thì giờ thay vào
-      this.time.delayedCall(Quality.low ? 400 : 150, () => this.loadRestAssets());
+      again();
     });
     this.load.start();
   }

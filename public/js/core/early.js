@@ -11,6 +11,11 @@ window.__noteServerTime = (res) => {
   try { const d = Date.parse(res.headers.get('Date')); if (d) window.__clockSkew = d - Date.now(); } catch { /* bỏ qua */ }
 };
 window.__me = fetch('/api/me', { credentials: 'same-origin' }).then(r => { __noteServerTime(r); return r.json(); }).catch(() => null);
+// Đăng ký service worker NGAY từ <head> (trước đây đợi window.load → SW không điều khiển được chính lượt tải đầu).
+// ?nosw để tắt khi cần đo so sánh. SW không cache /api/ hay index.html nên không lo kẹt phiên bản.
+if ('serviceWorker' in navigator && window.isSecureContext && !new URLSearchParams(location.search).has('nosw')) {
+  navigator.serviceWorker.register('/sw.js').catch(() => { /* bỏ qua */ });
+}
 try {
   if (document.fonts && document.fonts.load) {
     document.fonts.load('16px "Be Vietnam Pro"', 'Thức Tỉnh').catch(() => {});

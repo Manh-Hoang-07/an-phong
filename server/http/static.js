@@ -195,12 +195,31 @@ module.exports = function createStatic(ROOT) {
     for (const [prefix, dir] of DIRS) if (url.startsWith(prefix)) return path.join(dir, url.slice(prefix.length));
     return null;
   };
+  // Hash RIÊNG cho từng nhóm ảnh: đổi 1 file bg không làm đổi URL của chars/mobs/pets...
+  // (trước đây mọi ảnh dùng chung BUILD.assets → đổi 1 dòng JS invalidate cả 56MB ảnh).
+  const ASSET_GROUPS = ['bg', 'chars', 'mobs', 'pets', 'props', 'npcs'];
+  function groupVersions() {
+    const out = {};
+    for (const g of ASSET_GROUPS) {
+      const dir = path.join(PUBLIC, 'assets', g);
+      let acc = 0;
+      const walk = (d) => {
+        for (const f of fs.readdirSync(d, { withFileTypes: true })) {
+          const p = path.join(d, f.name);
+          if (f.isDirectory()) walk(p);
+          else { const s = fs.statSync(p); acc += s.mtimeMs + s.size; }
+        }
+      };
+      try { walk(dir); } catch { /* thư mục chưa có */ }
+      out[g] = hash(String(acc));
+    }
+    return out;
+  }
   function signature(src) {
     const parts = [INDEX, path.join(PUBLIC, 'css', 'style.css'), ...src.scripts.map(resolve), ...src.maps.map(m => path.join(MAPS_DIR, m))];
-    let assets = 0;
-    const walk = (d) => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) walk(p); else { const s = fs.statSync(p); assets += s.mtimeMs + s.size; } } };
-    try { walk(path.join(PUBLIC, 'assets')); } catch { /* chưa có thư mục ảnh */ }
-    return parts.map(p => { try { const s = fs.statSync(p); return s.mtimeMs + ':' + s.size; } catch { return '-'; } }).join('|') + '|' + assets;
+    // Chỉ gồm script/css/map + hash các nhóm ảnh. Đổi ảnh nhóm nào thì sig đổi (rebuild) nhưng assetV (script) KHÔNG đổi.
+    const groups = groupVersions();
+    return parts.map(p => { try { const s = fs.statSync(p); return s.mtimeMs + ':' + s.size; } catch { return '-'; } }).join('|') + '|' + ASSET_GROUPS.map(g => groups[g]).join('|');
   }
   function rebuild() {
     const now = Date.now();
@@ -215,10 +234,16 @@ module.exports = function createStatic(ROOT) {
     dirty = false;
     if (build && build.sig === sig) return build;
 
-    const assetV = hash(sig);
-    const mapText = {};
-    for (const m of src.maps) mapText[m.replace(/\.txt$/, '')] = fs.readFileSync(path.join(MAPS_DIR, m), 'utf8');
-    const chunks = [`window.BUILD = ${JSON.stringify({ assets: assetV })};\nwindow.MAP_TEXT = ${JSON.stringify(mapText)};\n`];
+    // assetV chỉ phụ thuộc script/css/map → đổi ảnh KHÔNG đổi URL của early.js/bundle.
+    const parts = [INDEX, path.join(PUBLIC, 'css', 'style.css'), ...src.scripts.map(resolve), ...src.maps.map(m => path.join(MAPS_DIR, m))];
+    const assetV = hash(parts.map(p => { try { const s = fs.statSync(p); return s.mtimeMs + ':' + s.size; } catch { return '-'; } }).join('|'));
+    const groups = groupVersions();
+    // MAP_TEXT trước đây nhúng 59 file bản đồ (~175KB raw) vào bundle dù mỗi phiên chỉ vào vài map.
+    // Giờ client tải map qua /shared/maps/<id>.txt?v=<assetV> (endpoint có sẵn, cache immutable).
+    // Giữ window.MAP_TEXT = {} để world.js vẫn chạy nhánh "đã có trong bundle" → thật ra rỗng → nó tải theo file.
+    const chunks = [`window.BUILD = ${JSON.stringify({ assets: assetV, mapVer: assetV, groups })};\n`
+      + `window.assetV = (g) => (window.BUILD && BUILD.groups && BUILD.groups[g]) ? '?v=' + BUILD.groups[g] : (window.BUILD ? '?v=' + BUILD.assets : '');\n`
+      + `window.MAP_TEXT = {};\n`];
     for (const s of src.scripts) chunks.push(`\n/* ${s} */\n` + fs.readFileSync(resolve(s), 'utf8').replace(/^﻿/, '') + '\n;');
     const app = Buffer.from(chunks.join(''), 'utf8');
     const appUrl = `/app.${hash(app)}.js`;

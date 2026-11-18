@@ -52,7 +52,7 @@
         const next = { auto: 'high', high: 'low', low: 'auto' }[Quality.mode];
         Quality.set(next);
         if (Quality.low && App.scene) App.scene.applyLowQuality();
-        else if (next === 'high') UI.log('Đã bật đồ họa chất lượng cao.', '#d7bd8a');
+        else if (next === 'high') { if (App.scene && App.scene.ensureMidLayer) App.scene.ensureMidLayer(); UI.log('Đã bật đồ họa chất lượng cao.', '#d7bd8a'); }
         if (App.refit) App.refit();   // đổi độ nét khung hình (Thấp: tối đa 1.5×)
         renderPanel();
         break;
@@ -60,7 +60,7 @@
       case 'set_quality': {
         Quality.set(ds.mode);
         if (Quality.low && App.scene) App.scene.applyLowQuality();
-        else if (ds.mode === 'high') UI.log('Đã bật đồ họa chất lượng cao.', '#d7bd8a');
+        else if (ds.mode === 'high') { if (App.scene && App.scene.ensureMidLayer) App.scene.ensureMidLayer(); UI.log('Đã bật đồ họa chất lượng cao.', '#d7bd8a'); }
         if (App.refit) App.refit();
         renderPanel();
         break;

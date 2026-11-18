@@ -3,7 +3,14 @@
 WorldScene.mix(class WorldMap {
   // ------------------------------------------------------------------ Bản đồ
   parseMap() {
-    const raw = this.cache.text.get('map_' + this.mapId).replace(/\r/g, '').split('\n').filter(l => l.length);
+    let text = this.cache.text.get('map_' + this.mapId);
+    if (text == null && window.MAP_TEXT && MAP_TEXT[this.mapId] != null) text = MAP_TEXT[this.mapId];
+    if (text == null) {   // lỗi tải map: về map mặc định thay vì crash (trước đây map nhúng sẵn nên không có đường này)
+      console.error('Không tải được bản đồ', this.mapId);
+      this.mapId = GameData.START_MAP;
+      text = this.cache.text.get('map_' + this.mapId) || (window.MAP_TEXT && MAP_TEXT[this.mapId]) || '';
+    }
+    const raw = String(text).replace(/\r/g, '').split('\n').filter(l => l.length);
     this.rows = raw.length;
     const sourceCols = Math.max(...raw.map(l => l.length));
     this.cols = Math.ceil(sourceCols * 1.5);
@@ -150,6 +157,12 @@ WorldScene.mix(class WorldMap {
     };
     const tall = this.rows > 20;   // map nhiều tầng: nền trượt dọc
     this.tallLayers = tall ? [] : null;
+    // Lưu lại để bật Cao trong phiên có thể tạo bù lớp mid mà không dựng lại toàn bộ nền (xem world.ensureMidLayer).
+    this._bgTile = (layer, depth) => {
+      const ts = bgTile(layer, depth);
+      if (layer === 'mid' && ts) this.bgMid = ts;
+      return ts;
+    };
     const bgTile = (layer, depth) => {
       const key = layerKey(layer);
       if (key) {
@@ -175,7 +188,7 @@ WorldScene.mix(class WorldMap {
     // Lớp giữa (chiều sâu) và sương sát đất (nối nền với mặt đất); đồ họa Thấp bỏ qua cho nhẹ
     this.bgMid = null;
     if (!Quality.low) {
-      this.bgMid = bgTile('mid', -15);
+      this._bgTile('mid', -15);
       const hazeTint = this.look.haze ?? 0xb8aaa0;
       const hz = this.add.tileSprite(0, 0, w, h, 'bg_haze').setOrigin(0).setScrollFactor(0).setDepth(-7)
         .setTileScale(Art.hdScale('bg_haze')).setTint(hazeTint);

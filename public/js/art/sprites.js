@@ -214,15 +214,16 @@ const Sprites = (() => {
 
   // Danh sách file ảnh còn thiếu (only = null: mọi bộ hình). ?v= là mã phiên bản ảnh: trình duyệt lưu lâu dài.
   function missing(scene, only) {
-    const v = window.BUILD ? '?v=' + BUILD.assets : '';
+    const vChars = window.assetV ? assetV('chars') : (window.BUILD ? '?v=' + BUILD.assets : '');
+    const vMobs = window.assetV ? assetV('mobs') : (window.BUILD ? '?v=' + BUILD.assets : '');
     const list = [];
     for (const [id, c] of Object.entries(CHARS)) {
       if (only && !only.chars.has(id)) continue;
-      for (const a of Object.keys(c.anims)) list.push({ key: `ch_${id}_${a}`, url: `/assets/chars/${id}/${a}.png` + v, fw: c.fw, fh: c.fh });
+      for (const a of Object.keys(c.anims)) list.push({ key: `ch_${id}_${a}`, url: `/assets/chars/${id}/${a}.png` + vChars, fw: c.fw, fh: c.fh });
     }
     for (const [id, m] of Object.entries(MOBS)) {
       if (only && !only.mobs.has(id)) continue;
-      for (const a of Object.keys(m.anims)) list.push({ key: `mb_${id}_${a}`, url: `/assets/mobs/${id}/${a}.png` + v, fw: m.fw, fh: m.fh });
+      for (const a of Object.keys(m.anims)) list.push({ key: `mb_${id}_${a}`, url: `/assets/mobs/${id}/${a}.png` + vMobs, fw: m.fw, fh: m.fh });
     }
     return list.filter(f => !scene.textures.exists(f.key));
   }

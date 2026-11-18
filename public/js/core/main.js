@@ -4,11 +4,14 @@
   let game = null;
 
   async function boot() {
+    // Nối WebSocket NGAY, song song với /api/me và việc dựng giao diện. Handshake thường xong trước
+    // khi startGame() tới Realtime.ready() → không còn phải chờ 200–600ms (worst 2.5s) trước khung hình đầu.
+    // Vẫn giữ ready() ở startGame làm fallback: scene cần biết chắc quái do server hay client quản lý.
+    if (window.Realtime) Realtime.start();
     let me;
     try { me = await Net.me(); } catch { me = { error: 'Không kết nối được server.' }; }
     if (me.user && me.player) { Loading.set(0.15, 'Đang vào game...'); startGame(me.player); }
     else { Loading.hide(); showLogin(me.registerOpen, me.error); }
-    registerServiceWorker();
     setupInstallTip();
   }
 
@@ -40,13 +43,7 @@
     showInstallTip(false);
   }
 
-  // Lưu sẵn code, hình, font trên máy để lần sau mở game gần như tức thì (cần HTTPS hoặc localhost)
-  function registerServiceWorker() {
-    if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-    if (new URLSearchParams(location.search).has('nosw')) return;
-    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => { /* bỏ qua */ }));
-    if (document.readyState === 'complete') navigator.serviceWorker.register('/sw.js').catch(() => { /* bỏ qua */ });
-  }
+  // Service worker được đăng ký trong early.js (ngay từ <head>) để có hiệu lực sớm nhất.
 
   // ------------------------------------------------------------ Đăng nhập / Đăng ký
   function showLogin(registerOpen, error) {
@@ -105,8 +102,8 @@
 
   // ------------------------------------------------------------ Vào game
   async function startGame(player) {
-    // Font đã bắt đầu tải từ <head> (early.js) nên thường xong rồi; chờ tối đa 600ms để chữ trong game đúng font
-    try { await Promise.race([document.fonts.load('16px "Be Vietnam Pro"', 'Thức Tỉnh'), new Promise(r => setTimeout(r, 600))]); } catch { /* bỏ qua */ }
+    // Font đã bắt đầu tải từ <head> (early.js) với font-display:swap: chữ hiện ngay, đổi font khi sẵn sàng.
+    // Không chờ 600ms nữa — chờ font từng làm trễ khung hình đầu mà không cải thiện gì (FOUT đã được phép).
     App.hp = 0; App.mp = 0;
     App.player = player;
     App.form = false;
@@ -119,7 +116,7 @@
     UI.init();
     if (window.Chat) Chat.init();
     if (window.Social) Social.init();
-    if (window.Realtime) Realtime.start();
+    // Realtime.start() đã gọi ở boot() để nối song song với /api/me; không gọi lại ở đây.
     setupKeyboard();
     setupTouch();
     ScreenRot.update();

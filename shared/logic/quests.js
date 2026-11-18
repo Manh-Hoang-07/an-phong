@@ -208,7 +208,12 @@
   //   và không bao giờ thấp hơn nhiệm vụ đứng trước (chuỗi chính là đường thẳng). Nhiệm vụ chỉ nói chuyện / thăm NPC thừa hưởng mốc trước đó.
   // Mục đích: làm nhiệm vụ quá nhanh không kéo nhân vật vào vùng quái cao hơn hẳn cấp của mình.
   const MIN_LEVEL_GAP = 3;
-  (function () {
+  // Trước đây chạy IIFE này ngay lúc nạp file: ~7,400 lần quét QUESTS×MONSTERS dù chỉ dùng khi mở panel nhiệm vụ.
+  // Giờ tính lazily đúng 1 lần ở lời gọi questMinLevel đầu tiên (ui.js:458 / actions.js:213) → bỏ ~5–15ms lúc boot.
+  let minLevelsReady = false;
+  function ensureMinLevels() {
+    if (minLevelsReady) return;
+    minLevelsReady = true;
     let run = 1;
     for (const q of QUESTS) {
       if (q.minLevel == null) {
@@ -223,8 +228,8 @@
       }
       run = Math.max(run, q.minLevel);
     }
-  })();
-  const questMinLevel = (q) => (q && q.minLevel) || 1;
+  }
+  const questMinLevel = (q) => { ensureMinLevels(); return (q && q.minLevel) || 1; };
 
   Object.assign(G, { questMinLevel, questGuide,npcAt, gateOf, portalStatus, gateDestinations, mapList, npcHere, npcMaps, npcByRole, villageOf, villageRewardMult, dailyDate, dailyReward, weekKey, weeklyReward, questDone, sideById, sideDone, sideActive, sideReqDone, sideAvailable, sideLines, sideReady });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);
