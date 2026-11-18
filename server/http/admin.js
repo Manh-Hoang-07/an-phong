@@ -199,6 +199,11 @@ const routes = {
       bag[e.id].qty += e.qty || 1;
       bag[e.id].plus = Math.max(bag[e.id].plus, e.plus || 0);
     }
+    // Kỳ Nguyên đã mua hiện chung danh sách vật phẩm để chọn thu hồi
+    for (const id of (p.kyNguyen && p.kyNguyen.owned) || []) {
+      const def = G.ITEMS[id];
+      if (def && def.kyNguyen) bag[id] = { id, name: def.name, qty: 1, plus: 0 };
+    }
     const skills = Object.keys(p.skills || {})
       .filter((id) => G.SKILLS[id] && p.skills[id] > 0)
       .map((id) => ({ id, name: G.SKILLS[id].name, level: p.skills[id], ult: !!G.SKILLS[id].ult }));
@@ -239,6 +244,15 @@ const routes = {
 
         const items = [];
         for (const [id, want] of r.items || []) {
+          // Kỳ Nguyên không nằm trong túi: nằm ở p.kyNguyen (owned = đã mua, active = đang bật). Thu hồi là gỡ khỏi cả hai.
+          if (G.ITEMS[id] && G.ITEMS[id].kyNguyen) {
+            const kn = p.kyNguyen;
+            if (!kn || !Array.isArray(kn.owned) || !kn.owned.includes(id)) continue;
+            kn.owned = kn.owned.filter((x) => x !== id);
+            kn.active = (kn.active || []).filter((x) => x !== id);
+            items.push([id, 1]);
+            continue;
+          }
           const have = (p.bag || []).filter((e) => e.id === id).reduce((s, e) => s + (e.qty || 1), 0);
           const n = Math.min(want, have);
           if (n < 1) continue;

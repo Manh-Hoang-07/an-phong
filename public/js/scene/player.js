@@ -837,6 +837,17 @@ WorldScene.mix(class WorldPlayer {
       if (!this.fusionText) this.fusionText = this.add.text(pl.x, pl.y - 78, '', { fontSize: '13px', color: '#d9c2ff' }).setOrigin(0.5).setDepth(9);
       this.fusionText.setText(`🕸️ ${left}s`).setPosition(pl.x, pl.y - 78).setVisible(true);
     } else if (this.fusionText && this.fusionText.visible) this.fusionText.setVisible(false);
+    // Bất Tử / Hộ Mệnh đang trong thời gian giữ 1 máu: màng vàng ôm người, vòng sáng nhấp nháy + đếm ngược giây còn lại
+    if (this.lastStandUntil && time < this.lastStandUntil) {
+      const pulse = Math.sin(time / 90);
+      g.fillStyle(0xffe082, 0.16 + pulse * 0.06).fillCircle(pl.x, pl.y, 42);
+      g.lineStyle(3, 0xffd54f, 0.75 + pulse * 0.2).strokeCircle(pl.x, pl.y, 42);
+      g.lineStyle(2, 0xfff3b0, 0.5).strokeEllipse(pl.x, pl.y + 28, 70, 16);
+      pl.setTint(0xfff3b0);
+      const left = Math.ceil((this.lastStandUntil - time) / 1000);
+      if (!this.lastStandText) this.lastStandText = this.add.text(pl.x, pl.y - 66, '', { fontSize: '14px', color: '#ffe082', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(9);
+      this.lastStandText.setText(`🪬 Bất Tử ${left}s`).setPosition(pl.x, pl.y - 66).setVisible(true);
+    } else if (this.lastStandText && this.lastStandText.visible) this.lastStandText.setVisible(false);
   }
 
   levelUpFx() {
