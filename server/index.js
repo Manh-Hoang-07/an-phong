@@ -234,7 +234,11 @@ const server = http.createServer((req, res) => {
   if (url.startsWith('/api/')) {
     api(req, res, url).catch((e) => { console.error(e); send(res, 500, { error: 'Lỗi server.' }); });
   } else if (req.method === 'GET' || req.method === 'HEAD') {
-    serveStatic(req, res, url, query);
+    serveStatic(req, res, url, query).catch((e) => {
+      console.error('Lỗi file tĩnh:', e);
+      if (!res.headersSent) { res.writeHead(500); res.end('Server error'); }
+      else res.destroy();
+    });
   } else {
     res.writeHead(405); res.end();
   }

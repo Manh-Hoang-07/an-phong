@@ -16,9 +16,9 @@ const PUBLIC = path.join(ROOT, 'public');
 
 const createStatic = require(path.join(ROOT, 'server', 'http', 'static'));
 const serveStatic = createStatic(ROOT);
-function hit(url, accept = 'gzip') {
+async function hit(url, accept = 'gzip') {
   const res = { headers: null, body: null, writeHead(c, h) { this.headers = h || {}; return this; }, end(b) { this.body = b; return this; } };
-  serveStatic({ method: 'GET', url, headers: { 'accept-encoding': accept } }, res, url, '');
+  await serveStatic({ method: 'GET', url, headers: { 'accept-encoding': accept } }, res, url, '');
   return res;
 }
 
@@ -53,44 +53,44 @@ async function scenario(label, work) {
   return r.max;
 }
 
-// Chuẩn bị: lấy URL bundle
-hit('/');
-const home = hit('/', 'gzip');
-const html = require('zlib').gunzipSync(home.body).toString('utf8');
-const appUrl = (html.match(/src="(\/app\.[\w-]+\.js)"/) || [])[1];
-
-const imgs = [];
-(function walk(d) {
-  for (const f of fs.readdirSync(d, { withFileTypes: true })) {
-    const p = path.join(d, f.name);
-    if (f.isDirectory()) walk(p); else if (/\.(png|webp)$/i.test(f.name)) imgs.push(p);
-  }
-})(path.join(PUBLIC, 'assets'));
-const urlOf = (p) => '/' + path.relative(PUBLIC, p).split(path.sep).join('/');
-
 (async () => {
+  // Chuẩn bị: lấy URL bundle
+  await hit('/');
+  const home = await hit('/', 'gzip');
+  const html = require('zlib').gunzipSync(home.body).toString('utf8');
+  const appUrl = (html.match(/src="(\/app\.[\w-]+\.js)"/) || [])[1];
+
+  const imgs = [];
+  (function walk(d) {
+    for (const f of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, f.name);
+      if (f.isDirectory()) walk(p); else if (/\.(png|webp)$/i.test(f.name)) imgs.push(p);
+    }
+  })(path.join(PUBLIC, 'assets'));
+  const urlOf = (p) => '/' + path.relative(PUBLIC, p).split(path.sep).join('/');
+
   console.log('Đo độ trễ event loop (mỗi 10ms một mẫu). Trễ = thời gian server "đứng hình".');
 
-  // 1. Một người tải trang chủ (phải quét chữ ký 576 file)
-  await scenario('1. Một người mở game (GET / — quét chữ ký 576 file)', async () => { hit('/'); });
+  // 1. Một người tải trang chủ (signature giờ chỉ quét khi fs.watch báo đổi)
+  await scenario('1. Một người mở game (GET /)', async () => { await hit('/'); });
 
-  // 2. Tải bundle
-  await scenario('2. Tải bundle JS (đã nén sẵn trong RAM)', async () => { hit(appUrl); });
+  // 2. Tải bundle (lần đầu nén async)
+  await scenario('2. Tải bundle JS (nén async, dedup)', async () => { await hit(appUrl); });
 
   // 3. Tải 20 ảnh của một bản đồ (như lúc vào map mới)
   const mapImgs = imgs.slice(0, 20);
-  await scenario('3. Vào bản đồ mới (20 ảnh, lần đầu phải đọc đĩa)', async () => {
-    for (const p of mapImgs) hit(urlOf(p));
+  await scenario('3. Vào bản đồ mới (20 ảnh, lần đầu đọc đĩa async)', async () => {
+    for (const p of mapImgs) await hit(urlOf(p));
   });
 
   // 4. Ba người cùng mở game một lúc
   await scenario('4. Ba người cùng mở game một lúc', async () => {
-    for (let i = 0; i < 3; i++) { hit('/'); hit(appUrl); }
+    for (let i = 0; i < 3; i++) { await hit('/'); await hit(appUrl); }
   });
 
   // 5. Người chơi đi qua nhiều bản đồ liên tiếp
   await scenario('5. Đi qua 4 bản đồ liên tiếp (80 ảnh)', async () => {
-    for (const p of imgs.slice(20, 100)) hit(urlOf(p));
+    for (const p of imgs.slice(20, 100)) await hit(urlOf(p));
   });
 
   console.log('\n--- Kết luận ---');
@@ -99,4 +99,4 @@ const urlOf = (p) => '/' + path.relative(PUBLIC, p).split(path.sep).join('/');
   console.log('  - vòng lặp quái (50ms/lần) bị dồn, quái đánh trượt nhịp');
   console.log('  - WebSocket ping/echo chậm, cảm giác "lag mạng" dù mạng tốt');
   console.log('\nTrên VPS, đĩa chậm hơn và CPU yếu hơn máy dev nhiều lần → các số trên còn tệ hơn.');
-})();
+})().catch((e) => { console.error(e); process.exit(1); });

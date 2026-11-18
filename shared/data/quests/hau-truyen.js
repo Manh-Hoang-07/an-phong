@@ -24,7 +24,7 @@
     { id: 'c5q8', name: 'Dư ảnh của Thiên', npc: 'truong_lang_5',
       start: [
         'Trưởng làng Vực: Những Kỵ Sĩ Hư Không ở Đỉnh Cổng đang tụ tập quanh một vệt sáng.',
-        'Trưởng làng Vực: Hạ 20 tên. Có lẽ dấu vết của Thiên vẫn còn lưu lại ở đó.',
+        'Trưởng làng Vực: Hạ 10 tên. Có lẽ dấu vết của Thiên vẫn còn lưu lại ở đó.',
       ],
       obj: { kill: { ky_si_hu_khong: 10 } },
       end: [
@@ -34,7 +34,7 @@
     { id: 'c5q9', name: 'Bình minh sau cánh cổng', npc: 'truong_lang_5',
       start: [
         'Trưởng làng Vực: Tâm Điểm vẫn còn Ma Thần Trắng Trơn. Chúng đang bảo vệ tàn tích cuối cùng.',
-        'Trưởng làng Vực: Hạ 15 con để chắc chắn Cổng SS không còn đe dọa thế giới.',
+        'Trưởng làng Vực: Hạ 3 con để chắc chắn Cổng SS không còn đe dọa thế giới.',
       ],
       obj: { kill: { ma_than_trang_tron: 3 } },
       end: [

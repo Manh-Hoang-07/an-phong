@@ -631,8 +631,19 @@ function tick() {
   }
 }
 
+// Dàn đều: mỗi tick chỉ xử lý một batch conn, xoay vòng bằng con trỏ. Thay vì cứ 2 giây lại
+// kiểm tra MỌI conn trong cùng một nhịp (spike khi đông), ta quét từng phần nhỏ cách nhau 500ms.
+// Với batch 128: dưới 128 conn thì mọi conn được xét mỗi 500ms; 500 conn thì mỗi ~2s — vẫn sớm
+// hơn chu kỳ 30s (session) và 5s (look), nên hành vi không đổi, chỉ giảm spike.
+const MAINTAIN_BATCH = 128;
+let maintainCursor = 0;
+
 async function maintain() {
-  for (const conn of [...byUser.values()]) {
+  const conns = [...byUser.values()];
+  if (!conns.length) return;
+  const n = Math.min(MAINTAIN_BATCH, conns.length);
+  for (let i = 0; i < n; i++) {
+    const conn = conns[(maintainCursor + i) % conns.length];
     if (conn.ws.readyState !== 1) continue;
     const now = Date.now();
     if (now - conn.checkedAt >= SESSION_CHECK_MS) {
@@ -645,6 +656,7 @@ async function maintain() {
       if (await refreshLook(conn) && conn.map) broadcast(conn.map, { t: 'look', p: lookOf(conn) });
     }
   }
+  maintainCursor = (maintainCursor + n) % conns.length;
 }
 
 function reject(socket, code, text) {
@@ -688,7 +700,7 @@ function attach(server) {
   tickTimer.unref();
   mobTimer = setInterval(() => { try { mobTick(); } catch (e) { console.error('Quái lỗi:', e.message); } }, STEP_MS);
   mobTimer.unref();
-  const m = setInterval(() => maintain().catch((e) => console.error('Realtime lỗi:', e.message)), 2000);
+  const m = setInterval(() => maintain().catch((e) => console.error('Realtime lỗi:', e.message)), 500);
   m.unref();
   const ping = setInterval(() => {
     for (const c of byUser.values()) {

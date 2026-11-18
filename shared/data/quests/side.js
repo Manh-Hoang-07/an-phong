@@ -142,7 +142,7 @@
       end: ['Hội trưởng Khải: Đúng danh sách rồi. Tiền thưởng đây. Cậu làm việc gọn.'],
       obj: { kill: { linh_giao_hn: 10 } }, reward: { exp: sx(18, 0.15), gold: 1800, items: [['binh_mau_lon', 5]] } },
     { id: 'p7-2', name: 'Truy nã: kẻ cầm đầu', npc: 'lao_su', req: ['p7-1', 'c3q7'],
-      start: ['Hội trưởng Khải: Sau chuyện kho bạc, tôi muốn dọn nốt tàn dư của Hắc Nguyệt quanh Tân Đô.', 'Hội trưởng Khải: Hạ 12 Sát Thủ Bóng Tối. Chúng giỏi lẩn, nên cậu để ý bóng đổ.'],
+      start: ['Hội trưởng Khải: Sau chuyện kho bạc, tôi muốn dọn nốt tàn dư của Hắc Nguyệt quanh Tân Đô.', 'Hội trưởng Khải: Hạ 10 Sát Thủ Bóng Tối. Chúng giỏi lẩn, nên cậu để ý bóng đổ.'],
       end: ['Hội trưởng Khải: Bảng truy nã sạch rồi. Cậu xứng đáng với danh hiệu này.'],
       obj: { kill: { sat_thu_bong_toi: 10 } }, reward: { exp: sx(26, 0.16), gold: 3500, title: 'Thợ Săn Truy Nã', items: [['binh_mau_dac', 5]] } },
 
@@ -193,11 +193,11 @@
       end: ['Hội trưởng Khải: Đạt. Cuốn này dạy Thiên Địa Chấn Động. Đọc trong Túi đồ.'],
       obj: { kill: { yeu_tinh_bang: 20, dai_thach_nhan: 8 } }, reward: { exp: sx(28, 0.2), gold: 4000, items: [['sach_tk_ulChung1', 1]] } },
     { id: 'ut-2', name: 'Khảo hạch Tuyệt Kỹ II', npc: 'lao_su', req: ['ut-1', 'c5q5'],
-      start: ['Hội trưởng Khải: Khảo hạch thứ hai khó hơn. Thú Thủ Vô Diện lang thang ở nơi Hệ thống từng giấu dữ liệu.', 'Hội trưởng Khải: Hạ 20 con. Xong việc, tôi trao Ý Chí Bất Diệt.'],
+      start: ['Hội trưởng Khải: Khảo hạch thứ hai khó hơn. Thú Thủ Vô Diện lang thang ở nơi Hệ thống từng giấu dữ liệu.', 'Hội trưởng Khải: Hạ 10 con. Xong việc, tôi trao Ý Chí Bất Diệt.'],
       end: ['Hội trưởng Khải: Ý chí cậu đã được chứng minh. Cầm lấy.'],
       obj: { kill: { thu_thu_vo_dien: 10 } }, reward: { exp: sx(40, 0.15), gold: 8000, items: [['sach_tk_ulChung2', 1]] } },
     { id: 'ut-3', name: 'Khảo hạch Tuyệt Kỹ III', npc: 'lao_su', req: ['ut-2', 'c6q8'],
-      start: ['Hội trưởng Khải: Khảo hạch cuối. Kỵ Sĩ Hư Không và Ma Thần Trắng Trơn xé toạc không gian mỗi khi xuất hiện.', 'Hội trưởng Khải: Hạ 15 Kỵ Sĩ Hư Không và 10 Ma Thần Trắng Trơn rồi tôi trao Hư Không Tuyệt Trảm.'],
+      start: ['Hội trưởng Khải: Khảo hạch cuối. Kỵ Sĩ Hư Không và Ma Thần Trắng Trơn xé toạc không gian mỗi khi xuất hiện.', 'Hội trưởng Khải: Hạ 10 Kỵ Sĩ Hư Không và 3 Ma Thần Trắng Trơn rồi tôi trao Hư Không Tuyệt Trảm.'],
       end: ['Hội trưởng Khải: Cậu đủ tư cách. Hư Không Tuyệt Trảm là của cậu.'],
       obj: { kill: { ky_si_hu_khong: 10, ma_than_trang_tron: 3 } }, reward: { exp: sx(55, 0.15), gold: 15000, items: [['sach_tk_ulChung3', 1]] } },
   );

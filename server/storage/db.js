@@ -264,6 +264,11 @@ const MIGRATIONS = [
   );
   CREATE INDEX IF NOT EXISTS mob_state_updated_idx ON mob_state (updated);
   `,
+
+  // 9. Tối ưu dọn bản chụp: maintenance() xếp hạng snapshot theo (user_id, at DESC, id DESC)
+  //    rồi giữ SNAPSHOT_KEEP dòng mới nhất. Index cũ chỉ có (user_id, at); thêm id vào để
+  //    câu window function quét index-only, không phải đọc lại heap khi bảng phình.
+  `CREATE INDEX IF NOT EXISTS player_snapshots_user_at_id_idx ON player_snapshots (user_id, at DESC, id DESC);`,
 ];
 
 /*

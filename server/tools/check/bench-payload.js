@@ -17,16 +17,18 @@ const mb = (n) => (n / 1024 / 1024).toFixed(1) + ' MB';
 // ---- 1. Bundle JS
 const createStatic = require(path.join(ROOT, 'server', 'http', 'static'));
 const serveStatic = createStatic(ROOT);
-function hit(url, accept = 'gzip') {
+async function hit(url, accept = 'gzip') {
   const res = { headers: null, body: null, writeHead(c, h) { this.headers = h || {}; return this; }, end(b) { this.body = b; return this; } };
-  serveStatic({ method: 'GET', url, headers: { 'accept-encoding': accept } }, res, url, '');
+  await serveStatic({ method: 'GET', url, headers: { 'accept-encoding': accept } }, res, url, '');
   return res;
 }
-const home = hit('/');
+
+(async () => {
+const home = await hit('/');
 const html = zlib.gunzipSync(home.body).toString('utf8');
 const appUrl = (html.match(/src="(\/app\.[\w-]+\.js)"/) || [])[1];
-const appGz = hit(appUrl);
-const appRaw = hit(appUrl, 'identity');
+const appGz = await hit(appUrl);
+const appRaw = await hit(appUrl, 'identity');
 
 console.log('=== 1. Mã game (JS) ===');
 console.log(`  bundle thô:  ${kb(appRaw.body.length)}`);
@@ -79,3 +81,4 @@ console.log(`  Mã game (nén):       ${kb(appGz.body.length)}`);
 console.log(`  Lần đầu vào game:    ~${mb(total + appGz.body.length)}`);
 console.log(`\n  Nếu mạng 5 Mbps: ~${((total + appGz.body.length) * 8 / 5e6).toFixed(0)} giây chỉ để tải ảnh`);
 console.log(`  Nếu mạng 20 Mbps: ~${((total + appGz.body.length) * 8 / 20e6).toFixed(0)} giây`);
+})().catch((e) => { console.error(e); process.exit(1); });
