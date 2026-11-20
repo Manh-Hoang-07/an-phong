@@ -164,11 +164,14 @@ npm run giftcode -- remove QUA-TET
 
 ```
 .  trống            #  đất              =  bục gỗ (nhảy lên từ dưới được)
+%  thác nước (trang trí, ô khí)   "  hồ nông (trang trí, đào vào mặt đất)
 S  điểm xuất hiện   < >  cổng chuyển bản đồ
 a-z  quái (xem "spawns" của bản đồ trong shared/data/maps.js)
 A-Z  NPC  (xem "npcs" của bản đồ trong shared/data/maps.js)
 &  cây/tre   $  nhà   !  đèn lồng   ^  nhũ đá
 ```
+
+Lưu ý khi sửa tile: không đặt `=` ngay trên `#` (runtime bỏ qua bục đó) và không để thác `%` đè lên quái/NPC/cổng. Chân thác được renderer tự kéo tới mặt đất/hồ gần nhất. Chạy `npm run check:map-tiles` để soi các lỗi này.
 
 Nhân vật nhảy cao được khoảng 3 ô, nên đặt các bục cách nhau tối đa 3 hàng.
 Sửa xong thì tải lại trang là thấy bản đồ mới. Riêng các file `.js` trong `shared/` thì phải khởi động lại server.

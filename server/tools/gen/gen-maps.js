@@ -26,7 +26,8 @@ class Grid {
   get(r, c) { return r < 0 || r >= this.H || c < 0 || c >= this.W ? '#' : this.g[r][c]; }
   set(r, c, ch) { if (r >= 0 && r < this.H && c >= 0 && c < this.W) this.g[r][c] = ch; }
   fill(r0, r1, c0, c1, ch) { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) this.set(r, c, ch); }
-  ledge(r, c0, c1) { for (let c = c0; c <= c1; c++) if (this.get(r, c) === '.' || this.get(r, c) === '%') this.set(r, c, '='); }
+  // Không tạo bục ngay trên đất đặc (runtime bỏ qua) và không ghi đè '%' làm đứt thác.
+  ledge(r, c0, c1) { for (let c = c0; c <= c1; c++) if (this.get(r, c) === '.' && this.get(r + 1, c) !== '#') this.set(r, c, '='); }
   empty(r, c) { return this.get(r, c) === '.'; }
   text() { return this.g.map(r => r.join('')).join('\n') + '\n'; }
 }
@@ -82,7 +83,7 @@ const ARCH = {
     const c0 = b1 + 1, c1 = a2 - 1;
     if (o.gapMode === 'falls') {
       const wc = Math.floor((c0 + c1) / 2);
-      g.fill(0, G - 1, wc - 2, wc + 2, '%'); g.fill(G - 2, G - 1, c0, c1, '"');
+      g.fill(0, G - 2, wc - 2, wc + 2, '%'); g.fill(G - 2, G - 1, c0, c1, '"');
     } else if (o.gapMode === 'pond') g.fill(G - 1, G - 1, c0, c1, '"');
     gapStairs(g, c0, c1, G, top);
     stairs(g, -1, a1, G, top, rng); stairs(g, 1, b2, G, top, rng);
@@ -229,7 +230,7 @@ function addWater(g, spec, rng) {
   const safeFallCols = [];
   for (let c = 15; c < W - 16; c++) {
     let clear = true;
-    for (let r = 1; r < G - 1; r++) if (g.get(r, c) !== '.') { clear = false; break; }
+    for (let r = 1; r < G; r++) if (g.get(r, c) !== '.') { clear = false; break; }
     if (clear) safeFallCols.push(c);
   }
   const falls = spec.falls != null ? spec.falls : (safeFallCols.length ? (rng() < 0.65 ? 1 : 2) : 0);

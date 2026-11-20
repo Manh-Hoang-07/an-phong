@@ -498,16 +498,21 @@ WorldScene.mix(class WorldMap {
     if (!this.textures.exists('fx_fall')) return;
     // Bục '=' nằm giữa hai đoạn thác thì nước vẫn chảy liền phía sau bục
     const isFall = (r, c) => { const ch = this.grid[r]?.[c]; return ch === '%' || (ch === '=' && this.grid[r - 1]?.[c] === '%' && this.grid[r + 1]?.[c] === '%'); };
+    const isLanding = (r, c) => { const ch = this.grid[r]?.[c]; return ch === '#' || ch === '=' || ch === '"'; };
     for (let c = 0; c < this.cols; c++) {
       let r = 0;
       while (r < this.rows) {
         if (!isFall(r, c)) { r++; continue; }
         let e = r;
         while (e + 1 < this.rows && isFall(e + 1, c)) e++;
-        this.falls.push(this.add.tileSprite(c * T, r * T, T, (e - r + 1) * T, 'fx_fall').setOrigin(0).setDepth(-3).setAlpha(0.88));
-        // bọt nước ở chân thác
-        const fx = c * T + T / 2, fy = (e + 1) * T;
-        if (!Quality.low && c % 2 === 0) {
+        // Dò tới mặt tiếp xúc thật (đất, bục hoặc mặt hồ) để chân thác không bị hụt 1 ô.
+        let land = e + 1;
+        while (land < this.rows && !isLanding(land, c)) land++;
+        const bottom = land < this.rows ? land * T : (e + 1) * T;
+        this.falls.push(this.add.tileSprite(c * T, r * T, T, bottom - r * T, 'fx_fall').setOrigin(0).setDepth(-3).setAlpha(0.88));
+        // Bọt nước đúng tại mặt tiếp xúc. Bỏ điều kiện cột chẵn; vẫn tắt ở đồ họa Thấp.
+        if (!Quality.low && land < this.rows) {
+          const fx = c * T + T / 2, fy = bottom;
           const foam = this.add.image(fx, fy - 4, 'mote').setTint(0xffffff).setBlendMode(Phaser.BlendModes.ADD).setDepth(4.3).setScale(1.6).setAlpha(0.5);
           this.tweens.add({ targets: foam, scale: 2.6, alpha: 0.1, y: fy - 16, duration: 900 + (c % 5) * 120, repeat: -1, delay: (c % 7) * 130 });
         }
