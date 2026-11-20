@@ -207,7 +207,8 @@ WorldScene.mix(class WorldSkills {
   // KHÁC die() ở một điểm quan trọng: KHÔNG gọi Net.action('die').
   // Server đã tự chạy luật chết (mất 5% kinh nghiệm, hồi sinh ở làng) ngay trong onExec, và đẩy bản vá
   // về đây. Gọi thêm action 'die' là chết hai lần: mất 10% kinh nghiệm và tranh nhau ghi p.hp.
-  dieByExec() {
+  // Nếu người chơi chọn "Ở lại", chỉ gọi respawn_choice (dời chỗ đứng dậy, KHÔNG trừ EXP nữa).
+  async dieByExec() {
     if (this.dead) return;
     this.dead = true;
     App.hp = 0;
@@ -218,18 +219,20 @@ WorldScene.mix(class WorldSkills {
       else this.player.setTint(0x555555).setAngle(this.facing * -90);
       this.player.body.setVelocity(0, 0);
     } catch (e) { /* bỏ qua hiệu ứng chết */ }
-    UI.banner('ĐỔI MẠNG · BẠN ĐÃ GỤC', 1800);
+    UI.banner('ĐỔI MẠNG · BẠN ĐÃ GỤC', 1200);
     Sound.play('death');
-    // Chờ bản vá nhân vật về (map/hp mới do server quyết), rồi dựng lại cảnh ở đúng bản đồ đó.
+    const where = await UI.askRespawn();
+    if (where === 'stay') {
+      try { await Net.action('respawn_choice', { where: 'stay' }); }
+      catch (e) { /* mất mạng: server giữ chỗ làng, đồng bộ khi lưu */ }
+    }
+    if (!this.sys || !this.sys.isActive()) return;
+    App.sta = App.stats.maxSta; App.staLocked = false;
+    try { this.cameras.main.fadeOut(300); } catch (e) { /* bỏ qua */ }
     setTimeout(() => {
       if (!this.sys || !this.sys.isActive()) return;
-      App.sta = App.stats.maxSta; App.staLocked = false;
-      try { this.cameras.main.fadeOut(300); } catch (e) { /* bỏ qua */ }
-      setTimeout(() => {
-        if (!this.sys || !this.sys.isActive()) return;
-        this.scene.restart({ map: (App.player && App.player.map) || GameData.START_MAP, arrive: 'S' });
-      }, 340);
-    }, 1800);
+      this.scene.restart({ map: (App.player && App.player.map) || GameData.START_MAP, arrive: (App.player && App.player.arrive) || null });
+    }, 340);
   }
 
   // ---------------------------------------------------------------- Vạn Pháp Quy Nhất

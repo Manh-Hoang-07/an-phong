@@ -79,6 +79,13 @@ const actions = {
       p.choices[q.id] = chosen.id;
       if (!p.titles.includes(chosen.title)) p.titles.push(chosen.title);
       ev.push({ t: 'msg', text: `[Hệ thống] Danh hiệu: ${chosen.title}`, color: '#ffd54f' });
+      // Hậu quả thật của lựa chọn: mỗi kết cục cho một nội tại riêng, cộng dồn suốt game.
+      // Chỉ perk của lựa chọn đã chọn được nhận (các lựa chọn khác vĩnh viễn không lấy lại được).
+      if (chosen.perk && G.PERKS[chosen.perk] && !p.perks.includes(chosen.perk)) {
+        p.perks.push(chosen.perk);
+        ev.push({ t: 'perk', perk: chosen.perk });
+        ev.push({ t: 'msg', text: `[Hệ thống] ${G.PERKS[chosen.perk].name}: ${G.PERKS[chosen.perk].desc}`, color: '#ffc94a' });
+      }
     }
     gainExp(p, r.exp, ev);
     gainGold(p, r.gold, ev);

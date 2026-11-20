@@ -34,6 +34,23 @@
       mul: { hp: 1.1, mp: 1.1, atk: 1.1, def: 1.1 },
       add: { goldfind: 20, expfind: 20 },
     },
+    // Ba nội tại tương ứng ba kết cục chương 10. Chỉ nhận được cái của lựa chọn mình đi.
+    ket_cuc_pha_chuoi: {
+      icon: '⛓️‍💥', name: 'Người Phá Chuỗi',
+      desc: 'Ổ khóa đã tan: tốc chạy +15%, hồi chiêu -10%. Đánh đổi lấy tự do, không còn gì giữ lại.',
+      add: { speed: 15, cdr: 10 },
+    },
+    ket_cuc_giu_loi: {
+      icon: '🤝', name: 'Người Giữ Lời',
+      desc: 'Hệ thống còn đó nhưng ai cũng được từ chối: máu và phòng thủ +15%, hút máu +3%.',
+      mul: { hp: 1.15, def: 1.15 },
+      add: { lifestealAdd: 3 },
+    },
+    ket_cuc_viet_lai: {
+      icon: '✍️', name: 'Người Viết Lại',
+      desc: 'Ổ khóa mới không còn đói: sức mạnh kỹ năng +12%, chí mạng +8%.',
+      add: { skill: 12, crit: 8 },
+    },
   };
 
 

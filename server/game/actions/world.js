@@ -12,6 +12,26 @@ function markVillage(p, ev) {
   }
 }
 
+// Đặt chỗ đứng dậy sau khi chết. `stay` = tại chỗ, `home` = làng gần nhất (mặc định).
+// Map có cờ respawn (Cổng đỏ...) luôn đứng dậy tại chỗ: không có lối quay lại.
+// Trả về tên chỗ để die()/respawn_choice() đưa ra thông báo phù hợp.
+function placeRespawn(p, ev, where) {
+  const cur = G.MAPS[p.map];
+  if (where === 'stay' || (cur && cur.respawn)) {
+    p.x = null; p.y = null; p.arrive = 'S';
+    ev.push({ t: 'map', map: p.map });
+    return cur ? cur.name : 'đây';
+  }
+  const home = cur && cur.home;
+  p.map = home && p.villages.includes(home) ? home : G.START_MAP;
+  p.x = null; p.y = null; p.arrive = 'S';
+  // Ưu tiên điểm hồi sinh đã đặt ở làng này: client dùng p.x/p.y khi arrive rỗng.
+  const saved = G.respawnPointOf(p, p.map);
+  if (saved) { p.x = saved.x; p.y = saved.y; p.arrive = null; }
+  ev.push({ t: 'map', map: p.map });
+  return 'làng';
+}
+
 const actions = {
   // Tự lưu định kỳ: vị trí, máu, năng lượng
   save(p, a) {
@@ -84,6 +104,33 @@ const actions = {
     ev.push({ t: 'map', map: p.map });
   },
 
+  // Đặt điểm hồi sinh tại Trạm dịch chuyển của làng đang đứng.
+  // Client gửi toạ độ đang đứng (p.x/p.y của server chỉ cập nhật mỗi 10 giây nên có thể lệch);
+  // server kiểm lại: phải là làng có NPC trạm, toạ độ phải GẦN trạm và không nằm trong khối đất.
+  set_respawn(p, a, ev) {
+    const village = G.villageOf(p.map);
+    if (!village || village !== p.map) fail('Chỉ đặt được điểm hồi sinh ở Tân Đô.');
+    const npcId = G.npcByRole(p, p.map, 'teleport');
+    if (!npcId) fail('Hãy đến gần Trạm dịch chuyển để đặt điểm hồi sinh.');
+    const x = Number.isFinite(a && a.x) ? Math.round(a.x) : p.x;
+    const y = Number.isFinite(a && a.y) ? Math.round(a.y) : p.y;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) fail('Chưa xác định được vị trí của bạn. Hãy đi lại một chút rồi thử lại.');
+    // Kiểm tra bằng lưới bản đồ: toạ độ phải gần NPC trạm và đứng được (không lọt trong đất).
+    const grid = require('../../realtime/mapgrid').load(p.map);
+    if (!grid) fail('Không đọc được bản đồ này.');
+    const T = G.TILE;
+    const pos = Object.keys(G.MAPS[p.map].npcs).find(ch => G.MAPS[p.map].npcs[ch] === npcId);
+    const at = pos ? grid.findChar(pos) : null;
+    if (at) {
+      const nx = at.c * T + T / 2, ny = at.r * T;
+      if (Math.hypot(x - nx, y - ny) > 160) fail('Hãy đứng sát Trạm dịch chuyển rồi đặt lại.');
+    }
+    if (grid.isSolid(Math.floor(y / T), Math.floor(x / T))) fail('Vị trí này không đứng được. Hãy bước ra chỗ trống rồi thử lại.');
+    if (!p.respawnByMap || typeof p.respawnByMap !== 'object' || Array.isArray(p.respawnByMap)) p.respawnByMap = {};
+    p.respawnByMap[p.map] = { x, y };
+    ev.push({ t: 'msg', text: `Đã lưu điểm hồi sinh tại ${G.MAPS[p.map].name}.`, color: '#a5d6a7' });
+  },
+
   die(p, a, ev) {
     const lose = Math.floor(G.expToNext(p.level) * 0.05);
     p.exp = Math.max(0, p.exp - lose);
@@ -94,21 +141,23 @@ const actions = {
     p.hp = Math.round(st.maxHp * 0.5);
     p.mp = Math.round(st.maxMp * 0.5);
     p.hiddenNpcActive = false;
-    // Hồi sinh tại chỗ ở cổng đặc biệt (respawn: true, ví dụ Cổng đỏ): chết là đứng dậy ngay trong cổng,
-    // không bị đẩy về làng — nếu không sẽ phải đi lại cả đường và có map không có lối quay lại.
-    const cur = G.MAPS[p.map];
-    if (cur && cur.respawn) {
-      p.x = null; p.y = null; p.arrive = 'S';
-      ev.push({ t: 'msg', text: `Bạn đã bị đánh bại, mất ${fmt(lose)} kinh nghiệm. Hồi sinh tại ${cur.name}.`, color: '#ef5350' });
-      ev.push({ t: 'map', map: p.map });
-      return;
+    // Mặc định `home` để các luồng chết tự động (Đổi mạng gọi die(p, {}, [])) giữ nguyên hành vi cũ.
+    const where = placeRespawn(p, ev, a && a.where);
+    ev.push({ t: 'msg', text: `Bạn đã bị đánh bại, mất ${fmt(lose)} kinh nghiệm. Hồi sinh tại ${where}.`, color: '#ef5350' });
+  },
+
+  // Đổi mạng: server đã chạy luật chết (trừ 5% EXP, hồi sinh về làng) ngay trong onExec.
+  // Khi người chơi chọn "Ở lại", đưa về đúng bản đồ đang đứng lúc gục — KHÔNG trừ EXP lần nữa.
+  respawn_choice(p, a, ev) {
+    if (a && a.where === 'stay') {
+      // onExec lưu map gốc vào lastDeathMap trước khi die() đẩy về làng.
+      if (p.lastDeathMap && G.MAPS[p.lastDeathMap]) p.map = p.lastDeathMap;
+      delete p.lastDeathMap;
+      const where = placeRespawn(p, ev, 'stay');
+      ev.push({ t: 'msg', text: `Bạn đứng dậy tại ${where}.`, color: '#a5d6a7' });
+    } else {
+      delete p.lastDeathMap;   // chọn về làng: dọn dẹp dấu vết
     }
-    // hồi sinh ở làng gần nhất (nếu đã từng tới), không thì về Tân Đô I
-    const home = cur && cur.home;
-    p.map = home && p.villages.includes(home) ? home : G.START_MAP;
-    p.x = null; p.y = null; p.arrive = 'S';
-    ev.push({ t: 'msg', text: `Bạn đã bị đánh bại, mất ${fmt(lose)} kinh nghiệm. Hồi sinh ở làng.`, color: '#ef5350' });
-    ev.push({ t: 'map', map: p.map });
   },
 };
 

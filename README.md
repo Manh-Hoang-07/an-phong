@@ -100,8 +100,8 @@ Trên máy tính, muốn thử giao diện điện thoại thì thêm `?touch=1`
 - Thức tỉnh class ở cấp 5 tại Hội trưởng Khải: **Kiếm Sĩ** (kiếm), **Cung Thủ** (cung), **Pháp Sư** (trượng).
 - Mỗi class có **5 kỹ năng chủ động** (1 trong số đó là tuyệt kỹ, mở ở cấp 20) và **1 nội tại**.
 - **Điểm kỹ năng:** mỗi lần lên cấp +1 điểm, xong chương 1 thưởng +2, **Sách kỹ năng** (trùm rơi) +1.
-  - Học kỹ năng tốn 1 điểm, mỗi cấp sau tốn thêm 1 điểm, tối đa cấp 10.
-  - Mỗi cấp: sức mạnh +10%. Cấp 10: hồi chiêu -15%.
+  - Học kỹ năng tốn 1 điểm cho mỗi lần cộng cấp, tối đa cấp 10.
+  - Mỗi cấp: sức mạnh +5%. Cấp 10: hồi chiêu -15%.
   - Cấp 5 và cấp 10 mở thêm hiệu ứng riêng của từng kỹ năng.
   - Tẩy điểm ở Hội trưởng Khải (tốn 100 xu × cấp nhân vật).
 - Thanh kỹ năng có 4 ô thường và 1 ô tuyệt kỹ, tự chọn kỹ năng đặt vào ô trong tab Kỹ năng.
@@ -109,7 +109,7 @@ Trên máy tính, muốn thử giao diện điện thoại thì thêm `?touch=1`
 ### Class đặc biệt Toàn Năng và mật mã
 
 - Toàn Năng **không có trong danh sách chọn**. Phải nói mật mã với **Lữ khách bí ẩn** (đứng cạnh cổng ở Tân Đô), rồi thức tỉnh ở chính NPC đó (cần cấp 5). Đang có class khác vẫn đổi được, điểm kỹ năng được trả lại.
-- Toàn Năng: máu, tấn công, năng lượng +200% (gấp 3), dùng mọi vũ khí, học cả 15 kỹ năng của 3 class cùng tuyệt kỹ riêng **Thức Tỉnh Tối Thượng**, có cả 3 nội tại và thêm 1 ô kỹ năng. Muốn giảm sức mạnh thì sửa `bonus` của `toan_nang` trong `shared/data/classes.js`.
+- Toàn Năng: dùng mọi vũ khí (cầm vũ khí class nào thì hóa thân thành class đó), học mọi kỹ năng của các class, có cả 3 nội tại, thêm 1 ô kỹ năng và tuyệt kỹ riêng **Thức Tỉnh Tối Thượng**. Đổi lại, kỹ năng chỉ gây **80% sức mạnh** và tốn **thêm 20% năng lượng** (`skillPower: 0.8, skillCost: 1.2` trong `shared/data/classes/schools.js`). Toàn Năng **không** có hệ số nhân ×3 chỉ số; chỉ số gốc dùng đường cong chung của nhân vật chưa thức tỉnh. Muốn chỉnh sức mạnh thì sửa `skillPower` / `skillCost` / `bonus` của `toan_nang` trong `shared/data/classes/schools.js`.
 - **Mật mã lưu trong PostgreSQL** (bảng `gift_codes`).
 - Mỗi tài khoản dùng mỗi mã một lần. Ngoài ra mỗi mã có thể **giới hạn tổng số lượt** (`--max-uses`) và **hạn dùng** (`--expires`), hoặc để trống cho không giới hạn.
 - Tạo mã bằng lệnh, có hiệu lực ngay không cần khởi động lại server:
@@ -131,17 +131,17 @@ npm run giftcode -- list
 npm run giftcode -- remove QUA-TET
 ```
 
-## Nội dung hiện có (chương 1–5 và end-game)
+## Nội dung hiện có (chương 1–10 và hậu truyện)
 
-- **27 bản đồ** từ Cổng đỏ, Tân Đô, các cổng hạng E–SS đến Cổng SS – Vực Không Cùng.
-- **46 nhiệm vụ chính** qua 5 chương, kết thúc ở Thực Thể Bên Kia Cổng; sau đó mở Cổng SS để chơi tiếp.
+- **59 bản đồ** từ Cổng đỏ, Tân Đô, các cổng hạng E–SS đến Vùng Sáng Thế.
+- **100 nhiệm vụ chính** qua 10 chương và một hậu truyện, kết thúc ở Ngai Sáng Thế. Mạch truyện: Cổng Đỏ → Hắc Nguyệt → Lò Rèn Cổ → Tầng Trời Thứ Bảy → Cổng Vĩnh Hằng → Thiên Khôi → Long Mạch → Tinh Vân → Thần Mộng → Sáng Thế.
 - **Nội tại cốt truyện** nhận theo nhiệm vụ: Ý Chí Thầy Truyền, Nhận Thức Ký Sinh, Liên Minh, Trạng Thái Tự Do, Đồng Đội Bình Minh.
 - **Phụ tuyến:** Đội Bình Minh của Vy, hàng thất lạc của Chủ tiệm Tư (giảm giá và mở thêm hàng), mở rộng túi của Quản kho Bảo (+10 ô × 3 bậc) và thuốc chữa nhiễm đỏ của Dược sư Lan.
-- **Nhiệm vụ hằng ngày** ở Bảng nhiệm vụ trong Tân Đô: mỗi ngày 3 nhiệm vụ (hạ quái, thu thập Lõi năng lượng, hạ trùm), làm mới lúc 0 giờ (giờ Việt Nam). Xong cả 3 nhận thêm đá cường hóa và 1 Sách kỹ năng.
-- **Nhiệm vụ hằng tuần:** hạ 200 quái và 5 trùm, nhận đá cường hóa, đá cường hóa cao, xu, kinh nghiệm và Sách kỹ năng; làm mới vào thứ Hai.
+- **Nhiệm vụ hằng ngày** ở Bảng nhiệm vụ trong Tân Đô: mỗi ngày 3 nhiệm vụ (hạ quái, thu thập Lõi năng lượng, hạ trùm), làm mới lúc 0 giờ (giờ Việt Nam). Xong cả 3 nhận thêm **6 đá cường hóa** (`DAILY_BONUS.stones`, `shared/data/quests/periodic.js`). Sách kỹ năng **không** rơi từ nhiệm vụ ngày.
+- **Nhiệm vụ hằng tuần:** hạ 200 quái và 5 trùm, nhận đá cường hóa, đá cường hóa cao, xu, kinh nghiệm và **đúng 1 Sách kỹ năng/tuần** (`WEEKLY_BOOKS`); làm mới vào thứ Hai.
 - **Quái báo trước đòn đánh:** đứng lại nháy đỏ rồi mới lao tới, chỉ gây sát thương lúc lao, nên luôn né kịp.
 - **Trùm 2 giai đoạn:** dưới 50% máu, Thạch Vương nổi giận, gọi thêm Bộ Xương Pha Lê và tung sóng đá chạy dọc mặt đất (phải nhảy qua).
-- **Âm thanh và nhạc nền** tạo bằng code, mỗi bản đồ một bản nhạc. Bật tắt ở tab Nhân vật.
+- **Âm thanh và nhạc nền** tạo bằng code, nhạc theo **chủ đề** (thành phố, rừng, hang, cổng đỏ, thiên khôi, long mạch, tinh vân, thần mộng, sáng thế) chứ không phải mỗi bản đồ một bản riêng. Bật tắt ở tab Nhân vật.
 - Mỗi lần lên cấp được 3 điểm tiềm năng.
 - **10 ô trang bị:** vũ khí, mũ, áo, găng tay, đai lưng, quần, giày, nhẫn, dây chuyền, ngọc bội.
 - **Trang bị chia bộ theo cấp:** cứ 10 cấp là một bộ – Tân Binh (1–10), Thạch Vương (11–20), Băng Long (21–30), Lưu Trữ (31–40), Vĩnh Hằng (41–50). Trong mỗi bộ, từng món có cấp sử dụng riêng nên mở dần khi lên cấp, và bộ nào cũng phủ đủ 10 ô.
@@ -152,7 +152,7 @@ npm run giftcode -- remove QUA-TET
   - Mỗi món có **độ hoàn hảo** (0–100%) cho biết chỉ số ra cao hay thấp.
   - Đồ rơi nằm trên đất, đi qua là tự nhặt, tồn tại 3 phút. Xem đồ trong túi sẽ thấy so sánh với món đang mặc (▲ ▼).
 - **Thợ rèn:**
-  - Nâng cấp tới +12; từ +8 trở đi, thất bại sẽ bị giảm 1 cấp.
+  - Nâng cấp tới +12. Từ +4 đến +11, thất bại chỉ giữ nguyên cấp; riêng +11 → +12 (30% thành công) thất bại mới giảm 1 cấp.
   - Tẩy luyện: gieo lại dòng phụ.
   - Phân rã: đổi đồ thừa lấy đá cường hóa.
 - Có cửa hàng (bán đồ Thường, chỉ số chuẩn) và kho đồ. Túi đồ có 40 ô, mở rộng tối đa lên 70 ô bằng phụ tuyến Kho chật quá.

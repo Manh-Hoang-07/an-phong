@@ -8,7 +8,9 @@
   // Mỗi ngày 3 nhiệm vụ, làm mới lúc 0 giờ (giờ Việt Nam). Xong cả 3 nhận thêm thưởng.
   // KHÔNG có sách kỹ năng ở đây: sách kỹ năng chỉ đến từ nhiệm vụ tuần (xem WEEKLY_BOOKS bên dưới).
   const DAILY_COUNT = 3;
-  const DAILY_BONUS = { stones: 2, items: [] };
+  // 6 đá/ngày (tăng từ 2) để vòng lặp ngày có giá trị thật khi nâng cấp +10 trở đi.
+  // Vẫn KHÔNG cho sách kỹ năng ở daily — sách chỉ đến từ mốc trùm tuần (xem WEEKLY_BOOKS).
+  const DAILY_BONUS = { stones: 6, items: [] };
 
   // ---------------------------------------------------------------- Nhiệm vụ hằng tuần
   const WEEKLY_KILLS = 200;

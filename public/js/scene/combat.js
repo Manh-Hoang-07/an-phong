@@ -363,15 +363,17 @@ WorldScene.mix(class WorldCombat {
       else this.player.setTint(0x555555).setAngle(this.facing * -90);
       this.player.body.setVelocity(0, 0);
     } catch (e) { /* bỏ qua hiệu ứng chết */ }
-    UI.banner('Bạn đã bị đánh bại', 1800);
-    await new Promise(r => setTimeout(r, 1800));
+    UI.banner('Bạn đã bị đánh bại', 1200);
+    // Không tự hồi sinh nữa: hiện bảng cho người chơi chọn đứng dậy tại chỗ hay về làng.
+    const where = await UI.askRespawn();
     try {
-      const res = await Net.action('die');
+      const res = await Net.action('die', { where });
       if (res && res.player) { App.hp = res.player.hp; App.mp = res.player.mp; }
-    } catch (e) { /* mất mạng: vẫn về làng, server sẽ đồng bộ lại khi lưu */ }
+    } catch (e) { /* mất mạng: vẫn hồi sinh, server sẽ đồng bộ lại khi lưu */ }
     if (!(App.hp > 0)) App.hp = Math.max(1, Math.round(App.stats.maxHp * 0.5));
     App.sta = App.stats.maxSta; App.staLocked = false;
-    const restart = () => { if (this.sys && this.sys.isActive()) this.scene.restart({ map: (App.player && App.player.map) || GameData.START_MAP, arrive: 'S' }); };
+    // Dùng arrive do SERVER trả về: có điểm hồi sinh đã lưu thì server để null → client dùng p.x/p.y.
+    const restart = () => { if (this.sys && this.sys.isActive()) this.scene.restart({ map: (App.player && App.player.map) || GameData.START_MAP, arrive: (App.player && App.player.arrive) || null }); };
     try { this.cameras.main.fadeOut(300); } catch (e) { /* bỏ qua */ }
     setTimeout(restart, 340);   // dùng setTimeout thay đồng hồ cảnh: không phụ thuộc hitstop / làm chậm thời gian
   }

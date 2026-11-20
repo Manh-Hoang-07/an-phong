@@ -77,6 +77,7 @@
       end: [
         'Trụ Mộng Tinh Vân vỡ thành bụi sao. Quan Tinh hiện ra như một nhà khoa học mệt mỏi.',
         'Quan Tinh: Số bảy... Cậu là chìa thứ bảy nhưng không bị nuốt. Có lẽ vì cậu chưa từng tin Hệ thống hoàn toàn.',
+        '[Hệ thống] Ba Trụ Mộng đã giải (3/5). Bản vẽ trong đầu Minh Triết sáng thêm một vệt.',
       ],
       obj: { kill: { tru_mong_tinh_van: 1 } },
       reward: rw(80, 'boss', [['ao_tinh_van', 1], ['loi_tinh_van', 4]], { skillPoints: 3 }) },

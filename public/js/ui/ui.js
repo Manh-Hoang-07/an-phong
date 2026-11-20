@@ -141,6 +141,7 @@ const UI = (() => {
     confirmBuy: null,    // tiệm: món không hợp class đang chờ bấm lần nữa để mua
     detailOpen: null,    // "where:key" của vật phẩm đang mở khung chi tiết đầy đủ
     codeDraft: '', codeMsg: '',                                    // nhập mật mã
+    npcId: null,            // id NPC trong hội thoại đang mở (để mở lại sau khi lưu điểm hồi sinh)
   };
   // Các bảng tự đăng ký vào đây: tên bảng → hàm trả về [tiêu đề, html]
   const PANELS = {};
@@ -403,13 +404,61 @@ const UI = (() => {
     setTimeout(() => d.remove(), ms + 1200);
   }
 
-  let bannerTimer = null;
-  function banner(text, ms = 1500) {
+  // Banner theo HÀNG ĐỢI: không còn clearTimeout ghi đè làm mất thông báo cũ.
+  // Mỗi banner khi hiện cũng được chép vào log → có thể tra lại dù banner đã trôi đi.
+  const bannerQueue = [];
+  const bannerHistory = [];
+  let bannerBusy = false;
+  function bannerPump() {
+    if (bannerBusy) return;
+    const next = bannerQueue.shift();
+    if (!next) return;
+    bannerBusy = true;
     const b = $('banner');
-    b.textContent = text;
+    b.textContent = next.text;
+    b.dataset.kind = next.kind || 'sys';
     b.classList.remove('hidden');
-    clearTimeout(bannerTimer);
-    bannerTimer = setTimeout(() => b.classList.add('hidden'), ms);
+    // Chép vào log để tra lại (không dùng keyText ở đây: banner đã là text cuối).
+    log(next.text, next.kind === 'quest' ? '#a5d6a7' : '#ffd54f', 12000);
+    bannerHistory.push({ text: next.text, at: Date.now() });
+    if (bannerHistory.length > 30) bannerHistory.shift();
+    // Ép chạy lại animation dù banner đang hiện (thay đổi nội dung mà vẫn có hiệu ứng vào).
+    b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+    setTimeout(() => {
+      b.classList.add('hidden');
+      bannerBusy = false;
+      setTimeout(bannerPump, 120);   // nghỉ ngắn giữa 2 banner để dễ đọc
+    }, next.ms);
+  }
+  function banner(text, ms = 1500, kind = 'sys') {
+    bannerQueue.push({ text, ms, kind });
+    if (bannerQueue.length > 5) bannerQueue.shift();   // farm nhiều quái: bỏ bớt cũ, không dồn hàng dài
+    bannerPump();
+  }
+
+  // Hiện bảng chọn chỗ hồi sinh. Trả Promise<'stay' | 'home'>, phân giải khi người chơi bấm một nút.
+  // Chỉ một bảng tại một thời điểm: nếu đang hiện (chết liên tiếp do lỗi) thì bấm nút cũ vẫn trả lời cũ.
+  let respawnResolve = null;
+  function askRespawn() {
+    const box = $('death-overlay');
+    if (!box) return Promise.resolve('home');   // đề phòng HTML cũ chưa có bảng
+    if (respawnResolve) respawnResolve('home'); // đóng lời hứa cũ để không ai bị kẹt
+    box.classList.remove('hidden');
+    return new Promise((resolve) => {
+      const pick = (where) => {
+        if (respawnResolve !== resolve) return;
+        respawnResolve = null;
+        box.classList.add('hidden');
+        $('death-stay').removeEventListener('click', onStay);
+        $('death-home').removeEventListener('click', onHome);
+        resolve(where);
+      };
+      const onStay = () => pick('stay');
+      const onHome = () => pick('home');
+      respawnResolve = resolve;
+      $('death-stay').addEventListener('click', onStay);
+      $('death-home').addEventListener('click', onHome);
+    });
   }
 
   function hint(text, npcName = '') {
@@ -795,11 +844,12 @@ const UI = (() => {
   }
 
   // Dùng nội bộ cho các file ui/panels/*.js và ui/actions.js (không gọi từ ngoài UI)
-  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, itemEmoji, refresh, tick, tickPets, tickBuffs, log, banner, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
+  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, itemEmoji, refresh, tick, tickPets, tickBuffs, log, banner, askRespawn, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
 
   return {
-    init, refresh, tick, tickPets, log, banner, hint, setMap, setMapCount, setAttackIcon, questReady, hiddenChat,
+    init, refresh, tick, tickPets, log, banner, askRespawn, hint, setMap, setMapCount, setAttackIcon, questReady, hiddenChat,
     openPanel, closePanel, itemIcon, itemEmoji, petPanel, isOpen: () => !!panel, panelIs: (name) => !!panel && panel.name === name,   // openNpc, upgradeResult: gắn trong ui/panels
+    bannerHistory: () => bannerHistory.slice(),
     _: lib,
   };
 })();

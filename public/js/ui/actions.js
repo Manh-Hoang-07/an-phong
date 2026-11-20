@@ -258,6 +258,12 @@
       case 'pet_skill': await act('pet_skill_set', { id: ds.id, skill: ds.skill }); renderPanel(); break;
       case 'use_boost': await act('use', { item: ds.item }); renderPanel(); break;
       case 'teleport_go': closePanel(); if (App.scene) App.scene.useTeleport(ds.to); break;
+      case 'set_respawn': {
+        const pl = App.scene && App.scene.player;
+        const r = await act('set_respawn', pl ? { x: Math.round(pl.x), y: Math.round(pl.y) } : {});
+        if (r.ok && S.npcId) openNpc(S.npcId);
+        break;
+      }
       case 'gate_go': closePanel(); if (App.scene) App.scene.usePortal(ds.ch); break;
       case 'school_pick': openPanel('school', { confirm: ds.school, force: true }); break;
       case 'choose_school': {

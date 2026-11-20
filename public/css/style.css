@@ -244,7 +244,33 @@ input { font: inherit; }
   white-space: nowrap; pointer-events: none; animation: bannerIn 0.35s ease-out;
 }
 #banner::before { content: '◆ HỆ THỐNG'; display: block; font-size: 10px; letter-spacing: 3px; color: var(--sys); font-weight: 600; text-shadow: none; margin-bottom: 2px; }
+#banner[data-kind="quest"] { border-color: rgba(165, 214, 167, 0.6); box-shadow: 0 0 30px rgba(165, 214, 167, 0.22); font-size: 17px; }
+#banner[data-kind="quest"]::before { content: '◆ NHIỆM VỤ'; color: #a5d6a7; }
 @keyframes bannerIn { from { transform: translate(-50%, -8px) scale(0.96); } }
+
+/* Bảng chọn chỗ hồi sinh sau khi gục */
+#death-overlay {
+  position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  background: rgba(4, 2, 10, 0.72); pointer-events: auto;
+}
+.death-card {
+  width: min(420px, calc(var(--gw, 100vw) - 32px)); padding: 26px 28px 24px; text-align: center;
+  background: linear-gradient(180deg, rgba(30, 12, 26, 0.97), rgba(10, 6, 18, 0.98));
+  border: 1px solid rgba(239, 83, 80, 0.55); border-radius: 10px;
+  box-shadow: 0 0 48px rgba(239, 83, 80, 0.28), inset 0 0 24px rgba(239, 83, 80, 0.08);
+  animation: bannerIn 0.3s ease-out;
+}
+.death-title { font-size: 22px; font-weight: 800; letter-spacing: 2px; color: #ff8a80; text-shadow: 0 0 14px rgba(239, 83, 80, 0.7); }
+.death-sub { margin-top: 8px; font-size: 13px; color: #c8bcd0; }
+.death-actions { display: flex; gap: 10px; margin-top: 22px; }
+.death-btn {
+  flex: 1; padding: 11px 8px; border: 1px solid var(--line-2); border-radius: 6px;
+  background: linear-gradient(180deg, rgba(20, 34, 66, 0.9), rgba(8, 14, 30, 0.9));
+  font-size: 14px; font-weight: 700; color: #dbe6ff; transition: filter 0.15s, transform 0.1s;
+}
+.death-btn:hover { filter: brightness(1.25); }
+.death-btn:active { transform: translateY(1px); }
+.death-btn.primary { border-color: rgba(92, 242, 165, 0.6); color: #a8ffd0; }
 
 /* ---------- Bảng (panel) ---------- */
 #panel { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgba(2, 4, 12, 0.55); }

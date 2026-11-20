@@ -77,7 +77,7 @@
     let def = lvl(cv.def) + Math.floor(p.vit * 0.8) + eq.def;
     let crit = 3 + p.agi * 0.4 + eq.crit;
     const perkMul = { hp: 1, mp: 1, atk: 1, def: 1 };
-    const perkAdd = { crit: 0, boss: 0, cdr: 0, goldfind: 0, expfind: 0 };
+    const perkAdd = { crit: 0, boss: 0, cdr: 0, goldfind: 0, expfind: 0, skill: 0, speed: 0, lifestealAdd: 0 };
     for (const id of perksOf(player)) {
       const pk = PERKS[id];
       for (const k in pk.mul || {}) perkMul[k] *= pk.mul[k];
@@ -87,6 +87,7 @@
     let skillMul = 1 + p.spi / (p.spi + 150);
     // Kỳ Nguyên Tụ Linh: cộng thẳng % sát thương kỹ năng, ngoài điểm Tinh thần
     if (eq.skill) skillMul *= 1 + eq.skill / 100;
+    if (perkAdd.skill) skillMul *= 1 + perkAdd.skill / 100;   // nội tại kết cục (Người Viết Lại)
     let costMul = 1;
     if (sc) {
       const b = sc.bonus;
@@ -130,7 +131,7 @@
     const scLifesteal = sc && sc.bonus && sc.bonus.lifestealAdd ? sc.bonus.lifestealAdd : 0;
     const scCdr = sc && sc.bonus && sc.bonus.cdrAdd ? sc.bonus.cdrAdd : 0;
     // speed: tính trước clamp, nhân thêm hệ số class (sat_thu)
-    const speedFinal = Math.round(Math.min(290, Math.min(260, 190 + p.agi * 2) * scSpeed + eq.speed));
+    const speedFinal = Math.round(Math.min(290, Math.min(260, 190 + p.agi * 2) * scSpeed + eq.speed + (perkAdd.speed || 0)));
     // Thể lực tối đa: dạng thường x1.3 (STAMINA.maxMul). Đang biến hình thì KHÔNG có hệ số này, thay bằng hệ số của ấn / hình thái
     const staMul = aw ? formSta : G.STAMINA.maxMul;
     // Vết Nhiễm: món đang mặc bị nhiễm đỏ thì trừ máu tối đa (6% mỗi bậc, sàn 30%).
@@ -150,7 +151,7 @@
       nhiem,
       // Hệ số hồi thể lực (Cánh): 0 = không có gì, 15 = hồi nhanh thêm 15%
       staRegen: Math.max(0, r1(eq.staRegen)),
-      lifesteal: Math.min(15, r1(eq.lifesteal + scLifesteal)),
+      lifesteal: Math.min(15, r1(eq.lifesteal + scLifesteal + perkAdd.lifestealAdd)),
       cdr: Math.min(30, r1(eq.cdr + perkAdd.cdr + scCdr)),
       // Trần cộng dồn: sát thương lên trùm 80%, xu rơi thêm 100%, kinh nghiệm thêm 60%
       boss: Math.min(80, r1(eq.boss + perkAdd.boss)), goldfind: Math.min(100, r1(eq.goldfind + perkAdd.goldfind)), expfind: Math.min(60, r1(eq.expfind + perkAdd.expfind)),
@@ -225,6 +226,7 @@
       quest: { step: 0, state: 'none', progress: {}, ver: QUEST_VERSION },
       side: { active: {}, done: [] },
       dailyByMap: {}, weeklyByMap: {}, shopDiscount: 0,   // bảng nhiệm vụ ngày / tuần riêng từng làng { mapId: ... }
+      respawnByMap: {},   // điểm hồi sinh do người chơi đặt tại Trạm, riêng từng làng { mapId: {x, y} }
       kills: {},
       nextUid: 1,
       created: Date.now(),
@@ -236,9 +238,15 @@
     return (player.storageByMap && player.storageByMap[mapId || player.map]) || [];
   }
 
+  // Điểm hồi sinh đã đặt tại làng (hoặc null nếu chưa đặt). mapId bỏ trống = bản đồ đang đứng.
+  function respawnPointOf(player, mapId) {
+    const pt = player.respawnByMap && player.respawnByMap[mapId || player.map];
+    return pt && Number.isFinite(pt.x) && Number.isFinite(pt.y) ? pt : null;
+  }
+
   function bagSize(player) {
     return BAG_SIZE + 10 * Math.min(3, Math.max(0, player.bagPlus || 0));
   }
 
-  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, specialFx, newPlayer, bagSize, storageOf, BOOST_MAX_MS, boostLeft, expBoostMul });
+  Object.assign(G, { nextAwaken, awakenOf, canAwaken, passivesOf, perksOf, canUseItem, canUseWeapon, calcStats, specialFx, newPlayer, bagSize, storageOf, respawnPointOf, BOOST_MAX_MS, boostLeft, expBoostMul });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

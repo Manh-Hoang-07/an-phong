@@ -8,6 +8,7 @@
 
   function panelNpc({ id, say }) {
     const n = G.NPCS[id], p = App.player;
+    UI._.S.npcId = id;
     const q = G.QUESTS[p.quest.step];
     const opts = [];
     if (id === 'npc_an') {
@@ -74,7 +75,14 @@
     if (n.shop) opts.push(`<button class="btn" data-act="open" data-panel="shop" data-npc="${id}">🛒 Mua bán</button>`);
     if (n.role === 'market') opts.push(`<button class="btn primary" data-act="open_market">🛒 Mở chợ người chơi</button>`);
     if (n.role === 'smith') opts.push('<button class="btn" data-act="open" data-panel="smith">⚒️ Nâng cấp trang bị</button>');
-    if (n.role === 'teleport') opts.push('<button class="btn primary" data-act="open" data-panel="teleport">🌀 Dịch chuyển giữa các Tân Đô</button>');
+    if (n.role === 'teleport') {
+      opts.push('<button class="btn primary" data-act="open" data-panel="teleport">🌀 Dịch chuyển giữa các Tân Đô</button>');
+      // Điểm hồi sinh: chỉ đặt được ở Tân Đô (npc trạm cũng có ở một số map không phải làng, nhưng luật chặn ở server).
+      if (G.villageOf(p.map) === p.map) {
+        const saved = G.respawnPointOf(p, p.map);
+        opts.push(`<button class="btn" data-act="set_respawn">⚑ ${saved ? 'Cập nhật điểm hồi sinh' : 'Đặt điểm hồi sinh'}${saved ? ' (đã lưu ở làng này)' : ''}</button>`);
+      }
+    }
     if (n.role === 'storage') opts.push('<button class="btn" data-act="open" data-panel="storage">📦 Gửi / lấy đồ</button>');
     opts.push('<button class="btn" data-act="close">Tạm biệt</button>');
     const text = (say || [n.greet]).map(l => `<p>${esc(l)}</p>`).join('');

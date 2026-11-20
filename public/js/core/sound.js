@@ -125,7 +125,25 @@ const Sound = (() => {
     forest: { bpm: 72, chords: [[50, 53, 57], [55, 58, 62], [58, 62, 65], [57, 61, 64]], arp: true, bright: 1300 },
     cave: { bpm: 92, chords: [[52, 55, 59], [48, 52, 55], [57, 60, 64], [59, 63, 66]], arp: true, bright: 1100 },
     redgate: { bpm: 64, chords: [[48, 51, 55], [49, 53, 56], [48, 51, 55], [43, 47, 50]], arp: false, bright: 700 },
+    // Nhạc theo chương (chương 5–10 trước đây đều dùng chung redgate).
+    void:    { bpm: 60, chords: [[45, 48, 52], [43, 47, 50], [41, 45, 48], [40, 43, 47]], arp: false, bright: 600 },
+    meteor:  { bpm: 100, chords: [[50, 53, 57], [55, 59, 62], [48, 52, 55], [53, 57, 60]], arp: false, bright: 1400 },
+    dragon:  { bpm: 88, chords: [[48, 55, 59], [50, 57, 60], [53, 60, 64], [43, 50, 55]], arp: true, bright: 1200 },
+    stars:   { bpm: 76, chords: [[60, 64, 67], [57, 60, 64], [62, 65, 69], [55, 59, 62]], arp: true, bright: 2200 },
+    dream:   { bpm: 68, chords: [[53, 57, 60], [50, 53, 57], [57, 60, 64], [55, 58, 62]], arp: true, bright: 900 },
+    genesis: { bpm: 96, chords: [[48, 52, 55], [53, 57, 60], [55, 59, 62], [60, 64, 67]], arp: true, bright: 2600 },
   };
+  // Ánh xạ mapId → bản nhạc. Chỉ các map từ chương 5 trở đi cần ghi đè; map cũ dùng theme của nó.
+  // Làng (tan_do_*) dùng city để người chơi có nhịp nghỉ giữa các vùng chiến đấu.
+  const MAP_SONG = {
+    tan_do_bt: 'void', cau_dan: 'void', sanh_cho: 'void', dinh_cong_vh: 'void', tam_diem: 'void', cong_ss: 'void',
+    tan_do_6: 'city', thien_khoi_1: 'meteor', thien_khoi_2: 'meteor', thien_khoi_3: 'meteor', thien_khoi_4: 'meteor', thien_khoi: 'meteor',
+    long_mach_1: 'dragon', long_mach_2: 'dragon', long_mach_3: 'dragon', long_mach_4: 'dragon', long_mach: 'dragon',
+    tan_do_7: 'city', tinh_van_1: 'stars', tinh_van_2: 'stars', tinh_van_3: 'stars', tinh_van_4: 'stars', tinh_van: 'stars',
+    than_mong_1: 'dream', than_mong_2: 'dream', than_mong_3: 'dream', than_mong_4: 'dream', than_mong: 'dream',
+    sang_the_1: 'genesis', sang_the_2: 'genesis', sang_the_3: 'genesis', sang_the_4: 'genesis', sang_the: 'genesis',
+  };
+  function songFor(mapId, theme) { return MAP_SONG[mapId] || theme; }
   let current = null, pendingTheme = null, timer = null, nextBar = 0, barIdx = 0;
 
   function padChord(notes, t, dur, song) {
@@ -185,5 +203,5 @@ const Sound = (() => {
   function setSfxVol(v) { settings.sfxVol = Math.min(1, Math.max(0, Number(v) || 0)); save(); applyGain(); }
   function setMusicVol(v) { settings.musicVol = Math.min(1, Math.max(0, Number(v) || 0)); save(); applyGain(); }
 
-  return { play, music, setSfx, setMusic, setSfxVol, setMusicVol, settings };
+  return { play, music, songFor, setSfx, setMusic, setSfxVol, setMusicVol, settings };
 })();

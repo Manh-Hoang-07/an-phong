@@ -9,7 +9,9 @@
 
   const PART = {
     bong_do: { name: 'Mắt Đỏ', level: 1, hp: 130, atk: 17, def: 4, exp: 4, gold: [1, 3],
-      speed: 45, respawn: 5, look: 'shade', drops: [] },
+      speed: 45, respawn: 5, look: 'shade',
+      // Rơi thuốc ngay từ quái đầu tiên: người mới thấy phần thưởng rơi ra đất thay vì 3 lần đánh trống.
+      drops: [['binh_mau_nho', 0.5]] },
     hinh_nhan: { name: 'Hình nhân', level: 1, hp: 30, atk: 0, def: 0, exp: 4, gold: [0, 0],
       speed: 0, passive: true, respawn: 2, look: 'dummy', drops: [] },
     nam_doc: { name: 'Nấm Độc', level: 2, hp: 185, atk: 31, def: 5, exp: 12, gold: [2, 6],

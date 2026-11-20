@@ -123,7 +123,7 @@ class WorldScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.worldW, this.worldH + 200);
 
     UI.setMap(this.meta.name);
-    Sound.music(this.theme);
+    Sound.music(Sound.songFor(this.mapId, this.theme));
     UI.banner(this.meta.name, 1600);
     UI.refresh();
 

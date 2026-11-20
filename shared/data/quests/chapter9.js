@@ -83,6 +83,7 @@
       end: [
         'Trụ Mộng Thần Mộng vỡ như gương. Mộng Điệp ngồi giữa đám cánh bướm, cọ vẽ vẫn trong tay.',
         'Mộng Điệp: Tôi vẽ xong rồi, phải không? Chỉ tiếc là tôi không ở trong bức tranh được.',
+        '[Hệ thống] Bốn Trụ Mộng đã giải (4/5). Chỉ còn một Trụ, ở nơi mọi chuyện bắt đầu.',
       ],
       obj: { kill: { tru_mong_than_mong: 1 } },
       reward: rw(90, 'boss', [['ao_than_mong', 1], ['loi_tinh_van', 4]], { skillPoints: 3 }) },

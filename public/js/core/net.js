@@ -187,6 +187,7 @@ App.onEvent = function (ev) {
     case 'form': App.form = !!ev.active;
       if (sc?.refreshPlayerLook) sc.refreshPlayerLook(); if (sc?.formStart && ev.active) sc.formStart(); else if (sc?.formStop && !ev.active) sc.formStop(); App.recalcStats(); UI.refresh(); break;
     case 'msg': UI.log(ev.text, ev.color); break;
+    case 'queststep': UI.banner(`${ev.name}: ${ev.label} ${ev.have}/${ev.need}`, 1400, 'quest'); break;
     case 'float': if (sc && sc.player) sc.floatText(sc.player.x, sc.player.y - 40, ev.text, ev.color); if (/xu$/.test(ev.text)) Sound.play('coin'); break;
     case 'levelup':
       App.hp = App.player.hp; App.mp = App.player.mp;
@@ -241,6 +242,14 @@ App.onEvent = function (ev) {
     }
     case 'market': if (window.Social) Social.onMarket(ev); break;
     case 'loot': if (sc && sc.addLoot) sc.addLoot(ev.loot, true); break;
-    case 'picked': Sound.play('pickup'); if (sc && sc.removeLoot) { sc.removeLoot(ev.lid, true); sc.lastLootError = null; } break;
+    case 'picked': {
+      Sound.play('pickup');
+      // Hiện tên món vừa nhặt cho MỌI chất lượng (trước đây đồ thường chỉ có tiếng "pickup" → tưởng không có gì xảy ra).
+      const entry = sc && sc.loots && sc.loots.get(ev.lid);
+      const item = entry && entry.l && entry.l.inst && GameData.ITEMS[entry.l.inst.id];
+      if (item && sc.floatText && sc.player) sc.floatText(sc.player.x, sc.player.y - 52, '+' + item.name, '#ffe082', 13);
+      if (sc && sc.removeLoot) { sc.removeLoot(ev.lid, true); sc.lastLootError = null; }
+      break;
+    }
   }
 };

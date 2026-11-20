@@ -79,7 +79,7 @@
         'Trụ Mộng vỡ, lửa tắt dần. Giữa tro tàn, một người đàn ông cao lớn quỳ xuống, tỉnh lại trong một khắc.',
         'Triệu Cương: ...Đã lâu rồi mới thấy ánh sáng. Cậu là người chơi thứ bảy?',
         'Triệu Cương: Đừng trở thành người thứ tám.',
-        '[Hệ thống] Mảnh Hệ thống trong túi nóng lên.',
+        '[Hệ thống] Một Trụ Mộng đã giải (1/5). Mảnh Hệ thống trong túi nóng lên.',
       ],
       obj: { kill: { tru_mong_thien_khoi: 1 } },
       reward: rw(60, 'boss', [['ao_thien_khoi', 1], ['loi_tinh_van', 4]], { skillPoints: 3 }) },

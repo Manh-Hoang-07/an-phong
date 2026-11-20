@@ -67,6 +67,7 @@
       ],
       end: [
         'Trụ Mộng Sáng Thế vỡ thành hàng nghìn mảnh sáng. Giữa ánh sáng, Lăng hiện ra, nhẹ như không.',
+        '[Hệ thống] Năm Trụ Mộng đã giải (5/5). Ổ khóa đang chờ được định đoạt.',
         'Lăng: Giờ đây ta hỏi ngươi, người chơi số 7. Ngươi muốn ổ khóa này thành gì?',
       ],
       obj: { kill: { tru_mong_sang_the: 1 } },
@@ -76,13 +77,18 @@
         'Lăng: Có ba con đường. Giải thoát ta và để ổ khóa tan. Giữ ổ khóa nhưng cho phép người ta từ chối. Hoặc viết lại nó theo cách không nuốt ai.',
         'Lăng: Cậu chọn đi. Dù chọn gì, thế giới này vẫn còn một cánh cổng mở cho cậu.',
       ],
-      end: ['[Hệ thống] ...', '[Hệ thống] Người chơi số 7. Trạng thái: tự do. Chế độ cổng ngẫu nhiên đã mở.', '— Hết Phần Hai: Năm Trụ Mộng —'],
+      end: ['[Hệ thống] ...', '[Hệ thống] Người chơi số 7. Lựa chọn đã được ghi nhận.', '— Hết Phần Hai: Năm Trụ Mộng —'],
       obj: {},
       reward: rw(100, 'story', [['da_cuong_hoa_than_thoai', 8]], { skillPoints: 8 }),
+      // Mỗi lựa chọn giờ có hậu quả thật: một nội tại riêng (perk) cộng dồn suốt game,
+      // một danh hiệu, và một đoạn kết riêng. Server áp perk ở quests.js:78 (chỉ perk của lựa chọn đã chọn).
       choices: [
-        { id: 'pha_chuoi', label: 'Phá Chuỗi: "Giải thoát bà. Để ổ khóa tan."', title: 'Người Phá Chuỗi', text: 'Lăng mỉm cười, tan thành ánh sáng. Các cổng đóng dần; thợ săn mất sức mạnh Hệ thống nhưng không ai phải trả giá nữa.' },
-        { id: 'giu_loi', label: 'Giữ Lời: "Giữ ổ khóa, nhưng ai cũng được quyền từ chối."', title: 'Người Giữ Lời', text: 'Lăng gật đầu. Hệ thống tiếp tục, nhưng từ nay, thợ săn tự quyết có nhận sức mạnh hay không.' },
-        { id: 'viet_lai', label: 'Viết Lại: "Để tôi giữ ổ khóa theo cách không nuốt ai."', title: 'Người Viết Lại', text: 'Ánh sáng quấn quanh cậu. Từ bên kia cổng, Thiên bước ra, nhận phần giữ cổng thay cậu. Ổ khóa mới không còn đói.' },
+        { id: 'pha_chuoi', label: 'Phá Chuỗi: "Giải thoát bà. Để ổ khóa tan."', title: 'Người Phá Chuỗi', perk: 'ket_cuc_pha_chuoi',
+          text: 'Lăng mỉm cười, tan thành ánh sáng. Các cổng đóng dần; thợ săn mất sức mạnh Hệ thống nhưng không ai phải trả giá nữa.\n[Hệ thống] Nội tại mới: Người Phá Chuỗi — tốc chạy +15%, hồi chiêu -10%.' },
+        { id: 'giu_loi', label: 'Giữ Lời: "Giữ ổ khóa, nhưng ai cũng được quyền từ chối."', title: 'Người Giữ Lời', perk: 'ket_cuc_giu_loi',
+          text: 'Lăng gật đầu. Hệ thống tiếp tục, nhưng từ nay, thợ săn tự quyết có nhận sức mạnh hay không.\n[Hệ thống] Nội tại mới: Người Giữ Lời — máu và phòng thủ +15%, hút máu +3%.' },
+        { id: 'viet_lai', label: 'Viết Lại: "Để tôi giữ ổ khóa theo cách không nuốt ai."', title: 'Người Viết Lại', perk: 'ket_cuc_viet_lai',
+          text: 'Ánh sáng quấn quanh cậu. Từ bên kia cổng, Thiên bước ra, nhận phần giữ cổng thay cậu. Ổ khóa mới không còn đói.\n[Hệ thống] Nội tại mới: Người Viết Lại — sức mạnh kỹ năng +12%, chí mạng +8%.' },
       ],
     },
   ];

@@ -447,7 +447,11 @@ async function onExec(conn, m) {
     overLevel = !!sk.execOverLevel && (mob.def.level || 1) - (p.level || 1) > sk.execOverLevel;
     // Chết theo: dùng đúng luật chết của game (mất 5% kinh nghiệm, hồi sinh ở làng).
     // Gọi SAU khi đã ghi hp = 0 để không bị ghi đè.
-    if (!bua) gameActions.die(p, {}, []);
+    // Lưu bản đồ đang đứng để người chơi còn có thể chọn "Ở lại" sau khi die() đã đẩy về làng.
+    if (!bua) {
+      p.lastDeathMap = conn.map || p.map;
+      gameActions.die(p, {}, []);
+    }
     applied = true;
   }).catch((e) => console.error('Đổi mạng lỗi:', e.message));
 

@@ -37,7 +37,9 @@
 
   // Nâng cấp: tỉ lệ thành công khi nâng từ +n lên +(n+1)
   const UPGRADE_MAX = 12;
-  const UPGRADE_RATES = [1, 1, 1, 1, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.15];
+  // Từ +8→+9 đến +10→+11: thất bại giữ nguyên cấp. Chỉ +11→+12 mới rớt, và ở mức 30% (thay vì 15%)
+  // để không còn cảnh "tốn 2160 xu + 4 đá rồi mất cả cấp lẫn tài nguyên" ở ngưỡng cuối.
+  const UPGRADE_RATES = [1, 1, 1, 1, 0.85, 0.78, 0.7, 0.62, 0.55, 0.48, 0.4, 0.3];
 
   Object.assign(G, { QUALITY_NAMES, QUALITY_MUL, QUALITY_AFFIX, QUALITY_PRICE, QUALITY_ODDS, AFFIXES, STAT_NAMES, UPGRADE_MAX, UPGRADE_RATES });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

@@ -218,9 +218,48 @@ MapLooks.PACKS.blank = { layers: ['sky', 'far', 'mid', 'near'], ext: 'png' };
 ['cav9', 'cav10', 'shr8', 'str2', 'rn10', 'rn7', 'rn22', 'tun7', 'shr5', 'rune1', 'rn6', 'rn3', 'rn16', 'shr6', 'tun29', 'rn12', 'rn19', 'rn14', 'cav6', 'rn15']
   .forEach((p) => { MapLooks.PACKS['lr_' + p] = { layers: ['far'], ext: 'jpg', cover: true }; });
 
-// Tân Đô mới dùng lại nền, cảnh trí và diện mạo của một map cùng vùng
-for (const [id, from] of Object.entries({ tan_do_2: 'lang_chai', tan_do_3: 'chan_nui', tan_do_4: 'quang_truong', tan_do_6: 'thien_khoi', tan_do_7: 'tinh_van', ham_ngam: 'tp_chim_c', quan_thuong_mai: 'vac_da', thien_khoi_1: 'thien_khoi', thien_khoi_2: 'thien_khoi', thien_khoi_3: 'thien_khoi', thien_khoi_4: 'thien_khoi', long_mach_1: 'long_mach', long_mach_2: 'long_mach', long_mach_3: 'long_mach', long_mach_4: 'long_mach', tinh_van_1: 'tinh_van', tinh_van_2: 'tinh_van', tinh_van_3: 'tinh_van', tinh_van_4: 'tinh_van', than_mong_1: 'than_mong', than_mong_2: 'than_mong', than_mong_3: 'than_mong', than_mong_4: 'than_mong', sang_the_1: 'sang_the', sang_the_2: 'sang_the', sang_the_3: 'sang_the', sang_the_4: 'sang_the' })) {
-  if (MapScenes[from]) MapScenes[id] = MapScenes[from];
-  if (MapDecor[from]) MapDecor[id] = MapDecor[from];
-  if (MapLooks.MAPS[from]) MapLooks.MAPS[id] = MapLooks.MAPS[from];
+// Map phụ dùng lại nền/cảnh trí của map cùng vùng, NHƯNG mỗi map được tint riêng để không còn
+// trông y hệt map gốc. Trước đây gán trực tiếp object (MapScenes[id] = MapScenes[from]) khiến
+// thien_khoi_1..4, long_mach_1..4… copy nguyên diện mạo. Giờ clone + đổi sắc + đổi sương/đất.
+// `all` trong scene được layerDefs() áp cho mọi lớp trước khi lớp riêng đè lên (xem map_looks.js:132).
+const SUBMAPS = {
+  // map phụ: [map gốc, { tint cho scene.all, look riêng }]
+  tan_do_2: ['lang_chai', {}], tan_do_3: ['chan_nui', {}], tan_do_4: ['quang_truong', {}],
+  ham_ngam: ['tp_chim_c', {}], quan_thuong_mai: ['vac_da', {}],
+  tan_do_6: ['thien_khoi', { haze: 0xc89870, grade: 0xffe8d0, weather: 'none', bg: 0x2a2020 }],
+  tan_do_7: ['tinh_van', { haze: 0x9a9ce0, grade: 0xe6e8ff, weather: 'none', bg: 0x141838 }],
+  // Thiên Khôi: bãi tro → đồi lửa → mỏ vàng → thành sụp, sắc nóng dần
+  thien_khoi_1: ['thien_khoi', { all: { hue: -12, lum: 0.95 }, haze: 0xb88a6a, mote: 0xffb070, bg: 0x241418 }],
+  thien_khoi_2: ['thien_khoi', { all: { hue: 8, sat: 1.15, mix: [0x8a2a10, 0.14] }, haze: 0xd87a50, mote: 0xff7a40, bg: 0x2e1210 }],
+  thien_khoi_3: ['thien_khoi', { all: { hue: 26, sat: 1.25, lum: 1.05 }, haze: 0xd8a860, mote: 0xffd060, bg: 0x2a2010 }],
+  thien_khoi_4: ['thien_khoi', { all: { hue: -20, sat: 0.7, lum: 0.75 }, haze: 0x9a7060, mote: 0xd89060, weather: 'fog', bg: 0x1e1418 }],
+  // Long Mạch: cửa vào → suối → mạch lam → điện rồng, xanh dần/đậm dần
+  long_mach_1: ['long_mach', { all: { hue: -18, sat: 0.9 }, haze: 0x8ac0a8, mote: 0xa0e0c0, bg: 0x122828 }],
+  long_mach_2: ['long_mach', { all: { hue: -30, sat: 1.1, lum: 0.9 }, haze: 0x6ac0b8, mote: 0x80f0e0, weather: 'fog', fog: 0x9fdcd0, bg: 0x0e2a2c }],
+  long_mach_3: ['long_mach', { all: { hue: 20, sat: 1.2, lum: 0.8 }, haze: 0x5a90d0, mote: 0x80b0ff, bg: 0x101c38 }],
+  long_mach_4: ['long_mach', { all: { hue: 40, sat: 1.3, lum: 1.05 }, haze: 0xd0b070, mote: 0xffd890, bg: 0x2a2410 }],
+  // Tinh Vân: bến sao → rừng sáng → biển ký ức → ngai, sáng dần
+  tinh_van_1: ['tinh_van', { all: { lum: 0.85 }, haze: 0x6a78c0, mote: 0xc0c8ff, bg: 0x0c1030 }],
+  tinh_van_2: ['tinh_van', { all: { hue: -30, lum: 1.15 }, haze: 0x8ad0a0, mote: 0xd0ffd0, bg: 0x102818 }],
+  tinh_van_3: ['tinh_van', { all: { hue: 30, sat: 1.1, lum: 1.05 }, haze: 0x7aa8e0, mote: 0xa0d8ff, bg: 0x101c30 }],
+  tinh_van_4: ['tinh_van', { all: { hue: -12, lum: 1.25 }, haze: 0xe0d8b0, mote: 0xfff0c0, bg: 0x242018 }],
+  // Thần Mộng: bốn lớp mộng, tím hồng đậm dần
+  than_mong_1: ['than_mong', { all: { hue: -20, sat: 0.85 }, haze: 0xc0a0d0, mote: 0xe0b0f0, bg: 0x241830 }],
+  than_mong_2: ['than_mong', { all: { hue: 12, sat: 1.15 }, haze: 0xe0a0c0, mote: 0xffa0d0, bg: 0x2c1428 }],
+  than_mong_3: ['than_mong', { all: { hue: -35, lum: 0.85 }, haze: 0xa080d0, mote: 0xc080ff, bg: 0x1e1230 }],
+  than_mong_4: ['than_mong', { all: { hue: 25, sat: 1.3, lum: 1.1 }, haze: 0xf0a0a0, mote: 0xffd0e0, bg: 0x301420 }],
+  // Sáng Thế: khởi nguyên → rừng ánh sáng → biển ký ức → ngai, càng về sau càng rực
+  sang_the_1: ['sang_the', { all: { sat: 0.7, lum: 0.85 }, haze: 0xc0b890, mote: 0xe0d8b0, bg: 0x201e14 }],
+  sang_the_2: ['sang_the', { all: { hue: -40, sat: 1.1, lum: 1.1 }, haze: 0xa8d8a0, mote: 0xd0ffb0, bg: 0x182414 }],
+  sang_the_3: ['sang_the', { all: { hue: 20, sat: 1.15, lum: 1.05 }, haze: 0x90c8e0, mote: 0xb0e8ff, bg: 0x14202c }],
+  sang_the_4: ['sang_the', { all: { hue: -10, lum: 1.25 }, haze: 0xffe8a0, mote: 0xfff8d0, bg: 0x2e2810 }],
+};
+for (const [id, [from, tweak]] of Object.entries(SUBMAPS)) {
+  const { all, ...lookTweak } = tweak;
+  if (MapScenes[from]) {
+    const base = MapScenes[from];
+    MapScenes[id] = all ? { ...base, all: { ...(base.all || {}), ...all } } : { ...base };
+  }
+  if (MapDecor[from]) MapDecor[id] = MapDecor[from];   // cảnh trí giữ nguyên (chỉ đổi sắc nền)
+  if (MapLooks.MAPS[from]) MapLooks.MAPS[id] = { ...MapLooks.MAPS[from], ...lookTweak };
 }

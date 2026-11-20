@@ -55,8 +55,8 @@
   function upgradeCost(plus) {
     return { gold: 15 * (plus + 1) * (plus + 1), stones: Math.ceil((plus + 1) / 3) };
   }
-  // Thất bại khi nâng lên +8 trở lên thì bị giảm 1 cấp
-  function upgradeFailDrops(plus) { return plus + 1 >= 8; }
+  // Chỉ thất bại ở ngưỡng cuối (+11 → +12) mới giảm 1 cấp; các cấp thấp hơn thất bại thì giữ nguyên.
+  function upgradeFailDrops(plus) { return plus + 1 >= 12; }
 
   // ---------------------------------------------------------------- Trang bị theo từng món
   // Mỗi món trang bị trong túi: { uid, id, qty, plus, q (phẩm chất), roll (0.8–1.2), aff: [[dòng phụ, giá trị, độ tốt 0..1]] }

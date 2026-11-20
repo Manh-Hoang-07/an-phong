@@ -78,6 +78,7 @@
         'Trụ Mộng Long Mạch vỡ, nước ngọc rút về lòng đất. Diệp Tâm tỉnh lại một khắc.',
         'Vy cầm tay cô ấy lúc cô tan đi. Diệp Tâm: Chữa cho người khác xong thì tự chữa cho mình nữa nhé.',
         'Vy khóc, lần đầu tiên trước mặt cậu.',
+        '[Hệ thống] Hai Trụ Mộng đã giải (2/5). Ánh sáng trong túi nhịp chậm lại.',
       ],
       obj: { kill: { tru_mong_long_mach: 1 } },
       reward: rw(70, 'boss', [['ao_long_mach', 1], ['loi_tinh_van', 4]], { skillPoints: 3 }) },

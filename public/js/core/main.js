@@ -147,7 +147,14 @@
     UI.refresh();
     UI.log(`[Hệ thống] Chào mừng thợ săn ${player.name}. Tiến trình được tự động lưu.`, '#ffd54f');
     const q0 = GameData.QUESTS[player.quest.step];
-    if (q0 && player.quest.state === 'none' && player.quest.step <= 1) {
+    // Người chơi mới: mở ngay bảng thoại mở đầu thay vì một dòng log 7 giây rồi mất.
+    // Chỉ khi còn ở q0, chưa nhận và vẫn cấp 1 — account cũ / đã chơi không bị làm phiền.
+    if (q0 && q0.id === 'q0' && player.quest.state === 'none' && player.level <= 1) {
+      UI.openPanel('story', {
+        id: q0.npc, lines: q0.start, force: true,
+        button: '<button class="btn primary" data-act="quest_accept">Nhận nhiệm vụ</button>',
+      });
+    } else if (q0 && player.quest.state === 'none' && player.quest.step <= 1) {
       const who = GameData.NPCS[q0.npc].name;
       UI.log(document.body.classList.contains('touch')
         ? `Hãy đến gần ${who} rồi bấm nút 💬 Nói chuyện.`

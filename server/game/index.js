@@ -47,6 +47,7 @@ function migrate(p) {
   if (!p.storageByMap || typeof p.storageByMap !== 'object' || Array.isArray(p.storageByMap)) p.storageByMap = {};
   if (!p.dailyByMap || typeof p.dailyByMap !== 'object' || Array.isArray(p.dailyByMap)) p.dailyByMap = {};
   if (!p.weeklyByMap || typeof p.weeklyByMap !== 'object' || Array.isArray(p.weeklyByMap)) p.weeklyByMap = {};
+  if (!p.respawnByMap || typeof p.respawnByMap !== 'object' || Array.isArray(p.respawnByMap)) p.respawnByMap = {};
   if (p.storage !== undefined) {
     if (Array.isArray(p.storage) && p.storage.length) storageFor(p, G.START_MAP).push(...p.storage);
     delete p.storage;

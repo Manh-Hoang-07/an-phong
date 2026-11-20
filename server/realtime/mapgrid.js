@@ -77,7 +77,7 @@ function build(meta, grid) {
   for (const ch in meta.spawns || {}) {
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === ch) spawns.push({ id: meta.spawns[ch], r, c });
   }
-  return { rows, cols, worldW: cols * T, worldH, groundY, spanAt, portals, spawns };
+  return { rows, cols, worldW: cols * T, worldH, groundY, spanAt, portals, spawns, findChar, isSolid };
 }
 
 module.exports = { load, T };

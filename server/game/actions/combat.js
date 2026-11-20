@@ -172,6 +172,8 @@ function killOne(p, a, ev, lk, now) {
           if (target === a.monster) {
             pr.kill[target] = cur + 1;
             ev.push({ t: 'msg', text: `${q.name}: ${mon.name} ${cur + 1}/${need}`, color: '#a5d6a7' });
+            // Event riêng để client hiện tiến độ lên banner (kênh msg 7 giây dễ bị trôi đi mất).
+            ev.push({ t: 'queststep', name: q.name, label: mon.name, have: cur + 1, need });
           }
           break;
         }
