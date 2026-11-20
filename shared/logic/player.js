@@ -132,8 +132,10 @@
     const scCdr = sc && sc.bonus && sc.bonus.cdrAdd ? sc.bonus.cdrAdd : 0;
     // speed: tính trước clamp, nhân thêm hệ số class (sat_thu)
     const speedFinal = Math.round(Math.min(290, Math.min(260, 190 + p.agi * 2) * scSpeed + eq.speed + (perkAdd.speed || 0)));
-    // Thể lực tối đa: dạng thường x1.3 (STAMINA.maxMul). Đang biến hình thì KHÔNG có hệ số này, thay bằng hệ số của ấn / hình thái
-    const staMul = aw ? formSta : G.STAMINA.maxMul;
+    // Thể lực tối đa: dạng thường x1.3 (STAMINA.maxMul). Ấn có hệ số thể lực riêng (theo MP),
+    // nhưng biến hình KHÔNG ĐƯỢC làm thể lực tụt xuống dưới dạng thường — Ấn I (1.2) từng lấy 1.3 → 1.2.
+    // Lấy max để ấn yếu vẫn giữ nguyên mức thường, ấn mạnh (≥1.5) mới tăng thêm.
+    const staMul = aw ? Math.max(formSta, G.STAMINA.maxMul) : G.STAMINA.maxMul;
     // Vết Nhiễm: món đang mặc bị nhiễm đỏ thì trừ máu tối đa (6% mỗi bậc, sàn 30%).
     // Đây là cái giá của việc mặc đồ nhiễm — ăn chỉ số thì mất máu.
     const nhiem = nhiemLoad(player);

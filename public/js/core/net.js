@@ -148,6 +148,7 @@ App.recalcStats = function () {
   App.stats = GameData.calcStats(App.player, { form: App.form });
   App.hp = Math.min(App.hp, App.stats.maxHp);
   App.mp = Math.min(App.mp, App.stats.maxMp);
+  if (App.sta != null) App.sta = Math.min(App.sta, App.stats.maxSta);
 };
 
 // Ghép bản vá { set, del } từ server vào nhân vật. Tạo object mới (bản sao nông) để mọi nơi so sánh / cache
@@ -165,6 +166,7 @@ App.setPlayer = function (p, prev) {
   const formChanged = !!oldPlayer && (!!oldPlayer.formActive !== !!p.formActive || oldPlayer.formChoice !== p.formChoice);
   const hpRatio = formChanged && oldStats?.maxHp ? App.hp / oldStats.maxHp : null;
   const mpRatio = formChanged && oldStats?.maxMp ? App.mp / oldStats.maxMp : null;
+  const prevStaMax = oldStats ? oldStats.maxSta : 0;
   App.player = p;
   // Nhớ Ấn thức tỉnh người chơi đã chọn (Ấn I–V) để phím T không tự nhảy sang Ấn cao nhất
   if (GameData.awakenTierOf(p.formChoice)) App.awakenPick = p.formChoice;
@@ -174,6 +176,8 @@ App.setPlayer = function (p, prev) {
   if (formChanged) {
     App.hp = Math.max(1, Math.round(App.stats.maxHp * hpRatio));
     App.mp = Math.max(0, Math.round(App.stats.maxMp * mpRatio));
+    // Thể lực cũng đổi max theo ấn: giữ nguyên tỉ lệ đầy, không để thanh cũ kẹt dưới max mới.
+    if (App.sta != null && prevStaMax > 0) App.sta = Math.max(0, Math.round(App.stats.maxSta * (App.sta / prevStaMax)));
   }
   App.hp = Math.min(App.hp, App.stats.maxHp);
   App.mp = Math.min(App.mp, App.stats.maxMp);

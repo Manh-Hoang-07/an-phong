@@ -685,12 +685,15 @@ WorldScene.mix(class WorldPlayer {
     const drain = aw?.drain || 3;
     const need = drain * 3;   // phải đủ ít nhất 3 giây biến hình
     if (App.mp < need || App.sta < need || App.staLocked) { UI.log(`Không đủ năng lượng / thể lực để biến hình (cần ${need}).`, '#ffca28'); return; }
-    // Giữ nguyên % máu và % năng lượng khi giá trị tối đa tăng (không thì thanh MP tụt xuống như bị mất MP)
+    // Giữ nguyên % máu, năng lượng VÀ thể lực khi giá trị tối đa đổi theo ấn
+    // (không thì thanh thể lực tụt/mắc ở mức cũ dù max mới đã tăng).
     const hpRatio = App.hp / App.stats.maxHp, mpRatio = App.mp / App.stats.maxMp;
+    const staRatio = App.stats.maxSta ? App.sta / App.stats.maxSta : 1;
     App.form = true;
     App.recalcStats();
     App.hp = Math.round(App.stats.maxHp * hpRatio);
     App.mp = Math.round(App.stats.maxMp * mpRatio);
+    App.sta = Math.round(App.stats.maxSta * staRatio);
     this.formDrainAcc = 0;
     this.formReadyAt = time + 1500;
     if (aw) this.awakenFx(aw.tier);
@@ -718,11 +721,13 @@ WorldScene.mix(class WorldPlayer {
   endForm(reason) {
     if (!App.form) return;
     const hpRatio = App.hp / App.stats.maxHp, mpRatio = App.mp / App.stats.maxMp;
+    const staRatio = App.stats.maxSta ? App.sta / App.stats.maxSta : 1;
     App.form = false;
     Net.action('form_toggle');
     App.recalcStats();
     App.hp = Math.max(1, Math.round(App.stats.maxHp * hpRatio));
     App.mp = Math.max(0, Math.round(App.stats.maxMp * mpRatio));
+    App.sta = Math.max(0, Math.round(App.stats.maxSta * staRatio));
     this.formReadyAt = this.time.now + 1500;
     this.formStop();
     if (reason) UI.log(reason, '#ffca28');
