@@ -90,6 +90,7 @@ WorldScene.mix(class WorldCombat {
     const angle = o.angle || 0;
     const p = this.add.image(pl.x + this.facing * 16, pl.y - 2 + (o.dy || 0), o.key).setDepth(7).setFlipX(this.facing < 0);
     if (o.tint) p.setTint(o.tint);
+    if (o.scale) p.setScale(o.scale);   // hiệu ứng riêng của kỹ năng (skillfx.js) có thể đổi cỡ đạn
     // Đạn phép, mũi tên lửa sáng lên bằng cách cộng màu (nhẹ hơn nhiều so với hiệu ứng phát sáng)
     if (o.key !== 'proj_arrow') p.setBlendMode(Phaser.BlendModes.ADD);
     p.setRotation(angle * this.facing);
@@ -107,6 +108,7 @@ WorldScene.mix(class WorldCombat {
       p.x += p.vx * dt; p.y += p.vy * dt;
       p.dist += Math.hypot(p.vx, p.vy) * dt;
       if (p.o.spin) p.rotation += 0.5;
+      if (p.o.sfx) this.sfxProjTick(p, delta);   // vệt đuôi theo kiểu của từng kỹ năng
       const c = Math.floor(p.x / T), r = Math.floor(p.y / T);
       if (p.dist > p.o.range || this.isSolid(r, c)) { this.fadeProjectile(p); continue; }
       const b = p.getBounds();
@@ -115,6 +117,7 @@ WorldScene.mix(class WorldCombat {
         if (p.focus && p.focus.alive && m !== p.focus) continue;   // quái xa: không cần tính khung va chạm
         if (Phaser.Geom.Intersects.RectangleToRectangle(b, this.mBounds(m))) {
           p.hitSet.add(m);
+          if (p.o.sfx) this.sfxProjHit(p, m);
           this.damageMonster(m, p.o.mult, { slow: p.o.slow, freeze: p.o.freeze, knock: p.o.knock, dir: Math.sign(p.vx), basic: p.o.basic, shred: p.o.shred });
           if (!p.o.pierce) { this.fadeProjectile(p); break; }
         }

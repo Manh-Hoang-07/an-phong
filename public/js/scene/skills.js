@@ -89,13 +89,15 @@ WorldScene.mix(class WorldSkills {
     this.cooldownLen[id] = cdMs;
     const pl = this.player;
     this.floatText(pl.x, pl.y - 52, sk.name, '#ffd54f', 17);
-    this.attackAnim(time, 520, 'skill');
+    // Nhân vật đứng yên, chỉ có hiệu ứng (skillfx.js)
     Sound.play('ult');
     this.cameras.main.flash(200, 255, 255, 255);
     this.cameras.main.shake(260, 0.012);
     this.hitstop(140);
+    this.sfx?.('cast', id, sk);
     // Vệt chém trắng nối thẳng tới mục tiêu: đòn này phải thấy rõ nó đi đâu
     const tx = target.sprite.x, ty = target.sprite.y;
+    this.sfx?.('execute', id, sk, tx, ty);
     const line = this.add.rectangle((pl.x + tx) / 2, (pl.y + ty) / 2, Math.abs(tx - pl.x) + 40, 6, 0xffffff, 0.95)
       .setDepth(9).setBlendMode(Phaser.BlendModes.ADD).setAngle(Math.atan2(ty - pl.y, tx - pl.x) * 57.2958);
     this.tweens.add({ targets: line, alpha: 0, scaleY: 3, duration: 420, onComplete: () => line.destroy() });
@@ -141,11 +143,12 @@ WorldScene.mix(class WorldSkills {
     this.cooldownLen[id] = cdMs;
     const pl = this.player;
     this.floatText(pl.x, pl.y - 52, sk.name, '#c6a7ff', 17);
-    this.attackAnim(time, 480, 'skill');
     Sound.play('ult');
     this.cameras.main.flash(260, 180, 140, 255);
     this.cameras.main.shake(300, 0.010);
     this.hitstop(120);
+    this.sfx?.('cast', id, sk);
+    this.sfx?.('fusion', id, sk);
     // Hiệu ứng: vòng xoáy tím dưới chân + các chấm sáng bay từ bốn phía vào người (bóng ma bị hút vào)
     const ring = this.add.circle(pl.x, pl.y, 18, 0x9b6bff, 0.35).setDepth(8.5).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: ring, radius: 130, alpha: 0, duration: 620, onComplete: () => ring.destroy() });
@@ -187,11 +190,12 @@ WorldScene.mix(class WorldSkills {
     App.mp = 0;
     this.mpLockUntil = time + (sk.lockSec || 10) * 1000;
     this.floatText(pl.x, pl.y - 52, sk.name, '#ff8a80', 18);
-    this.attackAnim(time, 560, 'skill');
     Sound.play('ult');
     this.cameras.main.flash(300, 255, 120, 90);
     this.cameras.main.shake(340, 0.016);
     this.hitstop(160);
+    this.sfx?.('cast', id, sk);
+    this.sfx?.('manaburst', id, sk);
     // Hiệu ứng: vòng đỏ-cam bùng ra theo bán kính thật của đòn
     const g = this.add.graphics().setDepth(7.5);
     let t = 0;
@@ -261,11 +265,12 @@ WorldScene.mix(class WorldSkills {
     const pl = this.player, f = this.facing;
     const pw = sk.power * App.stats.skillMul;
     this.floatText(pl.x, pl.y - 52, sk.name, '#b388ff', 19);
-    this.attackAnim(time, 700, 'skill');
     Sound.play('ult');
     this.cameras.main.flash(340, 200, 160, 255);
     this.cameras.main.shake(420, 0.020);
     this.hitstop(200);
+    this.sfx?.('cast', id, sk);
+    this.sfx?.('allin', id, sk);
     // --- 1. Vụ nổ tổng hợp ở giữa (power riêng của TUYỆT PHẨM)
     const g = this.add.graphics().setDepth(7.5);
     let t = 0;
@@ -292,13 +297,12 @@ WorldScene.mix(class WorldSkills {
       this.time.delayedCall(180 + k * 200, () => {
         if (!this.sys || !this.sys.isActive()) return;
         const x = Phaser.Math.Clamp(pl.x + f * (140 + k * 130), 30, this.worldW - 30);
-        this.telegraph(x, gy, chung3.radius, 0xb388ff, 260);
-        const sw = this.add.image(x, gy - 420, 'fx_bigsword').setOrigin(0.5, 1).setDepth(8).setAlpha(0.95).setTint(0xd9c2ff);
-        this.tweens.add({ targets: sw, y: gy + 20, duration: 280, ease: 'Quad.in', onComplete: () => {
+        this.sfx?.('fall', 'ulChung3', chung3, x, gy, 280);
+        this.time.delayedCall(280, () => {
+          if (!this.sys || !this.sys.isActive()) return;
           this.cameras.main.shake(180, 0.010);
           this.hitCircle(x, gy - 30, chung3.radius, chung3.power * App.stats.skillMul, { sk: 1, superUlt: 1, id, knock: 300 });
-          this.tweens.add({ targets: sw, alpha: 0, duration: 420, delay: 200, onComplete: () => sw.destroy() });
-        } });
+        });
       });
     }
     // --- 4. Ý Chí Bất Diệt: buff tấn công / chí mạng / tốc đánh, cùng ô riêng như dùng bình thường
@@ -369,6 +373,8 @@ WorldScene.mix(class WorldSkills {
     const pw = sk.power ? sk.power * App.stats.skillMul : 0;
     // Kỹ năng đánh thẳng: quay mặt về quái đang chỉ định trước khi tung
     if (sk.type === 'melee' || sk.type === 'projectile' || sk.type === 'spread') this.aimAtTarget();
+    // Hình dạng đạn riêng của kỹ năng này (skillfx.js); thiếu module thì đạn dùng hình mặc định
+    const ps = (forced) => (this.sfxProj ? this.sfxProj(id, sk, forced) : {});
     const pl = this.player, f = this.facing;
     // Nhịp giữa các nhát: đủ thưa để người chơi ĐẾM được số nhát, đủ nhanh để không thành đòn chậm chạp
     const HIT_GAP = 130;
@@ -393,18 +399,21 @@ WorldScene.mix(class WorldSkills {
     };
     if (sk.ult && (p.school === 'tu_linh_thuat_su' || p.school === 'trieu_hoi_su' && p.advancement?.unlocked?.tu_linh_thuat_su)) this.shadowPowerUntil = time + 8000;
     this.floatText(pl.x, pl.y - 52, sk.name, sk.ult ? '#ffd54f' : '#fff59d', sk.ult ? 17 : 14);
-    this.attackAnim(time, sk.type === 'melee' ? (sk.hits || 3) * HIT_GAP : 420, 'skill');
-    if (sk.ult) { this.cameras.main.flash(180, 255, 230, 160); }
+    // Dùng kỹ năng thì nhân vật ĐỨNG YÊN, không vung vũ khí / không phát hoạt ảnh đánh:
+    // chỉ có hiệu ứng riêng của từng chiêu (skillfx.js). Đòn thường (basicAttack) vẫn có hoạt ảnh.
+    this.sfx?.('cast', id, sk);
     Sound.play(sk.ult ? 'ult' : sk.type === 'heal' ? 'heal' : 'skill');
 
     switch (sk.type) {
       case 'summon':
         Net.action('summon_toggle').then(() => { if (this.sys.isActive()) this.buildSummons(); });
         this.floatText(pl.x, pl.y - 52, App.player.summons?.enabled ? 'Thu hồi' : 'Triệu hồi', '#8be9ff', 14);
+        this.sfx?.('summon', id, sk);
         break;
       case 'shadow_toggle':
         Net.action('shadow_toggle').then(() => { if (this.sys.isActive()) this.buildShadows(); });
         this.floatText(pl.x, pl.y - 52, App.player.shadows?.enabled ? 'Giải trừ' : 'Triệu hồi', '#c6a7ff', 14);
+        this.sfx?.('summon', id, sk);
         break;
       case 'shadow_command': {
         const target = this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive && Math.abs(m.sprite.x - pl.x) < 500 && Math.abs(m.sprite.y - pl.y) < 200)
@@ -412,8 +421,12 @@ WorldScene.mix(class WorldSkills {
         if (target) {
           this.shadowFocusTarget = target;
           this.shadowFocusUntil = time + 6000;
+          this.sfx?.('aoe', id, sk, target.sprite.x, target.sprite.y, sk.radius, target.sprite.body ? target.sprite.body.bottom : pl.body.bottom);
           this.hitCircle(target.sprite.x, target.sprite.y, sk.radius, pw, fx({ freeze: sk.freeze, sk: 1 }));
-        } else this.hitCircle(pl.x + f * 100, pl.y, sk.radius, pw, fx({ freeze: sk.freeze, sk: 1 }));
+        } else {
+          this.sfx?.('aoe', id, sk, pl.x + f * 100, pl.y, sk.radius, pl.body.bottom);
+          this.hitCircle(pl.x + f * 100, pl.y, sk.radius, pw, fx({ freeze: sk.freeze, sk: 1 }));
+        }
         break;
       }
       case 'dash': {
@@ -422,23 +435,18 @@ WorldScene.mix(class WorldSkills {
         const endX = Phaser.Math.Clamp(pl.x + f * sk.distance, 20, this.worldW - 20);
         pl.body.setVelocityX(f * 1100);
         pl.body.setAllowGravity(false); pl.body.setVelocityY(0);
-        this.time.addEvent({ delay: 25, repeat: 6, callback: () => {
-          const ghost = this.add.image(pl.x, pl.y, pl.texture.key).setFlipX(pl.flipX).setAlpha(0.5).setTint(this.accent()).setDepth(3);
-          this.tweens.add({ targets: ghost, alpha: 0, duration: 250, onComplete: () => ghost.destroy() });
-        } });
+        // Dư ảnh mỗi nhịp theo kiểu riêng của kỹ năng (bóng tối, máu, bụi xung phong, rồng…)
+        let dashTick = 0;
+        this.time.addEvent({ delay: 25, repeat: 6, callback: () => { this.sfx?.('dashStep', id, sk, dashTick++ === 0); } });
         this.time.delayedCall(Math.abs(endX - startX) / 1100 * 1000 + 20, () => {
           this.dashing = false; pl.body.setAllowGravity(true); pl.body.setVelocityX(0);
           const a = Math.min(startX, pl.x), b = Math.max(startX, pl.x);
-          // Vệt lướt: một đường sáng dọc cả quãng đã đi, để thấy rõ đòn đánh xuyên qua bao xa
-          const trail = this.add.rectangle((a + b) / 2, pl.y, Math.max(40, b - a + 50), 5, this.accent(), 0.75)
-            .setDepth(7).setBlendMode(Phaser.BlendModes.ADD);
-          this.tweens.add({ targets: trail, scaleY: 3, alpha: 0, duration: 280, onComplete: () => trail.destroy() });
+          // Vệt lướt dọc cả quãng đã đi, để thấy rõ đòn đánh xuyên qua bao xa
+          this.sfx?.('dashEnd', id, sk, a, b);
           this.hitBox((a + b) / 2, pl.y, b - a + 50, 64, pw, fx({ sk: 1 }));
-          this.slashFx(pl.x, pl.y, 1.6, 1.2);
           if (sk.after) {
             this.time.delayedCall(180, () => {
-              const g = this.add.rectangle((a + b) / 2, pl.y, b - a + 40, 6, this.accent(), 0.9).setDepth(7).setBlendMode(Phaser.BlendModes.ADD);
-              this.tweens.add({ targets: g, scaleY: 4, alpha: 0, duration: 260, onComplete: () => g.destroy() });
+              this.sfx?.('dashEnd', id, sk, a, b, true);
               this.hitBox((a + b) / 2, pl.y, b - a + 50, 64, sk.after * App.stats.skillMul, fx({ sk: 1 }));
             });
           }
@@ -455,15 +463,8 @@ WorldScene.mix(class WorldSkills {
           const isLast = h === n - 1;                 // nhát cuối = nhát cuối cùng, kể cả khi không có finisher
           const fin = isLast && !!sk.finisher;        // chỉ nhát cuối mới được hưởng sức mạnh finisher
           this.time.delayedCall(h * HIT_GAP, () => {
-            this.swing();
-            const up = h % 2 === 0;
-            const ang = (up ? -1 : 1) * (0.34 + 0.1 * (h % 3));
-            const sx = fin ? 1.9 : 1.25 + 0.08 * (h % 3);
-            const sy = fin ? 1.55 : 1;
-            this.slashFx(pl.x + this.facing * (30 + 6 * (h % 2)), pl.y + (up ? -10 : 10), sx, sy, !up,
-              { angle: ang, life: fin ? 260 : 190, alpha: fin ? 0.85 : 0.6, tint: fin ? 0xffffff : undefined });
-            // Chấm sáng ở điểm chạm: đếm được từng nhát kể cả khi vệt chém đã mờ
-            this.ringFx(pl.x + this.facing * (sk.range / 2), pl.y, fin ? 0xffffff : this.accent(), fin ? 2.2 : 1.1);
+            // Mỗi nhát một vệt riêng (kiểu chém của từng kỹ năng, xem skillfx.js); nhân vật đứng yên
+            this.sfx?.('melee', id, sk, h, n, fin);
             // Hất văng / choáng dồn vào NHÁT CUỐI (mô tả luôn nói "nhát cuối ... hất văng"),
             // làm chậm / đóng băng / xuyên giáp thì mọi nhát đều ăn.
             const hitFx = fx(isLast ? { sk: 1 } : { knock: 0, stun: 0, sk: 1 });
@@ -480,13 +481,13 @@ WorldScene.mix(class WorldSkills {
         // Kỹ năng thủ có thể kèm buff tấn công / chí mạng / tốc đánh (cộng dồn qua buffTotals)
         this.buffs[id] = { name: 'guard', until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id, reduce: sk.reduce, reflect: sk.reflect || 0,
           atk: sk.atkBuff || 0, crit: sk.critBuff || 0, speed: sk.speedBuff || 0 };
-        this.ringFx(pl.x, pl.y, 0xffb36b);
+        this.sfx?.('guard', id, sk);
         break;
       }
       case 'manashield': {
         // Khiên cũng vậy: mỗi kỹ năng một ô, hấp thụ cộng dồn
         this.buffs[id] = { name: 'manashield', until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id, absorb: sk.absorb };
-        this.ringFx(pl.x, pl.y, 0x8fb4ff);
+        this.sfx?.('shield', id, sk);
         break;
       }
       case 'buff': {
@@ -495,30 +496,25 @@ WorldScene.mix(class WorldSkills {
         // Buff tấn công theo % của kỹ năng, không nhân sức mạnh kỹ năng / SPI
         this.buffs[id] = { name: sk.buff || id, until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id,
           atk: sk.atkBuff || 0, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0, exec: sk.exec || null };
-        for (let k = 0; k < (sk.ult ? 10 : 6); k++) {
-          const ghost = this.add.image(pl.x, pl.y, pl.texture.key).setTint(this.accent()).setAlpha(0.6).setDepth(3);
-          this.tweens.add({ targets: ghost, x: pl.x + Phaser.Math.Between(-70, 70), y: pl.y + Phaser.Math.Between(-20, 10), alpha: 0, duration: 520, onComplete: () => ghost.destroy() });
-        }
-        if (sk.ult) { this.ringFx(pl.x, pl.y, 0xffd54f, 4); this.cameras.main.shake(250, 0.008); }
+        this.sfx?.('buff', id, sk);
+        if (sk.ult) this.cameras.main.shake(250, 0.008);
         break;
       }
       case 'projectile': {
         const water = sk.school === 'phap_su';
-        this.swing();
         const n = sk.count || 1;
         for (let k = 0; k < n; k++) {
           this.shoot({ key: water ? 'fx_wave' : 'proj_fire', speed: water ? 520 : 820, range: sk.range, mult: pw,
             pierce: sk.pierce, slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun,
-            knock: sk.knock || (water ? 140 : 60), sk: 1, dy: (k - (n - 1) / 2) * 16, angle: this.targetAngle() });
+            knock: sk.knock || (water ? 140 : 60), sk: 1, dy: (k - (n - 1) / 2) * 16, angle: this.targetAngle(), ...ps() });
         }
         break;
       }
       case 'spread': {
-        this.swing();
         for (let k = 0; k < sk.count; k++) {
           const ang = (k - (sk.count - 1) / 2) * 0.16 + this.targetAngle();
           this.shoot({ key: 'proj_fire', speed: 760, range: sk.range, mult: pw, angle: ang, sk: 1,
-            slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun, knock: sk.knock, pierce: sk.pierce });
+            slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun, knock: sk.knock, pierce: sk.pierce, ...ps() });
         }
         break;
       }
@@ -526,27 +522,18 @@ WorldScene.mix(class WorldSkills {
         this.invulnUntil = Math.max(this.invulnUntil, time + 450);
         pl.body.setVelocity(-f * 650, -320);
         this.knockUntil = time + 260;
+        this.sfx?.('backstep', id, sk);
         this.time.delayedCall(120, () => {
-          this.swing();
           for (let k = 0; k < (sk.count || 1); k++) {
             const ang = (k - ((sk.count || 1) - 1) / 2) * 0.12;
             this.shoot({ key: 'proj_fire', speed: 780, range: 420, mult: pw, angle: ang, sk: 1,
-              slow: sk.slow, freeze: sk.freeze, stun: sk.stun, knock: sk.knock });
+              slow: sk.slow, freeze: sk.freeze, stun: sk.stun, knock: sk.knock, ...ps() });
           }
         });
         break;
       }
       case 'aoe': {
-        const ice = !!sk.freeze;
-        const g = this.add.graphics().setDepth(7);
-        const col = ice ? 0x80deea : 0xff7043;
-        let t = 0;
-        this.time.addEvent({ delay: 16, repeat: 20, callback: () => {
-          t++; g.clear();
-          g.fillStyle(col, 0.35 * (1 - t / 21)).fillCircle(pl.x, pl.y, sk.radius * (t / 21));
-          g.lineStyle(4, ice ? 0xe0f7fa : 0xffd180, 1 - t / 21).strokeCircle(pl.x, pl.y, sk.radius * (t / 21));
-          if (t >= 21) g.destroy();
-        } });
+        this.sfx?.('aoe', id, sk, pl.x, pl.y, sk.radius, pl.body.bottom);
         this.cameras.main.shake(150, 0.006);
         this.hitCircle(pl.x, pl.y, sk.radius, pw, fx({ ...(sk.chain ? { chain: pw * sk.chain, chainRadius: 150, chainBudget: { n: 6 } } : {}), sk: 1 }));
         if (sk.heal) this.skillHeal(sk.heal);
@@ -559,7 +546,7 @@ WorldScene.mix(class WorldSkills {
           App.mp = Math.min(App.stats.maxMp, App.mp + m);
           this.floatText(pl.x, pl.y - 46, '+' + m, '#64b5f6', 14);
         }
-        this.ringFx(pl.x, pl.y, 0xb2ff59);
+        this.sfx?.('heal', id, sk);
         break;
       }
       case 'sword_fall': {
@@ -567,30 +554,29 @@ WorldScene.mix(class WorldSkills {
         const offs = [140, 270, 400].slice(0, sk.count);
         offs.forEach((o, k) => this.time.delayedCall(k * 220, () => {
           const x = Phaser.Math.Clamp(pl.x + f * o, 30, this.worldW - 30);
-          this.telegraph(x, gy, sk.radius, 0xffd54f, 300);
-          const sw = this.add.image(x, gy - 420, 'fx_bigsword').setOrigin(0.5, 1).setDepth(8).setAlpha(0.95);
-          this.tweens.add({ targets: sw, y: gy + 20, duration: 300, ease: 'Quad.in', onComplete: () => {
+          // Hình ảnh (cảnh báo + vật rơi + tiếp đất) do skillfx.js vẽ; thời điểm trúng đòn ở đây
+          this.sfx?.('fall', id, sk, x, gy, 300);
+          this.time.delayedCall(300, () => {
+            if (!this.sys || !this.sys.isActive()) return;
             this.cameras.main.shake(200, 0.012);
-            this.ringFx(x, gy - 10, 0xffd54f, 3);
             this.hitCircle(x, gy - 30, sk.radius, pw, fx({ knock: sk.knock || 300, sk: 1 }));
-            this.tweens.add({ targets: sw, alpha: 0, duration: 500, delay: 250, onComplete: () => sw.destroy() });
-          } });
+          });
         }));
         break;
       }
       case 'arrow_rain': {
         const gy = pl.body.bottom;
         const cx = Phaser.Math.Clamp(pl.x + f * (sk.width / 2 + 30), 30, this.worldW - 30);
-        this.telegraph(cx, gy, sk.width / 2, 0x6ff0a6, 1300);
+        this.sfx?.('arrowZone', id, sk, cx, gy, sk.width / 2, 1300);
         const top = this.cameras.main.worldView.y - 40;
         for (let i = 0; i < sk.arrows; i++) {
           this.time.delayedCall(150 + i * (1200 / sk.arrows), () => {
             const x = cx + Phaser.Math.Between(-sk.width / 2, sk.width / 2);
-            const a = this.add.image(x, top, 'fx_arrow_down').setDepth(8);
-            this.tweens.add({ targets: a, y: gy - 16, duration: 260, ease: 'Quad.in', onComplete: () => {
+            this.sfx?.('arrow', id, sk, x, top, gy, 260);
+            this.time.delayedCall(260, () => {
+              if (!this.sys || !this.sys.isActive()) return;
               this.hitBox(x, gy - 30, 46, 90, pw, fx({ sk: 1 }));
-              this.tweens.add({ targets: a, alpha: 0, duration: 300, onComplete: () => a.destroy() });
-            } });
+            });
           });
         }
         break;
@@ -600,16 +586,13 @@ WorldScene.mix(class WorldSkills {
         for (let k = 0; k < sk.count; k++) {
           this.time.delayedCall(k * 420, () => {
             const x = Phaser.Math.Clamp(pl.x + f * (170 + k * 110), 30, this.worldW - 30);
-            this.telegraph(x, gy, sk.radius, 0xff7043, 600);
-            const m = this.add.image(x - f * 260, this.cameras.main.worldView.y - 60, 'fx_meteor').setDepth(8);
-            this.tweens.add({ targets: m, x, y: gy - 20, duration: 600, ease: 'Quad.in', onComplete: () => {
-              m.destroy();
+            this.sfx?.('meteor', id, sk, x, gy, 600, k, x - f * 260, this.cameras.main.worldView.y - 60);
+            this.time.delayedCall(600, () => {
+              if (!this.sys || !this.sys.isActive()) return;
               this.cameras.main.shake(260, 0.016);
-              this.cameras.main.flash(120, 255, 140, 60);
-              this.ringFx(x, gy - 20, 0xff9d4d, 4);
               this.hitCircle(x, gy - 30, sk.radius, pw, fx({ knock: sk.knock || 260, sk: 1,
                 ...(sk.chain ? { chain: pw * sk.chain, chainRadius: 170, chainBudget: { n: 6 } } : {}) }));
-            } });
+            });
           });
         }
         // Hồi máu MỘT LẦN mỗi lần tung (không phải mỗi đợt): Vạn Linh Quy Tụ hồi 12% ở m5.
