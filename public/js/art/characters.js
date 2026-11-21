@@ -358,7 +358,7 @@
     // trưởng làng thay Hội trưởng Khải giao nhiệm vụ
     truong_lang_5: 'lao_su', truong_lang_6: 'lao_su',
     // dịch vụ ở Hiệp Hội và các làng (bảng nhiệm vụ / trạm / chợ dùng chung hình gốc)
-    bang_nv: 'bang_nv', tram: 'tram', cho: 'cho',
+    bang_nv: 'bang_nv', tram: 'tram', cho: 'cho', khu_su: 'tram',
     ha_phong: 'ha_phong', minh_triet: 'minh_triet', lu_khach: 'lu_khach',
   };
   for (let n = 2; n <= 7; n++) { NPC_LOOK['bang_nv_' + n] = 'bang_nv'; NPC_LOOK['tram_' + n] = 'tram'; NPC_LOOK['cho_' + n] = 'cho'; }

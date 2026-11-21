@@ -8,7 +8,7 @@ WorldScene.mix(class WorldCombat {
     const bossMul = (mon.def.boss || mon.def.leader) ? 1 + (st.boss || 0) / 100 : 1;
     // Giảm giáp theo tỉ lệ: DEF / (DEF + 60 + 12 x cấp quái), tối đa 75% (xem GameData.defReduce)
     // Thần Kiếm Vĩnh Hằng: đòn đánh xuyên mọi phòng thủ của quái Hư Không (cấp 41–50)
-    const pierceFx = GameData.specialFx(App.player).pierce;
+    const pierceFx = this.playerFx().pierce;
     const pierce = !!pierceFx && mon.def.level >= (pierceFx.minLevel || 1) && mon.def.level <= (pierceFx.maxLevel || 999);
     let dmg = st.atk * mult * (1 + bt.atk) * bossMul * (pierce ? 1 : 1 - GameData.defReduce(mon.def.def, mon.def.level));
     dmg = Math.max(1, dmg) * Phaser.Math.FloatBetween(0.9, 1.1);
@@ -25,6 +25,8 @@ WorldScene.mix(class WorldCombat {
     const w = GameData.WEAPON_TYPES[App.stats.wtype];
     const fast = 1 / (1 + this.buffTotals(time).speed);
     if (time < this.cooldowns.atk) return;
+    // Đang chỉ định đồ rơi: nút Đánh dùng để nhặt
+    if (this.attackPicksLoot(time)) return;
     const sta = this.attackStaminaCost();
     if (!this.canSpendStamina(sta)) { this.cooldowns.atk = time + 250; return; }
     this.spendStamina(sta);
@@ -34,13 +36,14 @@ WorldScene.mix(class WorldCombat {
     Sound.play(w.style === 'melee' ? 'swing' : 'shoot');
     if (w.style === 'melee') this.attackLunge();
     const pl = this.player;
+    const tm = this.targetMob();   // quái đang chỉ định (nếu có)
     if (w.style === 'melee') {
       this.slashFx(pl.x + this.facing * 28, pl.y);
-      this.hitBox(pl.x + this.facing * w.range / 2, pl.y, w.range, 60, w.mult, { basic: true });
+      this.hitBox(pl.x + this.facing * w.range / 2, pl.y, w.range, 60, w.mult, { basic: true, only: tm });
     } else if (w.style === 'projectile') {
-      this.shoot({ key: w.proj || 'proj_arrow', speed: w.speed || 720, range: w.range, mult: w.mult, basic: true });
+      this.shoot({ key: w.proj || 'proj_arrow', speed: w.speed || 720, range: w.range, mult: w.mult, basic: true, angle: this.targetAngle() });
     } else {
-      this.shoot({ key: 'proj_orb', speed: 460, range: w.range, mult: w.mult, pierce: true, knock: 160, basic: true });
+      this.shoot({ key: 'proj_orb', speed: 460, range: w.range, mult: w.mult, pierce: true, knock: 160, basic: true, angle: this.targetAngle() });
     }
   }
 
@@ -65,8 +68,11 @@ WorldScene.mix(class WorldCombat {
   hitBox(cx, cy, w, h, mult, extra = {}) {
     const rect = new Phaser.Geom.Rectangle(cx - w / 2, cy - h / 2, w, h);
     let hit = 0;
+    // Có quái đang chỉ định nằm trong vùng chém → chỉ trúng đúng con đó (không thì chém như thường)
+    const only = extra.only && extra.only.alive && Phaser.Geom.Intersects.RectangleToRectangle(rect, this.mBounds(extra.only)) ? extra.only : null;
+    if ('only' in extra) { extra = { ...extra }; delete extra.only; }
     for (const m of this.monsters) {
-      if (!m.alive) continue;
+      if (!m.alive || (only && m !== only)) continue;
       if (Phaser.Geom.Intersects.RectangleToRectangle(rect, this.mBounds(m))) { this.damageMonster(m, mult, extra); hit++; }
     }
     return hit;
@@ -90,6 +96,8 @@ WorldScene.mix(class WorldCombat {
     p.vx = Math.cos(angle) * o.speed * this.facing;
     p.vy = Math.sin(angle) * o.speed;
     p.dist = 0; p.o = o; p.hitSet = new Set();
+    // Đạn đơn mục tiêu bay vào đúng quái đang chỉ định, bỏ qua quái khác chắn đường (xuyên / lan thì trúng hết như cũ)
+    if (!o.pierce && this.targetMob()) p.focus = this.targetMob();
     this.projectiles.add(p);
   }
 
@@ -103,7 +111,8 @@ WorldScene.mix(class WorldCombat {
       if (p.dist > p.o.range || this.isSolid(r, c)) { this.fadeProjectile(p); continue; }
       const b = p.getBounds();
       for (const m of this.monsters) {
-        if (!m.alive || p.hitSet.has(m) || Math.abs(m.sprite.x - p.x) > 350) continue;   // quái xa: không cần tính khung va chạm
+        if (!m.alive || p.hitSet.has(m) || Math.abs(m.sprite.x - p.x) > 350) continue;
+        if (p.focus && p.focus.alive && m !== p.focus) continue;   // quái xa: không cần tính khung va chạm
         if (Phaser.Geom.Intersects.RectangleToRectangle(b, this.mBounds(m))) {
           p.hitSet.add(m);
           this.damageMonster(m, p.o.mult, { slow: p.o.slow, freeze: p.o.freeze, knock: p.o.knock, dir: Math.sign(p.vx), basic: p.o.basic, shred: p.o.shred });
@@ -130,6 +139,7 @@ WorldScene.mix(class WorldCombat {
       }
     }
     m.lastHitSource = extra.pet ? 'pet' : extra.shadow ? 'shadow' : 'player';
+    if (!extra.pet && !extra.shadow && !extra.reflect && !extra.isChain) { this.lastHitMob = m; this.lastHitAt = now; }   // thú / bóng ma đánh theo quái này
     let { dmg, crit } = extra.reflect ? { dmg: extra.reflect, crit: false } : extra.shadow
       ? { dmg: Math.max(1, Math.round((extra.shadowAtk || GameData.calcStats(App.player).atk * 0.13) * mult * (1 - GameData.defReduce(m.def.def, m.def.level)))), crit: false }
       : extra.pet
@@ -139,7 +149,7 @@ WorldScene.mix(class WorldCombat {
     // Ấn (trang bị đặc biệt) — Ấn Sát: cứ n đòn đánh trúng thì đòn thứ n gây thêm sát thương.
     // Đếm riêng theo từng mục tiêu (m.anCount), đổi mục tiêu thì đếm lại từ đầu.
     // Bỏ qua đòn phản sát thương / dây chuyền / thú / bóng ma: chỉ đếm đòn của người chơi.
-    const anFx = GameData.specialFx(App.player).everyNth;
+    const anFx = this.playerFx().everyNth;
     if (anFx && !extra.reflect && !extra.isChain && !extra.pet && !extra.shadow) {
       m.anCount = (m.anCount || 0) + 1;
       if (m.anCount >= (anFx.n || 5)) {
@@ -153,13 +163,13 @@ WorldScene.mix(class WorldCombat {
     if (extra.shred) { m.shred = extra.shred; m.shredUntil = now + 6000; }
     // Bộ Băng Long 10 món — Đóng Băng: đòn đánh của người chơi có cơ hội đóng băng quái.
     // Chỉ đòn của người chơi (không tính phản sát thương / dây chuyền / thú / bóng ma) để không bị đóng băng vô hạn.
-    const freezeFx = GameData.specialFx(App.player).setFreeze;
+    const freezeFx = this.playerFx().setFreeze;
     if (freezeFx && !extra.reflect && !extra.isChain && !extra.pet && !extra.shadow && !extra.freeze && !m.def.passive
         && Math.random() < (freezeFx.chance || 0)) {
       extra.freeze = freezeFx.dur || 2;
       this.floatText(m.sprite.x, this.monsterTop(m) - 40, '❄ Đóng Băng', '#80d8ff', 14);
     }
-    if (!m.net) { m.hp -= dmg; m.aggro = true; }
+    if (!m.net) { m.hp -= dmg; m.aggro = true; m.barUntil = now + 4000; }
     if (!extra.pet && App.stats.lifesteal && !m.def.passive && !this.dead) {
       App.hp = Math.min(App.stats.maxHp, App.hp + dmg * App.stats.lifesteal / 100);
     }
@@ -171,6 +181,8 @@ WorldScene.mix(class WorldCombat {
     // Quái do server quản lý: gửi đòn lên server, máu và hiệu ứng trúng đòn tới theo gói `mhit` (xem onMobNet)
     if (m.net) {
       const sp = m.sprite;
+      // Đòn của thú / bóng ma / linh thú: gom 0,5 giây thành một gói mỗi quái (xem flushAssistHits)
+      if ((extra.pet || extra.shadow) && !extra.chain) { this.queueAssistHit(m, dmg, extra); return; }
       Realtime.send({
         t: 'hit', u: m.uid, d: dmg, c: crit ? 1 : 0, src: m.lastHitSource, dir: extra.dir || Math.sign(sp.x - this.player.x) || 1,
         slow: extra.slow || 0, freeze: extra.freeze || 0, stun: extra.stun || 0, knock: extra.knock || 90,
@@ -220,6 +232,36 @@ WorldScene.mix(class WorldCombat {
     else this.drawMonsterBar(m);
   }
 
+  // Gom đòn của đồ phụ (thú, linh thú, bóng ma): trước đây MỖI đòn là một gói lên server, một gói phát lại, một chữ nổi, tia lửa, âm thanh
+  // (7 bóng ma + vài thú ≈ 10 đòn/giây). Giờ mỗi 0,5 giây gửi một gói cho mỗi (quái, nguồn) với TỔNG sát thương.
+  // Gói được cắt thành từng phần không vượt 7 × ATK người chơi để không chạm trần sát thương một đòn của server (ATK × 8 + 50).
+  queueAssistHit(m, dmg, extra) {
+    const map = this.assistHits || (this.assistHits = new Map());
+    const src = extra.pet ? 'pet' : 'shadow', key = m.uid + '|' + src;
+    const e = map.get(key);
+    if (e) { e.dmg += dmg; e.slow = Math.max(e.slow, extra.slow || 0); e.dir = extra.dir || e.dir; }
+    else map.set(key, { m, src, dmg, slow: extra.slow || 0, dir: extra.dir || 1 });
+    if (!this.assistTimer) this.assistTimer = this.time.delayedCall(500, () => this.flushAssistHits());
+  }
+
+  flushAssistHits() {
+    this.assistTimer = null;
+    const map = this.assistHits;
+    if (!map || !map.size) return;
+    const chunk = Math.max(30, (App.stats.atk || 30) * 7);
+    for (const e of map.values()) {
+      if (!e.m.alive) continue;
+      let left = Math.round(e.dmg), first = true;
+      while (left >= 1) {
+        const d = Math.min(left, chunk);
+        left -= d;
+        Realtime.send({ t: 'hit', u: e.m.uid, d, c: 0, src: e.src, dir: e.dir, slow: first ? e.slow : 0, freeze: 0, stun: 0, knock: 90, k: 0 });
+        first = false;
+      }
+    }
+    map.clear();
+  }
+
   // Hồn Nổ Dây Chuyền: mỗi quái trúng gây thêm vụ nổ nhỏ lên quái bên cạnh (tối đa chainBudget.n lần mỗi lần dùng)
   damageChain(m, extra) {
     if (!extra.chain || extra.isChain) return;
@@ -235,7 +277,7 @@ WorldScene.mix(class WorldCombat {
   hurtPlayer(atk, dir, push = 260, mon = null) {
     const now = this.time.now;
     if (now < this.invulnUntil || this.dashing) return;
-    const fxNow = GameData.specialFx(App.player);
+    const fxNow = this.playerFx();
     // Cánh (trang bị đặc biệt) — Phiêu Diêu: né hoàn toàn một đòn, không mất máu, không mất khiên
     const dodgeFx = fxNow.dodge;
     if (dodgeFx && Math.random() < dodgeFx.chance) {
@@ -320,7 +362,7 @@ WorldScene.mix(class WorldCombat {
   // Hộ Mệnh: máu tụt xuống 0 thì cưỡng chế còn đúng 1 máu, giữ trong `dur` giây. Hồi lại sau `cd` giây.
   // Trong thời gian đó mọi đòn đánh đều không trừ máu (xem hurtPlayer). Hết hạn mà máu vẫn ≤ 0 thì gục.
   lastStandCheck(now) {
-    const fx = GameData.specialFx(App.player).undying;
+    const fx = this.playerFx().undying;
     if (!fx) return;
     if (App.hp > 0) return;
     if (now < (this.lastStandCd || 0)) return;

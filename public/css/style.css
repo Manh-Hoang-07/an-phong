@@ -859,6 +859,8 @@ body.touch .inv-detail .detail { margin-top: 0; }
 #tbtns .tb-aws  { right: 197px; bottom: 124px; }
 /* Ô kỹ năng thứ 9 (do trang bị cấp): nhỏ hơn nút kỹ năng, đặt ở góc trống trên-trái của cụm.
    Kiểm tra không đè: aws kết thúc ở bottom 174, nút này bắt đầu 176; right 236 > ult2 (kết thúc 67). */
+/* Nút chọn mục tiêu: khoảng trống phía trên nút mp (mp kết thúc ở bottom 160), liền trái nút aws (bắt đầu ở right 197). */
+#tbtns .tb-target { right: 150px; bottom: 172px; width: 46px; height: 46px; border-color: #ffd54f !important; }
 #tbtns .tb-gear { right: 236px; bottom: 176px; width: 46px; height: 46px; font-size: 19px; border-color: #b388ff !important; }
 html.compact body.touch #quest-track { width: min(190px, calc(var(--gw, 100vw) * .25)); max-width: 190px; padding: 6px 9px; font-size: 10.5px; line-height: 1.35; }
 .inv-wallet { margin: 0 0 8px; padding: 7px 10px; border: 1px solid rgba(231,182,107,.2); border-radius: 8px; color: var(--gold); font-size: 12px; font-weight: 700; }
@@ -897,7 +899,8 @@ html.compact body.touch #panel-body.inv-mode .inv-detail { max-height: none; }
 .sk.formlock .ico, .tb.formlock .ico { opacity: .45; }
 
 /* Bản đồ thế giới (chỉ xem) */
-.wm-svg { width: 100%; max-width: min(100%, 72vh); aspect-ratio: 1; height: auto; margin: 0 auto; display: block; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.wm-scroll { overflow: auto; max-height: min(62vh, 560px); border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.35); overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.wm-svg { display: block; max-width: none; border-radius: 14px; }
 .wm-node { cursor: pointer; }
 .wm-node:hover circle:first-of-type { filter: brightness(1.15); }
 .wm-lbl { fill: #3b2610; font-weight: 700; paint-order: stroke; stroke: #f3e2b8; stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
@@ -1571,3 +1574,17 @@ body.touch #party-hud { left: calc(10px + var(--sal)); top: 92px; width: 150px; 
 html.compact body.touch #party-hud { top: 70px; }
 html.compact body.touch #party-hud .pm { padding: 2px 5px; font-size: 10.5px; }
 
+
+/* Chọn khu (ui/khu.js): lưới 30 ô, mỗi ô ghi số người; ô xanh = còn chỗ, đỏ = đầy, viền sáng = khu đang đứng */
+#khu-badge { font-size: 12px; font-weight: 700; color: var(--sys); padding: 0 6px; align-self: center; text-shadow: 0 1px 2px #000; }
+.khu-list { max-height: min(60vh, 420px); overflow-y: auto; }
+.khu-list { display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+.khu-row { display: grid; grid-template-columns: 54px 1fr 42px 62px; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: rgba(6, 11, 26, 0.9); color: var(--text); cursor: pointer; text-align: left; font-size: 13px; }
+.khu-row em { font-style: normal; font-size: 11px; color: var(--muted); text-align: right; }
+.khu-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.khu-bar i { display: block; height: 100%; background: var(--ok); }
+.khu-n { font-size: 12px; text-align: right; }
+.khu-row.some { border-color: rgba(92, 242, 165, 0.5); }
+.khu-row.full { border-color: rgba(239, 83, 80, 0.6); opacity: 0.6; cursor: not-allowed; }
+.khu-row.full .khu-bar i { background: #ef5350; }
+.khu-row.cur { border-color: var(--sys); box-shadow: 0 0 10px rgba(63, 208, 255, 0.45); cursor: default; }

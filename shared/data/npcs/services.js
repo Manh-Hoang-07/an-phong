@@ -40,6 +40,10 @@
     // Chợ người chơi: một NPC đứng ở làng, không phải nút trên HUD của người chơi
     cho: { name: 'Chợ người chơi', role: 'market', color: 0x8a6a2f,
       greet: 'Chợ của thợ săn. Ai có đồ thừa thì treo lên, ai cần thì mua. Ta giữ tin 48 giờ, thu 5% khi bán được.' },
+    // Người dẫn khu: KHÔNG khai báo trong npcs của bản đồ. Client tự đặt 2 người mỗi bản đồ (bản đồ rộng 3 người), xem buildZoneNpcs
+    // trong public/js/scene/map.js. Bấm vào thì mở danh sách 30 khu (public/js/ui/khu.js).
+    khu_su: { name: 'Người dẫn khu', role: 'zone', color: 0x3fd0ff, look: 'tram',
+      greet: 'Mỗi bản đồ chia thành 30 khu, mỗi khu tối đa 20 người. Cậu muốn sang khu nào?' },
     lu_khach: { name: 'Lữ khách bí ẩn', role: 'mystic', color: 0x3a2a55,
       greet: 'Cậu cũng nghe thấy giọng nói của Hệ thống, phải không? Nó không chọn ngẫu nhiên đâu. Nếu cậu biết mật mã, ta sẽ chỉ cho cậu một con đường khác.',
       // Lữ khách đi cùng cậu qua Chương 4: ở Tân Đô I trước và sau, giữa chừng đứng ở nơi nhiệm vụ cần

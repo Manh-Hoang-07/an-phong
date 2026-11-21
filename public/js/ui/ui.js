@@ -82,7 +82,7 @@ const UI = (() => {
   const WEAPON_ICONS = Object.fromEntries(Object.entries(G.WEAPON_TYPES).map(([k, w]) => [k, w.icon]));
   const statText = (k, v) => `${G.statLabel(k)} +${v}${G.statUnit(k)}`;
   const qOf = (e) => (G.ITEMS[e.id] && G.ITEMS[e.id].slot ? (e.q || 1) : 1);
-  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', tran_bao: '💎', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙', tram: '🌀', cho: '🛒', truong_lang_5: '🧑‍💼', truong_lang_6: '🧑‍💼' };
+  const NPC_ICONS = { lao_su: '🧑‍💼', tho_ren: '⚒️', ba_thuoc: '⚗️', tap_hoa: '🏪', tran_bao: '💎', thu_kho: '📦', lu_khach: '🧙', he_thong: '💠', vy: '🗡️', bang_nv: '📋', lam_suong: '🌙', tram: '🌀', cho: '🛒', khu_su: '🧭', truong_lang_5: '🧑‍💼', truong_lang_6: '🧑‍💼' };
   // NPC dịch vụ của từng làng (tho_ren_3, bang_nv_5...) dùng biểu tượng của NPC gốc
   for (const id in G.NPCS) {
     if (NPC_ICONS[id]) continue;
@@ -150,6 +150,7 @@ const UI = (() => {
   // Chỉ ghi vào DOM khi nội dung thật sự đổi (đỡ vẽ lại thanh kỹ năng mỗi lần server trả lời)
   function setHtml(el, html) { if (el._html !== html) { el._html = html; el.innerHTML = html; } }
 
+  let potCache = null;
   function refresh() {
     const p = App.player;
     if (!p) return;
@@ -239,9 +240,10 @@ const UI = (() => {
       } else { setHtml(ico, String(G.isUltSlot(i) ? '★' : i + 1)); el.classList.add('empty'); }
     }
     const cnt = (ids) => p.bag.filter(e => ids.includes(e.id)).reduce((s, e) => s + e.qty, 0);
-    const potIds = (isMp) => Object.keys(G.ITEMS).filter(i => G.ITEMS[i].kind === 'potion' && (isMp ? G.ITEMS[i].mp : (G.ITEMS[i].hp || G.ITEMS[i].hpPct)));
-    $('pot-hp').textContent = $('tpot-hp').textContent = cnt(potIds(false));
-    $('pot-mp').textContent = $('tpot-mp').textContent = cnt(potIds(true));
+    // Bảng vật phẩm cố định: lập danh sách bình một lần, không quét lại mỗi lần vẽ giao diện
+    if (!potCache) potCache = [false, true].map(isMp => Object.keys(G.ITEMS).filter(i => G.ITEMS[i].kind === 'potion' && (isMp ? G.ITEMS[i].mp : (G.ITEMS[i].hp || G.ITEMS[i].hpPct))));
+    $('pot-hp').textContent = $('tpot-hp').textContent = cnt(potCache[0]);
+    $('pot-mp').textContent = $('tpot-mp').textContent = cnt(potCache[1]);
 
     renderQuestTrack();
     if (App.scene && App.scene.player) { App.scene.updateWeaponLook(); App.scene.refreshNpcMarks(); }

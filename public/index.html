@@ -70,6 +70,7 @@
           <!-- Thanh hiệu ứng: cùng hàng với nút bản đồ / chat / menu; màn hẹp thì xuống hàng dưới, không đè thanh máu -->
           <div id="buffbar" class="hidden"></div>
           <div class="menu">
+            <span id="khu-badge" title="Khu hiện tại (gặp Người dẫn khu để đổi khu)">K1</span>
             <button id="btn-map" title="Bản đồ (M)">🗺️</button>
             <button id="btn-chat" title="Chat (phím /)">💬</button>
             <button id="btn-menu" title="Menu (I / C / K / L)">☰<b id="h-points" class="badge hidden"></b></button>
@@ -124,6 +125,7 @@
         <button data-t="gear" class="tb tb-skill tb-gear hidden" title="Kỹ năng do trang bị cấp"><span class="ico"></span><div class="cd"></div></button>
         <button data-t="form" class="tb tb-skill tb-form hidden"><span class="ico">⚡<small>Biến</small></span></button>
         <button data-t="aws" class="tb tb-skill tb-aws hidden" title="Đổi vòng qua các Ấn đã mở"><span class="ico">⇄<small>Đổi ấn</small></span></button>
+        <button data-t="target" class="tb tb-target" aria-label="Chọn mục tiêu" title="Chọn mục tiêu (H)"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M4 6h16l-8 13z" fill="#ffd54f" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
         <button data-t="hp" class="tb tb-pot tb-hp">🧪<b id="tpot-hp"></b></button>
         <button data-t="mp" class="tb tb-pot tb-mp">💧<b id="tpot-mp"></b></button>
       </div>
@@ -138,6 +140,7 @@
     </div>
     <div id="tooltip" class="hidden"></div>
     <div id="player-menu" class="swin hidden"></div>
+    <div id="khu-win" class="swin hidden"></div>
     <div id="trade-win" class="swin hidden"></div>
     <div id="market-win" class="swin hidden"></div>
     <div id="banner" class="hidden"></div>
@@ -286,6 +289,7 @@
   <script src="/shared/logic/player.js"></script>
   <script src="/shared/logic/quests.js"></script>
   <script src="/shared/logic/shop.js"></script>
+  <script src="/shared/logic/zone-npcs.js"></script>
   <!-- Lõi: âm thanh, kết nối server -->
   <script src="/js/core/sound.js"></script>
   <script src="/js/core/net.js"></script>
@@ -326,6 +330,7 @@
   <script src="/js/ui/actions.js"></script>
   <script src="/js/ui/chat.js"></script>
   <script src="/js/ui/social.js"></script>
+  <script src="/js/ui/khu.js"></script>
   <!-- Cảnh chơi: khung WorldScene + các phần gắn thêm method -->
   <script src="/js/scene/world.js"></script>
   <script src="/js/scene/map_props_data.js"></script>
@@ -338,6 +343,7 @@
   <script src="/js/scene/boss.js"></script>
   <script src="/js/scene/skills.js"></script>
   <script src="/js/scene/loot.js"></script>
+  <script src="/js/scene/target.js"></script>
   <script src="/js/scene/juice.js"></script>
   <script src="/js/scene/remote.js"></script>
   <!-- Khởi động game -->

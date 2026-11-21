@@ -370,12 +370,8 @@ WorldScene.mix(class WorldPlayer {
     const ids = this.summonedPetIds();
     this.buildCompanions();
     const statsOf = (id) => this.cachedCalc('cp_' + id, () => GameData.companionStats(App.player, id)), pets = App.player.pets || {};
-    if (time >= (this.nextPetTargetScan || 0)) {
-      const pl = this.player;
-      this.petTarget = this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive && Math.abs(m.sprite.y - pl.y) < 180 && Math.abs(m.sprite.x - pl.x) < 260)
-        .sort((a, b) => Math.abs(a.sprite.x - pl.x) - Math.abs(b.sprite.x - pl.x))[0] || null;
-      this.nextPetTargetScan = time + 220;
-    }
+    // Thú KHÔNG tự tìm quái: chỉ đánh quái người chơi đang chỉ định / vừa đánh (xem focusMob ở target.js)
+    this.petTarget = this.focusMob(time);
     ids.forEach((id, index) => {
       const c = this.companionSprites[id];
       if (c) this.updateCompanion(id, c, index, time, delta, statsOf(id), pets[id]);
@@ -568,11 +564,7 @@ WorldScene.mix(class WorldPlayer {
     const data = App.player.shadows || {}, ids = data.enabled ? (data.active || []).slice(0, GameData.SHADOW_PARTY) : [];
     if (!ids.length) return;
     const pl = this.player;
-    if (time >= (this.nextShadowScan || 0)) {
-      this.shadowTarget = this.monsters.filter(m => m.alive && m.sprite?.body?.enable && !m.def.passive && Math.abs(m.sprite.y - pl.y) < 150 && Math.abs(m.sprite.x - pl.x) < 230)
-        .sort((a, b) => Math.abs(a.sprite.x - pl.x) - Math.abs(b.sprite.x - pl.x))[0] || null;
-      this.nextShadowScan = time + 220;
-    }
+    this.shadowTarget = this.focusMob(time);
     ids.forEach((uid, index) => {
       const c = this.shadowSprites[String(uid)];
       if (!c) return;

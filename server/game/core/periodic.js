@@ -45,6 +45,9 @@ function ensureDaily(p, v) {
   const cur = by[v];
   // Danh sách rỗng (tạo lúc chưa mở bản đồ nào của vùng) thì tạo lại khi đã có bản đồ
   if (cur && cur.date === today && cur.list && cur.list.length) return cur;
+  // Bảng rỗng (vùng chưa có bản đồ / quái hợp lệ) trước đây bị dựng lại ở MỖI hành động. Giờ thử lại tối đa 30 giây một lần.
+  const nowMs = Date.now();
+  if (cur && cur.date === today && cur.list && !cur.list.length && nowMs - (EMPTY_RETRY.get(p) || {})[v] < 30000) return cur;
   const maps = regionMaps(p, v);
   const list = [];
   const mons = [...new Set(maps.flatMap(id => Object.values(G.MAPS[id].spawns)))]
@@ -60,8 +63,10 @@ function ensureDaily(p, v) {
       list.push({ type: 'boss', target: b.boss, need: 1, have: 0, claimed: false });
     } else list.push({ type: 'kill', target: pick[1] || pick[0], need: 20 + Math.floor(Math.random() * 3) * 5, have: 0, claimed: false });
   }
+  if (!list.length) { let m = EMPTY_RETRY.get(p); if (!m) EMPTY_RETRY.set(p, m = {}); m[v] = nowMs; }
   return (by[v] = { date: today, list, bonus: false });
 }
+const EMPTY_RETRY = new WeakMap();   // nhân vật → { làng: thời điểm dựng bảng rỗng gần nhất } (không lưu xuống DB)
 
 // Mọi làng người chơi đã tới đều có bảng của ngày hôm nay
 function ensureBoards(p) {

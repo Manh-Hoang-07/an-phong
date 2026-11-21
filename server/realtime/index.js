@@ -94,10 +94,19 @@ const CHAT_GAP_MS = { map: 1200, world: 8000, party: 800 };
 const WORLD_BOUND = 100000;
 const ANIMS = new Set(['idle', 'run', 'jump', 'fall', 'atk', 'hit', 'dead']);
 
-const rooms = new Map();          // mapId → Map(connId → conn)
+// KHU (kênh): mỗi bản đồ có MAX_CH khu, mỗi khu tối đa CH_CAP người. Người chơi chọn khu qua NPC "Người dẫn khu" (2 người mỗi bản đồ, rộng 3) Mỗi khu là một phòng riêng với bộ quái riêng.
+// Khoá phòng = "<mapId>#<khu>". Khu 1 dùng trạng thái quái đã lưu (máu quái giữ qua đăng xuất / restart); các khu khác bắt đầu
+// đầy máu và bị bỏ khỏi bộ nhớ sau CH_IDLE_MS khi vắng người.
+const MAX_CH = 30;
+const CH_CAP = 20;
+const CH_IDLE_MS = 120000;
+const CH_SWITCH_GAP_MS = 3000;
+const roomKey = (mapId, ch) => mapId + '#' + ch;
+const rooms = new Map();          // khoá phòng → Map(connId → conn)
 const byUser = new Map();         // userId → conn
 const byId = new Map();           // connId → conn
-const worlds = new Map();         // mapId → World (quái của bản đồ đang có người)
+const worlds = new Map();         // khoá phòng → World (quái của khu)
+const outbox = new Map();         // khoá phòng → [gói quái chờ gửi]: mỗi nhịp 50ms gộp thành MỘT tin / phòng (xem flushOutbox)
 let mobTimer = null;
 let nextId = 1;
 let wss = null;
@@ -175,36 +184,77 @@ function broadcast(mapId, obj, exceptId) {
 }
 
 function leaveRoom(conn) {
-  if (!conn.map) return;
-  const r = rooms.get(conn.map);
+  if (!conn.room) return;
+  const r = rooms.get(conn.room);
   if (r) {
     r.delete(conn.id);
-    if (!r.size) rooms.delete(conn.map);
-    else broadcast(conn.map, { t: 'leave', id: conn.id });
+    if (!r.size) rooms.delete(conn.room);
+    else broadcast(conn.room, { t: 'leave', id: conn.id });
   }
   conn.map = null;
+  conn.room = null;
 }
 
-function enterRoom(conn, mapId) {
+const countOf = (mapId, ch) => { const r = rooms.get(roomKey(mapId, ch)); return r ? r.size : 0; };
+
+// Chọn khu: khu muốn vào nếu còn chỗ, không thì khu thấp nhất còn chỗ (người chơi dồn vào khu đầu cho đông vui),
+// hết chỗ cả thì khu vắng nhất.
+function pickChannel(mapId, want) {
+  if (want >= 1 && want <= MAX_CH && countOf(mapId, want) < CH_CAP) return want;
+  let best = 1, bn = Infinity;
+  for (let ch = 1; ch <= MAX_CH; ch++) {
+    const n = countOf(mapId, ch);
+    if (n < CH_CAP) return ch;
+    if (n < bn) { bn = n; best = ch; }
+  }
+  return best;
+}
+
+function enterRoom(conn, mapId, want) {
+  // Vào lại đúng bản đồ đang đứng (hồi sinh, dựng lại cảnh) thì giữ nguyên khu
+  if (want == null && conn.map === mapId) want = conn.ch;
   leaveRoom(conn);
-  conn.map = mapId;
+  const ch = pickChannel(mapId, want);
+  const key = roomKey(mapId, ch);
+  conn.map = mapId; conn.ch = ch; conn.room = key;
   conn.dirty = false;
-  const r = room(mapId);
-  send(conn, { t: 'room', map: mapId, list: [...r.values()].map(stateOf) });
-  const world = worldOf(mapId);
+  const r = room(key);
+  send(conn, { t: 'room', map: mapId, ch, list: [...r.values()].map(stateOf) });
+  const world = worldOf(mapId, ch);
   if (world) send(conn, { t: 'mobs', map: mapId, list: world.fullList() });
   r.set(conn.id, conn);
-  broadcast(mapId, { t: 'join', p: stateOf(conn) }, conn.id);
+  broadcast(key, { t: 'join', p: stateOf(conn) }, conn.id);
+}
+
+// Danh sách đủ MAX_CH khu của bản đồ đang đứng: [số khu, số người]
+function sendChannels(conn) {
+  if (!conn.map) return;
+  const list = [];
+  for (let ch = 1; ch <= MAX_CH; ch++) list.push([ch, countOf(conn.map, ch)]);
+  send(conn, { t: 'chlist', map: conn.map, cur: conn.ch, cap: CH_CAP, max: MAX_CH, list });
+}
+
+function onChannel(conn, m) {
+  const n = Number(m.n) | 0;
+  if (!conn.map || n < 1 || n > MAX_CH || n === conn.ch) return;
+  const now = Date.now();
+  if (now - (conn.chAt || 0) < CH_SWITCH_GAP_MS) { send(conn, { t: 'sys', text: 'Đổi khu quá nhanh, chờ vài giây.' }); return; }
+  if (countOf(conn.map, n) >= CH_CAP) { send(conn, { t: 'sys', text: `Khu ${n} đã đầy (${CH_CAP}/${CH_CAP}).` }); sendChannels(conn); return; }
+  conn.chAt = now;
+  trade.onMapChange(conn);
+  enterRoom(conn, conn.map, n);
+  send(conn, { t: 'sys', text: `Đã chuyển sang Khu ${conn.ch}.` });
 }
 
 // ---- Quái do server quản lý (server/realtime/mobs.js)
 // Thế giới quái của bản đồ KHÔNG bị xoá khi bản đồ vắng người: máu quái phải giữ nguyên dù người chơi
 // đăng xuất hay đổi bản đồ. Bản đồ vắng người thì chỉ ngừng chạy AI (xem mobTick).
-function worldOf(mapId) {
-  let w = worlds.get(mapId);
+function worldOf(mapId, ch = 1) {
+  const key = roomKey(mapId, ch);
+  let w = worlds.get(key);
   if (!w) {
     w = new World(mapId, {
-      emit: (obj) => broadcast(mapId, obj),
+      emit: (obj) => { const q = outbox.get(key); if (q) q.push(obj); else outbox.set(key, [obj]); },
       // Người kết liễu và người góp từ 10% máu trở lên đều được phiếu nhận thưởng (đổi ở hành động kills)
       kill: (mob, killerId, contrib, share, kid) => {
         const assist = [];
@@ -213,16 +263,16 @@ function worldOf(mapId) {
         for (const [cid, dmg] of contrib) {
           const c = byId.get(cid);
           // Phiếu chỉ cấp cho người còn ở trong map lúc quái chết (người đã rời / vừa về làng sẽ không nhận được gói mdie để đổi thưởng)
-          if (!c || c.map !== mapId || (cid !== killerId && dmg < mob.maxHp * share)) continue;
+          if (!c || c.room !== key || (cid !== killerId && dmg < mob.maxHp * share)) continue;
           const src = mob.contribSrc && mob.contribSrc.get(cid);
           // Người tự hạ được cộng thêm kinh nghiệm theo số đồng đội có mặt
-          claims.add(c.userId, kid, { monster: mob.id, x, y, source: src === 'pet' || src === 'shadow' ? src : 'player', bonus: party.bonusFor(c.userId, mapId, mob.x) });
+          claims.add(c.userId, kid, { monster: mob.id, x, y, source: src === 'pet' || src === 'shadow' ? src : 'player', bonus: party.bonusFor(c.userId, key, mob.x) });
           rewarded.add(c.userId);
           if (cid !== killerId) assist.push(cid);
         }
         // Đồng đội đứng gần nhưng không tự đánh: nhận phần chia (kinh nghiệm + tiến độ nhiệm vụ)
         for (const u of [...rewarded]) {
-          for (const m of party.membersNear(u, mapId, mob.x)) {
+          for (const m of party.membersNear(u, key, mob.x)) {
             if (rewarded.has(m)) continue;
             const c = byUser.get(m);
             if (!c) continue;
@@ -233,34 +283,50 @@ function worldOf(mapId) {
         }
         return assist;
       },
-    }, mobstore.get(mapId));
+    }, ch === 1 ? mobstore.get(mapId) : null);
     if (!w.map) return null;
-    worlds.set(mapId, w);
+    w.ch = ch; w.key = key; w.kidPrefix = key;
+    worlds.set(key, w);
   }
   return w;
 }
 
+// Gộp mọi gói quái phát sinh trong một nhịp thành MỘT tin cho mỗi phòng. Trước đây mỗi đòn đánh là một tin gửi cho cả phòng
+// (số tin = đòn × người × người). Client mở tin 'batch' theo đúng thứ tự (public/js/core/realtime.js).
+function flushOutbox() {
+  for (const [key, list] of outbox) {
+    if (list.length === 1) broadcast(key, list[0]);
+    else if (list.length) broadcast(key, { t: 'batch', l: list });
+  }
+  outbox.clear();
+}
+
 function mobTick() {
   const now = Date.now();
-  for (const [mapId, w] of worlds) {
-    const r = rooms.get(mapId);
+  for (const [key, w] of worlds) {
+    const r = rooms.get(key);
     // Bản đồ vắng người: ngừng AI (không ai để đánh) nhưng GIỮ NGUYÊN máu quái. Quái chết vẫn hồi sinh
     // đúng giờ để lần sau vào không gặp bản đồ trống. Không có ai thì chỉ cần chạy 1 giây một lần.
     if (r && r.size) {
       const players = [];
       for (const c of r.values()) players.push({ id: c.id, x: c.x, y: c.y, dead: c.dead });
+      w.emptyAt = 0;
       w.step(now, players);
       if (w.stepCount % 2 === 0) {
         const snap = w.snapshot(now);
-        if (snap.length) broadcast(mapId, { t: 'msnap', p: snap });
+        if (snap.length) { const o = { t: 'msnap', p: snap }; const q = outbox.get(key); if (q) q.push(o); else outbox.set(key, [o]); }
       }
+    } else if (w.ch !== 1 && now - (w.emptyAt || (w.emptyAt = now)) > CH_IDLE_MS) {
+      worlds.delete(key);   // khu phụ vắng người đủ lâu: bỏ khỏi bộ nhớ (khu 1 giữ để lưu máu quái)
+      continue;
     } else if (now - (w.lastIdleAt || 0) >= 1000) {
       w.lastIdleAt = now;
       w.stepIdle(now);
     }
     // Máu / sống-chết vừa đổi: đưa vào hàng đợi ghi (gộp vài giây một lần, xem mobstore.js)
-    if (w.dirty) { w.dirty = false; mobstore.markDirty(mapId, w.serialize()); }
+    if (w.dirty) { w.dirty = false; if (w.ch === 1) mobstore.markDirty(w.mapId, w.serialize()); }
   }
+  flushOutbox();
 }
 
 // ---------------------------------------------------------------- Nhận lệnh dùng chiêu (chống spam)
@@ -311,7 +377,7 @@ function onCast(conn, m) {
 }
 
 function onHit(conn, m) {
-  const w = conn.map && worlds.get(conn.map);
+  const w = conn.room && worlds.get(conn.room);
   if (!w) return;
   const now = Date.now();
   if (conn.dead && now - conn.deadAt > 1500) return;
@@ -417,7 +483,7 @@ const num = (v) => (Number.isFinite(v) && Math.abs(v) <= WORLD_BOUND ? Math.roun
 // bùa cứu lần nữa (tối đa mỗi 180 giây). Chặn tuyệt đối thì phải cho client làm nguồn sự thật về hồi
 // chiêu, tức là mở lỗ lớn hơn — không đáng.
 async function onExec(conn, m) {
-  const w = conn.map && worlds.get(conn.map);
+  const w = conn.room && worlds.get(conn.room);
   if (!w) return;
   const now = Date.now();
   if (conn.dead && now - conn.deadAt > 1500) return;
@@ -577,12 +643,12 @@ function onChat(conn, m) {
   }
   conn.lastChat[ch] = now;
   const msg = { t: 'chat', ch, id: conn.id, name: conn.name, text };
-  if (ch === 'map') broadcast(conn.map, msg);
+  if (ch === 'map') broadcast(conn.room, msg);
   else { const text2 = JSON.stringify(msg); for (const c of byUser.values()) sendRaw(c, text2); }
 }
 
 function onWho(conn) {
-  const r = conn.map && rooms.get(conn.map);
+  const r = conn.room && rooms.get(conn.room);
   const list = r ? [...r.values()].map((c) => ({ name: c.name, lv: c.level, sc: c.school })) : [];
   send(conn, { t: 'who', map: conn.map, list, online: byUser.size });
 }
@@ -597,6 +663,8 @@ function onMessage(conn, data) {
   if (m.t === 'pos') onPos(conn, m);
   else if (m.t === 'chat') onChat(conn, m);
   else if (m.t === 'who') onWho(conn);
+  else if (m.t === 'chlist') sendChannels(conn);
+  else if (m.t === 'ch') onChannel(conn, m);
   else if (m.t === 'hit') onHit(conn, m);
   else if (m.t === 'cast') onCast(conn, m);
   else if (m.t === 'exec') onExec(conn, m).catch((e) => console.error('Đổi mạng lỗi:', e.message));
@@ -657,7 +725,7 @@ async function maintain() {
     }
     if (now - conn.lookAt >= LOOK_REFRESH_MS) {
       conn.lookAt = now;
-      if (await refreshLook(conn) && conn.map) broadcast(conn.map, { t: 'look', p: lookOf(conn) });
+      if (await refreshLook(conn) && conn.room) broadcast(conn.room, { t: 'look', p: lookOf(conn) });
     }
   }
   maintainCursor = (maintainCursor + n) % conns.length;
@@ -762,7 +830,7 @@ function close() {
 
 // Ghi hết trạng thái quái đang chờ (gọi lúc tắt server, sau close()).
 async function flushMobs() {
-  for (const [mapId, w] of worlds) if (w.dirty) { w.dirty = false; mobstore.markDirty(mapId, w.serialize()); }
+  for (const w of worlds.values()) if (w.dirty && w.ch === 1) { w.dirty = false; mobstore.markDirty(w.mapId, w.serialize()); }
   await mobstore.flush();
 }
 

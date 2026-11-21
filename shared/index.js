@@ -159,5 +159,6 @@ require('./logic/skills');
 require('./logic/player');
 require('./logic/quests');
 require('./logic/shop');
+require('./logic/zone-npcs');
 
 module.exports = require('./core');

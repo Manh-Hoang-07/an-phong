@@ -80,7 +80,10 @@ WorldScene.mix(class WorldMonsters {
     m.label.setPosition(s.x, top - 16);
     // Thanh vẽ theo toạ độ riêng của nó (gốc ở giữa, mép trên thanh) → chỉ dời vị trí mỗi khung hình,
     // chỉ vẽ lại khi tỉ lệ máu đổi (trước đây xóa và vẽ lại mỗi khung hình cho từng quái).
-    const show = m.alive && (m.hp < m.maxHp || m.def.boss || m.def.leader);
+    // Thanh máu: trùm / thủ lĩnh luôn hiện; quái thường chỉ hiện khi vừa bị đánh (4 giây) hoặc đang là mục tiêu.
+    // Trước đây quái nào đã mất máu là hiện thanh MÃI MÃI (máu quái không tự hồi) nên map đầy thanh máu.
+    const now = this.time.now;
+    const show = m.alive && (m.def.boss || m.def.leader || (m.hp < m.maxHp && (now < (m.barUntil || 0) || (this.target && this.target.ref === m))));
     const frac = show ? Math.max(0, m.hp / m.maxHp) : -1;
     if (frac !== m._barFrac) {
       m._barFrac = frac;
@@ -127,7 +130,7 @@ WorldScene.mix(class WorldMonsters {
   killMonster(m) {
     this.killFx(m);
     // Chuông Trấn Hồn (trang bị đặc biệt) — Trấn Hồn: hạ quái thì hồi % máu và năng lượng tối đa
-    const onKill = GameData.specialFx(App.player).onKill;
+    const onKill = this.playerFx().onKill;
     if (onKill && !this.dead) {
       const hpGain = Math.round(App.stats.maxHp * (onKill.hp || 0));
       const mpGain = Math.round(App.stats.maxMp * (onKill.mp || 0));
@@ -180,6 +183,20 @@ WorldScene.mix(class WorldMonsters {
     else if (fade) { m.sprite.setAlpha(0); this.tweens.add({ targets: m.sprite, alpha: 1, duration: 400 }); }
     this.drawMonsterBar(m);
     return m;
+  }
+
+  // Quái do server quản lý ở xa ngoài màn hình: ẩn, dừng hoạt ảnh, chỉ đặt thẳng vị trí server báo (không nội suy, không tô màu,
+  // không vẽ thanh máu / chữ). Trùm và thủ lĩnh luôn chạy đủ (đòn đặc biệt có thể với tới từ xa).
+  netMobOnScreen(m) {
+    const cam = this.cameras.main.worldView, s = m.sprite;
+    const on = !!(m.def.boss || m.def.leader) || (s.x > cam.x - 300 && s.x < cam.right + 300 && s.y > cam.y - 300 && s.y < cam.bottom + 300);
+    if (on !== (m.onScreen !== false)) {
+      m.onScreen = on;
+      s.setVisible(on); m.label.setVisible(on); m.bar.setVisible(on);
+      m.labelOn = undefined;   // updateNetMonster tính lại có hiện chữ tên không
+      if (on) { s.anims.resume(); s.setPosition(m.tx, m.ty); } else s.anims.pause();
+    }
+    return on;
   }
 
   netState(st) { return st === 1 ? 'windup' : st === 2 ? 'lunge' : 'move'; }
@@ -235,7 +252,15 @@ WorldScene.mix(class WorldMonsters {
   // Đòn đánh (của mình hoặc người khác) đã được server tính: cập nhật máu và hiệu ứng
   netHitFx(m, ev) {
     m.hp = ev.hp;
+    m.barUntil = this.time.now + 4000;
     const s = m.sprite, crit = !!ev.c, mine = ev.by === Realtime.myId;
+    // Đòn của NGƯỜI KHÁC: chỉ vẽ chữ / tia lửa khi quái đang trong màn hình, và tối đa 8 lần mỗi giây (đông người thì
+    // mỗi đòn của mọi người đều tạo chữ nổi + hạt + âm thanh trên máy bạn). Máu quái vẫn cập nhật đủ.
+    if (!mine) {
+      const now = this.time.now;
+      if (now - (this.otherFxAt || 0) > 1000) { this.otherFxAt = now; this.otherFxN = 0; }
+      if (m.onScreen === false || ++this.otherFxN > 8) { this.drawMonsterBar(m); return; }
+    }
     this.floatText(s.x + Phaser.Math.Between(-8, 8), this.monsterTop(m) - 4, (crit ? '💥' : '') + ev.d, crit ? '#ffd740' : mine ? '#ffffff' : '#b0bec5', crit ? 20 : 15);
     m.flashUntil = this.time.now + 80;
     this.hitFx(s.x, s.body.center.y, crit, ev.dir || 1);
@@ -272,6 +297,8 @@ WorldScene.mix(class WorldMonsters {
     if (m.sheet) s.play(`mb_${m.sheet}_idle`);
     s.body.enable = true; s.body.reset(info.x, info.y);
     m.label.setVisible(true);
+    m.labelOn = undefined;
+    m.onScreen = true;   // khung kế tiếp netMobOnScreen tính lại (đang ở xa thì ẩn ngay)
     this.tweens.add({ targets: s, alpha: 1, duration: 400 });
     this.drawMonsterBar(m);
   }
@@ -313,6 +340,9 @@ WorldScene.mix(class WorldMonsters {
     else if (time < m.slowUntil) s.setTint(0x9fc5e8);
     else this.baseTint(m);
     if (m.sheet) this.mobAnim(m, time);
+    // Chữ tên quái thường chỉ hiện khi ở gần người chơi (chữ là đối tượng vẽ riêng cho từng quái); trùm / thủ lĩnh luôn hiện
+    const showLabel = !!(d.boss || d.leader) || (Math.abs(s.x - pl.x) < 420 && Math.abs(s.y - pl.y) < 260);
+    if (m.labelOn !== showLabel) { m.labelOn = showLabel; m.label.setVisible(showLabel); }
     if (m.wave) this.updateBossWave(m, time);
     // Đòn lao tới: tự kiểm tra trên máy mình, trúng mình thì mình nhận sát thương
     if (m.state === 'lunge' && !m.lungeHit && !this.dead && d.atk > 0) {
@@ -363,7 +393,7 @@ WorldScene.mix(class WorldMonsters {
     const dx = pl.x - s.x, dy = pl.y - (d.fly ? s.y : s.body.center.y);
     const dist = Math.hypot(dx, dy);
     // Kiếm Thượng Băng Sương: quái lại gần (trong 170) bị làm chậm
-    const slowFx = GameData.specialFx(App.player).slowAura;
+    const slowFx = this.playerFx().slowAura;
     if (slowFx && !this.dead && dist < (slowFx.range || 170)) m.slowUntil = Math.max(m.slowUntil || 0, time + 400);
     if (!this.dead && dist < (d.boss || d.leader ? 380 : 220) && Math.abs(dy) < 160) m.aggro = true;
     if (dist > 600 || this.dead) { m.aggro = false; if (m.state !== 'move') this.endAttack(m, time); }

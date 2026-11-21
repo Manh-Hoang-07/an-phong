@@ -81,7 +81,7 @@ function removeMember(party, userId, why) {
 function invite(conn, targetId) {
   const t = ctx.byId.get(Number(targetId));
   if (!t || t === conn) return sys(conn, 'Không tìm thấy người chơi.');
-  if (t.map !== conn.map || !conn.map) return sys(conn, 'Người đó không ở cùng bản đồ.');
+  if (t.room !== conn.room || !conn.room) return sys(conn, 'Người đó không ở cùng bản đồ / khu.');
   if (conn.dead || t.dead) return sys(conn, 'Không mời được lúc này.');
   const mine = partyById(conn);
   if (mine && mine.leader !== conn.userId) return sys(conn, 'Chỉ trưởng đội mới mời được.');
@@ -160,9 +160,9 @@ function chat(conn, text) {
 }
 
 // ---- Chia thưởng khi hạ quái
-const present = (userId, mapId, x) => {
+const present = (userId, roomKey, x) => {
   const c = connOf(userId);
-  return !!c && c.map === mapId && !c.dead && Math.abs(c.x - x) <= SHARE_RANGE;
+  return !!c && c.room === roomKey && !c.dead && Math.abs(c.x - x) <= SHARE_RANGE;
 };
 
 // Đồng đội (cùng đội với userId) đang ở gần chỗ quái chết, gồm cả chính userId nếu ở gần

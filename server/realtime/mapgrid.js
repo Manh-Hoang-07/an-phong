@@ -72,12 +72,18 @@ function build(meta, grid) {
     const pos = findChar(ch);
     if (pos) portals.push({ x: pos.c * T + T / 2 });
   }
+  // Người dẫn khu (client dựng ở đúng các chỗ này, cùng hàm G.zoneNpcSpots): coi như cổng để quái không đi / đuổi tới sát.
+  const used = portals.map((p) => p.x);
+  for (const ch of Object.keys(meta.npcs || {})) { const pos = findChar(ch); if (pos) used.push(pos.c * T + T / 2); }
+  const spawnX = [];
+  for (const ch in meta.spawns || {}) for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === ch) spawnX.push(c * T + T / 2);
+  for (const s of G.zoneNpcSpots({ cols, rows, cell, isStand, used, spawnX, T })) portals.push({ x: s.x, zone: true });
   // Chỗ xuất hiện quái, theo đúng thứ tự dựng của client (từng ký hiệu, quét từng hàng)
   const spawns = [];
   for (const ch in meta.spawns || {}) {
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === ch) spawns.push({ id: meta.spawns[ch], r, c });
   }
-  return { rows, cols, worldW: cols * T, worldH, groundY, spanAt, portals, spawns, findChar, isSolid };
+  return { rows, cols, worldW: cols * T, worldH, groundY, spanAt, portals, spawns, findChar, isSolid, isStand, cell };
 }
 
 module.exports = { load, T };

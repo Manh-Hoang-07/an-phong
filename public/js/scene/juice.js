@@ -10,8 +10,9 @@
  *  - Quái ở xa ngoài màn hình tạm dừng xử lý và không vẽ.
  */
 const Quality = (() => {
-  let mode = 'high';
-  try { mode = localStorage.getItem('tt_quality') || 'high'; } catch { /* bỏ qua */ }
+  // Mặc định 'auto': máy chậm thì tự giảm hiệu ứng + độ phân giải (trước đây mặc định 'high' nên cơ chế tự giảm KHÔNG BAO GIỜ chạy)
+  let mode = 'auto';
+  try { mode = localStorage.getItem('tt_quality') || 'auto'; } catch { /* bỏ qua */ }
   let autoLow = false;
   return {
     get mode() { return mode; },
@@ -41,7 +42,8 @@ const View = {
     // Vẽ đúng điểm ảnh thật của thiết bị: 1 điểm ảnh canvas = 1 điểm ảnh màn hình, không phóng rồi thu lại.
     // Trước đây chế độ Cao nhân thêm 1.5 (supersample) → canvas 2,25 lần số điểm ảnh mà hình không nét hơn
     // (pixel art phóng to rồi thu lại chỉ thêm bước nội suy), chỉ tốn GPU. Trần vẫn giữ để máy Retina không vỡ bộ nhớ.
-    const cap = Quality.low ? 1.5 : Quality.mode === 'high' ? 3.5 : 2.5;
+    // Trần thấp hơn trước (3,5 → 2,5): màn hình dpi cao (2–3×) vẽ gấp nhiều lần số điểm ảnh mà pixel art không nét hơn.
+    const cap = Quality.low ? 1.5 : Quality.mode === 'high' ? 2.5 : 2;
     let k = Math.max(0.75, Math.min(cap, cssH * dpr / this.H));
     // Điện thoại (nhất là iPhone, màn 3×): khung WebGL quá lớn (vd. iPhone 12 Pro Max ra ~4100×1900 ≈ 7,7 triệu điểm)
     // làm Safari hết bộ nhớ → tab bị tải lại / trắng màn hình, trong khi máy tính (dpr thấp) vẫn bình thường.
@@ -88,7 +90,7 @@ const Juice = {
     // Cổng phát sáng (chỉ 1–2 cổng mỗi bản đồ nên không tốn)
     if (!low) for (const pt of this.portals) this.glowObj(pt.img, 0x3fd0ff, 4);
     // Kho chữ nổi dùng lại
-    this.textPool = [];
+    this.textPools = new Map();
     // Theo dõi tốc độ khung hình để tự giảm hiệu ứng
     this.fpsSamples = [];
     this.fpsCheckAt = this.time.now + 4000;
@@ -268,18 +270,26 @@ const Juice = {
 
   // Chữ nổi (số sát thương, kinh nghiệm...) lấy từ kho dùng lại
   floatText(x, y, text, color = '#fff', size = 14) {
-    let t = this.textPool.pop();
+    // Mỗi lần đổi chữ / màu / cỡ chữ, Phaser vẽ lại cả khung chữ lên canvas rồi tải lại texture lên GPU. Trước đây mỗi con số
+    // sát thương gọi setText + setColor + setFontSize = 3 lần vẽ lại (ở độ phân giải chữ cao). Giờ kho chữ chia theo (màu, cỡ):
+    // lấy chữ đúng kiểu từ kho rồi chỉ setText → 1 lần vẽ.
+    const key = color + '|' + size;
+    const pools = this.textPools || (this.textPools = new Map());
+    let pool = pools.get(key);
+    if (!pool) { pool = []; pools.set(key, pool); }
+    let t = pool.pop();
     if (!t || !t.scene) {
       t = this.add.text(0, 0, '', {
-        fontFamily: '"Be Vietnam Pro", "Segoe UI", sans-serif', fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
+        fontFamily: '"Be Vietnam Pro", "Segoe UI", sans-serif', fontStyle: 'bold', stroke: '#000', strokeThickness: 3, color, fontSize: size + 'px',
       }).setOrigin(0.5).setDepth(20);
     }
     this.tweens.killTweensOf(t);
-    t.setText(text).setColor(color).setFontSize(size).setPosition(x, y).setAlpha(1).setScale(1).setVisible(true).setActive(true);
+    if (t.text !== String(text)) t.setText(text);
+    t.setPosition(x, y).setAlpha(1).setScale(1).setVisible(true).setActive(true);
     if (size >= 18 && !Quality.low) { t.setScale(0.4); this.tweens.add({ targets: t, scale: 1.25, duration: 120, yoyo: true, hold: 60, ease: 'Back.out' }); }
     this.tweens.add({
       targets: t, y: y - 36, alpha: 0, duration: 1000, ease: 'Cubic.out',
-      onComplete: () => { t.setVisible(false).setActive(false); if (this.textPool.length < 40) this.textPool.push(t); else t.destroy(); },
+      onComplete: () => { t.setVisible(false).setActive(false); if (pool.length < 12) pool.push(t); else t.destroy(); },
     });
   },
 

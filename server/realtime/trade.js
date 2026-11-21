@@ -69,7 +69,7 @@ function end(session, reason, done = null) {
 function problem(session) {
   const ca = connOf(session.a.userId), cb = connOf(session.b.userId);
   if (!ca || !cb) return 'Đối phương đã mất kết nối.';
-  if (ca.map !== cb.map || !ca.map) return 'Hai bên không còn ở cùng bản đồ.';
+  if (ca.room !== cb.room || !ca.room) return 'Hai bên không còn ở cùng bản đồ / khu.';
   if (ca.dead || cb.dead) return 'Có người bị đánh bại, giao dịch bị huỷ.';
   if (Math.hypot(ca.x - cb.x, ca.y - cb.y) > MAX_DIST) return 'Hai bên đã đi quá xa nhau.';
   return null;
@@ -81,7 +81,7 @@ function invite(conn, targetId) {
   if (!t || t === conn) return sys(conn, 'Không tìm thấy người chơi.');
   if (byUser.has(conn.userId)) return sys(conn, 'Bạn đang trong một giao dịch.');
   if (byUser.has(t.userId)) return sys(conn, `${t.name} đang giao dịch với người khác.`);
-  if (t.map !== conn.map || !conn.map || Math.hypot(t.x - conn.x, t.y - conn.y) > MAX_DIST) return sys(conn, 'Phải đứng gần nhau mới giao dịch được.');
+  if (t.room !== conn.room || !conn.room || Math.hypot(t.x - conn.x, t.y - conn.y) > MAX_DIST) return sys(conn, 'Phải đứng gần nhau mới giao dịch được.');
   if (conn.dead || t.dead) return sys(conn, 'Không giao dịch được lúc này.');
   invites.set(t.userId, { from: conn.userId, at: Date.now() });
   ctx.send(t, { t: 'trade_inv', from: { id: conn.id, name: conn.name, lv: conn.level }, ms: INVITE_MS });

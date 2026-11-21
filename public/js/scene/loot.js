@@ -28,7 +28,13 @@ WorldScene.mix(class WorldLoot {
           c.add(img); c.remove(icon, true);
           this.tweens.add({ targets: img, y: img.y - 4, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
         });
-        try { this.textures.addBase64(tex, ItemArt.url(l.inst.id)); } catch (e) { /* giữ emoji */ }
+        // Hai món cùng loại rơi liền nhau: món sau không nạp lại (nạp trùng khoá gây cảnh báo "Texture key already in use")
+        const loading = this._icoLoading || (this._icoLoading = new Set());
+        if (!loading.has(tex)) {
+          loading.add(tex);
+          this.textures.once('addtexture-' + tex, () => loading.delete(tex));
+          try { this.textures.addBase64(tex, ItemArt.url(l.inst.id)); } catch (e) { loading.delete(tex); /* giữ emoji */ }
+        }
       }
     }
     c.add([glow, icon]);
@@ -49,7 +55,10 @@ WorldScene.mix(class WorldLoot {
         UI.banner(`Rơi đồ ${GameData.QUALITY_NAMES[q]}: ${def.name}!`, 1800);
       }
     }
-    this.loots.set(l.lid, { l, c, pending: false, retryAt: 0 });
+    // Vùng bấm quanh món đồ; con trỏ đổi thành bàn tay khi rê vào
+    c.setSize(44, 52).setInteractive({ useHandCursor: true });
+    c.on('pointerdown', (ptr, lx, ly, ev) => { if (ev && ev.stopPropagation) ev.stopPropagation(); this.pickLoot(l.lid); });
+    this.loots.set(l.lid, { l, c, pending: false });
   }
 
   removeLoot(lid, toPlayer) {
@@ -63,24 +72,28 @@ WorldScene.mix(class WorldLoot {
     } else e.c.destroy();
   }
 
-  updateLoot(time) {
-    if (!this.loots || !this.loots.size || this.dead) return;
-    const now = App.serverNow();
+  // Bấm vào đồ rơi để nhặt (không còn tự nhặt khi đứng gần): túi đầy cũng không còn bị thử lại liên tục.
+  pickLoot(lid) {
+    const e = this.loots && this.loots.get(lid);
     const pl = this.player;
-    for (const [lid, e] of this.loots) {
-      if (e.l.until < now) { this.removeLoot(lid); continue; }
-      if (e.pending || time < e.retryAt) continue;
-      if (Math.abs(pl.x - e.l.x) < 30 && Math.abs(pl.body.bottom - e.l.y) < 60) {
-        e.pending = true;
-        Net.action('pickup', { lid }, { silent: true }).then((r) => {
-          if (r.ok) return;
-          e.pending = false;
-          e.retryAt = this.time.now + 4000;
-          if (r.error && r.error !== this.lastLootError) { UI.log(r.error, '#ef5350'); }
-          this.lastLootError = r.error;
-          if (r.error === 'Món đồ đã biến mất.') this.removeLoot(lid);
-        });
-      }
+    if (!e || e.pending || this.dead || this.changing || !pl) return;
+    if (Math.abs(pl.x - e.l.x) > 150 || Math.abs(pl.body.bottom - e.l.y) > 110) {
+      this.floatText(e.l.x, e.l.y - 40, 'Lại gần hơn để nhặt', '#ffe082', 12);
+      return;
     }
+    e.pending = true;
+    Net.action('pickup', { lid }, { silent: true }).then((r) => {
+      if (r.ok) return;
+      e.pending = false;
+      if (r.error) UI.log(r.error, '#ef5350');
+      if (r.error === 'Món đồ đã biến mất.') this.removeLoot(lid);
+    });
+  }
+
+  // Chỉ dọn đồ hết hạn; việc nhặt do người chơi bấm (pickLoot)
+  updateLoot() {
+    if (!this.loots || !this.loots.size) return;
+    const now = App.serverNow();
+    for (const [lid, e] of this.loots) if (e.l.until < now) this.removeLoot(lid);
   }
 });

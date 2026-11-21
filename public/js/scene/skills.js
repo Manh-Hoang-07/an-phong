@@ -46,7 +46,14 @@ WorldScene.mix(class WorldSkills {
     for (const b of this.buffList(time)) if (b.name === 'guard') r += b.reflect || 0;
     return r;
   }
-  hasPassive(id) { return GameData.passivesOf(App.player).includes(id); }
+    // Hiệu ứng trang bị + nội tại tính 1 lần cho tới khi nhân vật được cập nhật (App.player đổi tham chiếu mỗi bản vá).
+  // Trước đây specialFx duyệt 9 ô trang bị + Kỳ Nguyên + bộ trang bị CHO TỪNG ĐÒN TRÚNG TỪNG QUÁI.
+  playerFx() { this.fxCache(); return this._fx; }
+  fxCache() {
+    const p = App.player;
+    if (this._fxFor !== p) { this._fxFor = p; this._fx = GameData.specialFx(p); this._passives = new Set(GameData.passivesOf(p)); }
+  }
+  hasPassive(id) { this.fxCache(); return this._passives.has(id); }
   // Hồi máu từ kỹ năng: theo % máu tối đa của kỹ năng (không nhân sức mạnh kỹ năng / SPI); nội tại "Sinh Lực" của Trị Liệu Sư: +20% lượng hồi
   skillHeal(ratio) {
     const boost = this.hasPassive('tri_lieu_su') ? 1.2 : 1;
@@ -68,7 +75,7 @@ WorldScene.mix(class WorldSkills {
   // Bùa Hộ Mệnh còn dùng được? Đọc hiệu ứng đang mặc + hồi chiêu client.
   // Server kiểm lại lần nữa bằng p.buaCd (server/realtime/index.js onExec) — client không phải nguồn sự thật.
   buaReady() {
-    const fx = GameData.specialFx(App.player).undying;
+    const fx = this.playerFx().undying;
     if (!fx) return null;
     return this.time.now >= (this.lastStandCd || 0) ? fx : null;
   }
@@ -343,7 +350,7 @@ WorldScene.mix(class WorldSkills {
     const cost = Math.round(sk.mp * App.stats.costMul);
     // Bộ Lưu Trữ 10 món — Cổ Ngữ: kỹ năng ĐẦU TIÊN mỗi trận không tốn năng lượng.
     // Cờ reset ở resetCombatFlags() khi vào bản đồ mới hoặc hồi sinh.
-    const freeCast = GameData.specialFx(p).setFreeCast && !this.freeCastUsed;
+    const freeCast = this.playerFx().setFreeCast && !this.freeCastUsed;
     if (!freeCast && App.mp < cost) { UI.log('Không đủ năng lượng!', '#64b5f6'); return; }
     const sta = this.skillStaminaCost(sk);
     if (!this.canSpendStamina(sta)) return;
@@ -360,6 +367,8 @@ WorldScene.mix(class WorldSkills {
     // Báo server lần dùng chiêu hợp lệ để nó giữ hồi chiêu + đếm số lần (chống spam). Gửi TRƯỚC khi bắn đòn.
     Realtime.send({ t: 'cast', id });
     const pw = sk.power ? sk.power * App.stats.skillMul : 0;
+    // Kỹ năng đánh thẳng: quay mặt về quái đang chỉ định trước khi tung
+    if (sk.type === 'melee' || sk.type === 'projectile' || sk.type === 'spread') this.aimAtTarget();
     const pl = this.player, f = this.facing;
     // Nhịp giữa các nhát: đủ thưa để người chơi ĐẾM được số nhát, đủ nhanh để không thành đòn chậm chạp
     const HIT_GAP = 130;
@@ -459,7 +468,7 @@ WorldScene.mix(class WorldSkills {
             // làm chậm / đóng băng / xuyên giáp thì mọi nhát đều ăn.
             const hitFx = fx(isLast ? { sk: 1 } : { knock: 0, stun: 0, sk: 1 });
             this.hitBox(pl.x + this.facing * sk.range / 2, pl.y, sk.range, 70,
-              fin ? sk.finisher * App.stats.skillMul : pw, hitFx);
+              fin ? sk.finisher * App.stats.skillMul : pw, { ...hitFx, only: this.targetMob() });
             if (fin) { this.cameras.main.shake(120, 0.006); this.hitstop(40); }
           });
         }
@@ -500,14 +509,14 @@ WorldScene.mix(class WorldSkills {
         for (let k = 0; k < n; k++) {
           this.shoot({ key: water ? 'fx_wave' : 'proj_fire', speed: water ? 520 : 820, range: sk.range, mult: pw,
             pierce: sk.pierce, slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun,
-            knock: sk.knock || (water ? 140 : 60), sk: 1, dy: (k - (n - 1) / 2) * 16 });
+            knock: sk.knock || (water ? 140 : 60), sk: 1, dy: (k - (n - 1) / 2) * 16, angle: this.targetAngle() });
         }
         break;
       }
       case 'spread': {
         this.swing();
         for (let k = 0; k < sk.count; k++) {
-          const ang = (k - (sk.count - 1) / 2) * 0.16;
+          const ang = (k - (sk.count - 1) / 2) * 0.16 + this.targetAngle();
           this.shoot({ key: 'proj_fire', speed: 760, range: sk.range, mult: pw, angle: ang, sk: 1,
             slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun, knock: sk.knock, pierce: sk.pierce });
         }

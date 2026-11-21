@@ -2,7 +2,7 @@
 /* Kết nối thời gian thực (WebSocket /ws): thấy người chơi khác cùng bản đồ và chat.
  * Server: server/realtime/index.js. Mất kết nối thì tự nối lại; game vẫn chơi bình thường khi không có realtime. */
 const Realtime = (() => {
-  let ws = null, myId = null, retry = 0, timer = null, running = false;
+  let ws = null, myId = null, retry = 0, timer = null, running = false, channel = 1;
   let sent = { map: null, x: 0, y: 0, f: 0, a: '', at: 0 };
   const listeners = new Set();   // cảnh game đang nghe (App.scene)
   const helloWaiters = [];
@@ -15,13 +15,18 @@ const Realtime = (() => {
     try { s = new WebSocket(url()); } catch { schedule(); return; }
     ws = s;
     s.onopen = () => { retry = 0; sent.map = null; };   // vào lại phòng ở gói vị trí kế tiếp
-    s.onmessage = (ev) => {
-      let m;
-      try { m = JSON.parse(ev.data); } catch { return; }
+    const dispatch = (m) => {
       if (m.t === 'hello') { myId = m.id; if (window.Chat) Chat.onOnline(true); helloWaiters.splice(0).forEach((fn) => fn()); }
+      else if (m.t === 'room') channel = m.ch || 1;
       for (const fn of listeners) { try { fn(m); } catch (e) { console.error(e); } }
       if (window.Chat) Chat.onMessage(m);
       if (window.Social) Social.onMessage(m);
+    };
+    s.onmessage = (ev) => {
+      let m;
+      try { m = JSON.parse(ev.data); } catch { return; }
+      // 'batch': server gộp nhiều gói quái của cùng một nhịp vào một tin; mở ra theo đúng thứ tự
+      if (m.t === 'batch' && Array.isArray(m.l)) { for (const x of m.l) dispatch(x); } else dispatch(m);
     };
     s.onclose = (ev) => {
       if (ws === s) ws = null;
@@ -70,6 +75,7 @@ const Realtime = (() => {
     // Chờ kết nối xong (hoặc quá hạn) trước khi dựng cảnh: biết có quái do server quản lý hay phải chơi riêng lẻ
     ready(ms) { return new Promise((res) => { if (ws && ws.readyState === 1 && myId) return res(); helloWaiters.push(res); setTimeout(res, ms); }); },
     get myId() { return myId; },
+    get channel() { return channel; },
     get online() { return !!(ws && ws.readyState === 1); },
     listen(fn) { listeners.add(fn); },
     unlisten(fn) { listeners.delete(fn); },

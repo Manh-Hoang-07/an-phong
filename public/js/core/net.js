@@ -81,7 +81,8 @@ const Net = (() => {
         // Server chỉ gửi phần đổi. Lệch số thứ tự (lỡ mất bản vá, mở nhiều tab) thì tải lại cả nhân vật.
         if (App.player && data.base === App.rev) {
           App.rev = data.rev;
-          if (data.patch) App.applyPatch(data.patch);
+          // Lưu tự động chỉ đổi vị trí / máu / năng lượng (client tự giữ các giá trị này) thì không cần vẽ lại giao diện
+          if (data.patch) App.applyPatch(data.patch, type === 'save' && App.patchIsQuiet(data.patch));
           data.player = App.player;   // các chỗ gọi cũ vẫn đọc được res.player.map, res.player.hp...
         } else {
           const me = await req('/api/me');
@@ -153,15 +154,31 @@ App.recalcStats = function () {
 
 // Ghép bản vá { set, del } từ server vào nhân vật. Tạo object mới (bản sao nông) để mọi nơi so sánh / cache
 // theo App.player đều thấy là đã đổi; phần không đổi giữ nguyên tham chiếu.
-App.applyPatch = function (patch) {
+// Bản vá chỉ đổi những trường client tự giữ (x, y, hp, mp, arrive) → không có gì mới để hiển thị.
+// So theo NỘI DUNG vì server gửi lại cả section (đối tượng mới dù giá trị không đổi).
+App.patchIsQuiet = function (patch) {
+  const old = App.player;
+  if (!old || (patch.del && patch.del.length)) return false;
+  const OWN = { x: 1, y: 1, hp: 1, mp: 1, arrive: 1 };
+  for (const k in patch.set || {}) {
+    if (OWN[k]) continue;
+    const a = old[k], b = patch.set[k];
+    if (a === b) continue;
+    if (a && b && typeof a === 'object' && typeof b === 'object') { if (JSON.stringify(a) === JSON.stringify(b)) continue; }
+    return false;
+  }
+  return true;
+};
+
+App.applyPatch = function (patch, quiet) {
   const old = App.player;
   const p = Object.assign({}, old);
   for (const k of patch.del || []) delete p[k];
   Object.assign(p, patch.set);
-  App.setPlayer(p, old);
+  App.setPlayer(p, old, quiet);
 };
 
-App.setPlayer = function (p, prev) {
+App.setPlayer = function (p, prev, quiet) {
   const oldPlayer = prev || App.player, oldStats = App.stats;
   const formChanged = !!oldPlayer && (!!oldPlayer.formActive !== !!p.formActive || oldPlayer.formChoice !== p.formChoice);
   const hpRatio = formChanged && oldStats?.maxHp ? App.hp / oldStats.maxHp : null;
@@ -182,7 +199,7 @@ App.setPlayer = function (p, prev) {
   App.hp = Math.min(App.hp, App.stats.maxHp);
   App.mp = Math.min(App.mp, App.stats.maxMp);
   if (App.sta != null) App.sta = Math.min(App.sta, App.stats.maxSta);
-  UI.refresh();
+  if (!quiet) UI.refresh();
 };
 
 App.onEvent = function (ev) {

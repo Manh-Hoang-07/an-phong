@@ -69,6 +69,7 @@ class WorldScene extends Phaser.Scene {
     this.monsters = [];
     // Scene.restart() giữ lại instance WorldScene; không mang mục tiêu thú từ map cũ sang.
     this.petTarget = null;
+    this.assistHits = null; this.assistTimer = null; this.lastHitMob = null; this.target = null;   // dọn trạng thái của bản đồ cũ khi scene dựng lại
     this.nextPetTargetScan = 0;
     this.formWarmKey = null;
     this.npcs = [];
@@ -242,13 +243,14 @@ class WorldScene extends Phaser.Scene {
     if (!this.dead) this.updatePlayer(time, delta);
     for (const m of this.monsters) {
       if (!m.alive) continue;
-      if (m.net) this.updateNetMonster(m, time, delta);
+      if (m.net) { if (this.netMobOnScreen(m)) this.updateNetMonster(m, time, delta); else m.sprite.setPosition(m.tx, m.ty); }
       else if (this.mobActive(m)) this.updateMonster(m, time);
     }
     this.updateMobShadows();
     this.updateProjectiles(time, delta);
     this.updateEnemyShots(delta);
     this.updateLoot(time);
+    this.updateTarget(time);
     this.updateRemotes(time, delta);
 
     // Rơi khỏi bản đồ
@@ -321,6 +323,7 @@ class WorldScene extends Phaser.Scene {
     if (canAct) {
       if (this.pressed('KeyP') || this.tpressed('pets')) UI.openPanel(UI.petPanel());
       if (this.pressed('KeyY')) UI.hiddenChat();
+      if (this.pressed('KeyH') || this.tpressed('target')) this.cycleTarget();   // chọn mục tiêu kế (quái / đồ rơi)
       if (this.key('KeyJ') || App.touch.attack) this.basicAttack(time);
       for (let i = 0; i < 5; i++) if (this.pressed('Digit' + (i + 1)) || this.tpressed('s' + i)) this.useSkill(i, time);
       if (this.pressed('KeyR') || this.tpressed('ult')) this.useSkill(GameData.ULT_SLOTS[0], time);
@@ -426,6 +429,7 @@ class WorldScene extends Phaser.Scene {
     if (Math.abs(this.player.x - x) > 140) { UI.log('Hãy lại gần hơn để nói chuyện.', '#bdbdbd'); return; }
     this.facing = x > this.player.x ? 1 : -1;
     // Mở bảng hội thoại ngay; server ghi nhận lượt nói chuyện xong thì UI.refresh tự vẽ lại bảng (nhiệm vụ có thể vừa đổi)
+    if (id === 'khu_su') { Khu.open(); return; }   // Người dẫn khu: mở thẳng danh sách 30 khu, không cần hội thoại / server
     UI.openNpc(id);
     if (id === 'npc_an') return;
     Net.action('talk', { npc: id }).then(() => { if (this.sys.isActive()) this.refreshNpcMarks(); });

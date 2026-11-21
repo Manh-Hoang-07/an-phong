@@ -5,7 +5,10 @@
   const { G, esc, S } = UI._;
 
   const THEME_ICON = { city: '🏙️', forest: '🌲', cave: '🕳️', redgate: '🌀' };
-  const W = 720, H = 720, ROOT = 'cong_do';
+  // Khung vẽ lớn (1320 × 1320) hiển thị đúng cỡ thật trong vùng cuộn (.wm-scroll), không co nhỏ cho vừa bảng: tên khu giữ cỡ chữ đọc được,
+  // các khu cách xa nhau. Sau khi đặt, một bước "đẩy nhau" đảm bảo khung tên của hai khu không bao giờ chồng lên nhau.
+  const W = 1320, H = 1320, ROOT = 'cong_do';
+  const LBL_W = (name, hub) => name.length * (hub ? 7.4 : 6.6) + 10;   // bề ngang gần đúng của chữ (đậm, tiếng Việt)
 
   // Sơ đồ vuông tự nhiên: cây đường đi mọc ra từ Cổng đỏ, mỗi khu đặt cách khu cha một đoạn theo hướng
   // lệch ngẫu nhiên (cố định theo hạt giống) ưu tiên chỗ còn trống, nên các khu tản khắp khung vuông.
@@ -23,7 +26,7 @@
     grow(ROOT);
     for (const id in G.MAPS) if (!seen.has(id)) { seen.add(id); kids[ROOT].push(id); kids[id] = []; edges.push([ROOT, id]); }   // map chưa nối được thì treo vào gốc
     let seed = 20240611; const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
-    const n = Object.keys(kids).length, step = 0.9 / Math.sqrt(n), P = { [ROOT]: { x: 0.5, y: 0.5, a: 0 } }, depth = { [ROOT]: 0 };
+    const n = Object.keys(kids).length, step = 1.15 / Math.sqrt(n), P = { [ROOT]: { x: 0.5, y: 0.5, a: 0 } }, depth = { [ROOT]: 0 };
     const place = (id) => {
       for (const k of kids[id]) {
         const par = P[id]; let best = null, bs = -1e9;
@@ -43,6 +46,26 @@
     const xs = Object.values(P).map(p => p.x), ys = Object.values(P).map(p => p.y);
     const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), pad = 56, pos = {};
     for (const id in P) pos[id] = { x: pad + (P[id].x - x0) / ((x1 - x0) || 1) * (W - 2 * pad), y: pad + (P[id].y - y0) / ((y1 - y0) || 1) * (H - 2 * pad), d: depth[id] };
+    // Đẩy nhau: mỗi khu là một hộp (vòng tròn + tên). Hai hộp chồng lên nhau thì đẩy ra theo trục chồng ít hơn, lặp tới khi hết chồng.
+    const ids = Object.keys(pos), box = {};
+    for (const id of ids) {
+      const m = G.MAPS[id], hub = !!m.village, name = shortName(m.name), r = hub ? 14 : 8.5;
+      box[id] = { w: Math.max(2 * r + 14, LBL_W(name, hub)) + 26, h: 2 * r + 16 + 26 };
+    }
+    for (let it = 0; it < 200; it++) {
+      let moved = false;
+      for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+        const a = pos[ids[i]], b = pos[ids[j]], ba = box[ids[i]], bb = box[ids[j]];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const ox = (ba.w + bb.w) / 2 - Math.abs(dx), oy = (ba.h + bb.h) / 2 - Math.abs(dy);
+        if (ox <= 0 || oy <= 0) continue;
+        moved = true;
+        if (ox < oy) { const s = (dx >= 0 ? 1 : -1) * (ox / 2 + 0.5); a.x -= s; b.x += s; }
+        else { const s = (dy >= 0 ? 1 : -1) * (oy / 2 + 0.5); a.y -= s; b.y += s; }
+      }
+      for (const id of ids) { const q = pos[id]; q.x = Math.min(W - 60, Math.max(60, q.x)); q.y = Math.min(H - 50, Math.max(50, q.y)); }
+      if (!moved) break;
+    }
     return (cache = { pos, edges });
   }
   const edgePath = (a, b) => `M${a.x} ${a.y}L${b.x} ${b.y}`;
@@ -53,7 +76,7 @@
     const p = App.player, { pos, edges } = layout();
     const list = Object.fromEntries(G.mapList(p).map(m => [m.id, m]));
     const sel = S.selected && S.selected.where === 'map' && G.MAPS[S.selected.key] ? S.selected.key : p.map;
-    let svg = `<svg class="wm-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bản đồ thế giới">
+    let svg = `<svg class="wm-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bản đồ thế giới">
       <defs>
         <radialGradient id="wmg" cx="50%" cy="48%" r="75%"><stop offset="0" stop-color="#f0dcae"/><stop offset="0.7" stop-color="#d9bb80"/><stop offset="1" stop-color="#b48f55"/></radialGradient>
         <filter id="wmn" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 0.35  0 0 0 0 0.24  0 0 0 0 0.1  0 0 0 0.22 0"/></filter>
@@ -68,12 +91,12 @@
     for (const id in G.MAPS) {
       const m = G.MAPS[id], q = pos[id], open = isOpen(p, id), here = id === p.map, hub = !!m.village;
       const fill = here ? '#ffcf4a' : open ? '#5bbf4a' : '#9b9588';
-      const r = hub ? 14 : 8.5, above = q.d % 2 === 0;
+      const r = hub ? 14 : 8.5, above = q.d % 2 === 0;   // tên nằm trên / dưới vòng tròn xen kẽ theo độ sâu
       svg += `<g class="wm-node${id === sel ? ' sel' : ''}${open ? '' : ' locked'}" data-sel="map:${esc(id)}" tabindex="0">
         ${id === sel ? `<circle cx="${q.x}" cy="${q.y}" r="${r + 7}" fill="none" stroke="#7b2d1a" stroke-width="2.5" stroke-dasharray="4 3"/>` : ''}
         <circle cx="${q.x}" cy="${q.y}" r="${r}" fill="${fill}" stroke="${hub ? '#7b2d1a' : '#4a3216'}" stroke-width="${hub ? 4 : 2.5}"/>
         <text x="${q.x}" y="${q.y + 4}" text-anchor="middle" font-size="${hub ? 14 : 10}">${here ? '⭐' : open ? '' : '🔒'}</text>
-        <text class="wm-lbl" x="${q.x}" y="${above ? q.y - r - 6 : q.y + r + 13}" text-anchor="middle" font-size="${hub ? 12.5 : 10.5}">${esc(shortName(m.name))}</text>
+        <text class="wm-lbl" x="${q.x}" y="${above ? q.y - r - 6 : q.y + r + 13}" text-anchor="middle" font-size="${hub ? 15 : 12.5}">${esc(shortName(m.name))}</text>
       </g>`;
     }
     svg += '</svg>';
@@ -91,13 +114,23 @@
       <div class="wm-row"><span>Nối tới</span>${esc(near.join(' · ') || '—')}</div>
     </div>`;
     const legend = '<div class="wm-legend"><i style="background:#fff;border:3px solid #7b2d1a;width:12px;height:12px"></i>Tân Đô (làng) <i style="background:#ffcf4a"></i>Đang ở <i style="background:#5bbf4a"></i>Đã mở <i style="background:#9b9588"></i>Chưa mở. Muốn đi: tới cổng trong game.</div>';
-    return ['🗺️ Bản đồ', `<div class="wm">${svg}${card}${legend}</div>`];
+    // Bản đồ lớn nằm trong vùng cuộn (cả cảm ứng lẫn chuột). Vẽ lại bảng khi chọn khu không được làm mất chỗ đang xem,
+    // nên vị trí cuộn được nhớ; lần đầu thì cuộn tới khu đang đứng.
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.wm-scroll');
+      if (!el) return;
+      if (wmScroll) { el.scrollLeft = wmScroll.x; el.scrollTop = wmScroll.y; }
+      else { const q = pos[p.map] || { x: W / 2, y: H / 2 }; el.scrollLeft = q.x - el.clientWidth / 2; el.scrollTop = q.y - el.clientHeight / 2; }
+    });
+    return ['🗺️ Bản đồ', `<div class="wm"><div class="wm-scroll">${svg}</div>${card}${legend}</div>`];
   }
+  let wmScroll = null;
+  document.addEventListener('scroll', (e) => { const t = e.target; if (t && t.classList && t.classList.contains('wm-scroll')) wmScroll = { x: t.scrollLeft, y: t.scrollTop }; }, true);
   // Rút gọn tên dài ("Cổng hạng E – Rừng Sương" → "Rừng Sương")
   function shortName(n) {
     if (/^Cổng đỏ/i.test(n)) return 'Cổng đỏ';
     const parts = String(n).split(/\s[–-]\s/), s = parts[parts.length - 1];
-    return s.length > 15 ? s.slice(0, 14) + '…' : s;
+    return s.length > 22 ? s.slice(0, 21) + '…' : s;
   }
 
   Object.assign(UI._.PANELS, { map: panelMap });

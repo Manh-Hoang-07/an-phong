@@ -571,8 +571,27 @@ WorldScene.mix(class WorldMap {
     for (const ch in this.meta.npcs) {
       const pos = this.findChar(ch);
       if (!pos) continue;
-      const id = this.meta.npcs[ch];
-      const x = pos.c * T + T / 2, y = this.groundY(pos.r, pos.c);
+      this.spawnNpc(this.meta.npcs[ch], pos.c * T + T / 2, this.groundY(pos.r, pos.c));
+    }
+    this.buildZoneNpcs();
+    this.refreshNpcMarks();
+  }
+
+  // Người dẫn khu: mỗi bản đồ 2 người, bản đồ rộng 3 người, đặt tự động (không cần ký hiệu trong file bản đồ).
+  // Chỗ đứng do shared/logic/zone-npcs.js tính; SERVER tính cùng hàm đó và coi các chỗ này như cổng: quái không tới sát
+  // (cách 160px), nên đứng chọn khu không bị quái đánh. Bấm vào thì mở danh sách 30 khu (ui/khu.js).
+  buildZoneNpcs() {
+    if (!GameData.NPCS.khu_su) return;
+    const used = this.npcs.map(n => n.x).concat(this.portals.map(p => p.x));
+    const spawnX = [];
+    for (const ch in (this.meta.spawns || {})) this.forEachCell((c2, r, c) => { if (c2 === ch) spawnX.push(c * T + T / 2); });
+    for (const s of GameData.zoneNpcSpots({ cols: this.cols, rows: this.rows, cell: (r, c) => this.cell(r, c), isStand: (r, c) => this.isStand(r, c), used, spawnX, T })) {
+      this.spawnNpc('khu_su', s.x, s.y);
+    }
+  }
+
+  spawnNpc(id, x, y) {
+    {
       // NPC dịch vụ của làng có hình riêng (đổi tông màu); bảng nhiệm vụ / trạm các làng dùng chung hình gốc (look)
       const texKey = this.textures.exists('npc_' + id) ? 'npc_' + id : 'npc_' + (GameData.NPCS[id].look || id);
       const s = this.artImage(x, y, texKey).setOrigin(0.5, 1).setDepth(2).setFlipX(x > this.worldW / 2);
@@ -587,7 +606,6 @@ WorldScene.mix(class WorldMap {
       const shadow = this.add.image(x, y - 1, 'shadow').setDepth(1.9).setScale(0.9, 1);
       this.npcs.push({ id, x, y, sprite: s, mark, label, shadow });
     }
-    this.refreshNpcMarks();
   }
 
   addHiddenNpc() {
@@ -607,7 +625,7 @@ WorldScene.mix(class WorldMap {
     if (this.portals) this.refreshPortals();
     const q = GameData.QUESTS[p.quest.step];
     for (const n of this.npcs) {
-      n.visible = n.id === 'npc_an' ? this.mapId === 'lang' && !!p.hiddenNpcActive : GameData.npcHere(p, this.mapId, n.id);
+      n.visible = n.id === 'npc_an' ? this.mapId === 'lang' && !!p.hiddenNpcActive : n.id === 'khu_su' ? true : GameData.npcHere(p, this.mapId, n.id);
       n.sprite.setVisible(n.visible); n.label.setVisible(n.visible);
       if (n.shadow) n.shadow.setVisible(n.visible);
       if (!n.visible) { n.mark.setVisible(false); continue; }

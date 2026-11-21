@@ -32,6 +32,7 @@ const SWITCH_THREAT = 1.3;       // đổi mục tiêu khi có người gây nhi
 const BIG_SCALE_STEP = 0.5;      // trùm / thủ lĩnh: mỗi người chơi gần thêm 50% máu tối đa
 const BIG_SCALE_MAX = 3;
 const BIG_RANGE = 700;
+const MINION_TTL_MS = 90 * 1000;   // quái phụ do trùm gọi không ai hạ thì tự biến mất (trước đây tồn tại tới khi restart server)
 
 class World {
   constructor(mapId, hooks, saved) {
@@ -74,7 +75,7 @@ class World {
     const m = {
       uid: this.nextUid++, id, def, x, y, vy: 0, f: Math.random() < 0.5 ? -1 : 1, hp: maxHp, maxHp, alive: true,
       baseHp: maxHp, scale: 1, threat: new Map(), target: null,
-      homeX: x, homeY: y, span, minion: !!opts.minion, deaths: 0, respawnAt: 0, key: opts.key || null,
+      homeX: x, homeY: y, span, minion: !!opts.minion, owner: opts.owner == null ? null : opts.owner, bornAt: Date.now(), deaths: 0, respawnAt: 0, key: opts.key || null,
       aggro: false, state: 'move', stateUntil: 0, lungeDir: 1, lvx: 0, lvy: 0,
       nextAttack: 0, nextTurn: 0, nextJump: 0, nextSlam: 0, nextSpecial: 0, patrol: 0,
       slowUntil: 0, freezeUntil: 0, stunUntil: 0, knockUntil: 0, enraged: false, fled: false,
@@ -201,13 +202,24 @@ class World {
     m.deaths++;
     m.aggro = false; m.state = 'move'; m.sx = NaN; m.sy = NaN; m.threat.clear(); m.target = null;
     this.dirty = true;
-    const kid = `${this.mapId}.${m.uid}.${m.deaths}`;
+    if (!m.minion) this.removeMinionsOf(m.uid);   // trùm chết thì quái phụ của nó biến mất
+    const kid = `${this.kidPrefix || this.mapId}.${m.uid}.${m.deaths}`;   // theo khu để phiếu thưởng không trùng giữa các khu
     const assist = m.minion ? [] : this.hooks.kill(m, killerId, m.contrib, CONTRIB_SHARE, kid) || [];
     this.hooks.emit({ t: 'mdie', u: m.uid, by: killerId, as: assist, kid: m.minion ? undefined : kid, fled: m.fled ? 1 : 0, x: Math.round(m.x), y: Math.round(m.y) });
     m.contrib = new Map(); m.contribSrc = null;
     if (m.minion) {
       setTimeout(() => { this.byUid.delete(m.uid); this.mobs = this.mobs.filter((o) => o !== m); this.hooks.emit({ t: 'mdel', u: m.uid }); }, 600);
     } else m.respawnAt = now + (m.def.respawn || 10) * 1000;
+  }
+
+  // Xoá hẳn một quái phụ còn sống (hết hạn / trùm đã chết): không thưởng, không lưu
+  removeMinion(m) {
+    this.byUid.delete(m.uid);
+    this.mobs = this.mobs.filter((o) => o !== m);
+    this.hooks.emit({ t: 'mdel', u: m.uid });
+  }
+  removeMinionsOf(owner) {
+    for (const m of this.mobs.slice()) if (m.minion && m.alive && m.owner === owner) this.removeMinion(m);
   }
 
   // Hồi sinh: CHỈ xảy ra sau khi quái đã chết. Đây là chỗ duy nhất đưa máu về đầy.
@@ -225,6 +237,7 @@ class World {
     this.stepCount++;
     const dt = STEP_MS / 1000;
     for (const m of this.mobs.slice()) {
+      if (m.minion && m.alive && now - m.bornAt > MINION_TTL_MS) { this.removeMinion(m); continue; }
       if (!m.alive) { if (!m.minion && now >= m.respawnAt) this.respawn(m); continue; }
       this.stepMob(m, now, dt, players);
     }
@@ -235,6 +248,7 @@ class World {
   stepIdle(now) {
     this.stepCount++;
     for (const m of this.mobs.slice()) {
+      if (m.minion && m.alive && now - m.bornAt > MINION_TTL_MS) { this.removeMinion(m); continue; }
       if (!m.alive && !m.minion && now >= m.respawnAt) this.respawn(m);
     }
   }
@@ -408,10 +422,11 @@ class World {
     this.hooks.emit({ t: 'mact', u: m.uid, a: 'enrage' });
     const minion = m.def.minion || 'nhen_da';
     if (!G.MONSTERS[minion]) return;
+    this.removeMinionsOf(m.uid);
     const T = mapgrid.T;
     for (const off of [-170, 170]) {
       const x = Math.max(m.span[0], Math.min(m.span[1], m.x + off));
-      const mm = this.add(minion, Math.floor((m.y - 4) / T), Math.floor(x / T), { minion: true });
+      const mm = this.add(minion, Math.floor((m.y - 4) / T), Math.floor(x / T), { minion: true, owner: m.uid });
       if (mm) { mm.x = x; mm.y = m.y; mm.homeX = x; mm.homeY = m.y; this.hooks.emit({ t: 'mspawn', m: this.full(mm, now) }); }
     }
   }

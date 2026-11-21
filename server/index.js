@@ -212,10 +212,15 @@ async function api(req, res, url) {
       return send(res, 200, { ok: true, events, patch: c.patch, base: c.base, rev: c.rev });
     } catch (e) {
       // Lỗi giữa chừng thì trả nhân vật về trạng thái trước đó
+      const revBefore = cache.getRev(session.userId);
       const restored = cache.rollback(session.userId, token);
       const rev = cache.getRev(session.userId);
       if (e instanceof game.GameError) {
         rememberReply(session.userId, rid, 200, { ok: false, error: e.message });
+        // Hoàn tác không đổi gì (trường hợp thường gặp: "Túi đã đầy", "Chưa đủ vàng"...): client vẫn đúng,
+        // KHÔNG gửi cả nhân vật. Trước đây mỗi lần lỗi gửi toàn bộ nhân vật (túi, kho mọi làng, nhiệm vụ...)
+        // và client tính lại chỉ số + vẽ lại giao diện: túi đầy mà đứng giữa đống đồ rơi là giật liên tục.
+        if (rev === revBefore) return send(res, 200, { ok: false, error: e.message, rev });
         return send(res, 200, { ok: false, error: e.message, player: restored, rev });
       }
       console.error(e);
