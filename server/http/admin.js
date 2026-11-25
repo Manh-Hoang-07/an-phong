@@ -51,11 +51,18 @@ function cleanRewards(raw) {
   if (raw.items !== undefined && !Array.isArray(raw.items)) throw new GameError('Danh sách vật phẩm không hợp lệ.');
   const items = [];
   for (const row of raw.items || []) {
-    const [id, n] = Array.isArray(row) ? row : [];
+    const [id, n, quality, plus] = Array.isArray(row) ? row : [];
     if (!Object.prototype.hasOwnProperty.call(G.ITEMS, id)) throw new GameError(`Không có vật phẩm "${String(id).slice(0, 40)}".`);
     const q = amount(n, CAP.itemQty, 'Số lượng');
     if (q < 1) throw new GameError(`Số lượng của ${G.ITEMS[id].name} phải từ 1.`);
-    items.push([id, q]);
+    // Trang bị: có thể chỉ định phẩm chất (1–4) và cấp cường hóa (0–UPGRADE_MAX). Bỏ trống = như cũ (đồ chuẩn).
+    const qual = Number(quality) || 0, pl = Number(plus) || 0;
+    if (G.ITEMS[id].slot && (qual || pl)) {
+      if (qual && !Number.isInteger(qual)) throw new GameError('Phẩm chất không hợp lệ.');
+      if (qual && !G.QUALITY_MUL[qual]) throw new GameError('Phẩm chất phải từ 1 (Thường) đến 4 (Huyền thoại).');
+      if (!Number.isInteger(pl) || pl < 0 || pl > G.UPGRADE_MAX) throw new GameError(`Cấp cường hóa phải từ 0 đến ${G.UPGRADE_MAX}.`);
+      items.push([id, q, qual || 0, pl]);
+    } else items.push([id, q]);
   }
   if (items.length > CAP.items) throw new GameError(`Tối đa ${CAP.items} loại vật phẩm mỗi lần.`);
   if (items.length) r.items = items;
@@ -133,12 +140,12 @@ function cleanRevoke(raw) {
 function catalog() {
   const pick = (obj) => Object.keys(obj).map((id) => ({ id, name: obj[id].name }));
   return {
-    items: pick(G.ITEMS).sort((a, b) => a.name.localeCompare(b.name, 'vi')),
+    items: pick(G.ITEMS).map((it) => ({ ...it, gear: !!G.ITEMS[it.id].slot })).sort((a, b) => a.name.localeCompare(b.name, 'vi')),
     schools: pick(G.SCHOOLS).filter((s) => G.SCHOOLS[s.id].special && !G.SCHOOLS[s.id].evolved),
     mounts: pick(G.MOUNTS),
     skills: pick(G.SKILLS).sort((a, b) => a.name.localeCompare(b.name, 'vi')),
     superUlts: pick(G.SKILLS).filter((s) => G.SKILLS[s.id].superUlt),
-    caps: CAP,
+    caps: { ...CAP, plusMax: G.UPGRADE_MAX },
     skillMax: G.SKILL_MAX,
   };
 }

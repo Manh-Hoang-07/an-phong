@@ -50,7 +50,8 @@ function applyRewards(p, plan, ev, src) {
     if (!G.learnSuperUlt(p, id)) continue;
     ev.push({ t: 'msg', text: `[Hệ thống] Nhận Tuyệt Phẩm: ${G.SKILLS[id].icon} ${G.SKILLS[id].name}. Gắn vào ô R/X/Z để dùng.`, color: '#d66cff' });
   }
-  for (const [id, n] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev);
+  // Dòng vật phẩm [id, số lượng, phẩm chất?, cấp cường hóa?]: trang bị có chỉ định thì tạo đúng phẩm chất / cấp (admin), còn lại như cũ
+  for (const [id, n, q, plus] of items) giveItem(p, id, Math.max(1, Math.floor(n)), ev, (q || plus) && G.ITEMS[id].slot ? { q: q || undefined, plus: plus || 0 } : undefined);
   for (const id of newMounts) {
     p.mounts.owned.push(id);
     const petStats = G.companionStats(p, id);

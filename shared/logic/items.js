@@ -125,7 +125,9 @@
     if (opts.plain) return { id, qty: 1, plus: 0, q: def.minQ || 1, roll: 1, aff: def.minQ ? rollAffixes(def, def.minQ) : [] };
     const q = opts.q || rollQuality(opts.table || 'normal', def.minQ);
     const roll = Math.round((0.8 + Math.random() * 0.4) * 1000) / 1000;
-    return { id, qty: 1, plus: 0, q, roll, aff: rollAffixes(def, q) };
+    // opts.plus: cấp cường hóa tặng sẵn (trang admin); mọi chỗ khác không truyền thì vẫn +0
+    const plus = Math.max(0, Math.min(G.UPGRADE_MAX || 12, Math.floor(opts.plus) || 0));
+    return { id, qty: 1, plus, q, roll, aff: rollAffixes(def, q) };
   }
 
   // Độ hoàn hảo 0–100%: chỉ số chính và các dòng phụ ra cao hay thấp trong khoảng có thể
