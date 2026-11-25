@@ -124,25 +124,8 @@ const cookies = (req) => {
 };
 
 const SNAP_FULL_EVERY = 10;       // cứ 10 nhịp (~1 giây) gửi đủ hướng + hoạt ảnh một lần
-// Cảnh báo (tối đa mỗi 10 giây) khi một nhịp tick / mobTick chậm quá PERF_SLOW_MS. Bình thường không in gì.
-const PERF_SLOW_MS = Number(process.env.AP_PERF_SLOW_MS) || 25;
-let perfWarnAt = 0;
-
 function sendRaw(conn, text) {
   if (conn.ws.readyState === 1 && conn.ws.bufferedAmount < 256 * 1024) conn.ws.send(text);
-}
-
-// Đo một nhịp; `kind` là 'tick' hoặc 'mob'.
-function timed(kind, fn) {
-  const t0 = process.hrtime.bigint();
-  try { fn(); } finally {
-    const ms = Number(process.hrtime.bigint() - t0) / 1e6;
-    const now = Date.now();
-    if (ms > PERF_SLOW_MS && now - perfWarnAt > 10000) {
-      perfWarnAt = now;
-      console.warn(`[perf] ${kind}Tick chậm ${ms.toFixed(1)}ms (ngưỡng ${PERF_SLOW_MS}ms) | người ${byUser.size} | phòng ${rooms.size} | thế giới quái ${worlds.size}`);
-    }
-  }
 }
 
 const send = (conn, obj) => sendRaw(conn, JSON.stringify(obj));
@@ -827,9 +810,9 @@ function attach(server) {
   });
   const social = setInterval(() => { try { party.tick(); trade.tick(); } catch (e) { console.error('Đội / giao dịch lỗi:', e.message); } }, 1000);
   social.unref();
-  tickTimer = setInterval(() => timed('tick', tick), TICK_MS);
+  tickTimer = setInterval(tick, TICK_MS);
   tickTimer.unref();
-  mobTimer = setInterval(() => { try { timed('mob', mobTick); } catch (e) { console.error('Quái lỗi:', e.message); } }, STEP_MS);
+  mobTimer = setInterval(() => { try { mobTick(); } catch (e) { console.error('Quái lỗi:', e.message); } }, STEP_MS);
   mobTimer.unref();
   const m = setInterval(() => maintain().catch((e) => console.error('Realtime lỗi:', e.message)), 500);
   m.unref();
