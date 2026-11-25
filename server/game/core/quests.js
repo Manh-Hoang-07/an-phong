@@ -41,7 +41,9 @@ function giverMap(p, npcId) {
 }
 
 // Nhiệm vụ đã nhận ở bản đồ khác thì phải quay lại đó mới trả được
-function mustReturnTo(p, mapId) {
+// Chỉ bắt quay về khi NPC giao còn đứng ở bản đồ đó; NPC đã dời đi (cốt truyện tiến) mà người chơi đang đứng cạnh NPC thì trả ngay tại đây.
+function mustReturnTo(p, mapId, npcId) {
+  if (npcId && G.npcHere(p, p.map, npcId) && !G.npcHere(p, mapId, npcId)) return null;
   return mapId && mapId !== p.map && G.MAPS[mapId] ? `Hãy quay về ${G.MAPS[mapId].name} để trả nhiệm vụ.` : null;
 }
 

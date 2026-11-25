@@ -219,6 +219,15 @@ const actions = {
       ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách kỹ năng: +1 điểm kỹ năng (${p.skillBooks}/${G.SKILL_BOOK_MAX} cuốn).`, color: '#4fc3f7' });
       return;
     }
+    if (def.kind === 'potential_book') {
+      // Sách tiềm năng: +N điểm tiềm năng ngay (không giới hạn số cuốn; số lượng do phần thưởng nhiệm vụ quyết định)
+      e.qty--;
+      if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
+      const n = def.potential || G.STAT_POINTS_PER_LEVEL;
+      p.freePoints += n;
+      ev.push({ t: 'msg', text: `[Hệ thống] Đọc Sách tiềm năng: +${n} điểm tiềm năng.`, color: '#69f0ae' });
+      return;
+    }
     if (def.kind === 'boost') {
       const now = Date.now();
       p.boosts = p.boosts || {};

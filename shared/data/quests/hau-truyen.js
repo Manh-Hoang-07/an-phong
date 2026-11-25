@@ -30,7 +30,7 @@
       end: [
         'Trưởng làng Vực: Cậu đã giải phóng nơi đó. Một tín hiệu mới xuất hiện ở Tâm Điểm Dị Giới.',
       ],
-      reward: rw(50, 'elite', [['sach_ky_nang', 3]], { skillPoints: 4 }) },
+      reward: rw(50, 'elite', [['sach_tiem_nang', 3]], { skillPoints: 4 }) },
     { id: 'c5q9', name: 'Bình minh sau cánh cổng', npc: 'truong_lang_5',
       start: [
         'Trưởng làng Vực: Tâm Điểm vẫn còn Ma Thần Trắng Trơn. Chúng đang bảo vệ tàn tích cuối cùng.',

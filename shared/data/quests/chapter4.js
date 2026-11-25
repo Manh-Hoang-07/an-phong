@@ -93,7 +93,7 @@
         'Lữ khách: Hắn sẵn sàng hy sinh tất cả. Cậu phải ngăn hắn.',
         '[Hệ thống] Nhận nội tại "Nhận Thức Ký Sinh".',
       ],
-      reward: rw(36, 'story', [['sach_ky_nang', 1]], { perk: 'nhan_thuc_ky_sinh' }) },
+      reward: rw(36, 'story', [['sach_tiem_nang', 1]], { perk: 'nhan_thuc_ky_sinh' }) },
     { id: 'c4q6', name: 'Kẻ gác đỉnh tháp', npc: 'lu_khach',
       start: [
         'Lữ khách: Đỉnh Tháp Lưu Trữ. Người Gác canh toàn bộ dữ liệu.',
@@ -126,7 +126,7 @@
         '[Hệ thống] Nhận 5 điểm kỹ năng. Cấp tối đa: 50.',
         'Lữ khách: Hệ thống không còn che giấu nữa. Nghe thấy rồi chứ?',
       ],
-      reward: rw(39, 'story', [['sach_ky_nang', 2]], { skillPoints: 5 }) },
+      reward: rw(39, 'story', [['sach_tiem_nang', 2]], { skillPoints: 5 }) },
     { id: 'c4q8', name: 'Bầu trời rách', npc: 'lu_khach',
       start: [
         'Lữ khách: Cậu đã nghe giọng nói đó. Lời Hệ thống không phải lời đe dọa suông.',

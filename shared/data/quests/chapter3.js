@@ -120,7 +120,7 @@
         'Hội trưởng Khải: Cậu là người chơi thứ 7. Hệ thống chọn cậu không phải ngẫu nhiên.',
         'Hội trưởng Khải: Cậu là hy vọng duy nhất ngăn Thiên lại. Nhưng trước tiên, cậu cần vũ khí xứng tầm.',
       ],
-      reward: rw(26, 'story', [['sach_ky_nang', 1]], { perk: 'y_chi_thay' }) },
+      reward: rw(26, 'story', [['sach_tiem_nang', 1]], { perk: 'y_chi_thay' }) },
     { id: 'c3q10', name: 'Vũ khí từ lõi cổng', npc: 'tho_ren',
       start: [
         'Thợ chế tác Thiết: Trái Tim Băng Long, Lõi Lò Rèn, Mảnh Lõi Đỏ cổ đại... đủ rồi!',
@@ -131,7 +131,7 @@
       end: [
         'Thợ chế tác Thiết: Vũ khí hạng B! Xuyên được giáp quái lõi cổng.',
       ],
-      reward: rw(28, 'story', [['da_cuong_hoa_cao', 5], ['sach_ky_nang', 1]], { craftWeapon: true }) },
+      reward: rw(28, 'story', [['da_cuong_hoa_cao', 5], ['sach_tiem_nang', 1]], { craftWeapon: true }) },
     { id: 'c3q11', name: 'Cổng thành cổ', npc: 'tho_ren',
       start: [
         'Thợ chế tác Thiết: Vũ khí xong rồi. Giờ tới chuyện khác, chuyện tôi chưa nói với ai.',

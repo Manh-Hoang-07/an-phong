@@ -224,6 +224,7 @@ const ItemArt = (() => {
       + path('M6 30 Q2 38 6 46 M58 30 Q62 38 58 46', 'none', 1.6).replace(OUT, '#ffe0a0'),
     // sách
     sach_ky_nang: () => book('#3b78d8', circ(32, 32, 6, '#f2d98a', 1.6)),
+    sach_tiem_nang: () => book('#d8a63b', path('M32 20 L36 30 L46 32 L36 34 L32 44 L28 34 L18 32 L28 30Z', '#fff3c0', 1.4)),
     sach_bien_hinh_1: () => book('#3da05a', path('M24 36 Q32 20 40 36 Q32 32 24 36Z', '#f2d98a', 1.4)), sach_bien_hinh_2: () => book('#2a8d9e', path('M22 38 Q32 16 42 38 Q32 32 22 38Z', '#f2d98a', 1.4) + circ(32, 24, 3, '#ffffff', 1)),
     sach_bien_hinh_3: () => book('#2f7fd0', path('M22 38 Q32 14 42 38 Q32 32 22 38Z', '#bfe9ff', 1.4) + circ(28, 24, 2.4, '#ffffff', 1) + circ(36, 24, 2.4, '#ffffff', 1)),
     sach_bien_hinh_4: () => book('#c23b3b', path('M22 38 Q32 12 42 38 Q32 32 22 38Z', '#ffd0a0', 1.4) + circ(26, 25, 2.2, '#ffffff', 1) + circ(32, 21, 2.2, '#ffffff', 1) + circ(38, 25, 2.2, '#ffffff', 1)),

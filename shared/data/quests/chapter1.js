@@ -131,7 +131,7 @@
         'Hội trưởng Khải: Nhiều thợ săn đã vào đó và không trở về. Tìm hiểu xem chuyện gì đang xảy ra.',
         '[Hệ thống] Đã mở khóa Chương 2 – Bóng Trăng Khuyết.',
       ],
-      reward: rw(10, 'story', [['sach_ky_nang', 1]], { skillPoints: 2 }) },
+      reward: rw(10, 'story', [['sach_tiem_nang', 1]], { skillPoints: 2 }) },
   ];
 
   (G.QUEST_PARTS = G.QUEST_PARTS || []).push(PART);

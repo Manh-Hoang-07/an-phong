@@ -157,7 +157,7 @@
         'Hạ Phong (chuyển lời Hội trưởng Khải): Nếu đây là sự thật, Hắc Nguyệt không hẳn là kẻ thù. Nhưng mở Cổng Vĩnh Hằng mà không kiểm soát... hậu quả không lường được.',
         '[Hệ thống] Đã mở khóa cấp tối đa: 50.',
       ],
-      reward: rw(20, 'story', [['sach_ky_nang', 1]], { skillPoints: 2 }) },
+      reward: rw(20, 'story', [['sach_tiem_nang', 1]], { skillPoints: 2 }) },
   ];
 
   (G.QUEST_PARTS = G.QUEST_PARTS || []).push(PART);

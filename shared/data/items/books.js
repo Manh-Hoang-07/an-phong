@@ -5,6 +5,7 @@
   'use strict';
 
   const PART = {
+    sach_tiem_nang: { name: 'Sách tiềm năng', kind: 'potential_book', potential: 3, stack: true, price: 0, desc: 'Đọc để nhận ngay 3 điểm tiềm năng (cộng vào Sức mạnh / Thể chất / Tinh thần / Nhanh nhẹn tùy ý). Không giới hạn số cuốn.' },
     sach_ky_nang: { name: 'Sách kỹ năng', kind: 'book', stack: true, price: 0, priceNgoc: 20, ngocGroup: 'util', desc: 'Đọc để nhận thêm 1 điểm kỹ năng. Mỗi nhân vật đọc tối đa 7 cuốn (+7 điểm).' },
     sach_bien_hinh_1: { name: 'Sách Biến Hình I', kind: 'transform_book', transform: 'awaken1', stack: true, price: 0, desc: 'Mở khóa hình thái biến hình lần thứ nhất.' },
     sach_tien_hoa_chuc_nghiep: { name: 'Sách Tiến Hóa Chức Nghiệp', kind: 'transform_book', transform: 'evolution', stack: true, price: 0, desc: 'Mở khóa hình thái tiến hóa của class nền.' },

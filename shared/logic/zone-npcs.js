@@ -19,7 +19,8 @@
 
   function zoneNpcSpots(g) {
     const { cols, rows, cell, isStand, T } = g;
-    const marks = cols >= WIDE_COLS ? [0.2, 0.5, 0.8] : [0.28, 0.72];
+    // Đầu map và cuối map; map rộng thêm một người ở giữa
+    const marks = cols >= WIDE_COLS ? [0.06, 0.5, 0.94] : [0.06, 0.94];
     // có chỗ đứng (đất / bục) với 3 ô phía trên thoáng, không nước / thác
     const free = (r, c) => {
       if (!isStand(r, c)) return false;
@@ -32,17 +33,24 @@
     const out = [];
     for (const f of marks) {
       const c0 = Math.round(cols * f);
+      const edge = f !== 0.5;
+      // Người ở đầu / cuối map chỉ tìm trong 22% bề rộng gần mép (không để trôi vào giữa map); người giữa tìm rộng như cũ
+      const reach = edge ? Math.max(12, Math.round(cols * 0.22)) : 60;
+      // Thử lần lượt từ chặt tới lỏng: (cách quái xuất hiện, đất bằng mỗi bên, cách cổng / NPC khác)
+      const tiers = [[200, 2, MIN_GAP], [120, 2, MIN_GAP], [0, 2, MIN_GAP], [0, 1, 80], [0, 0, 56]];
       let done = false;
-      for (const spawnGap of [200, 120, 0]) {
-        for (let d = 0; d < 60 && !done; d++) {
-          for (const c of d ? [c0 - d, c0 + d] : [c0]) {
+      for (const [spawnGap, flat, minGap] of tiers) {
+        for (let d = 0; d < reach && !done; d++) {
+          for (const c of d ? (edge && f < 0.5 ? [c0 + d] : edge ? [c0 - d] : [c0 - d, c0 + d]) : [c0]) {
             if (c < 5 || c > cols - 6) continue;
             const r = floorRow(c);
             if (r < 0) continue;
-            // đất bằng 5 ô liền nhau cùng độ cao
-            if (![-2, -1, 1, 2].every(k => floorRow(c + k) === r)) continue;
+            // đất bằng các ô liền kề cùng độ cao
+            let ok = true;
+            for (let k = 1; k <= flat && ok; k++) if (floorRow(c - k) !== r || floorRow(c + k) !== r) ok = false;
+            if (!ok) continue;
             const x = c * T + T / 2;
-            if (used.some(u => Math.abs(u - x) < MIN_GAP)) continue;
+            if (used.some(u => Math.abs(u - x) < minGap)) continue;
             if (spawnX.some(u => Math.abs(u - x) < spawnGap)) continue;
             used.push(x);
             out.push({ c, r, x, y: r * T });

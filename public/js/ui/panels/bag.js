@@ -4,7 +4,7 @@
   const { G, esc, fmt, qOf, cellHtml, itemInfo, shopHere, selectedEntry, S } = UI._;
 
   // Loại vật phẩm đọc được (sách) — dùng chung cho nút "Đọc sách"
-  const BOOK_KINDS = ['book', 'ult_book', 'skill_book', 'slot_book', 'erase_book', 'transform_book'];
+  const BOOK_KINDS = ['book', 'potential_book', 'ult_book', 'skill_book', 'slot_book', 'erase_book', 'transform_book'];
 
   // ------------------------------------------------------------ Nút chức năng của vật phẩm đang chọn
   // opts.noDetail: khung chi tiết không cần nút mở chính nó (sẽ thành vòng lặp vô nghĩa)

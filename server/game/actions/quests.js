@@ -50,7 +50,7 @@ const actions = {
     const q = currentQuest(p);
     if (!q) fail('Không có nhiệm vụ.');
     if (!onCurrentMapNpc(p, q.npc)) fail('Hãy đến gặp người giao nhiệm vụ.');
-    const back = mustReturnTo(p, p.quest.map);
+    const back = mustReturnTo(p, p.quest.map, q.npc);
     if (back) fail(back);
     if (!questComplete(p)) fail('Nhiệm vụ chưa xong.');
     // Nhiệm vụ có lời thoại để chọn: phải chọn một câu đáp hợp lệ
@@ -116,7 +116,7 @@ const actions = {
     if (!G.sideActive(p, q.id)) fail('Bạn chưa nhận phụ tuyến này.');
     if (!G.sideReady(p, q.id)) fail('Phụ tuyến chưa hoàn thành.');
     if (!onCurrentMapNpc(p, q.npc)) fail('Hãy đến gặp người giao phụ tuyến.');
-    const back = mustReturnTo(p, p.side.active[q.id].map);
+    const back = mustReturnTo(p, p.side.active[q.id].map, q.npc);
     if (back) fail(back.replace('nhiệm vụ', 'phụ tuyến'));
     const r = q.reward || {};
     const items = r.items || [];

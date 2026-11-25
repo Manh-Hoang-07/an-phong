@@ -134,7 +134,7 @@
     { id: 'p6-3', name: 'Khuôn rèn cổ', npc: 'tho_ren', req: ['p6-2'],
       start: ['Thợ chế tác Thiết: Khuôn rèn cổ của tổ tiên tôi bị Quỷ Búa Băng chiếm làm ổ trên đỉnh núi.', 'Thợ chế tác Thiết: Hạ 6 con để lấy lại. Nó cứng, cậu đừng đánh liều.'],
       end: ['Thợ chế tác Thiết: Khuôn đây rồi! Cậu giúp dòng họ tôi nhiều lắm. Từ nay ai hỏi, tôi nói cậu là học trò của ta.'],
-      obj: { kill: { dai_thach_nhan: 6 } }, reward: { exp: sx(28, 0.2), gold: 3000, title: 'Học Trò Thợ Rèn', items: [['sach_ky_nang', 1]] } },
+      obj: { kill: { dai_thach_nhan: 6 } }, reward: { exp: sx(28, 0.2), gold: 3000, title: 'Học Trò Thợ Rèn', items: [['sach_tiem_nang', 1]] } },
 
     // ---- Bảng truy nã (Hội trưởng Khải)
     { id: 'p7-1', name: 'Truy nã: kẻ trốn', npc: 'lao_su', req: ['c2q12'],
@@ -154,7 +154,7 @@
     { id: 'p8-2', name: 'Nhật ký người Số 3 (2)', npc: 'lu_khach', req: ['p8-1', 'c4q8'],
       start: ['Lữ khách: Trang cuối của nhật ký nằm trong tay Thủ Thư Vô Diện ở Đỉnh Tháp. Hắn đọc từng chữ rồi xóa nó.', 'Lữ khách: Hạ 4 tên Thủ Thư. Ta muốn đọc trang đó trước khi quên.'],
       end: ['Lữ khách: Trang cuối chỉ có một dòng: "Hãy là người chơi đầu tiên không bị nuốt." Cậu đã làm được rồi.'],
-      obj: { kill: { thu_thu_vo_dien: 4 } }, reward: { exp: sx(38, 0.2), gold: 5000, title: 'Người Đọc Ký Ức', items: [['sach_ky_nang', 2]] } },
+      obj: { kill: { thu_thu_vo_dien: 4 } }, reward: { exp: sx(38, 0.2), gold: 5000, title: 'Người Đọc Ký Ức', items: [['sach_tiem_nang', 2]] } },
 
     // ---- Lam Sương ở lại
     { id: 'p9-1', name: 'Lam Sương ở lại (1)', npc: 'lam_suong', req: ['c5q9'],
