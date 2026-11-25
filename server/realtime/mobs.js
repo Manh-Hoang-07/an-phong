@@ -27,6 +27,9 @@ const FLAG_SLOW = 1, FLAG_FREEZE = 2, FLAG_ENRAGE = 4;
 const ST = { move: 0, windup: 1, lunge: 2 };
 const CONTRIB_SHARE = 0.1;       // đánh được từ 10% máu quái trở lên thì được tính điểm kết liễu (nhận thưởng như người hạ)
 const MAX_MOBS = 300;
+// Quái thường hồi sinh chậm gấp 3 so với dữ liệu gốc (người chơi thấy hiện lại quá nhanh). Trùm / thủ lĩnh giữ nguyên.
+const RESPAWN_MUL = 3;
+const respawnMs = (def) => (def.respawn || 10) * 1000 * (def.boss || def.leader || def.finalBoss ? 1 : RESPAWN_MUL);
 const LEASH = 600;               // xa hơn thế (hoặc chết / rời map) thì quái bỏ mục tiêu
 const SWITCH_THREAT = 1.3;       // đổi mục tiêu khi có người gây nhiều hơn mục tiêu hiện tại 30% sát thương
 const BIG_SCALE_STEP = 0.5;      // trùm / thủ lĩnh: mỗi người chơi gần thêm 50% máu tối đa
@@ -121,7 +124,7 @@ class World {
       m.enraged = false;
       const ra = Number.isFinite(s.ra) ? s.ra : 0;
       // Đã chết mà không có mốc hồi sinh (dữ liệu cũ / đồng hồ lệch): hồi sinh sau đúng thời gian chờ của nó
-      m.respawnAt = ra > 0 ? ra : Date.now() + (m.def.respawn || 10) * 1000;
+      m.respawnAt = ra > 0 ? ra : Date.now() + respawnMs(m.def);
     }
   }
 
@@ -209,7 +212,7 @@ class World {
     m.contrib = new Map(); m.contribSrc = null;
     if (m.minion) {
       setTimeout(() => { this.byUid.delete(m.uid); this.mobs = this.mobs.filter((o) => o !== m); this.hooks.emit({ t: 'mdel', u: m.uid }); }, 600);
-    } else m.respawnAt = now + (m.def.respawn || 10) * 1000;
+    } else m.respawnAt = now + respawnMs(m.def);
   }
 
   // Xoá hẳn một quái phụ còn sống (hết hạn / trùm đã chết): không thưởng, không lưu
@@ -236,10 +239,13 @@ class World {
   step(now, players) {
     this.stepCount++;
     const dt = STEP_MS / 1000;
+    // Danh sách người còn sống tính MỘT lần cho cả thế giới (trước đây mỗi quái tự lọc lại mỗi 50 ms).
+    // Người chết giữa chừng không xảy ra trong một bước nên kết quả không đổi.
+    const living = players.filter((p) => !p.dead);
     for (const m of this.mobs.slice()) {
       if (m.minion && m.alive && now - m.bornAt > MINION_TTL_MS) { this.removeMinion(m); continue; }
       if (!m.alive) { if (!m.minion && now >= m.respawnAt) this.respawn(m); continue; }
-      this.stepMob(m, now, dt, players);
+      this.stepMob(m, now, dt, living);
     }
   }
 
@@ -260,7 +266,8 @@ class World {
     let near = null;
     const cand = [];
     for (const p of living) {
-      const dist = Math.hypot(p.x - m.x, p.y - cy);
+      const ddx = p.x - m.x, ddy = p.y - cy;
+      const dist = Math.sqrt(ddx * ddx + ddy * ddy);   // nhanh hơn Math.hypot, cùng kết quả ở dải toạ độ game
       if (!near || dist < near.dist) near = { p, dist };
       if (dist <= LEASH) cand.push({ p, dist });
     }
@@ -303,13 +310,12 @@ class World {
     m.nextAttack = now + (m.def.boss || m.def.leader ? (m.enraged ? 900 : 1300) : 1000 + Math.random() * 500);
   }
 
-  stepMob(m, now, dt, players) {
+  // `living`: chỉ người còn sống mới là mục tiêu (chết thì quái chuyển sang người khác, không còn ai thì bỏ cuộc và về chỗ cũ)
+  stepMob(m, now, dt, living) {
     const d = m.def;
     if (d.passive) return;
     const fly = !!d.fly;
     const big = d.boss || d.leader;
-    // Chỉ người còn sống mới là mục tiêu: chết thì quái chuyển sang người khác, không còn ai thì bỏ cuộc và về chỗ cũ
-    const living = players.filter((p) => !p.dead);
     const { target, near } = this.pickTarget(m, living, fly, big);
     m.aggro = !!target;
     m.target = target ? target.p.id : null;

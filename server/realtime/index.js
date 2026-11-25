@@ -21,6 +21,8 @@ const gameActions = require('../game/actions/world');
 const combatActions = require('../game/actions/combat');
 const mobstore = require('./mobstore');
 const { World, STEP_MS } = require('./mobs');
+const hitValidate = require('../game/core/hit-validate');
+const combatGuard = require('../game/core/combat-guard');
 
 const PATH = '/ws';
 const TICK_MS = 100;              // chu kỳ phát vị trí
@@ -121,8 +123,43 @@ const cookies = (req) => {
   return out;
 };
 
+// Số đo hiệu năng (chỉ đếm, gần như không tốn): ghi ra log mỗi PERF_LOG_MS khi bật AP_PERF=1,
+// và LUÔN cảnh báo (tối đa mỗi 10 giây) nếu một nhịp tick / mobTick chậm quá PERF_SLOW_MS.
+const SNAP_FULL_EVERY = 10;       // cứ 10 nhịp (~1 giây) gửi đủ hướng + hoạt ảnh một lần
+const PERF_LOG_MS = 30000;
+const PERF_SLOW_MS = Number(process.env.AP_PERF_SLOW_MS) || 25;
+const perf = { bytes: 0, msgs: 0, tickN: 0, tickSum: 0, tickMax: 0, mobN: 0, mobSum: 0, mobMax: 0, at: Date.now(), warnAt: 0 };
+
 function sendRaw(conn, text) {
-  if (conn.ws.readyState === 1 && conn.ws.bufferedAmount < 256 * 1024) conn.ws.send(text);
+  if (conn.ws.readyState === 1 && conn.ws.bufferedAmount < 256 * 1024) {
+    perf.bytes += text.length; perf.msgs++;
+    conn.ws.send(text);
+  }
+}
+
+// Đo một nhịp: cộng vào thống kê, cảnh báo nếu quá chậm. `kind` là 'tick' hoặc 'mob'.
+function timed(kind, fn) {
+  const t0 = process.hrtime.bigint();
+  try { fn(); } finally {
+    const ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    perf[kind + 'N']++; perf[kind + 'Sum'] += ms;
+    if (ms > perf[kind + 'Max']) perf[kind + 'Max'] = ms;
+    const now = Date.now();
+    if (ms > PERF_SLOW_MS && now - perf.warnAt > 10000) {
+      perf.warnAt = now;
+      console.warn(`[perf] ${kind}Tick chậm ${ms.toFixed(1)}ms (ngưỡng ${PERF_SLOW_MS}ms) | người ${byUser.size} | phòng ${rooms.size} | thế giới quái ${worlds.size}`);
+    }
+  }
+}
+
+function perfReport() {
+  const now = Date.now(), sec = Math.max(1, (now - perf.at) / 1000);
+  if (process.env.AP_PERF === '1') {
+    const avg = (s, n) => (n ? (s / n).toFixed(2) : '0');
+    console.log(`[perf] ${sec.toFixed(0)}s | người ${byUser.size} phòng ${rooms.size} thế giới ${worlds.size} | gửi ${(perf.bytes / 1024 / sec).toFixed(1)} KB/s, ${(perf.msgs / sec).toFixed(0)} gói/s | tick tb ${avg(perf.tickSum, perf.tickN)}ms max ${perf.tickMax.toFixed(1)}ms | mobTick tb ${avg(perf.mobSum, perf.mobN)}ms max ${perf.mobMax.toFixed(1)}ms`);
+  }
+  perf.bytes = perf.msgs = perf.tickN = perf.tickSum = perf.tickMax = perf.mobN = perf.mobSum = perf.mobMax = 0;
+  perf.at = now;
 }
 const send = (conn, obj) => sendRaw(conn, JSON.stringify(obj));
 
@@ -141,6 +178,8 @@ async function refreshLook(conn) {
   const school = p.school || null;
   const level = Number(p.level) || 1;
   const name = String(p.name || '?').slice(0, 16);
+  // Bản đồ do SERVER xác nhận (HTTP change_map/teleport đã sửa p.map trong cache). Client không gửi được.
+  conn.serverMap = p.map;
   try {
     const st = G.calcStats(p, { form: !!p.formActive });
     // Trần sát thương một đòn, tính từ ATK của chính nhân vật: chặn client gửi số tuỳ ý.
@@ -152,8 +191,9 @@ async function refreshLook(conn) {
     conn.capSkill = conn.atk * CAP_MUL_SKILL + 500;
     conn.capUlt = conn.atk * CAP_MUL_ULT + 500;
     conn.capSuperUlt = conn.atk * CAP_MUL_SUPERULT + 500;
-    conn.cdr = st.cdr || 0;   // giảm hồi chiêu: server phải áp cùng tỉ lệ với client (tối đa 30%)
-  } catch { conn.dmgCap = 5000; conn.atk = 30; conn.capBasic = 5000; conn.capSkill = 20000; conn.capUlt = 40000; conn.capSuperUlt = 400000; conn.cdr = 0; }
+    conn.cdr = st.cdr || 0;
+    conn.skillMul = st.skillMul || 1;  // sức mạnh kỹ năng do server tính, dùng cho trần tham chiếu
+  } catch { conn.dmgCap = 5000; conn.atk = 30; conn.capBasic = 5000; conn.capSkill = 20000; conn.capUlt = 40000; conn.capSuperUlt = 400000; conn.cdr = 0; conn.skillMul = 1; }
   // Cache danh sách kỹ năng đã học + đang gắn để onCast đối chiếu (server tự đọc, không tin client).
   // Chỉ lấy id + cấp + cờ loại; refresh mỗi LOOK_REFRESH_MS nên thay đổi sách/ô được cập nhật trong vài giây.
   conn.skillLevels = {};
@@ -332,7 +372,7 @@ function mobTick() {
 // ---------------------------------------------------------------- Nhận lệnh dùng chiêu (chống spam)
 // Client gửi gói `cast` NGAY TRƯỚC khi bắn đòn. Server kiểm ba thứ nó tự biết:
 //   1. kỹ năng đã học VÀ đang gắn trên thanh (cache từ refreshLook, client sửa không được)
-//   2. hồi chiêu do SERVER giữ (conn.skillCds), có áp cdr như client
+//   2. hồi chiêu do SERVER giữ (combatGuard theo userId), có áp cdr như client
 //   3. số lần dùng mỗi giây/phút theo CAST_RATE
 // Hợp lệ thì mở một "cửa sổ đòn" trong CAST_HIT_WINDOW_MS: onHit chỉ nhận đòn kỹ năng có id này.
 // Không hợp lệ thì đánh dấu castDenyUntil để onHit bỏ qua đòn trong 1 giây.
@@ -343,6 +383,7 @@ function onCast(conn, m) {
   const now = Date.now();
   const sk = G.SKILLS[id];
   if (!sk) return;
+  const g = combatGuard.state(conn.userId);   // dùng chung cho mọi kết nối của tài khoản này
   const lv = (conn.skillLevels || {})[id] || 0;
   const equipped = (conn.skillEquipped || []).includes(id);
   // Kỹ năng do TRANG BỊ cấp (GEAR_SKILL_SLOT) không nằm trong p.skills/p.skillSlots nên không có trong cache.
@@ -355,25 +396,25 @@ function onCast(conn, m) {
   const kind = sk.superUlt ? 'superUlt' : sk.ult ? 'ult' : 'skill';
   // 1) Hồi chiêu do server giữ. Áp cdr y hệt client: cd_ms × (1 - cdr/100).
   const cdMs = (sk.cd || 0) * 1000 * (1 - (conn.cdr || 0) / 100);
-  if (now < (conn.skillCds[id] || 0)) { conn.castDenyUntil = now + CAST_DENY_MS; return; }
+  if (now < (g.skillCds[id] || 0)) { g.castDenyUntil = now + CAST_DENY_MS; return; }
   // 2) Giới hạn số lần dùng theo từng loại (cửa sổ trượt).
   const rate = CAST_RATE[kind];
-  if (!conn.castWinAt[kind]) { conn.castN[kind] = 0; conn.castWinAt[kind] = now; }
+  if (!g.castWinAt[kind]) { g.castN[kind] = 0; g.castWinAt[kind] = now; }
   else {
-    const add = ((now - conn.castWinAt[kind]) / rate.windowMs) * rate.max;
-    conn.castN[kind] = Math.max(0, (conn.castN[kind] || 0) - add);
-    conn.castWinAt[kind] = now;
+    const add = ((now - g.castWinAt[kind]) / rate.windowMs) * rate.max;
+    g.castN[kind] = Math.max(0, (g.castN[kind] || 0) - add);
+    g.castWinAt[kind] = now;
   }
-  if (conn.castN[kind] >= rate.max) { conn.castDenyUntil = now + CAST_DENY_MS; return; }
-  conn.castN[kind] = (conn.castN[kind] || 0) + 1;
+  if (g.castN[kind] >= rate.max) { g.castDenyUntil = now + CAST_DENY_MS; return; }
+  g.castN[kind] = (g.castN[kind] || 0) + 1;
   // Hợp lệ: ghi hồi chiêu server + mở cửa sổ cho đòn của lần dùng này.
-  conn.skillCds[id] = now + cdMs;
+  g.skillCds[id] = now + cdMs;
   conn.lastCastAt = now;
   conn.lastCastId = id;
   // Giữ TẤT CẢ lần dùng trong cửa sổ: kỹ năng bắn nhiều nhát có thể còn đòn rơi sau khi đã bấm chiêu khác.
-  (conn.recentCasts || (conn.recentCasts = [])).push({ id, at: now });
-  if (conn.recentCasts.length > 32) conn.recentCasts.splice(0, conn.recentCasts.length - 32);
-  conn.castDenyUntil = 0;
+  g.recentCasts.push({ id, at: now });
+  if (g.recentCasts.length > 32) g.recentCasts.splice(0, g.recentCasts.length - 32);
+  g.castDenyUntil = 0;
 }
 
 function onHit(conn, m) {
@@ -381,6 +422,7 @@ function onHit(conn, m) {
   if (!w) return;
   const now = Date.now();
   if (conn.dead && now - conn.deadAt > 1500) return;
+  const g = combatGuard.state(conn.userId);   // bộ đếm dùng chung, reconnect không reset được
   // Loại đòn do client khai: 0 đánh thường, 1 kỹ năng, 2 tuyệt kỹ, 3 siêu tuyệt kỹ.
   // Cờ này KHÔNG đáng tin (client sửa được), nên nó chỉ dùng để CHỌN TRẦN; chặn thật là ngân sách bên dưới.
   // Giữ tương thích cũ: gói chỉ có `sk: 1` thì coi là kỹ năng.
@@ -393,8 +435,8 @@ function onHit(conn, m) {
   // sau khi đã bấm chiêu khác). Nếu không gửi id thì chấp nhận đòn trong cửa sổ (tương thích client cũ).
   // Bị từ chối cast gần đây → bỏ qua đòn trong CAST_DENY_MS.
   if (isSkill && m.src !== 'pet' && m.src !== 'shadow') {
-    if (now < (conn.castDenyUntil || 0)) return;
-    const casts = conn.recentCasts || [];
+    if (now < (g.castDenyUntil || 0)) return;
+    const casts = g.recentCasts;
     if (!casts.length || now - casts[casts.length - 1].at > CAST_HIT_WINDOW_MS) return;
     if (m.id) {
       const want = String(m.id).slice(0, 40);
@@ -403,17 +445,19 @@ function onHit(conn, m) {
   }
   // Hai ngân sách riêng: đánh thường và kỹ năng. Kỹ năng bắn nhiều đòn một lần nên cần ngân sách rộng hơn,
   // nhưng không được dùng chung với đánh thường (nếu không thì đánh thường thành cửa sau).
-  if (now - conn.hitAt >= 1000) { conn.hitAt = now; conn.hitN = 0; conn.skillHitN = 0; }
+  if (now - g.hitAt >= 1000) { g.hitAt = now; g.hitN = 0; g.skillHitN = 0; }
   if (isSkill) {
     // Siêu tuyệt kỹ bắn ít đòn nhưng mỗi đòn rất lớn, nên đếm riêng để không giành hạn mức với kỹ năng thường.
-    if (isSuper) { conn.superHitN = (conn.superHitN || 0) + 1; if (conn.superHitN > MAX_SKILL_HITS_PER_SEC) return; }
-    else if (++conn.skillHitN > MAX_SKILL_HITS_PER_SEC) return;
-  } else if (++conn.hitN > MAX_HITS_PER_SEC) return;
+    if (isSuper) { g.superHitN = (g.superHitN || 0) + 1; if (g.superHitN > MAX_SKILL_HITS_PER_SEC) return; }
+    else if (++g.skillHitN > MAX_SKILL_HITS_PER_SEC) return;
+  } else if (++g.hitN > MAX_HITS_PER_SEC) return;
   const mob = w.byUid.get(m.u | 0);
   if (!mob || !mob.alive) return;
   if (Math.abs(conn.x - mob.x) > 1100 || Math.abs(conn.y - mob.y) > 700) return;   // quá xa (đã gồm tầm bắn / thú đi theo)
   const dmg = Number(m.d);
   if (!(dmg >= 1)) return;
+  // Bước trung gian: ngân sách đòn thường trên TỪNG QUÁI (chặn spam 1 quái bằng nhiều nhát). 
+  if (!isSkill && !hitValidate.basicMobBudget(g.basicMobHits, m.u, now)) return;
   const f = (v, max) => (Number.isFinite(v) && v > 0 ? Math.min(v, max) : 0);
   const atk = Math.max(conn.atk || 30, 30);
   const capOf = (k) => {
@@ -423,6 +467,13 @@ function onHit(conn, m) {
     return conn.capBasic || atk * CAP_MUL_BASIC + 50;
   };
   let cap = capOf(kind);
+  // Trần tham chiếu gắn với skill THẬT đã cast (client sửa được cờ k, không sửa được lịch sử cast của server).
+  // Chỉ áp cho skill/tuyệt kỹ/siêu tuyệt kỹ có id; đánh thường giữ nguyên trần CAP_MUL_BASIC.
+  if (isSkill && m.id) {
+    const cast = g.recentCasts.find((x) => x.id === String(m.id).slice(0, 40));
+    const ref = cast ? hitValidate.skillCeiling(conn.atk, conn.skillMul, m.id, (conn.skillLevels || {})[cast.id], mob, now) : null;
+    if (ref > 0) cap = Math.min(cap, ref);
+  }
   // Cờ loại đòn do client gửi nên không đáng tin: kỹ năng còn bị ghì thêm bằng ngân sách SÁT THƯƠNG mỗi giây,
   // để giả cờ cũng không đổi được nhiều hơn một lượng nhỏ.
   if (isSkill) {
@@ -432,31 +483,31 @@ function onHit(conn, m) {
       // Một lần dùng siêu tuyệt kỹ bắn nhiều đòn (AoE nhiều quái) trong vài trăm ms, nên các đòn
       // trong cùng một đợt chỉ tính là MỘT lần. Đợt mới phải cách đợt trước ít nhất 1,5 giây —
       // ngắn hơn thì đó là cùng một lần dùng (đòn thứ 2, 3 của cùng AoE), không phải lần dùng mới.
-      const newCast = !conn.superCastAt || now - conn.superCastAt >= 1500;
+      const newCast = !g.superCastAt || now - g.superCastAt >= 1500;
       if (newCast) {
-        if (!conn.superWinAt) { conn.superUses = 0; conn.superWinAt = now; }
+        if (!g.superWinAt) { g.superUses = 0; g.superWinAt = now; }
         else {
           // Nạp lại theo tỉ lệ thời gian trôi qua: 60 giây hoàn lại đủ 2 lần.
-          const add = ((now - conn.superWinAt) / SUPERULT_WINDOW_MS) * SUPERULT_USES_MAX;
-          conn.superUses = Math.max(0, (conn.superUses || 0) - add);
-          conn.superWinAt = now;
+          const add = ((now - g.superWinAt) / SUPERULT_WINDOW_MS) * SUPERULT_USES_MAX;
+          g.superUses = Math.max(0, (g.superUses || 0) - add);
+          g.superWinAt = now;
         }
-        if (conn.superUses >= SUPERULT_USES_MAX) return;
-        conn.superUses = (conn.superUses || 0) + 1;
+        if (g.superUses >= SUPERULT_USES_MAX) return;
+        g.superUses = (g.superUses || 0) + 1;
       }
-      conn.superCastAt = now;
+      g.superCastAt = now;
     } else {
       const rate = atk * CAP_MUL_SKILL * SKILL_DMG_RATE_MUL;
       const pool = rate * SKILL_DMG_BURST_SEC;
       // Lần dùng kỹ năng đầu tiên phải có ngân sách đầy, nếu không đòn đầu tiên bị chặn oan.
-      if (!conn.skillDmgAt) { conn.skillDmg = pool; conn.skillDmgAt = now; }
+      if (!g.skillDmgAt) { g.skillDmg = pool; g.skillDmgAt = now; }
       else {
-        conn.skillDmg = Math.min(pool, (conn.skillDmg || 0) + ((now - conn.skillDmgAt) / 1000) * rate);
-        conn.skillDmgAt = now;
+        g.skillDmg = Math.min(pool, (g.skillDmg || 0) + ((now - g.skillDmgAt) / 1000) * rate);
+        g.skillDmgAt = now;
       }
-      if (conn.skillDmg < 1) return;
-      cap = Math.min(cap, conn.skillDmg);
-      conn.skillDmg -= Math.min(dmg, cap);
+      if (g.skillDmg < 1) return;
+      cap = Math.min(cap, g.skillDmg);
+      g.skillDmg -= Math.min(dmg, cap);
     }
   }
   w.applyHit(mob, conn.id, {
@@ -608,6 +659,17 @@ function onPos(conn, m) {
   if (x === null || y === null) return;
   const mapId = typeof m.map === 'string' && G.MAPS && G.MAPS[m.map] ? m.map : null;
   if (!mapId) return;
+  // Chống đổi bản đồ qua gói vị trí: bản đồ hợp lệ chỉ đổi được qua action change_map/teleport
+  // (server đã sửa p.map và refreshLook đọc sang conn.serverMap trong vòng 5 giây).
+  // Lần đầu vào phòng conn.serverMap chưa có thì cho đi, nhưng chỉ đúng map client khai.
+  const trustedMap = conn.serverMap || mapId;
+  if (mapId !== trustedMap) return;
+  const now = Date.now();
+  // `r=1` là gói xin vào lại phòng lúc dựng cảnh/hồi sinh. Trước đây client có thể gửi liên tục để
+  // đổi khu bỏ qua CH_SWITCH_GAP_MS (farm quái respawn). Áp cùng mốc chờ như onChannel.
+  const reenter = m.r === 1;
+  if (reenter && now - (conn.chAt || 0) < CH_SWITCH_GAP_MS) return;
+  if (reenter) conn.chAt = now;
   conn.x = x; conn.y = y;
   conn.f = m.f === -1 ? -1 : 1;
   conn.a = ANIMS.has(m.a) ? m.a : 'idle';
@@ -615,7 +677,7 @@ function onPos(conn, m) {
   // Đang nằm chết: quái không nhắm vào nữa, và không nhận thêm đòn đánh quá 1,5 giây sau khi chết
   if (conn.a === 'dead') { if (!conn.dead) { conn.dead = true; conn.deadAt = Date.now(); trade.onDead(conn); } } else conn.dead = false;
   if (conn.map && conn.map !== mapId) trade.onMapChange(conn);
-  if (conn.map !== mapId || m.r === 1) { enterRoom(conn, mapId); return; }
+  if (conn.map !== mapId || reenter) { enterRoom(conn, mapId); return; }
   conn.dirty = true;
 }
 
@@ -692,7 +754,14 @@ function tick() {
     for (const c of r.values()) {
       if (!c.dirty) continue;
       c.dirty = false;
-      (list = list || []).push([c.id, c.x, c.y, c.f, c.a]);
+      // Delta: chỉ gửi [id,x,y] khi hướng và hoạt ảnh không đổi so với lần gửi trước (tiết kiệm ~40% mỗi mục).
+      // Gửi đủ [id,x,y,f,a] khi có đổi, và cứ SNAP_FULL_EVERY lần lại gửi đủ một lần để sửa mọi sai lệch
+      // (người mới vào phòng nhận trạng thái đầy đủ qua gói 'room', nên không cần mốc riêng cho từng người).
+      c.sn = (c.sn | 0) + 1;
+      if (c.sf !== c.f || c.sa !== c.a || c.sn >= SNAP_FULL_EVERY) {
+        c.sf = c.f; c.sa = c.a; c.sn = 0;
+        (list = list || []).push([c.id, c.x, c.y, c.f, c.a]);
+      } else (list = list || []).push([c.id, c.x, c.y]);
     }
     if (!list) continue;
     // Người vừa di chuyển không cần nhận lại chính vị trí của mình: client bỏ qua id lạ
@@ -711,6 +780,7 @@ const MAINTAIN_BATCH = 128;
 let maintainCursor = 0;
 
 async function maintain() {
+  combatGuard.prune();   // dọn bộ đếm cũ theo userId (O(64) mỗi nhịp 500ms)
   const conns = [...byUser.values()];
   if (!conns.length) return;
   const n = Math.min(MAINTAIN_BATCH, conns.length);
@@ -742,13 +812,18 @@ function attach(server) {
   server.on('upgrade', async (req, socket, head) => {
     try {
       if ((req.url || '').split('?')[0] !== PATH) return reject(socket, 404, 'Not Found');
+      const cookieToken = cookies(req).ap_session;
+      // App mobile (Godot) không gửi được custom header/Cookie lúc WS handshake → nhận token qua query.
+      // Browser vẫn dùng cookie như cũ; origin check chỉ áp cho browser (cookie).
+      let queryToken = '';
+      try { queryToken = new URL(req.url, 'http://localhost').searchParams.get('token') || ''; } catch { /* bỏ qua */ }
+      const token = cookieToken || queryToken;
       const origin = req.headers.origin;
-      if (origin) {
+      if (origin && cookieToken) {
         let host = '';
         try { host = new URL(origin).host; } catch { /* sai định dạng */ }
         if (host !== req.headers.host) return reject(socket, 403, 'Forbidden');
       }
-      const token = cookies(req).ap_session;
       const session = await auth.getSession(token);
       if (!session) return reject(socket, 401, 'Unauthorized');
       wss.handleUpgrade(req, socket, head, (ws) => connect(ws, token, session));
@@ -768,10 +843,12 @@ function attach(server) {
   });
   const social = setInterval(() => { try { party.tick(); trade.tick(); } catch (e) { console.error('Đội / giao dịch lỗi:', e.message); } }, 1000);
   social.unref();
-  tickTimer = setInterval(tick, TICK_MS);
+  tickTimer = setInterval(() => timed('tick', tick), TICK_MS);
   tickTimer.unref();
-  mobTimer = setInterval(() => { try { mobTick(); } catch (e) { console.error('Quái lỗi:', e.message); } }, STEP_MS);
+  mobTimer = setInterval(() => { try { timed('mob', mobTick); } catch (e) { console.error('Quái lỗi:', e.message); } }, STEP_MS);
   mobTimer.unref();
+  const perfTimer = setInterval(perfReport, PERF_LOG_MS);
+  perfTimer.unref();
   const m = setInterval(() => maintain().catch((e) => console.error('Realtime lỗi:', e.message)), 500);
   m.unref();
   const ping = setInterval(() => {
@@ -795,7 +872,7 @@ async function connect(ws, token, session) {
     // Chống spam: hồi chiêu do server giữ, bộ đếm số lần dùng, và cửa sổ đòn hợp lệ sau một lần cast.
     skillCds: {}, castN: { skill: 0, ult: 0, superUlt: 0 }, castWinAt: { skill: now, ult: now, superUlt: now },
     lastCastAt: 0, lastCastId: null, recentCasts: [], castDenyUntil: 0,
-    skillLevels: {}, skillEquipped: [], gearSkillId: null, cdr: 0,
+    skillLevels: {}, skillEquipped: [], gearSkillId: null, cdr: 0, skillMul: 1, basicMobHits: new Map(),
     alive: true, rateAt: now, rateN: 0, lastChat: {}, checkedAt: now, lookAt: now,
   };
   const old = byUser.get(conn.userId);

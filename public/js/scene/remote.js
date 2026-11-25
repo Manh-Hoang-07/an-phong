@@ -60,9 +60,12 @@ WorldScene.mix(class WorldRemote {
     } else if (m.t === 'join') { this.addRemote(m.p); this.countRemotes(); }
     else if (m.t === 'leave') { this.dropRemote(m.id); this.countRemotes(); }
     else if (m.t === 'snap') {
-      for (const [id, x, y, f, a] of m.p) {
-        const r = this.remotes.get(id);
-        if (r) { r.tx = x; r.ty = y; r.f = f; r.a = a; }
+      // Mục ngắn [id,x,y] = hướng và hoạt ảnh không đổi (server chỉ gửi đủ khi có đổi)
+      for (const e of m.p) {
+        const r = this.remotes.get(e[0]);
+        if (!r) continue;
+        r.tx = e[1]; r.ty = e[2];
+        if (e.length >= 5) { r.f = e[3]; r.a = e[4]; }
       }
     } else if (m.t === 'look') {
       const r = this.remotes.get(m.p.id);
