@@ -123,44 +123,28 @@ const cookies = (req) => {
   return out;
 };
 
-// Số đo hiệu năng (chỉ đếm, gần như không tốn): ghi ra log mỗi PERF_LOG_MS khi bật AP_PERF=1,
-// và LUÔN cảnh báo (tối đa mỗi 10 giây) nếu một nhịp tick / mobTick chậm quá PERF_SLOW_MS.
 const SNAP_FULL_EVERY = 10;       // cứ 10 nhịp (~1 giây) gửi đủ hướng + hoạt ảnh một lần
-const PERF_LOG_MS = 30000;
+// Cảnh báo (tối đa mỗi 10 giây) khi một nhịp tick / mobTick chậm quá PERF_SLOW_MS. Bình thường không in gì.
 const PERF_SLOW_MS = Number(process.env.AP_PERF_SLOW_MS) || 25;
-const perf = { bytes: 0, msgs: 0, tickN: 0, tickSum: 0, tickMax: 0, mobN: 0, mobSum: 0, mobMax: 0, at: Date.now(), warnAt: 0 };
+let perfWarnAt = 0;
 
 function sendRaw(conn, text) {
-  if (conn.ws.readyState === 1 && conn.ws.bufferedAmount < 256 * 1024) {
-    perf.bytes += text.length; perf.msgs++;
-    conn.ws.send(text);
-  }
+  if (conn.ws.readyState === 1 && conn.ws.bufferedAmount < 256 * 1024) conn.ws.send(text);
 }
 
-// Đo một nhịp: cộng vào thống kê, cảnh báo nếu quá chậm. `kind` là 'tick' hoặc 'mob'.
+// Đo một nhịp; `kind` là 'tick' hoặc 'mob'.
 function timed(kind, fn) {
   const t0 = process.hrtime.bigint();
   try { fn(); } finally {
     const ms = Number(process.hrtime.bigint() - t0) / 1e6;
-    perf[kind + 'N']++; perf[kind + 'Sum'] += ms;
-    if (ms > perf[kind + 'Max']) perf[kind + 'Max'] = ms;
     const now = Date.now();
-    if (ms > PERF_SLOW_MS && now - perf.warnAt > 10000) {
-      perf.warnAt = now;
+    if (ms > PERF_SLOW_MS && now - perfWarnAt > 10000) {
+      perfWarnAt = now;
       console.warn(`[perf] ${kind}Tick chậm ${ms.toFixed(1)}ms (ngưỡng ${PERF_SLOW_MS}ms) | người ${byUser.size} | phòng ${rooms.size} | thế giới quái ${worlds.size}`);
     }
   }
 }
 
-function perfReport() {
-  const now = Date.now(), sec = Math.max(1, (now - perf.at) / 1000);
-  if (process.env.AP_PERF === '1') {
-    const avg = (s, n) => (n ? (s / n).toFixed(2) : '0');
-    console.log(`[perf] ${sec.toFixed(0)}s | người ${byUser.size} phòng ${rooms.size} thế giới ${worlds.size} | gửi ${(perf.bytes / 1024 / sec).toFixed(1)} KB/s, ${(perf.msgs / sec).toFixed(0)} gói/s | tick tb ${avg(perf.tickSum, perf.tickN)}ms max ${perf.tickMax.toFixed(1)}ms | mobTick tb ${avg(perf.mobSum, perf.mobN)}ms max ${perf.mobMax.toFixed(1)}ms`);
-  }
-  perf.bytes = perf.msgs = perf.tickN = perf.tickSum = perf.tickMax = perf.mobN = perf.mobSum = perf.mobMax = 0;
-  perf.at = now;
-}
 const send = (conn, obj) => sendRaw(conn, JSON.stringify(obj));
 
 function lookOf(conn) {
@@ -847,8 +831,6 @@ function attach(server) {
   tickTimer.unref();
   mobTimer = setInterval(() => { try { timed('mob', mobTick); } catch (e) { console.error('Quái lỗi:', e.message); } }, STEP_MS);
   mobTimer.unref();
-  const perfTimer = setInterval(perfReport, PERF_LOG_MS);
-  perfTimer.unref();
   const m = setInterval(() => maintain().catch((e) => console.error('Realtime lỗi:', e.message)), 500);
   m.unref();
   const ping = setInterval(() => {

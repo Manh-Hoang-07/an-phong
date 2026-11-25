@@ -1,0 +1,78 @@
+{
+  "id": "th5",
+  "name": "Triệu Hồi Linh Thú",
+  "school": "trieu_hoi_su",
+  "type": "summon",
+  "tier": "normal",
+  "theme": "spirit",
+  "sig": "summon",
+  "colors": [
+    "0xe6ffff",
+    "0x72e8ff",
+    "0x2a9cff"
+  ],
+  "texture": "fx_glow",
+  "dark": false,
+  "layers": [
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 380,
+      "color": "main",
+      "params": {
+        "r": 58,
+        "y": "ground"
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "glow",
+      "t": 0,
+      "dur": 300,
+      "color": "main",
+      "params": {
+        "scale": 1.7,
+        "alpha": 0.6
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "burst",
+      "t": 0,
+      "dur": 560,
+      "color": "main",
+      "params": {
+        "n": 8,
+        "d0": 20,
+        "d1": 60,
+        "grav": -26,
+        "a0": -3.14159,
+        "a1": 0,
+        "size": 0.8
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 900,
+      "color": "main",
+      "params": {
+        "r": 78,
+        "y": "ground"
+      },
+      "trigger": "summon"
+    },
+    {
+      "kind": "pillar",
+      "t": 0,
+      "dur": 640,
+      "color": "main",
+      "params": {
+        "w": 60,
+        "h": 260
+      },
+      "trigger": "summon"
+    }
+  ]
+}

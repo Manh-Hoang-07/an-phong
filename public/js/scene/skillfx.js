@@ -1119,4 +1119,11 @@
       try { (HIT[sf.ps.hit] || HIT.burst)(this, p.x, p.y, sf.th); } catch (err) { /* bỏ qua */ }
     }
   });
+
+  // Export primitive cho bộ vẽ JSON (skillfx-json.js) dùng chung. Không đổi luật chơi,
+  // chỉ mở các hàm vẽ đã có để file JSON điều khiển màu/kiểu mà không phải viết lại Phaser.
+  (typeof window !== 'undefined' ? window : globalThis).SkillFxPrim = {
+    makeTex, alive, img, glow, ring, burst, stream, beam, bolt, arc, pillar, sigil,
+    runeDisc, cracks, debris, swirl, ghostOf, flashCam, glyph, R, look, TH,
+  };
 })();

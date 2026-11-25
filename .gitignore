@@ -4,3 +4,6 @@ backups/
 assets_raw/
 *.log
 .perch/tmp/
+
+# Ảnh chụp màn hình tạm
+.perch_tmp/

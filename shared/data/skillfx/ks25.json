@@ -1,0 +1,85 @@
+{
+  "id": "ks25",
+  "name": "Kiếm Khí Hoành Tảo",
+  "school": "kiem_si",
+  "type": "melee",
+  "tier": "normal",
+  "theme": "sword",
+  "sig": "sweep",
+  "colors": [
+    "0xffffff",
+    "0xbcd6ff",
+    "0x5b8cff"
+  ],
+  "texture": "fx_spark",
+  "dark": false,
+  "layers": [
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 380,
+      "color": "main",
+      "params": {
+        "r": 58,
+        "y": "ground"
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "glow",
+      "t": 0,
+      "dur": 300,
+      "color": "main",
+      "params": {
+        "scale": 1.7,
+        "alpha": 0.6
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "burst",
+      "t": 0,
+      "dur": 560,
+      "color": "main",
+      "params": {
+        "n": 8,
+        "d0": 20,
+        "d1": 60,
+        "grav": -26,
+        "a0": -3.14159,
+        "a1": 0,
+        "size": 0.8
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "arc",
+      "t": 0,
+      "dur": 300,
+      "color": "main",
+      "params": {
+        "r": 72,
+        "a0": -1.5,
+        "a1": 1.5,
+        "thick": 34
+      },
+      "trigger": "melee"
+    },
+    {
+      "kind": "stream",
+      "t": 0,
+      "dur": 120,
+      "color": "main",
+      "params": {
+        "n": 5,
+        "w": 30,
+        "hh": 40,
+        "dx": 60,
+        "dy": 0,
+        "size": 0.8,
+        "life": 340
+      },
+      "trigger": "melee"
+    }
+  ]
+}

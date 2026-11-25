@@ -1,0 +1,1757 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-22T11:24:00.560Z",
+  "count": 175,
+  "skills": {
+    "av25": {
+      "file": "av25.json",
+      "hash": "4119055c087c1f52",
+      "name": "Ảnh Bộ Đoạt Mệnh",
+      "school": "sat_thu",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "shadow"
+    },
+    "av27": {
+      "file": "av27.json",
+      "hash": "21b4163dcd725edf",
+      "name": "Ảnh Độn",
+      "school": "sat_thu",
+      "type": "backstep",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "smoke"
+    },
+    "av30": {
+      "file": "av30.json",
+      "hash": "1800f786cccd457a",
+      "name": "Phi Đao U Ảnh",
+      "school": "sat_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "dagger"
+    },
+    "av32": {
+      "file": "av32.json",
+      "hash": "69550ed0f1d744f3",
+      "name": "Ảnh Phân Thân",
+      "school": "sat_thu",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "clones"
+    },
+    "av35": {
+      "file": "av35.json",
+      "hash": "38283acd3c4d4743",
+      "name": "Thế Thân Bóng Tối",
+      "school": "sat_thu",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "cloak"
+    },
+    "av37": {
+      "file": "av37.json",
+      "hash": "5ca6688ecb135462",
+      "name": "Mưa Phi Đao Bóng",
+      "school": "sat_thu",
+      "type": "spread",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "dagger"
+    },
+    "av38": {
+      "file": "av38.json",
+      "hash": "e5a3c934dca1d1a7",
+      "name": "Sát Ý Dâng Trào",
+      "school": "sat_thu",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "blood",
+      "sig": "bloodlust"
+    },
+    "av40": {
+      "file": "av40.json",
+      "hash": "3a7c3cb33a9b30ce",
+      "name": "Bách Ảnh Sát",
+      "school": "sat_thu",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "blood",
+      "sig": "stab"
+    },
+    "av42": {
+      "file": "av42.json",
+      "hash": "46b52b85f1cde8ad",
+      "name": "Huyết Ảnh Liên Hoàn",
+      "school": "sat_thu",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "blood",
+      "sig": "blood"
+    },
+    "av45": {
+      "file": "av45.json",
+      "hash": "6b6145a2421cb621",
+      "name": "Vạn Ảnh Tuyệt Sát",
+      "school": "sat_thu",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "veil"
+    },
+    "hl1": {
+      "file": "hl1.json",
+      "hash": "94cd3dcb150e0683",
+      "name": "Tiễn Xuyên Phá",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "fire",
+      "sig": "arrow"
+    },
+    "hl10": {
+      "file": "hl10.json",
+      "hash": "40d0e06c428ee105",
+      "name": "Tiễn Xuyên Tâm",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "lance"
+    },
+    "hl11": {
+      "file": "hl11.json",
+      "hash": "c5ec7bcf93304840",
+      "name": "Hỏa Vũ Liên Châu",
+      "school": "cung_thu",
+      "type": "spread",
+      "tier": "normal",
+      "theme": "fire",
+      "sig": "fan"
+    },
+    "hl2": {
+      "file": "hl2.json",
+      "hash": "47395a1e85903d8d",
+      "name": "Tam Tiễn",
+      "school": "cung_thu",
+      "type": "spread",
+      "tier": "normal",
+      "theme": "arrow",
+      "sig": "fan"
+    },
+    "hl3": {
+      "file": "hl3.json",
+      "hash": "40ec77641f2171e3",
+      "name": "Mắt Ưng",
+      "school": "cung_thu",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "arrow",
+      "sig": "eye"
+    },
+    "hl4": {
+      "file": "hl4.json",
+      "hash": "d9eed0a223a4ca52",
+      "name": "Lùi Né",
+      "school": "cung_thu",
+      "type": "backstep",
+      "tier": "normal",
+      "theme": "wind",
+      "sig": "hop"
+    },
+    "hl5": {
+      "file": "hl5.json",
+      "hash": "8b6f4c5dcffaecd0",
+      "name": "Mưa Tên",
+      "school": "cung_thu",
+      "type": "arrow_rain",
+      "tier": "ult",
+      "theme": "arrow",
+      "sig": "arrow"
+    },
+    "hl6": {
+      "file": "hl6.json",
+      "hash": "b3d450c5d514c365",
+      "name": "Tam Tiễn Truy Kích",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "wind",
+      "sig": "arrow"
+    },
+    "hl7": {
+      "file": "hl7.json",
+      "hash": "7b4a744c5e3f54ad",
+      "name": "Bão Tên Định Mệnh",
+      "school": "cung_thu",
+      "type": "arrow_rain",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "storm"
+    },
+    "hl8": {
+      "file": "hl8.json",
+      "hash": "d7945fbce70c663d",
+      "name": "Tên Băng",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "ice",
+      "sig": "shard"
+    },
+    "hl9": {
+      "file": "hl9.json",
+      "hash": "4391b239487b6a3a",
+      "name": "Xạ Liên Hoàn",
+      "school": "cung_thu",
+      "type": "spread",
+      "tier": "normal",
+      "theme": "arrow",
+      "sig": "fan"
+    },
+    "hv25": {
+      "file": "hv25.json",
+      "hash": "9e7b9d3d07177c78",
+      "name": "Khiên Phi Trảm",
+      "school": "tanker",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "disc"
+    },
+    "hv27": {
+      "file": "hv27.json",
+      "hash": "17c2cecc2b36109c",
+      "name": "Thuẫn Kích",
+      "school": "tanker",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "bash"
+    },
+    "hv30": {
+      "file": "hv30.json",
+      "hash": "eff9f5ee916be66d",
+      "name": "Thuẫn Trận Phản Chấn",
+      "school": "tanker",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "dome"
+    },
+    "hv32": {
+      "file": "hv32.json",
+      "hash": "f3dfc2c76e5028a5",
+      "name": "Ý Chí Hộ Vệ",
+      "school": "tanker",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "earth",
+      "sig": "orbit"
+    },
+    "hv35": {
+      "file": "hv35.json",
+      "hash": "5216f580d2d3cf6e",
+      "name": "Chấn Địa",
+      "school": "tanker",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "earth",
+      "sig": "quake"
+    },
+    "hv37": {
+      "file": "hv37.json",
+      "hash": "45ea82f75b887c64",
+      "name": "Khiên Xoáy",
+      "school": "tanker",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "vortex"
+    },
+    "hv38": {
+      "file": "hv38.json",
+      "hash": "e118edad44202826",
+      "name": "Thành Lũy Bất Diệt",
+      "school": "tanker",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "fortress"
+    },
+    "hv40": {
+      "file": "hv40.json",
+      "hash": "2d6ece06f4e1e13a",
+      "name": "Pháo Đài Tiến Quân",
+      "school": "tanker",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "charge"
+    },
+    "hv42": {
+      "file": "hv42.json",
+      "hash": "d56d4a3db70664d6",
+      "name": "Phản Chấn Địa Long",
+      "school": "tanker",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "dragon",
+      "sig": "quake"
+    },
+    "hv45": {
+      "file": "hv45.json",
+      "hash": "d9c48af7d4648c0f",
+      "name": "Tuyên Chiến",
+      "school": "tanker",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "awaken"
+    },
+    "ks25": {
+      "file": "ks25.json",
+      "hash": "62485f7364af41e6",
+      "name": "Kiếm Khí Hoành Tảo",
+      "school": "kiem_si",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "sword",
+      "sig": "sweep"
+    },
+    "ks27": {
+      "file": "ks27.json",
+      "hash": "727719e50412e3de",
+      "name": "Nhất Kiếm Thiên Phong",
+      "school": "kiem_si",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "wind",
+      "sig": "streak"
+    },
+    "ks30": {
+      "file": "ks30.json",
+      "hash": "4bf3b11174d2ecfe",
+      "name": "Kiếm Tâm Phản Kích",
+      "school": "kiem_si",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "counter"
+    },
+    "ks32": {
+      "file": "ks32.json",
+      "hash": "2661e541852125b2",
+      "name": "Kiếm Ý Hộ Thân",
+      "school": "kiem_si",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "sword",
+      "sig": "orbit"
+    },
+    "ks35": {
+      "file": "ks35.json",
+      "hash": "a22952c0a6a9d59e",
+      "name": "Long Ảnh Liên Trảm",
+      "school": "kiem_si",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "dragon",
+      "sig": "dragon"
+    },
+    "ks37": {
+      "file": "ks37.json",
+      "hash": "a49700925f1fda8f",
+      "name": "Tam Kiếm Hợp Nhất",
+      "school": "kiem_si",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "sword",
+      "sig": "thrust"
+    },
+    "ks38": {
+      "file": "ks38.json",
+      "hash": "89ab4fd85ea32d13",
+      "name": "Kiếm Khí Trường Hà",
+      "school": "kiem_si",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "water",
+      "sig": "wave"
+    },
+    "ks40": {
+      "file": "ks40.json",
+      "hash": "0435b8a3e986f30a",
+      "name": "Vạn Kiếm Quy Tông",
+      "school": "kiem_si",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "sword",
+      "sig": "blades"
+    },
+    "ks42": {
+      "file": "ks42.json",
+      "hash": "003e81ad0ac09e58",
+      "name": "Phong Vân Kiếm Vũ",
+      "school": "kiem_si",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "wind",
+      "sig": "vortex"
+    },
+    "ks45": {
+      "file": "ks45.json",
+      "hash": "b69dcbdb38e459b1",
+      "name": "Chân Kiếm Thức Tỉnh",
+      "school": "kiem_si",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "awaken"
+    },
+    "nl1": {
+      "file": "nl1.json",
+      "hash": "cb2532e56ae0af2e",
+      "name": "Lời Nguyền Tàn Lụi",
+      "school": "tu_linh_thuat_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "necro",
+      "sig": "cursed"
+    },
+    "nl10": {
+      "file": "nl10.json",
+      "hash": "dc5ab7de937de87f",
+      "name": "Hồn Nổ Dây Chuyền",
+      "school": "tu_linh_thuat_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "necro",
+      "sig": "chain"
+    },
+    "nl11": {
+      "file": "nl11.json",
+      "hash": "29da89fedfc2fe97",
+      "name": "Tử Khí Tràn Ngập",
+      "school": "tu_linh_thuat_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "necro",
+      "sig": "miasma"
+    },
+    "nl2": {
+      "file": "nl2.json",
+      "hash": "009f99a3006e2969",
+      "name": "Triệu Hồi Bóng",
+      "school": "tu_linh_thuat_su",
+      "type": "shadow_toggle",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "summon"
+    },
+    "nl3": {
+      "file": "nl3.json",
+      "hash": "856efda248442958",
+      "name": "Hút Linh",
+      "school": "tu_linh_thuat_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "blood",
+      "sig": "drain"
+    },
+    "nl4": {
+      "file": "nl4.json",
+      "hash": "81ef7596fcc43094",
+      "name": "Đội Quân U Ảnh",
+      "school": "tu_linh_thuat_su",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "necro",
+      "sig": "spirit"
+    },
+    "nl5": {
+      "file": "nl5.json",
+      "hash": "ff6c5ad5d7f2a3b2",
+      "name": "Cổng Âm Giới",
+      "school": "tu_linh_thuat_su",
+      "type": "meteor",
+      "tier": "ult",
+      "theme": "void",
+      "sig": "void"
+    },
+    "nl6": {
+      "file": "nl6.json",
+      "hash": "d81bf236bb5a359c",
+      "name": "Phân Hồn",
+      "school": "tu_linh_thuat_su",
+      "type": "shadow_command",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "chain"
+    },
+    "nl7": {
+      "file": "nl7.json",
+      "hash": "012acb28a1bc99ef",
+      "name": "Vuốt Quỷ",
+      "school": "tu_linh_thuat_su",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "necro",
+      "sig": "claw"
+    },
+    "nl8": {
+      "file": "nl8.json",
+      "hash": "08edc0bb8e8250d4",
+      "name": "Xiềng Xích Âm Hồn",
+      "school": "tu_linh_thuat_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "void",
+      "sig": "cursed"
+    },
+    "nl9": {
+      "file": "nl9.json",
+      "hash": "5a45ddb1221a9619",
+      "name": "Hồn Phách Hộ Thể",
+      "school": "tu_linh_thuat_su",
+      "type": "manashield",
+      "tier": "normal",
+      "theme": "necro",
+      "sig": "soul"
+    },
+    "pa1": {
+      "file": "pa1.json",
+      "hash": "e4b99e96915bb986",
+      "name": "Trảm Kích Lướt",
+      "school": "kiem_si",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "sword",
+      "sig": "streak"
+    },
+    "pa10": {
+      "file": "pa10.json",
+      "hash": "c44a06a280fde181",
+      "name": "Cuồng Phong Trảm",
+      "school": "kiem_si",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "wind",
+      "sig": "vortex"
+    },
+    "pa11": {
+      "file": "pa11.json",
+      "hash": "52e6539281c18810",
+      "name": "Kiếm Khí Tung Hoành",
+      "school": "kiem_si",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "sword",
+      "sig": "wave"
+    },
+    "pa2": {
+      "file": "pa2.json",
+      "hash": "c1771b6f9dd27c26",
+      "name": "Liên Trảm",
+      "school": "kiem_si",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "sword",
+      "sig": "slash"
+    },
+    "pa3": {
+      "file": "pa3.json",
+      "hash": "ad6850738ef04b62",
+      "name": "Cuồng Nộ",
+      "school": "kiem_si",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "fire",
+      "sig": "rage"
+    },
+    "pa4": {
+      "file": "pa4.json",
+      "hash": "a994093229b1c463",
+      "name": "Khiên Ý Chí",
+      "school": "kiem_si",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "shield"
+    },
+    "pa5": {
+      "file": "pa5.json",
+      "hash": "a02bb7cfc4bf72f5",
+      "name": "Thiên Kiếm Giáng",
+      "school": "kiem_si",
+      "type": "sword_fall",
+      "tier": "ult",
+      "theme": "sword",
+      "sig": "sword"
+    },
+    "pa6": {
+      "file": "pa6.json",
+      "hash": "75bbf4d287d8a895",
+      "name": "Kiếm Vũ Liên Hoàn",
+      "school": "kiem_si",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "wind",
+      "sig": "whirl"
+    },
+    "pa7": {
+      "file": "pa7.json",
+      "hash": "5b6d67ee71197f37",
+      "name": "Phá Quân Trảm",
+      "school": "kiem_si",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "cross"
+    },
+    "pa8": {
+      "file": "pa8.json",
+      "hash": "6bbe88ad65fcfb73",
+      "name": "Đâm Xuyên",
+      "school": "kiem_si",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "sword",
+      "sig": "thrust"
+    },
+    "pa9": {
+      "file": "pa9.json",
+      "hash": "6336af144f1cfa30",
+      "name": "Kiếm Phản Kích",
+      "school": "kiem_si",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "counter"
+    },
+    "ps25": {
+      "file": "ps25.json",
+      "hash": "0ce8565ecb5016a4",
+      "name": "Lôi Xà",
+      "school": "phap_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "bolt",
+      "sig": "lightning"
+    },
+    "ps27": {
+      "file": "ps27.json",
+      "hash": "ce931265f215f6a8",
+      "name": "Hỏa Cầu Nổ",
+      "school": "phap_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "fire",
+      "sig": "bolt"
+    },
+    "ps30": {
+      "file": "ps30.json",
+      "hash": "7779af38442b5224",
+      "name": "Hỏa Tường",
+      "school": "phap_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "fire",
+      "sig": "flame"
+    },
+    "ps32": {
+      "file": "ps32.json",
+      "hash": "052b3f1dab3bceab",
+      "name": "Băng Phong Trận",
+      "school": "phap_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "ice",
+      "sig": "frost"
+    },
+    "ps35": {
+      "file": "ps35.json",
+      "hash": "2fbcbfe242cc4988",
+      "name": "Tinh Thạch Hộ Thể",
+      "school": "phap_su",
+      "type": "manashield",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "crystal"
+    },
+    "ps37": {
+      "file": "ps37.json",
+      "hash": "16cdc8bd80864402",
+      "name": "Lôi Cầu Xoáy",
+      "school": "phap_su",
+      "type": "meteor",
+      "tier": "normal",
+      "theme": "bolt",
+      "sig": "lightning"
+    },
+    "ps38": {
+      "file": "ps38.json",
+      "hash": "4c437b84f17f5023",
+      "name": "Hồi Nguyên",
+      "school": "phap_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "water",
+      "sig": "moon"
+    },
+    "ps40": {
+      "file": "ps40.json",
+      "hash": "c9d2dd2cb84eac21",
+      "name": "Bão Nguyên Tố",
+      "school": "phap_su",
+      "type": "meteor",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "elem"
+    },
+    "ps42": {
+      "file": "ps42.json",
+      "hash": "679a13f01f5aacb8",
+      "name": "Dịch Chuyển Tức Thời",
+      "school": "phap_su",
+      "type": "backstep",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "blink"
+    },
+    "ps45": {
+      "file": "ps45.json",
+      "hash": "8369880e007f3bbc",
+      "name": "Thiên Địa Hợp Nhất Pháp",
+      "school": "phap_su",
+      "type": "meteor",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "elem"
+    },
+    "st1": {
+      "file": "st1.json",
+      "hash": "4972040e4dff083b",
+      "name": "Lướt Bóng",
+      "school": "sat_thu",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "shadow"
+    },
+    "st10": {
+      "file": "st10.json",
+      "hash": "51718a8a4a9b9d45",
+      "name": "Tử Huyệt",
+      "school": "sat_thu",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "blood",
+      "sig": "stab"
+    },
+    "st11": {
+      "file": "st11.json",
+      "hash": "bbd5e378a23b1491",
+      "name": "Bóng Đêm Bao Phủ",
+      "school": "sat_thu",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "veil"
+    },
+    "st2": {
+      "file": "st2.json",
+      "hash": "958b66ad1d496891",
+      "name": "Nhát Kép",
+      "school": "sat_thu",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "blood",
+      "sig": "stab"
+    },
+    "st3": {
+      "file": "st3.json",
+      "hash": "60ba99363ed55297",
+      "name": "Cuồng Sát",
+      "school": "sat_thu",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "blood",
+      "sig": "bloodlust"
+    },
+    "st4": {
+      "file": "st4.json",
+      "hash": "5a8413ce5818a988",
+      "name": "Ẩn Thân",
+      "school": "sat_thu",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "cloak"
+    },
+    "st5": {
+      "file": "st5.json",
+      "hash": "bd46b437870dd610",
+      "name": "Trăm Nhát Phân Tán",
+      "school": "sat_thu",
+      "type": "spread",
+      "tier": "ult",
+      "theme": "shadow",
+      "sig": "dagger"
+    },
+    "st6": {
+      "file": "st6.json",
+      "hash": "0366a1ef482c037e",
+      "name": "Ảnh Trảm Liên Kích",
+      "school": "sat_thu",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "shadow"
+    },
+    "st7": {
+      "file": "st7.json",
+      "hash": "84070f718c84524a",
+      "name": "Huyết Ảnh Truy Sát",
+      "school": "sat_thu",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "blood",
+      "sig": "blood"
+    },
+    "st8": {
+      "file": "st8.json",
+      "hash": "92646331bd870192",
+      "name": "Phi Tiêu Độc",
+      "school": "sat_thu",
+      "type": "spread",
+      "tier": "normal",
+      "theme": "necro",
+      "sig": "dagger"
+    },
+    "st9": {
+      "file": "st9.json",
+      "hash": "5501302be5f7ccf8",
+      "name": "Xóa Dấu",
+      "school": "sat_thu",
+      "type": "backstep",
+      "tier": "normal",
+      "theme": "shadow",
+      "sig": "smoke"
+    },
+    "tg27": {
+      "file": "tg27.json",
+      "hash": "806108ba012c5184",
+      "name": "Thánh Quang Chiếu",
+      "school": "tri_lieu_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "holy"
+    },
+    "tg32": {
+      "file": "tg32.json",
+      "hash": "d68f1a3a0201ef2d",
+      "name": "Phước Lành",
+      "school": "tri_lieu_su",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "bless"
+    },
+    "tg37": {
+      "file": "tg37.json",
+      "hash": "30015c887123ae66",
+      "name": "Thiên Sứ Hộ Tống",
+      "school": "tri_lieu_su",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "angel"
+    },
+    "tg38": {
+      "file": "tg38.json",
+      "hash": "723bcabe1c621bd8",
+      "name": "Thánh Dụ",
+      "school": "tri_lieu_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "holy"
+    },
+    "tg42": {
+      "file": "tg42.json",
+      "hash": "b1d27f41b7c66759",
+      "name": "Ánh Sáng Phán Xét",
+      "school": "tri_lieu_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "judge"
+    },
+    "tg45": {
+      "file": "tg45.json",
+      "hash": "676de66364fa5032",
+      "name": "Phục Sinh Ánh Quang",
+      "school": "tri_lieu_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "phoenix"
+    },
+    "th1": {
+      "file": "th1.json",
+      "hash": "dbb85780d149f487",
+      "name": "Linh Tiễn",
+      "school": "trieu_hoi_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "bolt"
+    },
+    "th10": {
+      "file": "th10.json",
+      "hash": "4321befda6b0f485",
+      "name": "Linh Long Xung",
+      "school": "trieu_hoi_su",
+      "type": "spread",
+      "tier": "normal",
+      "theme": "dragon",
+      "sig": "dragon"
+    },
+    "th11": {
+      "file": "th11.json",
+      "hash": "41420b9d47046a82",
+      "name": "Vạn Linh Quy Tụ",
+      "school": "trieu_hoi_su",
+      "type": "meteor",
+      "tier": "ult",
+      "theme": "spirit",
+      "sig": "spirit"
+    },
+    "th2": {
+      "file": "th2.json",
+      "hash": "cc688834cae42a41",
+      "name": "Linh Thể Hộ Vệ",
+      "school": "trieu_hoi_su",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "spirit"
+    },
+    "th3": {
+      "file": "th3.json",
+      "hash": "e5006af419b757e8",
+      "name": "Nổ Linh Lực",
+      "school": "trieu_hoi_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "nova"
+    },
+    "th4": {
+      "file": "th4.json",
+      "hash": "951dbe6d08c3bb46",
+      "name": "Hiệu Lệnh Triệu Hồi",
+      "school": "trieu_hoi_su",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "spirit"
+    },
+    "th5": {
+      "file": "th5.json",
+      "hash": "263824a310cbacf5",
+      "name": "Triệu Hồi Linh Thú",
+      "school": "trieu_hoi_su",
+      "type": "summon",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "summon"
+    },
+    "th6": {
+      "file": "th6.json",
+      "hash": "8d20feec0cc5593d",
+      "name": "Tiếng Gọi Linh Hồn",
+      "school": "trieu_hoi_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "spirit"
+    },
+    "th7": {
+      "file": "th7.json",
+      "hash": "a264599028a31c31",
+      "name": "Linh Giới Hộ Thân",
+      "school": "trieu_hoi_su",
+      "type": "manashield",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "soul"
+    },
+    "th8": {
+      "file": "th8.json",
+      "hash": "325f6c0502113505",
+      "name": "Linh Điểu Truy Kích",
+      "school": "trieu_hoi_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "bird"
+    },
+    "th9": {
+      "file": "th9.json",
+      "hash": "c3d59120da241770",
+      "name": "Cộng Hưởng Linh Thú",
+      "school": "trieu_hoi_su",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "spirit"
+    },
+    "tk1": {
+      "file": "tk1.json",
+      "hash": "db48ea660cd055b8",
+      "name": "Khiên Phá",
+      "school": "tanker",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "bash"
+    },
+    "tk10": {
+      "file": "tk10.json",
+      "hash": "c13d693474a69d92",
+      "name": "Phản Giáp",
+      "school": "tanker",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "thorn"
+    },
+    "tk11": {
+      "file": "tk11.json",
+      "hash": "f40e951f53ec6cd6",
+      "name": "Búa Thiên Lôi",
+      "school": "tanker",
+      "type": "sword_fall",
+      "tier": "normal",
+      "theme": "bolt",
+      "sig": "hammer"
+    },
+    "tk2": {
+      "file": "tk2.json",
+      "hash": "c670551f0e634de3",
+      "name": "Vòng Thép",
+      "school": "tanker",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "vortex"
+    },
+    "tk3": {
+      "file": "tk3.json",
+      "hash": "19daed65d8e28274",
+      "name": "Thịnh Nộ",
+      "school": "tanker",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "earth",
+      "sig": "rage"
+    },
+    "tk4": {
+      "file": "tk4.json",
+      "hash": "507c7c1d5cbb2d21",
+      "name": "Giáp Sắt",
+      "school": "tanker",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "shield"
+    },
+    "tk5": {
+      "file": "tk5.json",
+      "hash": "73813b5629cea71c",
+      "name": "Sóng Thép",
+      "school": "tanker",
+      "type": "sword_fall",
+      "tier": "ult",
+      "theme": "steel",
+      "sig": "steel"
+    },
+    "tk6": {
+      "file": "tk6.json",
+      "hash": "88fe56c3cfcca99c",
+      "name": "Địa Chấn",
+      "school": "tanker",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "earth",
+      "sig": "quake"
+    },
+    "tk7": {
+      "file": "tk7.json",
+      "hash": "fb70b6c342060afa",
+      "name": "Pháo Đài Bất Khuất",
+      "school": "tanker",
+      "type": "guard",
+      "tier": "normal",
+      "theme": "earth",
+      "sig": "fortress"
+    },
+    "tk8": {
+      "file": "tk8.json",
+      "hash": "c6d90e656ce01613",
+      "name": "Xung Phong",
+      "school": "tanker",
+      "type": "dash",
+      "tier": "normal",
+      "theme": "earth",
+      "sig": "charge"
+    },
+    "tk9": {
+      "file": "tk9.json",
+      "hash": "5691a57cd9ed739f",
+      "name": "Tiếng Gầm Uy Hiếp",
+      "school": "tanker",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "earth",
+      "sig": "roar"
+    },
+    "tl1": {
+      "file": "tl1.json",
+      "hash": "3374626585aadc8b",
+      "name": "Chữa Lành",
+      "school": "tri_lieu_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "heal",
+      "sig": "cross"
+    },
+    "tl10": {
+      "file": "tl10.json",
+      "hash": "92b11c3a9845c70f",
+      "name": "Thanh Tẩy",
+      "school": "tri_lieu_su",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "wings"
+    },
+    "tl11": {
+      "file": "tl11.json",
+      "hash": "5380a7b78a8efbb6",
+      "name": "Quang Vũ Tái Sinh",
+      "school": "tri_lieu_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "dawn"
+    },
+    "tl2": {
+      "file": "tl2.json",
+      "hash": "d8eb22d23b412042",
+      "name": "Sóng Thánh",
+      "school": "tri_lieu_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "wave"
+    },
+    "tl25": {
+      "file": "tl25.json",
+      "hash": "6f635bc1c59c26d5",
+      "name": "Thánh Vực",
+      "school": "tri_lieu_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "heal",
+      "sig": "garden"
+    },
+    "tl3": {
+      "file": "tl3.json",
+      "hash": "7f5862e80e168716",
+      "name": "Ân Sủng",
+      "school": "tri_lieu_su",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "bless"
+    },
+    "tl30": {
+      "file": "tl30.json",
+      "hash": "07b17604cc3f9631",
+      "name": "Quang Tiễn",
+      "school": "tri_lieu_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "arrow"
+    },
+    "tl35": {
+      "file": "tl35.json",
+      "hash": "a06c059a86769da0",
+      "name": "Kết Giới Thánh Quang",
+      "school": "tri_lieu_su",
+      "type": "manashield",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "holy"
+    },
+    "tl4": {
+      "file": "tl4.json",
+      "hash": "5248529197039c93",
+      "name": "Khiên Ánh Sáng",
+      "school": "tri_lieu_su",
+      "type": "manashield",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "holy"
+    },
+    "tl40": {
+      "file": "tl40.json",
+      "hash": "55bb6ef29f6aff21",
+      "name": "Bình Minh Tái Sinh",
+      "school": "tri_lieu_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "dawn"
+    },
+    "tl5": {
+      "file": "tl5.json",
+      "hash": "8ad3e4fadebc6662",
+      "name": "Phép Thánh Toàn Trị",
+      "school": "tri_lieu_su",
+      "type": "aoe",
+      "tier": "ult",
+      "theme": "holy",
+      "sig": "dawn"
+    },
+    "tl6": {
+      "file": "tl6.json",
+      "hash": "d7f74c24a1186c9c",
+      "name": "Thánh Quang Hộ Thể",
+      "school": "tri_lieu_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "holy"
+    },
+    "tl7": {
+      "file": "tl7.json",
+      "hash": "7effa0b89c082fff",
+      "name": "Kết Giới Sinh Mệnh",
+      "school": "tri_lieu_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "heal",
+      "sig": "garden"
+    },
+    "tl8": {
+      "file": "tl8.json",
+      "hash": "48f38ee5fecf5c0f",
+      "name": "Giọt Thánh",
+      "school": "tri_lieu_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "water",
+      "sig": "drop"
+    },
+    "tl9": {
+      "file": "tl9.json",
+      "hash": "1913e0513f87a98e",
+      "name": "Thánh Ấn",
+      "school": "tri_lieu_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "holy"
+    },
+    "tn1": {
+      "file": "tn1.json",
+      "hash": "ceb0c8fb24f37ee2",
+      "name": "Sóng Băng",
+      "school": "phap_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "water",
+      "sig": "wave"
+    },
+    "tn10": {
+      "file": "tn10.json",
+      "hash": "d5276bd5bec3e05e",
+      "name": "Dịch Chuyển Nguyên Tố",
+      "school": "phap_su",
+      "type": "backstep",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "blink"
+    },
+    "tn11": {
+      "file": "tn11.json",
+      "hash": "ff28ad9b95ef6bb3",
+      "name": "Địa Ngục Liệt Hỏa",
+      "school": "phap_su",
+      "type": "meteor",
+      "tier": "normal",
+      "theme": "inferno",
+      "sig": "hell"
+    },
+    "tn2": {
+      "file": "tn2.json",
+      "hash": "327fcabe82f775d7",
+      "name": "Hồi Phục",
+      "school": "phap_su",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "water",
+      "sig": "moon"
+    },
+    "tn3": {
+      "file": "tn3.json",
+      "hash": "0515e3163ccda1bc",
+      "name": "Băng Ngục",
+      "school": "phap_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "ice",
+      "sig": "frost"
+    },
+    "tn4": {
+      "file": "tn4.json",
+      "hash": "94235a8ceaa2421d",
+      "name": "Khiên Năng Lượng",
+      "school": "phap_su",
+      "type": "manashield",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "crystal"
+    },
+    "tn5": {
+      "file": "tn5.json",
+      "hash": "0123dd26c41e9f4c",
+      "name": "Thiên Thạch",
+      "school": "phap_su",
+      "type": "meteor",
+      "tier": "ult",
+      "theme": "fire",
+      "sig": "fire"
+    },
+    "tn6": {
+      "file": "tn6.json",
+      "hash": "88034724710057eb",
+      "name": "Băng Lưu Bạo",
+      "school": "phap_su",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "ice",
+      "sig": "blizzard"
+    },
+    "tn7": {
+      "file": "tn7.json",
+      "hash": "b5b07194b0568fa8",
+      "name": "Hỏa Tinh Bạo Liệt",
+      "school": "phap_su",
+      "type": "meteor",
+      "tier": "normal",
+      "theme": "fire",
+      "sig": "fire"
+    },
+    "tn8": {
+      "file": "tn8.json",
+      "hash": "b941cedaa5ebaef3",
+      "name": "Hỏa Cầu",
+      "school": "phap_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "fire",
+      "sig": "bolt"
+    },
+    "tn9": {
+      "file": "tn9.json",
+      "hash": "4d4144e4dbfdbaac",
+      "name": "Tia Sét Xuyên",
+      "school": "phap_su",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "bolt",
+      "sig": "lightning"
+    },
+    "ulChung1": {
+      "file": "ulChung1.json",
+      "hash": "3e5ffdb13dc57f82",
+      "name": "Thiên Địa Chấn Động",
+      "school": "chung",
+      "type": "aoe",
+      "tier": "ult",
+      "theme": "arcane",
+      "sig": "nova"
+    },
+    "ulChung2": {
+      "file": "ulChung2.json",
+      "hash": "b2b2b8f477bcfab3",
+      "name": "Ý Chí Bất Diệt",
+      "school": "chung",
+      "type": "buff",
+      "tier": "ult",
+      "theme": "holy",
+      "sig": "awaken"
+    },
+    "ulChung3": {
+      "file": "ulChung3.json",
+      "hash": "256c83daf5174c3e",
+      "name": "Hư Không Tuyệt Trảm",
+      "school": "chung",
+      "type": "sword_fall",
+      "tier": "ult",
+      "theme": "void",
+      "sig": "void"
+    },
+    "ulCung1": {
+      "file": "ulCung1.json",
+      "hash": "d880f04e75f24fb3",
+      "name": "Tinh Vân Tuyệt Xạ",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "ult",
+      "theme": "star",
+      "sig": "lance"
+    },
+    "ulCung2": {
+      "file": "ulCung2.json",
+      "hash": "8f75d8d387dac1e0",
+      "name": "Thiên Hỏa Mưa Tên",
+      "school": "cung_thu",
+      "type": "arrow_rain",
+      "tier": "ult",
+      "theme": "fire",
+      "sig": "fire"
+    },
+    "ulKiem1": {
+      "file": "ulKiem1.json",
+      "hash": "3506e54371e0e865",
+      "name": "Kiếm Trận Hủy Diệt",
+      "school": "kiem_si",
+      "type": "sword_fall",
+      "tier": "ult",
+      "theme": "sword",
+      "sig": "blade"
+    },
+    "ulKiem2": {
+      "file": "ulKiem2.json",
+      "hash": "e81d1ff42d806e81",
+      "name": "Kiếm Vũ Tuyệt Diệt",
+      "school": "kiem_si",
+      "type": "melee",
+      "tier": "ult",
+      "theme": "sword",
+      "sig": "whirl"
+    },
+    "ulLinh1": {
+      "file": "ulLinh1.json",
+      "hash": "249da991e2daccdf",
+      "name": "Vạn Linh Bùng Nổ",
+      "school": "trieu_hoi_su",
+      "type": "meteor",
+      "tier": "ult",
+      "theme": "spirit",
+      "sig": "spirit"
+    },
+    "ulLinh2": {
+      "file": "ulLinh2.json",
+      "hash": "5a5a12cf63f94519",
+      "name": "U Minh Cuồng Triều",
+      "school": "tu_linh_thuat_su",
+      "type": "buff",
+      "tier": "ult",
+      "theme": "necro",
+      "sig": "awaken"
+    },
+    "ulPhap1": {
+      "file": "ulPhap1.json",
+      "hash": "a4103ff20a28c7f3",
+      "name": "Lôi Đế Giáng Thế",
+      "school": "phap_su",
+      "type": "meteor",
+      "tier": "ult",
+      "theme": "bolt",
+      "sig": "lightning"
+    },
+    "ulPhap2": {
+      "file": "ulPhap2.json",
+      "hash": "5e8ed08f1916ffaf",
+      "name": "Băng Hải Phong Thiên",
+      "school": "phap_su",
+      "type": "aoe",
+      "tier": "ult",
+      "theme": "ice",
+      "sig": "blizzard"
+    },
+    "ulPhapSuper": {
+      "file": "ulPhapSuper.json",
+      "hash": "3de7c42bdc6a0802",
+      "name": "Cấm Chú Giải Phóng",
+      "school": "phap_su",
+      "type": "manaburst",
+      "tier": "superUlt",
+      "theme": "inferno",
+      "sig": "manaburst"
+    },
+    "ulSat1": {
+      "file": "ulSat1.json",
+      "hash": "fce9dd5236f940e0",
+      "name": "Huyết Ảnh Vạn Đao",
+      "school": "sat_thu",
+      "type": "spread",
+      "tier": "ult",
+      "theme": "blood",
+      "sig": "dagger"
+    },
+    "ulSinhTu": {
+      "file": "ulSinhTu.json",
+      "hash": "e627d7f628fb24ab",
+      "name": "Sinh Tử Đồng Quy",
+      "school": "chung",
+      "type": "execute",
+      "tier": "superUlt",
+      "theme": "void",
+      "sig": "execute"
+    },
+    "ulTank1": {
+      "file": "ulTank1.json",
+      "hash": "61b2da26f130357f",
+      "name": "Thành Đồng Bất Hoại",
+      "school": "tanker",
+      "type": "guard",
+      "tier": "ult",
+      "theme": "steel",
+      "sig": "fortress"
+    },
+    "ulTank2": {
+      "file": "ulTank2.json",
+      "hash": "0eb28b4bd9a26db4",
+      "name": "Địa Chấn Thiên Hạ",
+      "school": "tanker",
+      "type": "aoe",
+      "tier": "ult",
+      "theme": "earth",
+      "sig": "quake"
+    },
+    "ulTankSuper": {
+      "file": "ulTankSuper.json",
+      "hash": "ea68b283647a08db",
+      "name": "Thiết Bích Vĩnh Cửu",
+      "school": "tanker",
+      "type": "guard",
+      "tier": "superUlt",
+      "theme": "steel",
+      "sig": "dome"
+    },
+    "ulToanNangSuper": {
+      "file": "ulToanNangSuper.json",
+      "hash": "62ae6867dbaea0c1",
+      "name": "Vạn Pháp Quy Nhất",
+      "school": "toan_nang",
+      "type": "allin",
+      "tier": "superUlt",
+      "theme": "arcane",
+      "sig": "allin"
+    },
+    "ulTri1": {
+      "file": "ulTri1.json",
+      "hash": "127e4987faa4bd78",
+      "name": "Thánh Quang Hồi Sinh",
+      "school": "tri_lieu_su",
+      "type": "heal",
+      "tier": "ult",
+      "theme": "holy",
+      "sig": "phoenix"
+    },
+    "ulTuLinhDungHop": {
+      "file": "ulTuLinhDungHop.json",
+      "hash": "5dea10d0b150844d",
+      "name": "Tử Linh Dung Hợp",
+      "school": "tu_linh_thuat_su",
+      "type": "fusion",
+      "tier": "superUlt",
+      "theme": "shadow",
+      "sig": "fusion"
+    },
+    "vn1": {
+      "file": "vn1.json",
+      "hash": "a937774a665b2697",
+      "name": "Thức Tỉnh Tối Thượng",
+      "school": "toan_nang",
+      "type": "buff",
+      "tier": "ult",
+      "theme": "holy",
+      "sig": "awaken"
+    },
+    "vn2": {
+      "file": "vn2.json",
+      "hash": "064a98d0d598cfe4",
+      "name": "Hợp Nhất Nguyên Tố",
+      "school": "toan_nang",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "elem"
+    },
+    "vn3": {
+      "file": "vn3.json",
+      "hash": "3525a13a0bffbe80",
+      "name": "Dòng Chảy Toàn Năng",
+      "school": "toan_nang",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "rune"
+    },
+    "vn4": {
+      "file": "vn4.json",
+      "hash": "117c55e5b342e6f3",
+      "name": "Thế Cân Bằng",
+      "school": "toan_nang",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "rune"
+    },
+    "vn5": {
+      "file": "vn5.json",
+      "hash": "5bed9748868e930c",
+      "name": "Tinh Lực Dồi Dào",
+      "school": "toan_nang",
+      "type": "heal",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "spirit"
+    },
+    "vn6": {
+      "file": "vn6.json",
+      "hash": "a2b9cbd8d3a3287d",
+      "name": "Thủ Ấn Toàn Năng",
+      "school": "toan_nang",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "holy"
+    },
+    "vn7": {
+      "file": "vn7.json",
+      "hash": "6a0c943c46150428",
+      "name": "Trảm Hợp Nhất",
+      "school": "toan_nang",
+      "type": "melee",
+      "tier": "normal",
+      "theme": "arcane",
+      "sig": "cross"
+    },
+    "xa25": {
+      "file": "xa25.json",
+      "hash": "8e71ef6431e1907c",
+      "name": "Ấn Tâm Tiễn",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "arrow"
+    },
+    "xa27": {
+      "file": "xa27.json",
+      "hash": "48a74e0e0da172d6",
+      "name": "Tiễn Thần Tốc",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "bolt",
+      "sig": "lance"
+    },
+    "xa30": {
+      "file": "xa30.json",
+      "hash": "c75de9f1ebf54986",
+      "name": "Bước Lùi Liên Xạ",
+      "school": "cung_thu",
+      "type": "backstep",
+      "tier": "normal",
+      "theme": "arrow",
+      "sig": "hop"
+    },
+    "xa32": {
+      "file": "xa32.json",
+      "hash": "80c84124f7dceff0",
+      "name": "Tên Phá Giáp",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "steel",
+      "sig": "lance"
+    },
+    "xa35": {
+      "file": "xa35.json",
+      "hash": "360000b2bd6a9f38",
+      "name": "Thần Nhãn",
+      "school": "cung_thu",
+      "type": "buff",
+      "tier": "normal",
+      "theme": "arrow",
+      "sig": "eye"
+    },
+    "xa37": {
+      "file": "xa37.json",
+      "hash": "ef130930090dde21",
+      "name": "Liên Châu Ngũ Tiễn",
+      "school": "cung_thu",
+      "type": "spread",
+      "tier": "normal",
+      "theme": "arrow",
+      "sig": "fan"
+    },
+    "xa38": {
+      "file": "xa38.json",
+      "hash": "699527902f736190",
+      "name": "Bẫy Linh Quang",
+      "school": "cung_thu",
+      "type": "aoe",
+      "tier": "normal",
+      "theme": "holy",
+      "sig": "trap"
+    },
+    "xa40": {
+      "file": "xa40.json",
+      "hash": "56e83f9ca5be3df8",
+      "name": "Thiên Võng Xạ Kích",
+      "school": "cung_thu",
+      "type": "arrow_rain",
+      "tier": "normal",
+      "theme": "spirit",
+      "sig": "net"
+    },
+    "xa42": {
+      "file": "xa42.json",
+      "hash": "313c26e6844908e0",
+      "name": "Tinh Tú Truy Hồn",
+      "school": "cung_thu",
+      "type": "projectile",
+      "tier": "normal",
+      "theme": "star",
+      "sig": "star"
+    },
+    "xa45": {
+      "file": "xa45.json",
+      "hash": "21966849ecaffe42",
+      "name": "Thiên Hỏa Thần Tiễn",
+      "school": "cung_thu",
+      "type": "arrow_rain",
+      "tier": "normal",
+      "theme": "fire",
+      "sig": "fire"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "id": "ulCung2",
+  "name": "Thiên Hỏa Mưa Tên",
+  "school": "cung_thu",
+  "type": "arrow_rain",
+  "tier": "ult",
+  "theme": "fire",
+  "sig": "fire",
+  "colors": [
+    "0xfff1b0",
+    "0xff9d4d",
+    "0xff4a2b"
+  ],
+  "texture": "fx_ember",
+  "dark": false,
+  "layers": [
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 684,
+      "color": "main",
+      "params": {
+        "r": 104,
+        "y": "ground"
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "glow",
+      "t": 0,
+      "dur": 540,
+      "color": "main",
+      "params": {
+        "scale": 3.06,
+        "alpha": 0.6
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "burst",
+      "t": 0,
+      "dur": 560,
+      "color": "main",
+      "params": {
+        "n": 14,
+        "d0": 20,
+        "d1": 108,
+        "grav": -26,
+        "a0": -3.14159,
+        "a1": 0,
+        "size": 0.8
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "meteor",
+      "t": 0,
+      "dur": 600,
+      "color": "main",
+      "params": {
+        "r": 200
+      },
+      "trigger": "arrowZone"
+    },
+    {
+      "kind": "pillar",
+      "t": 0,
+      "dur": 700,
+      "color": "main",
+      "params": {
+        "w": 80,
+        "h": 320
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "runeDisc",
+      "t": 0,
+      "dur": 760,
+      "color": "main",
+      "params": {
+        "r": 84,
+        "spin": 200
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "flash",
+      "t": 0,
+      "dur": 180,
+      "color": "main",
+      "params": {},
+      "trigger": "cast"
+    }
+  ]
+}

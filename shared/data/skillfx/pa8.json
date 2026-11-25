@@ -1,0 +1,88 @@
+{
+  "id": "pa8",
+  "name": "Đâm Xuyên",
+  "school": "kiem_si",
+  "type": "melee",
+  "tier": "normal",
+  "theme": "sword",
+  "sig": "thrust",
+  "colors": [
+    "0xffffff",
+    "0xbcd6ff",
+    "0x5b8cff"
+  ],
+  "texture": "fx_spark",
+  "dark": false,
+  "layers": [
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 380,
+      "color": "main",
+      "params": {
+        "r": 58,
+        "y": "ground"
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "glow",
+      "t": 0,
+      "dur": 300,
+      "color": "main",
+      "params": {
+        "scale": 1.7,
+        "alpha": 0.6
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "burst",
+      "t": 0,
+      "dur": 560,
+      "color": "main",
+      "params": {
+        "n": 8,
+        "d0": 20,
+        "d1": 60,
+        "grav": -26,
+        "a0": -3.14159,
+        "a1": 0,
+        "size": 0.8
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "beam",
+      "t": 0,
+      "dur": 260,
+      "color": "main",
+      "params": {
+        "dx": 100,
+        "dy": 0,
+        "w": 16
+      },
+      "trigger": "melee"
+    },
+    {
+      "kind": "glow",
+      "t": 0,
+      "dur": 240,
+      "color": "core",
+      "params": {
+        "scale": 1.5
+      },
+      "trigger": "melee"
+    },
+    {
+      "kind": "ring",
+      "t": 0,
+      "dur": 300,
+      "color": "main",
+      "params": {
+        "r1": 36
+      },
+      "trigger": "melee"
+    }
+  ]
+}

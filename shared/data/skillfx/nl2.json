@@ -1,0 +1,78 @@
+{
+  "id": "nl2",
+  "name": "Triệu Hồi Bóng",
+  "school": "tu_linh_thuat_su",
+  "type": "shadow_toggle",
+  "tier": "normal",
+  "theme": "shadow",
+  "sig": "summon",
+  "colors": [
+    "0xe8d8ff",
+    "0x9a6cff",
+    "0x2a1448"
+  ],
+  "texture": "fx_dust",
+  "dark": true,
+  "layers": [
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 380,
+      "color": "main",
+      "params": {
+        "r": 58,
+        "y": "ground"
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "glow",
+      "t": 0,
+      "dur": 300,
+      "color": "main",
+      "params": {
+        "scale": 1.7,
+        "alpha": 0.6
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "burst",
+      "t": 0,
+      "dur": 560,
+      "color": "main",
+      "params": {
+        "n": 8,
+        "d0": 20,
+        "d1": 60,
+        "grav": -26,
+        "a0": -3.14159,
+        "a1": 0,
+        "size": 0.8
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 900,
+      "color": "main",
+      "params": {
+        "r": 78,
+        "y": "ground"
+      },
+      "trigger": "summon"
+    },
+    {
+      "kind": "pillar",
+      "t": 0,
+      "dur": 640,
+      "color": "main",
+      "params": {
+        "w": 60,
+        "h": 260
+      },
+      "trigger": "summon"
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "id": "ulTankSuper",
+  "name": "Thiết Bích Vĩnh Cửu",
+  "school": "tanker",
+  "type": "guard",
+  "tier": "superUlt",
+  "theme": "steel",
+  "sig": "dome",
+  "colors": [
+    "0xfff4dc",
+    "0xd9b36e",
+    "0x78879a"
+  ],
+  "texture": "fx_spark",
+  "dark": false,
+  "layers": [
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 988,
+      "color": "main",
+      "params": {
+        "r": 151,
+        "y": "ground"
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "glow",
+      "t": 0,
+      "dur": 780,
+      "color": "main",
+      "params": {
+        "scale": 4.42,
+        "alpha": 0.6
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "burst",
+      "t": 0,
+      "dur": 560,
+      "color": "main",
+      "params": {
+        "n": 21,
+        "d0": 20,
+        "d1": 156,
+        "grav": -26,
+        "a0": -3.14159,
+        "a1": 0,
+        "size": 0.8
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "ring",
+      "t": 0,
+      "dur": 560,
+      "color": "main",
+      "params": {
+        "r1": 110
+      },
+      "trigger": "guard"
+    },
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 800,
+      "color": "main",
+      "params": {
+        "r": 90,
+        "y": "ground"
+      },
+      "trigger": "guard"
+    },
+    {
+      "kind": "pillar",
+      "t": 0,
+      "dur": 900,
+      "color": "main",
+      "params": {
+        "w": 120,
+        "h": 420
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "runeDisc",
+      "t": 0,
+      "dur": 900,
+      "color": "main",
+      "params": {
+        "r": 120,
+        "spin": 260
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "flash",
+      "t": 0,
+      "dur": 260,
+      "color": "main",
+      "params": {},
+      "trigger": "cast"
+    },
+    {
+      "kind": "shake",
+      "t": 0,
+      "dur": 320,
+      "color": "main",
+      "params": {
+        "intensity": 0.014
+      },
+      "trigger": "cast"
+    }
+  ]
+}

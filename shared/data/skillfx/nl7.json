@@ -1,0 +1,83 @@
+{
+  "id": "nl7",
+  "name": "Vuốt Quỷ",
+  "school": "tu_linh_thuat_su",
+  "type": "melee",
+  "tier": "normal",
+  "theme": "necro",
+  "sig": "claw",
+  "colors": [
+    "0xe6ffd8",
+    "0x7bf27a",
+    "0x4a2a80"
+  ],
+  "texture": "fx_glow",
+  "dark": true,
+  "layers": [
+    {
+      "kind": "sigil",
+      "t": 0,
+      "dur": 380,
+      "color": "main",
+      "params": {
+        "r": 58,
+        "y": "ground"
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "glow",
+      "t": 0,
+      "dur": 300,
+      "color": "main",
+      "params": {
+        "scale": 1.7,
+        "alpha": 0.6
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "burst",
+      "t": 0,
+      "dur": 560,
+      "color": "main",
+      "params": {
+        "n": 8,
+        "d0": 20,
+        "d1": 60,
+        "grav": -26,
+        "a0": -3.14159,
+        "a1": 0,
+        "size": 0.8
+      },
+      "trigger": "cast"
+    },
+    {
+      "kind": "beam",
+      "t": 0,
+      "dur": 320,
+      "color": "main",
+      "params": {
+        "dx": 40,
+        "dy": 44,
+        "w": 12,
+        "count": 3,
+        "spread": 20
+      },
+      "trigger": "melee"
+    },
+    {
+      "kind": "burst",
+      "t": 0,
+      "dur": 460,
+      "color": "main",
+      "params": {
+        "n": 8,
+        "d1": 50,
+        "grav": 40,
+        "size": 0.8
+      },
+      "trigger": "melee"
+    }
+  ]
+}

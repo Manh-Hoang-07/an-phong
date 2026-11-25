@@ -23,6 +23,9 @@ const G = require('../shared');
 const PORT = Number(process.env.PORT) || 3100;
 const HOST = process.env.HOST || '127.0.0.1';
 const COOKIE_SECURE = process.env.COOKIE_SECURE === '1';
+// Chỉ tin X-Real-IP khi chạy SAU reverse proxy do mình quản lý (Nginx ghi đè header này).
+// Nếu không, client tự gửi header giả để né throttle đăng nhập.
+const TRUST_PROXY_IP = process.env.TRUST_PROXY_IP === '1';
 const ROOT = path.join(__dirname, '..');
 
 const serveStatic = require('./http/static')(ROOT);
@@ -105,8 +108,12 @@ function sessionCookie(token, maxAge) {
 }
 
 function clientIp(req) {
-  // Sau Nginx: lấy IP thật từ X-Real-IP (Nginx ghi đè header này, người chơi không giả được)
-  return req.headers['x-real-ip'] || req.socket.remoteAddress || '';
+  // Sau Nginx (TRUST_PROXY_IP=1): lấy IP thật từ X-Real-IP. Mặc định bỏ qua header do client gửi.
+  if (TRUST_PROXY_IP) {
+    const real = String(req.headers['x-real-ip'] || '').trim();
+    if (real) return real;
+  }
+  return req.socket.remoteAddress || '';
 }
 
 function clientCtx(req) {
