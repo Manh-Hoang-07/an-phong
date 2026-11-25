@@ -93,7 +93,8 @@
   }
 
   // Giới hạn học: 5 ô gốc + số ô đã mở rộng (tối đa 2) cho mỗi loại; usedSkillSlots = số kỹ năng đã học của loại đó
-  const skillCap = (player, ult) => G.SKILL_BASE_CAP + Math.min(G.SKILL_EXPAND_MAX, Math.max(0, (player.skillExpand && player.skillExpand[ult ? 'ult' : 'normal']) || 0));
+  // Không còn giới hạn số kỹ năng đã học (thường lẫn tuyệt kỹ). Giữ hàm để chỗ gọi cũ không vỡ.
+  const skillCap = () => Infinity;
   // Tuyệt Phẩm KHÔNG tính vào ô học: nó là trụ riêng (logic/super-ults.js), không có cấp,
   // không tiêu điểm. Đếm nó vào đây là bắt người chơi trả một ô tuyệt kỹ cho thứ không nâng cấp được.
   const learnedIds = (player, ult) => Object.keys(player.skills || {}).filter(id => player.skills[id] > 0 && G.SKILLS[id] && !G.SKILLS[id].superUlt && !!G.SKILLS[id].ult === !!ult);

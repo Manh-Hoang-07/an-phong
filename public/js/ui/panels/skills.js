@@ -94,7 +94,7 @@
     return `<div class="sk-bar-card">
       <div class="sk-bar-head">
         <b>Thanh kỹ năng</b>
-        <span class="sk-bar-cap">Thường <b>${usedN}/${capN}</b> · Tuyệt kỹ <b>${usedU}/${capU}</b></span>
+        <span class="sk-bar-cap">Đã học: thường <b>${usedN}</b> · tuyệt kỹ <b>${usedU}</b></span>
       </div>
       <div class="skill-slots">${cells}${gearCell}</div>
       <div class="muted" style="font-size:11px;margin-top:6px">Ô <b>${G.GEAR_SKILL_KEY}</b> là kỹ năng do trang bị cấp: mặc món có kỹ năng riêng thì có, tháo ra thì mất. Không tốn điểm kỹ năng, không nâng cấp được.</div>

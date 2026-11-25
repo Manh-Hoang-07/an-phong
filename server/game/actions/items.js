@@ -200,7 +200,7 @@ const actions = {
     if (def.kind === 'slot_book') {
       const key = def.ult ? 'ult' : 'normal';
       p.skillExpand = p.skillExpand || { normal: 0, ult: 0 };
-      if ((p.skillExpand[key] || 0) >= G.SKILL_EXPAND_MAX) fail(`Ô học ${def.ult ? 'tuyệt kỹ' : 'kỹ năng thường'} đã mở rộng tối đa (+${G.SKILL_EXPAND_MAX}).`);
+      fail('Số kỹ năng học được không còn giới hạn nên không cần mở rộng ô học.');
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
       p.skillExpand[key] = (p.skillExpand[key] || 0) + 1;
