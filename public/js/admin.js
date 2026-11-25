@@ -51,11 +51,12 @@
     const items = h('div', { class: 'items' });
     // Phẩm chất + cấp cường hóa: chỉ dùng được với trang bị (chọn món khác thì hai ô này mờ đi)
     const QUALS = [[0, 'Phẩm chất: chuẩn'], [1, 'Thường'], [2, 'Tốt'], [3, 'Hiếm'], [4, 'Huyền thoại']];
-    const gearOf = (txt) => { const m = /(([w-]+))s*$/.exec(txt.trim()); const it = CAT.items.find((x) => x.id === (m ? m[1] : txt.trim())); return !!(it && it.gear); };
+    // Chỉ khóa hai ô khi CHẮC CHẮN món đó không phải trang bị (server cũ chưa gửi cờ gear thì cứ để mở)
+    const gearOf = (txt) => { const m = /(([w-]+))s*$/.exec(txt.trim()); const it = CAT.items.find((x) => x.id === (m ? m[1] : txt.trim())); return !(it && it.gear === false); };
     const addRow = () => {
       const idIn = h('input', { list: 'dl-items', placeholder: 'Vật phẩm (gõ tên để tìm)', 'data-it': 'id' });
-      const qSel = h('select', { 'data-it': 'quality', title: 'Phẩm chất (chỉ trang bị)', disabled: true }, QUALS.map(([v, t]) => h('option', { value: v }, t)));
-      const plusIn = h('input', { class: 'q', type: 'number', min: 0, max: CAT.caps.plusMax, value: 0, title: 'Cấp cường hóa +0…+' + CAT.caps.plusMax + ' (chỉ trang bị)', 'data-it': 'plus', disabled: true });
+      const qSel = h('select', { 'data-it': 'quality', title: 'Phẩm chất (chỉ trang bị)' }, QUALS.map(([v, t]) => h('option', { value: v }, t)));
+      const plusIn = h('input', { class: 'q', type: 'number', min: 0, max: CAT.caps.plusMax || 12, value: 0, title: 'Cấp cường hóa +0…+' + (CAT.caps.plusMax || 12) + ' (chỉ trang bị)', 'data-it': 'plus' });
       idIn.addEventListener('input', () => { const g = gearOf(idIn.value); qSel.disabled = !g; plusIn.disabled = !g; if (!g) { qSel.value = '0'; plusIn.value = 0; } });
       items.append(h('div', { class: 'it' }, idIn,
         h('input', { class: 'q', type: 'number', min: 1, max: CAT.caps.itemQty, value: 1, 'data-it': 'n' }),
