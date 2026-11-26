@@ -156,6 +156,16 @@
       g.fillStyle(0x8793a6, 1); g.fillRoundedRect(4, 0, 62, 30, 5); g.fillStyle(0xdfe7f2, 1); g.fillRoundedRect(7, 3, 56, 8, 3);
       g.fillStyle(0xffe066, 0.8); g.fillRect(30, 8, 10, 18);
     });
+    mk('fx_sword_v', 16, 48, (g) => {   // kiếm dựng đứng, mũi hướng lên
+      g.fillStyle(0xffffff, 0.25); g.fillEllipse(8, 24, 16, 48);
+      poly(g, [[8, 0], [13, 9], [12, 35], [4, 35], [3, 9]], 0xffffff, 1);
+      g.fillStyle(0xffffff, 0.6); g.fillRect(7, 6, 2, 28); g.fillRect(1, 35, 14, 3); g.fillRect(6, 38, 4, 9);
+    });
+    mk('fx_roundshield', 40, 40, (g) => {   // khiên tròn
+      g.fillStyle(0xffffff, 0.3); g.fillCircle(20, 20, 19); g.lineStyle(3, 0xffffff, 1); g.strokeCircle(20, 20, 17);
+      g.lineStyle(1.5, 0xffffff, 0.8); g.strokeCircle(20, 20, 11);
+      g.fillStyle(0xffffff, 1); g.fillCircle(20, 20, 4.5); g.fillStyle(0xffffff, 0.6); g.fillRect(19, 4, 2, 32); g.fillRect(4, 19, 32, 2);
+    });
     mk('fx_sigil', 128, 128, (g) => {
       g.lineStyle(3, 0xffffff, 0.95); g.strokeCircle(64, 64, 60);
       g.lineStyle(1.5, 0xffffff, 0.8); g.strokeCircle(64, 64, 52); g.strokeCircle(64, 64, 34);
@@ -838,6 +848,59 @@
   };
 
   // ---- Triệu hồi / gọi bóng
+  // ---- Vật thể xoay quanh người suốt thời gian buff (gắn thẳng vào bảng this.buffs nên hết buff là biến mất)
+  // atk = tăng công / chí mạng / tốc đánh · def = giảm sát thương / khiên · heal = hồi dần
+  // rot: góc gốc của hình (hình vẽ mũi hướng phải nên cần xoay -90° để dựng đứng); mode: 'up' giữ nguyên, 'spin' tự xoay
+  const SCHOOL_AURA = {
+    kiem_si:   { atk: { tex: 'fx_sword_v', n: 5, sc: 1.0 }, def: { tex: 'fx_roundshield', n: 4, sc: 0.95 } },
+    cung_thu:  { atk: { tex: 'fx_lance', n: 5, sc: 0.42, rot: -PI / 2 }, def: { tex: 'fx_feather', n: 6, sc: 1.5, mode: 'spin' } },
+    phap_su:   { atk: { tex: 'fx_orb', n: 5, sc: 0.6, mix: [TH.fire, TH.ice, TH.bolt] }, def: { tex: 'fx_shard', n: 6, sc: 1.4, rot: -PI / 2 } },
+    toan_nang: { atk: { tex: 'fx_star', n: 5, sc: 0.85, mode: 'spin', mix: [TH.fire, TH.holy, TH.ice, TH.arcane, TH.heal] }, def: { tex: 'fx_disc', n: 4, sc: 0.75, mode: 'spin' } },
+    sat_thu:   { atk: { tex: 'fx_dagger', n: 5, sc: 1.15, rot: -PI / 2 }, def: { tex: 'fx_dust', n: 7, sc: 2.2, normal: true, col: 2 } },
+    tanker:    { atk: { tex: 'fx_hammer', n: 4, sc: 0.34, normal: true }, def: { tex: 'fx_roundshield', n: 4, sc: 1.3, rx: 1.1 } },
+    tri_lieu_su: { atk: { tex: 'fx_star', n: 5, sc: 0.85, mode: 'spin' }, def: { tex: 'fx_feather', n: 6, sc: 1.5, mode: 'spin', halo: true } },
+    trieu_hoi_su: { atk: { tex: 'fx_orb', n: 5, sc: 0.6 }, def: { tex: 'fx_bird', n: 3, sc: 0.65 } },
+    tu_linh_thuat_su: { atk: { tex: 'fx_skull', n: 5, sc: 0.8 }, def: { tex: 'fx_skull', n: 4, sc: 0.6, col: 2 } },
+  };
+  const HEAL_AURA = { tex: 'fx_cross', n: 4, sc: 0.9 };
+
+  R.aura = (s, id, sk, L) => {
+    const b = s.buffs && s.buffs[id];
+    if (!b) return;
+    const atk = !!(b.atk || b.crit || b.speed || b.exec);
+    const def = b.name === 'guard' || b.name === 'manashield' || !!b.reduce || !!b.absorb;
+    const heal = !!b.regen && !atk && !def;
+    if (!atk && !def && !heal) return;
+    let school = sk.school;
+    if (!school || !SCHOOL_AURA[school]) school = (App.player && SCHOOL_AURA[App.player.school] && App.player.school) || 'toan_nang';
+    const SA = SCHOOL_AURA[school], th = L.th, c = L.c;
+    s._auras = s._auras || {};
+    if (s._auras[id]) sfxAuraKill(s._auras[id]);
+    const rings = [];
+    const both = atk && def;
+    if (atk) rings.push({ ...SA.atk, rx: both ? 36 : 44, ry: both ? 12 : 15, dy: -4, spd: 1.6, dir: 1 });
+    if (def) rings.push({ ...SA.def, rx: (both ? 62 : 52) * (SA.def.rx || 1), ry: both ? 20 : 17, dy: 2, spd: 1.1, dir: both ? -1 : 1 });
+    if (heal) rings.push({ ...HEAL_AURA, rx: 46, ry: 15, dy: -4, spd: 1.2, dir: 1, col: 1 });
+    const a = { t0: s.time.now + 320, items: [], rings, sig: null, fixed: [] };
+    s._auras[id] = a;
+    later(s, 320, () => {
+      if (s._auras[id] !== a) return;
+      for (const g of rings) {
+        g.list = [];
+        for (let i = 0; i < g.n; i++) {
+          const col = g.mix ? g.mix[i % g.mix.length].c[1] : c[g.col == null ? 1 : g.col];
+          const it = s.add.image(s.player.x, s.player.y, g.tex).setTint(col).setBlendMode(g.normal ? NORMAL() : ADD()).setScale(0.01).setDepth(4.5);
+          g.list.push(it); a.items.push(it);
+        }
+      }
+      // Vòng sáng trên đầu (Trị Liệu Sư) và trận đồ mờ dưới chân suốt thời gian buff
+      if (def && SA.def.halo) { const h = s.add.image(s.player.x, s.player.y - 36, 'fx_ring').setTint(c[1]).setBlendMode(ADD()).setScale(0.01).setDepth(4.6); a.halo = h; a.items.push(h); }
+      const sg = s.add.image(s.player.x, s.player.body.bottom - 2, 'fx_sigil').setTint(c[1]).setBlendMode(ADD()).setScale(0.01).setDepth(1.6);
+      a.sig = sg; a.items.push(sg); a.sigR = both ? 70 : 56;
+    });
+  };
+  function sfxAuraKill(a) { for (const it of a.items) if (it && it.active) it.destroy(); a.dead = true; }
+
   R.summon = (s, id, sk, L) => {
     const pl = s.player, c = L.c, th = L.th, gy = pl.body.bottom;
     sigil(s, pl.x, gy - 2, c[1], 78, 900); pillar(s, pl.x, gy, c[1], 60, 260, 640);
@@ -1113,6 +1176,31 @@
     }
 
     // Đạn trúng quái
+    // Mỗi khung hình (gọi từ drawAura): đặt lại vị trí vật thể xoay quanh người; buff hết / bị xoá thì dọn
+    sfxAuraUpdate(time) {
+      const A = this._auras;
+      if (!A) return;
+      const pl = this.player;
+      for (const id of Object.keys(A)) {
+        const a = A[id], b = this.buffs[id];
+        if (a.dead || !b || time >= b.until || (a.items[0] && !a.items[0].active)) { sfxAuraKill(a); delete A[id]; continue; }
+        if (time < a.t0) continue;
+        const k = Math.min(1, (time - a.t0) / 350) * Math.min(1, (b.until - time) / 500);
+        const tt = time / 1000;
+        for (const g of a.rings || []) {
+          if (!g.list) continue;
+          for (let i = 0; i < g.list.length; i++) {
+            const it = g.list[i], ang = tt * g.spd * g.dir + (i * PI * 2) / g.n, sn = Math.sin(ang), front = sn > 0;
+            it.setPosition(pl.x + Math.cos(ang) * g.rx, pl.y + g.dy + sn * g.ry)
+              .setDepth(front ? 4.5 : 3.8).setAlpha(k * (front ? 1 : 0.6)).setScale(g.sc * k * (0.9 + 0.1 * sn));
+            it.setRotation(g.mode === 'spin' ? tt * 4 + i : (g.rot || 0));
+          }
+        }
+        if (a.halo) a.halo.setPosition(pl.x, pl.y - 36).setScale(0.62 * k, 0.17 * k).setAlpha(0.8 * k);
+        if (a.sig) a.sig.setPosition(pl.x, pl.body.bottom - 2).setScale((a.sigR / 60) * k, (a.sigR / 60) * 0.3 * k).setAlpha(k * (0.3 + 0.1 * Math.sin(tt * 4)));
+      }
+    }
+
     sfxProjHit(p, m) {
       const sf = p.o.sfx;
       if (!sf || !alive(this)) return;

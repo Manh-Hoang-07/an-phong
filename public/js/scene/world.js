@@ -360,6 +360,7 @@ class WorldScene extends Phaser.Scene {
     else if (classTint) pl.setTint(classTint);
     else pl.clearTint();
     this.drawAura(time);
+    if (this.sfxAuraUpdate) this.sfxAuraUpdate(time);   // vật thể xoay quanh người khi có buff (skillfx.js)
 
     this.placeWeapon();
     this.juiceUpdate(time, onGround, move);

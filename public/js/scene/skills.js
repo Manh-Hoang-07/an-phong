@@ -310,6 +310,7 @@ WorldScene.mix(class WorldSkills {
     this.buffs['ulChung2'] = { name: 'awaken', until: time + chung2.duration * 1000, dur: chung2.duration * 1000,
       skill: 'ulChung2', atk: chung2.atkBuff || 0, crit: chung2.critBuff || 0, speed: chung2.speedBuff || 0,
       regen: chung2.regen || 0, exec: chung2.exec || null };
+    this.sfx?.('aura', 'ulChung2', chung2);
     this.floatText(pl.x, pl.y - 78, 'Ý Chí Bất Diệt', '#ffd54f', 15);
     // --- 5. Cái giá: phong ấn toàn bộ kỹ năng
     this.skillLockUntil = time + (sk.lockSec || 60) * 1000;
@@ -482,12 +483,14 @@ WorldScene.mix(class WorldSkills {
         this.buffs[id] = { name: 'guard', until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id, reduce: sk.reduce, reflect: sk.reflect || 0,
           atk: sk.atkBuff || 0, crit: sk.critBuff || 0, speed: sk.speedBuff || 0 };
         this.sfx?.('guard', id, sk);
+        this.sfx?.('aura', id, sk);   // vật thể xoay quanh người suốt thời gian buff
         break;
       }
       case 'manashield': {
         // Khiên cũng vậy: mỗi kỹ năng một ô, hấp thụ cộng dồn
         this.buffs[id] = { name: 'manashield', until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id, absorb: sk.absorb };
         this.sfx?.('shield', id, sk);
+        this.sfx?.('aura', id, sk);
         break;
       }
       case 'buff': {
@@ -497,6 +500,7 @@ WorldScene.mix(class WorldSkills {
         this.buffs[id] = { name: sk.buff || id, until: time + sk.duration * 1000, dur: sk.duration * 1000, skill: id,
           atk: sk.atkBuff || 0, crit: sk.critBuff || 0, speed: sk.speedBuff || 0, regen: sk.regen || 0, exec: sk.exec || null };
         this.sfx?.('buff', id, sk);
+        this.sfx?.('aura', id, sk);
         if (sk.ult) this.cameras.main.shake(250, 0.008);
         break;
       }
