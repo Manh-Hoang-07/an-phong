@@ -161,6 +161,14 @@
     return g && g.id === id ? g.level : 0;
   }
 
+  // Thoi gian hoi HIEN THI: o ky nang thuc te hoi cd*(1-CDR/100), nen hien so do lam chinh
+  // va giu so goc trong ngoac de nguoi choi hieu tai sao hoi nhanh hon so ghi tren sach.
+  function cdText(cd, cdr) {
+    const base = Math.round((cd || 0) * 10) / 10;
+    const real = Math.round((cd || 0) * (1 - (cdr || 0) / 100) * 10) / 10;
+    return real !== base ? real + 's (goc ' + base + 's)' : base + 's';
+  }
+
   Object.assign(G, { skillAt, schoolsOf, ultFits, availableSkills, ultSlotsOf, normalSlotsOf, isUltSlot, ultKeyLabel, signatureUlt, skillCap, learnedIds, usedSkillSlots, skillLevel, slotsOf,
-    GEAR_SKILL_SLOT, GEAR_SKILL_KEY, gearSkill, gearSkillLevel, skillLevelOf });
+    GEAR_SKILL_SLOT, GEAR_SKILL_KEY, gearSkill, gearSkillLevel, skillLevelOf, cdText });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

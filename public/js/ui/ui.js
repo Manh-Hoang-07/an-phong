@@ -769,8 +769,8 @@ const UI = (() => {
       <div class="book-skill-h"><span class="ic">${sk.icon}</span><b>${esc(sk.name)}</b>${sk.ult ? ' <span class="tag-ult">TUYỆT KỸ</span>' : ''} · ${status}</div>
       <small class="sk-desc">${esc(sk.desc || '')}</small>
       <div class="sk-nums"><span>Cấp 1: ${nums(lv1) || '—'}</span>
-        <span class="muted">${Math.round(lv1.mp * costMul)} năng lượng · hồi ${Math.round(lv1.cd * 10) / 10}s</span></div>
-      ${G.SKILL_MAX > 1 ? `<div class="sk-next">▲ Cấp ${G.SKILL_MAX}: ${nums(max) || '—'} · ${Math.round(max.mp * costMul)} năng lượng · hồi ${Math.round(max.cd * 10) / 10}s</div>` : ''}
+        <span class="muted">${Math.round(lv1.mp * costMul)} năng lượng · hồi ${G.cdText(lv1.cd, App.stats.cdr)}</span></div>
+      ${G.SKILL_MAX > 1 ? `<div class="sk-next">▲ Cấp ${G.SKILL_MAX}: ${nums(max) || '—'} · ${Math.round(max.mp * costMul)} năng lượng · hồi ${G.cdText(max.cd, App.stats.cdr)}</div>` : ''}
       ${ms}
     </div>`;
   }

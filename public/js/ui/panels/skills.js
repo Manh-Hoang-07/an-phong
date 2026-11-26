@@ -131,7 +131,7 @@
         <small class="sk-desc">${esc(base.desc)}</small>
         <div class="sk-nums">
           <span>${skillNumbers(cur)}</span>
-          <span class="muted">${Math.round(cur.mp * App.stats.costMul)} năng lượng · hồi ${Math.round(cur.cd * 10) / 10}s</span>
+          <span class="muted">${Math.round(cur.mp * App.stats.costMul)} năng lượng · hồi ${G.cdText(cur.cd, App.stats.cdr)}</span>
         </div>
         ${next ? `<div class="sk-next">▲ Cấp ${lv + 1}: ${skillNumbers(next)}</div>` : ''}
         ${ms}
@@ -164,7 +164,7 @@
         <small class="sk-desc">${esc(base.desc)}</small>
         <div class="sk-nums">
           <span>${skillNumbers(sk)}</span>
-          <span class="muted">${Math.round(sk.mp * App.stats.costMul)} năng lượng · hồi ${Math.round(sk.cd * 10) / 10}s</span>
+          <span class="muted">${Math.round(sk.mp * App.stats.costMul)} năng lượng · hồi ${G.cdText(sk.cd, App.stats.cdr)}</span>
         </div>
         ${costs.length ? `<div class="sk-cost">⚠ Cái giá: ${costs.map(esc).join(' · ')}</div>` : ''}
         <div class="sk-superult-meta">Chỉ số cố định · không nâng cấp · tối đa 2 lần mỗi 60 giây</div>
