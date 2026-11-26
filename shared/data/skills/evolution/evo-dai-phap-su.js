@@ -13,8 +13,8 @@
   'use strict';
 
   const PART = {
-    ps25: { school: 'phap_su', evolutionKey: 'dai_phap_su', icon: '⚡', name: 'Lôi Xà', level: 25, mp: 52, cd: 5,
-      type: 'projectile', power: 0.84, pierce: true, range: 430, count: 2, slow: 1, desc: 'Phóng tia sét xuyên qua nhiều mục tiêu, làm chậm.',
+    ps25: { school: 'phap_su', evolutionKey: 'dai_phap_su', icon: '⚡', name: 'Song Lôi Xuyên', level: 25, mp: 52, cd: 5,
+      type: 'projectile', power: 0.84, pierce: true, range: 430, count: 2, slow: 1, desc: 'Phóng hai tia sét xuyên qua nhiều mục tiêu, làm chậm.',
       m5: { count: 3 }, t5: 'Phóng 3 tia sét.', m10: { freeze: 1 }, t10: 'Đóng băng quái 1 giây.' },
     ps30: { school: 'phap_su', evolutionKey: 'dai_phap_su', icon: '🔥', name: 'Hỏa Tường', level: 25, mp: 64, cd: 10,
       type: 'aoe', power: 1.98, radius: 220, slow: 2, desc: 'Dựng dải lửa ma thuật quanh người, làm chậm quái.',
