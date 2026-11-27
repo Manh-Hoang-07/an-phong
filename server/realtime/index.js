@@ -116,7 +116,6 @@ const outbox = new Map();         // khoá phòng → [gói quái chờ gửi]: 
 let mobTimer = null;
 let nextId = 1;
 let wss = null;
-let tickTimer = null;
 
 const cookies = (req) => {
   const out = {};
@@ -772,8 +771,9 @@ function tick() {
     // Người vừa di chuyển không cần nhận lại chính vị trí của mình: client bỏ qua id lạ
     // (remote.js chỉ tra this.remotes, không có mình trong đó). Phòng chỉ có 1 người thì khỏi gửi.
     if (r.size < 2) continue;
-    if (list.length === 1) broadcast(mapId, { t: 'snap', p: list }, list[0][0]);
-    else broadcast(mapId, { t: 'snap', p: list });
+    // Không phát riêng nữa: đưa vào hàng đợi để flushOutbox() gộp chung với gói quái thành MỘT tin / người / nhịp.
+    const o = { t: 'snap', p: list }, q = outbox.get(mapId);
+    if (q) q.push(o); else outbox.set(mapId, [o]);
   }
 }
 
@@ -848,9 +848,14 @@ function attach(server) {
   });
   const social = setInterval(() => { try { party.tick(); trade.tick(); } catch (e) { console.error('Đội / giao dịch lỗi:', e.message); } }, 1000);
   social.unref();
-  tickTimer = setInterval(tick, TICK_MS);
-  tickTimer.unref();
-  mobTimer = setInterval(() => { try { mobTick(); } catch (e) { console.error('Quái lỗi:', e.message); } }, STEP_MS);
+  // Một đồng hồ duy nhất (STEP_MS): cứ TICK_MS/STEP_MS bước thì chạy thêm tick() vị trí TRƯỚC mobTick(),
+  // để snap người chơi + msnap quái + sự kiện quái rơi vào cùng một lần flushOutbox → một gói / người / 100ms.
+  const TICK_EVERY = Math.max(1, Math.round(TICK_MS / STEP_MS));
+  let beat = 0;
+  mobTimer = setInterval(() => {
+    if (++beat >= TICK_EVERY) { beat = 0; try { tick(); } catch (e) { console.error('Vị trí lỗi:', e.message); } }
+    try { mobTick(); } catch (e) { console.error('Quái lỗi:', e.message); }
+  }, STEP_MS);
   mobTimer.unref();
   const m = setInterval(() => maintain().catch((e) => console.error('Realtime lỗi:', e.message)), 500);
   m.unref();
@@ -903,7 +908,6 @@ async function connect(ws, token, session) {
 }
 
 function close() {
-  if (tickTimer) clearInterval(tickTimer);
   if (mobTimer) clearInterval(mobTimer);
   mobstore.stop();
   if (wss) for (const c of wss.clients) c.close(1001, 'shutdown');
