@@ -141,7 +141,7 @@
     if (!player || !player.equip) return null;
     for (const slot of G.SLOTS) {
       const it = player.equip[slot];
-      if (!it) continue;
+      if (!it || G.isBroken(it)) continue;
       const def = G.ITEMS[it.id];
       if (!def || !def.grantsSkill) continue;
       const sk = SKILLS[def.grantsSkill];

@@ -193,6 +193,13 @@
         renderPanel();
         break;
       }
+      case 'repair': {
+        const s = S.selected;
+        await act('repair', s.where === 'equip' ? { slot: s.key } : { uid: Number(s.key) });
+        renderPanel();
+        break;
+      }
+      case 'repair_all': await act('repair_all', {}); renderPanel(); break;
       case 'seal': {
         const s = S.selected;
         await act('seal', s.where === 'equip' ? { slot: s.key } : { uid: Number(s.key) });

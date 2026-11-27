@@ -510,14 +510,15 @@ WorldScene.mix(class WorldSkills {
         for (let k = 0; k < n; k++) {
           this.shoot({ key: water ? 'fx_wave' : 'proj_fire', speed: water ? 520 : 820, range: sk.range, mult: pw,
             pierce: sk.pierce, slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun,
-            knock: sk.knock || (water ? 140 : 60), sk: 1, dy: (k - (n - 1) / 2) * 16, angle: this.targetAngle(), ...ps() });
+            knock: sk.knock || (water ? 140 : 60), sk: 1, id, ult: sk.ult ? 1 : 0, superUlt: sk.superUlt ? 1 : 0,
+            dy: (k - (n - 1) / 2) * 16, angle: this.targetAngle(), ...ps() });
         }
         break;
       }
       case 'spread': {
         for (let k = 0; k < sk.count; k++) {
           const ang = (k - (sk.count - 1) / 2) * 0.16 + this.targetAngle();
-          this.shoot({ key: 'proj_fire', speed: 760, range: sk.range, mult: pw, angle: ang, sk: 1,
+          this.shoot({ key: 'proj_fire', speed: 760, range: sk.range, mult: pw, angle: ang, sk: 1, id, ult: sk.ult ? 1 : 0, superUlt: sk.superUlt ? 1 : 0,
             slow: sk.slow, freeze: sk.freeze, shred: sk.shred, stun: sk.stun, knock: sk.knock, pierce: sk.pierce, ...ps() });
         }
         break;
@@ -530,7 +531,7 @@ WorldScene.mix(class WorldSkills {
         this.time.delayedCall(120, () => {
           for (let k = 0; k < (sk.count || 1); k++) {
             const ang = (k - ((sk.count || 1) - 1) / 2) * 0.12;
-            this.shoot({ key: 'proj_fire', speed: 780, range: 420, mult: pw, angle: ang, sk: 1,
+            this.shoot({ key: 'proj_fire', speed: 780, range: 420, mult: pw, angle: ang, sk: 1, id, ult: sk.ult ? 1 : 0, superUlt: sk.superUlt ? 1 : 0,
               slow: sk.slow, freeze: sk.freeze, stun: sk.stun, knock: sk.knock, ...ps() });
           }
         });

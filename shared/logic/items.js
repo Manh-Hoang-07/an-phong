@@ -21,7 +21,7 @@
     const out = {};
     for (const slot of G.SLOTS) {
       const it = player.equip && player.equip[slot];
-      if (!it) continue;
+      if (!it || isBroken(it)) continue;   // món hỏng không tính vào bộ
       const set = setOfItem(ITEMS[it.id]);
       if (!set) continue;
       out[set.id] = (out[set.id] || 0) + 1;
@@ -182,7 +182,7 @@
     let n = 0;
     for (const slot of G.SLOTS) {
       const it = player.equip && player.equip[slot];
-      if (it && it.nhiem > 0) n += it.nhiem;
+      if (it && it.nhiem > 0 && !isBroken(it)) n += it.nhiem;
     }
     return n;
   }
@@ -223,14 +223,112 @@
     return { gold: 120 * (inst.q || 1) * Math.max(2, def.level || 1), stones: (inst.q || 1) * 2 };
   }
 
+  // ---------------------------------------------------------------- Độ bền
+  // inst.dur = điểm độ bền hiện tại; thiếu trường = đầy. Tối đa tính từ cấp của món (durMax), UI chỉ hiện %.
+  // Về 0 = hỏng: bị bỏ khỏi calcStats / specialFx / setCounts, không mặc được, nhưng vẫn sửa được ở Thợ rèn.
+  // Đồ Linh Ngọc / đặc biệt (def.special hoặc def.priceNgoc) có độ bền vô hạn: không hao, không hỏng.
+  const DUR = () => G.DURABILITY;
+  const durInfinite = (def) => !def || !def.slot || !!def.special || !!def.priceNgoc;
+
+  // Quái cấp cao đánh nặng hơn: 1 + cấp / 20
+  const mobFactor = (lv) => 1 + Math.max(1, lv || 1) / DUR().MOB_LEVEL_DIV;
+
+  // Hệ số hạng quái (thường 1, tinh anh 1,5, thủ lĩnh 2, trùm 3)
+  const gradeWear = (mdef) => DUR().GRADE_WEAR[G.gradeOf(mdef)] || 1;
+
+  // Độ bền tối đa theo bộ đồ (cấp giữa của bộ). Nhân mobFactor cùng hệ số hao → số đòn để hỏng đều ở mọi tầng.
+  function durMax(def) {
+    if (durInfinite(def)) return Infinity;
+    const set = setOfItem(def);
+    const mid = set ? (set.min + set.max) / 2 : (def.level || 1);
+    const hits = def.slot === 'weapon' ? DUR().HITS_WEAPON : DUR().HITS_ARMOR;
+    return Math.round(hits * mobFactor(mid));
+  }
+
+  function durCur(inst) {
+    const def = inst && ITEMS[inst.id];
+    const max = durMax(def);
+    if (max === Infinity) return Infinity;
+    return inst.dur == null ? max : Math.max(0, Math.min(max, inst.dur));
+  }
+  function isBroken(inst) {
+    // Đường nóng (calcStats chạy rất nhiều): chưa hao hoặc còn độ bền thì chắc chắn chưa hỏng, khỏi tính durMax
+    if (!inst || inst.dur == null || inst.dur > 0) return false;
+    const def = ITEMS[inst.id];
+    if (!def || durMax(def) === Infinity) return false;
+    return durCur(inst) <= 0;
+  }
+  // % hiển thị (0–100); đồ vô hạn trả null. Còn một chút thì hiện tối thiểu 1% để không nhầm với hỏng.
+  function durPct(inst) {
+    const def = inst && ITEMS[inst.id];
+    const max = durMax(def);
+    if (max === Infinity) return null;
+    const cur = durCur(inst);
+    if (cur <= 0) return 0;
+    return Math.max(1, Math.min(100, Math.round(cur / max * 100)));
+  }
+
+  // Điểm hao của vũ khí cho một đòn trúng quái: loại đòn (0 thường, 1 kỹ năng, 2 tuyệt kỹ, 3 siêu) × cấp & hạng quái
+  function weaponWearPts(kind, mdef) {
+    return (DUR().WEAPON_WEAR[kind] || 1) * mobFactor(mdef && mdef.level) * gradeWear(mdef);
+  }
+  // Điểm hao của một ô giáp cho một cú bị quái đánh trúng
+  function armorWearPts(mdef) {
+    return DUR().ARMOR_WEAR * mobFactor(mdef && mdef.level) * gradeWear(mdef);
+  }
+
+  // Trừ độ bền, giữ số nguyên. Trả { changed, broke, pct }. Đồ vô hạn không đổi.
+  function applyWear(inst, pts) {
+    const def = inst && ITEMS[inst.id];
+    const max = durMax(def);
+    if (max === Infinity || !(pts > 0)) return { changed: false, broke: false, pct: durPct(inst) };
+    const before = durCur(inst);
+    if (before <= 0) return { changed: false, broke: false, pct: 0 };
+    inst.dur = Math.max(0, Math.round(before - pts));
+    return { changed: inst.dur !== before, broke: inst.dur <= 0, pct: durPct(inst) };
+  }
+
+  // Chết: mọi ô đang mặc mất DEATH_PCT độ bền tối đa. Trả danh sách ô vừa hỏng.
+  function applyDeathWear(player) {
+    const broke = [];
+    for (const slot of G.SLOTS) {
+      const it = player.equip && player.equip[slot];
+      if (!it) continue;
+      const max = durMax(ITEMS[it.id]);
+      if (max === Infinity) continue;
+      if (applyWear(it, max * DUR().DEATH_PCT).broke) broke.push(slot);
+    }
+    return broke;
+  }
+
+  // Chi phí sửa: tỉ lệ theo phần độ bền còn thiếu. Món 0% sửa đầy tốn nhất. Trả { gold, stones, pct } hoặc null nếu không cần sửa.
+  function repairCost(inst) {
+    const def = inst && ITEMS[inst.id];
+    const max = durMax(def);
+    if (max === Infinity) return null;
+    const missing = max - durCur(inst);
+    if (missing <= 0) return null;
+    const frac = missing / max;
+    const lv = def.level || 1;
+    const set = setOfItem(def);
+    const base = Math.max(def.price || 0, 40 * lv);
+    return {
+      gold: Math.max(1, Math.ceil(frac * base * 0.4 * QUALITY_PRICE[inst.q || 1])),
+      stones: Math.max(1, Math.ceil(frac * (2 + (set ? set.id : 1) * 1.5))),
+      pct: Math.round(frac * 100),
+    };
+  }
+  function repairFull(inst) { if (inst) { delete inst.dur; delete inst.warned; } return inst; }
+
   function sellPrice(inst) {
     const def = ITEMS[inst.id];
     if (!def || !def.price || def.kind === 'quest') return 0;
     if (!def.slot) return Math.floor(def.price / 4);
-    return Math.floor(def.price / 4 * QUALITY_PRICE[inst.q || 1] * (1 + (inst.plus || 0) * 0.25));
+    const base = Math.floor(def.price / 4 * QUALITY_PRICE[inst.q || 1] * (1 + (inst.plus || 0) * 0.25));
+    return isBroken(inst) ? Math.floor(base * DUR().BROKEN_SELL) : base;
   }
 
-  Object.assign(G, { setOfLevel, setOfItem, setCounts, setBonusOf, statLabel, statUnit, upgradeCost, upgradeFailDrops, normalizeInst, instStats, rollQuality, rollAffixes, makeInst, perfection, sellPrice,
+  Object.assign(G, { durInfinite, mobFactor, gradeWear, durMax, durCur, isBroken, durPct, weaponWearPts, armorWearPts, applyWear, applyDeathWear, repairCost, repairFull, setOfLevel, setOfItem, setCounts, setBonusOf, statLabel, statUnit, upgradeCost, upgradeFailDrops, normalizeInst, instStats, rollQuality, rollAffixes, makeInst, perfection, sellPrice,
     PERFECT_MIN, SEAL_AFFIX_COUNT, canSeal, sealCost,
     NHIEM_STAT_MUL, NHIEM_HP_PENALTY, NHIEM_MAX, NHIEM_CHANCE, isRedGate, rollNhiem, isNhiem, nhiemLoad, nhiemHpMul, cleanseNhiem, nhiemText });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

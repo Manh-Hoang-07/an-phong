@@ -104,6 +104,7 @@ const actions = {
     const def = G.ITEMS[e.id];
     if (!def.slot) fail('Không trang bị được.');
     if ((def.level || 1) > p.level) fail(`Cần đạt cấp ${def.level}.`);
+    if (G.isBroken(e)) fail(`${def.name} đã hỏng. Hãy đến Thợ rèn sửa trước khi mặc.`);
     if (!G.canUseItem(p, def)) {
       if (def.slot === 'weapon' && !p.school) fail('Chưa chọn class: chỉ dùng được vũ khí luyện tập.');
       if (def.slot === 'weapon') fail(`${G.WEAPON_TYPES[def.wtype]?.name || 'Vũ khí này'} chỉ dành cho ${G.weaponOwners(def.wtype).map(s => G.SCHOOLS[s].name).join(', ') || 'class khác'}. Class ${G.SCHOOLS[p.school].name} dùng ${G.WEAPON_TYPES[G.classWeapon(p.school)].name}.`);
@@ -237,8 +238,7 @@ const actions = {
       e.qty--;
       if (e.qty <= 0) p.bag.splice(p.bag.indexOf(e), 1);
       const total = Math.round((left + def.minutes * 60000) / 60000);
-      ev.push({ t: 'msg', text: `[Hệ thống] ${def.name}: kinh nghiệm khi hạ quái x${def.mul} trong ${total} phút.`, color: '#ffd54f' });
-      ev.push({ t: 'float', text: `Kinh nghiệm x${def.mul}!`, color: '#ffd54f' });
+      ev.push({ t: 'msg', text: `[Hệ thống] Bùa x${def.mul}: ${total} phút.`, color: '#ffd54f' });
       return;
     }
     if (def.kind !== 'potion') fail('Không dùng được.');

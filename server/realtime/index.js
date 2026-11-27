@@ -22,7 +22,9 @@ const combatActions = require('../game/actions/combat');
 const mobstore = require('./mobstore');
 const { World, STEP_MS } = require('./mobs');
 const hitValidate = require('../game/core/hit-validate');
+const dmgProfile = require('../game/core/damage-profile');
 const combatGuard = require('../game/core/combat-guard');
+const durability = require('../game/core/durability');
 
 const PATH = '/ws';
 const TICK_MS = 100;              // chu kỳ phát vị trí
@@ -38,6 +40,8 @@ const MAX_HITS_PER_SEC = 16;
 // Kỹ năng thưa nhất là 1 lần/giây; 20 đòn/giây đủ cho kỹ năng nhiều nhát nhất trong lúc chờ hồi chiêu.
 const MAX_SKILL_HITS_PER_SEC = 20;
 // Hệ số trần sát thương một đòn, tính từ ATK của chính nhân vật (server tự đọc, client không sửa được).
+// LƯU Ý: trần CHÍNH nay nằm ở server/game/core/damage-profile.js (theo class + kỹ năng đang gắn). Bốn hằng CAP_MUL_*
+// dưới đây chỉ còn là dự phòng khi dựng hồ sơ lỗi và là trần cho đòn của thú / bóng ma.
 //
 // BỐN MỨC, vì bốn loại đòn chênh nhau tới 140 lần (đánh thường 1,25 → siêu tuyệt kỹ 176,3).
 // Dùng chung một mức thì hoặc cắt oan loại mạnh, hoặc thả cửa loại yếu.
@@ -147,11 +151,13 @@ async function refreshLook(conn) {
   const name = String(p.name || '?').slice(0, 16);
   // Bản đồ do SERVER xác nhận (HTTP change_map/teleport đã sửa p.map trong cache). Client không gửi được.
   conn.serverMap = p.map;
+  let st = null;
   try {
-    const st = G.calcStats(p, { form: !!p.formActive });
+    st = G.calcStats(p, { form: !!p.formActive });
     // Trần sát thương một đòn, tính từ ATK của chính nhân vật: chặn client gửi số tuỳ ý.
-    // Bốn trần vì bốn loại đòn chênh nhau tới 140 lần (xem CAP_MUL_* ở đầu file).
-    // dmgCap giữ lại cho tương thích; capBasic/capSkill/capUlt/capSuperUlt là thứ onHit dùng.
+    // Trần CHÍNH nằm ở hồ sơ theo class + kỹ năng đang gắn (conn.dmg, dựng bên dưới, xem damage-profile.js).
+    // Bốn trần cào bằng này chỉ còn là DỰ PHÒNG khi dựng hồ sơ thất bại, và là trần cho đòn của thú / bóng ma
+    // (công của chúng không tính từ ATK người chơi). Chênh nhau tới 140 lần giữa đánh thường và tuyệt phẩm (xem CAP_MUL_* ở đầu file).
     conn.dmgCap = Math.max(st.atk, 30) * 60 + 500;
     conn.atk = Math.max(st.atk, 30);
     conn.capBasic = conn.atk * CAP_MUL_BASIC + 50;
@@ -172,6 +178,8 @@ async function refreshLook(conn) {
   // Kỹ năng do trang bị cấp (ô thứ 9) — cache riêng để onCast không từ chối nhầm.
   conn.gearSkillId = null;
   try { const gs = G.gearSkill(p); if (gs && gs.id) { conn.gearSkillId = gs.id; conn.skillLevels[gs.id] = conn.skillLevels[gs.id] || gs.level || 1; } } catch { /* bỏ qua */ }
+  // Hồ sơ sát thương theo class + chỉ số + kỹ năng đang gắn. Lỗi thì null → onHit rơi về trần cào bằng cũ.
+  try { conn.dmg = st ? dmgProfile.buildProfile(p, st, conn.skillLevels, conn.skillEquipped, conn.gearSkillId, conn.dmg) : null; } catch { conn.dmg = null; }
   const changed = name !== conn.name || school !== conn.school || level !== conn.level || weapon !== conn.weapon;
   conn.name = name; conn.school = school; conn.level = level; conn.weapon = weapon;
   return changed;
@@ -433,13 +441,21 @@ function onHit(conn, m) {
     if (k === 1) return conn.capSkill || atk * CAP_MUL_SKILL + 500;
     return conn.capBasic || atk * CAP_MUL_BASIC + 50;
   };
-  let cap = capOf(kind);
-  // Trần tham chiếu gắn với skill THẬT đã cast (client sửa được cờ k, không sửa được lịch sử cast của server).
-  // Chỉ áp cho skill/tuyệt kỹ/siêu tuyệt kỹ có id; đánh thường giữ nguyên trần CAP_MUL_BASIC.
-  if (isSkill && m.id) {
-    const cast = g.recentCasts.find((x) => x.id === String(m.id).slice(0, 40));
-    const ref = cast ? hitValidate.skillCeiling(conn.atk, conn.skillMul, m.id, (conn.skillLevels || {})[cast.id], mob, now) : null;
-    if (ref > 0) cap = Math.min(cap, ref);
+  // Trần theo HỒ SƠ của người chơi (damage-profile.js): class → hệ số chí mạng / vũ khí, kỹ năng đang gắn → power từng chiêu.
+  // Cờ loại đòn k của client chỉ chọn ĐƯỜNG đi (đánh thường / kỹ năng); con số trần của kỹ năng tra theo id kỹ năng thật,
+  // đã đối chiếu với lần cast hợp lệ ở trên, nên giả cờ k không đổi được trần.
+  // Thú / bóng ma giữ trần cũ: công của chúng không tính từ ATK người chơi.
+  const pr = conn.dmg;
+  const assist = m.src === 'pet' || m.src === 'shadow';
+  let cap, crit = m.c === 1, skillId = null;
+  if (pr && !assist) {
+    // Thiếu id (client cũ) → lấy lần cast gần nhất, giống cách cửa sổ đòn ở trên đã chấp nhận.
+    if (isSkill) skillId = String(m.id || (g.recentCasts.length ? g.recentCasts[g.recentCasts.length - 1].id : '')).slice(0, 40);
+    // Cờ chí mạng do client tung xúc xắc nên chỉ kiểm được theo tỉ lệ; vượt ngưỡng thì coi là không chí mạng.
+    crit = dmgProfile.critAllowed(g, m.c === 1, pr, now);
+    cap = dmgProfile.hitCap(pr, isSkill, skillId, mob, crit, dmgProfile.shredActive(g, m.u | 0, now), now);
+  } else {
+    cap = assist && pr ? pr.assistCap : capOf(kind);
   }
   // Cờ loại đòn do client gửi nên không đáng tin: kỹ năng còn bị ghì thêm bằng ngân sách SÁT THƯƠNG mỗi giây,
   // để giả cờ cũng không đổi được nhiều hơn một lượng nhỏ.
@@ -464,7 +480,7 @@ function onHit(conn, m) {
       }
       g.superCastAt = now;
     } else {
-      const rate = atk * CAP_MUL_SKILL * SKILL_DMG_RATE_MUL;
+      const rate = (pr && !assist ? pr.budgetHit : atk * CAP_MUL_SKILL) * SKILL_DMG_RATE_MUL;
       const pool = rate * SKILL_DMG_BURST_SEC;
       // Lần dùng kỹ năng đầu tiên phải có ngân sách đầy, nếu không đòn đầu tiên bị chặn oan.
       if (!g.skillDmgAt) { g.skillDmg = pool; g.skillDmgAt = now; }
@@ -477,11 +493,32 @@ function onHit(conn, m) {
       g.skillDmg -= Math.min(dmg, cap);
     }
   }
+  // Phá giáp: chỉ đánh dấu SAU khi tính trần, vì client chỉ nhân phá giáp cho các đòn đến sau đòn phá giáp.
+  if (pr && !assist && skillId) {
+    const e = pr.entries.get(skillId);
+    if (e && e.shred > 0) dmgProfile.shredMark(g, m.u | 0, now);
+  }
+  // Độ bền: chỉ đòn của chính người chơi hao vũ khí (thú / bóng ma không dùng vũ khí của bạn)
+  if (!assist) durability.addWeaponWear(conn, kind, mob.def, now);
   w.applyHit(mob, conn.id, {
-    dmg: Math.min(dmg, cap), crit: m.c === 1,
+    dmg: Math.min(dmg, cap), crit,
     src: m.src === 'pet' || m.src === 'shadow' ? m.src : 'player', dir: m.dir === -1 ? -1 : 1,
     slow: f(m.slow, 6), freeze: f(m.freeze, 4), stun: f(m.stun, 2), knock: f(m.knock, 400),
   }, now);
+}
+
+// Bị quái đánh trúng: client chỉ báo uid quái. Cấp/hạng quái do server tra, lượng hao do server tính.
+// Chặn: quái phải có thật và ở gần, hai cú cách nhau tối thiểu HURT_GAP_MS (client bất tử 700ms sau mỗi cú trúng).
+function onHurt(conn, m) {
+  const w = conn.room && worlds.get(conn.room);
+  if (!w || conn.dead) return;
+  const now = Date.now();
+  if (now - (conn.hurtAt || 0) < G.DURABILITY.HURT_GAP_MS) return;
+  const mob = w.byUid.get(m.u | 0);
+  if (!mob || !mob.def) return;
+  if (Math.abs(conn.x - mob.x) > 1500 || Math.abs(conn.y - mob.y) > 1000) return;   // đạn của trùm bay xa nên chừa rộng
+  conn.hurtAt = now;
+  durability.addArmorWear(conn, mob.def, now);
 }
 
 const num = (v) => (Number.isFinite(v) && Math.abs(v) <= WORLD_BOUND ? Math.round(v) : null);
@@ -695,6 +732,7 @@ function onMessage(conn, data) {
   else if (m.t === 'chlist') sendChannels(conn);
   else if (m.t === 'ch') onChannel(conn, m);
   else if (m.t === 'hit') onHit(conn, m);
+  else if (m.t === 'hurt') onHurt(conn, m);
   else if (m.t === 'cast') onCast(conn, m);
   else if (m.t === 'exec') onExec(conn, m).catch((e) => console.error('Đổi mạng lỗi:', e.message));
   else if (m.t === 'fusion') onFusion(conn).catch((e) => console.error('Dung hợp lỗi:', e.message));
@@ -848,6 +886,7 @@ async function connect(ws, token, session) {
 
   ws.on('pong', () => { conn.alive = true; });
   const close = () => {
+    durability.flush(conn).catch(() => {});   // ghi nốt hao mòn còn gom
     trade.onClose(conn);
     leaveRoom(conn);
     byId.delete(conn.id);

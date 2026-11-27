@@ -41,5 +41,22 @@
   // để không còn cảnh "tốn 2160 xu + 4 đá rồi mất cả cấp lẫn tài nguyên" ở ngưỡng cuối.
   const UPGRADE_RATES = [1, 1, 1, 1, 0.85, 0.78, 0.7, 0.62, 0.55, 0.48, 0.4, 0.3];
 
-  Object.assign(G, { QUALITY_NAMES, QUALITY_MUL, QUALITY_AFFIX, QUALITY_PRICE, QUALITY_ODDS, AFFIXES, STAT_NAMES, UPGRADE_MAX, UPGRADE_RATES });
+  // ---------------------------------------------------------------- Độ bền
+  // Mục tiêu đặt theo SỐ ĐÒN, rồi suy ra điểm (xem logic/items.js: durMax). Gốc: 1 điểm = 1 đòn thường / 1 cú bị đánh,
+  // nhân MOB_LEVEL_DIV để quái cấp cao hao nặng hơn; durMax nhân cùng hệ số nên số đòn để hỏng gần như đều ở mọi tầng.
+  const DURABILITY = {
+    HITS_WEAPON: 25000,                       // đòn thường để vũ khí từ 100% về 0% (kiếm 360ms ≈ 2,5 giờ đánh liên tục)
+    HITS_ARMOR: 400,                          // cú bị đánh mỗi ô giáp để về 0% (hao ngẫu nhiên đều 9 ô)
+    WEAPON_WEAR: { 0: 1, 1: 3, 2: 8, 3: 15 }, // đánh thường / kỹ năng / tuyệt kỹ / siêu tuyệt kỹ
+    ARMOR_WEAR: 1,                            // điểm gốc mỗi cú bị đánh
+    MOB_LEVEL_DIV: 20,                        // mobFactor(lv) = 1 + lv / 20
+    GRADE_WEAR: { normal: 1, elite: 1.5, leader: 2, boss: 3 },
+    DEATH_PCT: 0.03,                          // chết: mọi ô đang mặc mất thêm 3% độ bền tối đa
+    WARN_PCT: 20,                             // dưới mức này cảnh báo
+    BROKEN_SELL: 0.25,                        // món hỏng bán được 25% giá
+    FLUSH_MS: 8000,                           // server gom hao mòn, ghi mỗi 8 giây một lần
+    HURT_GAP_MS: 300,                         // hai cú 'hurt' liên tiếp cách nhau ít nhất 300ms (client bất tử 700ms sau mỗi cú trúng)
+  };
+
+  Object.assign(G, { QUALITY_NAMES, QUALITY_MUL, QUALITY_AFFIX, QUALITY_PRICE, QUALITY_ODDS, AFFIXES, STAT_NAMES, UPGRADE_MAX, UPGRADE_RATES, DURABILITY });
 })(typeof module === 'object' && module.exports ? require('../core') : self.GameData);

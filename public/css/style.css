@@ -336,6 +336,14 @@ input { font: inherit; }
 .detail .stats { margin: 4px 0 6px; }
 .affix { margin: 2px 0 6px; color: #d4b8ff; font-size: 13px; }
 .perf { font-size: 12.5px; margin-bottom: 4px; }
+/* Độ bền trang bị */
+.dur { font-size: 11px; font-weight: 700; }
+.dur-ok { color: #81c784; } .dur-mid { color: #ffd54f; } .dur-low { color: #ff9800; } .dur-broken { color: #ef5350; }
+.dur-row { font-size: 12.5px; margin-bottom: 4px; }
+.dur-bar { height: 5px; margin-top: 3px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+.dur-bar i { display: block; height: 100%; }
+.dur-bar i.dur-ok { background: #66bb6a; } .dur-bar i.dur-mid { background: #ffca28; } .dur-bar i.dur-low { background: #ff9800; } .dur-bar i.dur-broken { background: #ef5350; }
+.eq-slot.broken { border-color: rgba(239,83,80,.7); }
 /* Kỳ Nguyên: khối thông tin + bật/tắt trong bảng chi tiết */
 .kn-box { margin: 8px 0 4px; padding: 8px 10px; border-radius: 9px; background: rgba(179,136,255,.07); border: 1px solid rgba(179,136,255,.22); }
 .kn-fx { font-size: 12.5px; color: #d4b8ff; line-height: 1.5; margin: 4px 0; }

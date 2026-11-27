@@ -10,7 +10,7 @@
     const items = [];
     if (S.smithTab !== 'salvage') for (const s of G.SLOTS) if (p.equip[s]) items.push({ where: 'equip', key: s, entry: p.equip[s], tag: 'Đang mặc' });
     for (const e of p.bag) if (G.ITEMS[e.id].slot) items.push({ where: 'bag', key: e.uid, entry: e, tag: 'Trong túi' });
-    const tabs = [['upgrade', '⚒️ Nâng cấp'], ['reforge', '🔮 Tẩy luyện'], ['seal', '🔏 Khắc ấn'], ['salvage', '♻️ Phân rã']]
+    const tabs = [['upgrade', '⚒️ Nâng cấp'], ['reforge', '🔮 Tẩy luyện'], ['seal', '🔏 Khắc ấn'], ['repair', '🔧 Sửa chữa'], ['salvage', '♻️ Phân rã']]
       .map(([k, n]) => `<button class="btn small ${S.smithTab === k ? 'primary' : ''}" data-act="smith_tab" data-tab="${k}">${n}</button>`).join(' ');
     let html = `<div class="row" style="margin-bottom:8px">${tabs}<span style="margin-left:auto">🪙 <b class="gold">${fmt(p.gold)}</b> · 💎 <b>${stones}</b></span></div><div class="cols"><div class="list">`;
     if (!items.length) html += '<p class="muted">Không có trang bị nào.</p>';
@@ -19,7 +19,11 @@
       const sel = S.selected && S.selected.where === it.where && String(S.selected.key) === String(it.key);
       const q = qOf(it.entry);
       html += `<div class="li ${sel ? 'sel' : ''}" data-sel="${it.where}:${it.key}" style="cursor:pointer"><div class="ic">${itemIcon(it.entry.id)}</div>
-        <div class="main"><b class="q${q}">${esc(d.name)} ${it.entry.plus ? '+' + it.entry.plus : ''}</b><small>${it.tag} · ${G.QUALITY_NAMES[q]} · ${G.perfection(it.entry)}%</small></div></div>`;
+        <div class="main"><b class="q${q}">${esc(d.name)} ${it.entry.plus ? '+' + it.entry.plus : ''}</b><small>${it.tag} · ${G.QUALITY_NAMES[q]} · ${G.perfection(it.entry)}% ${UI._.durTag(it.entry)}</small></div></div>`;
+    }
+    if (S.smithTab === 'repair') {
+      const need = G.SLOTS.filter(s => p.equip[s] && G.repairCost(p.equip[s])).length;
+      html = html.replace('</div><div class="cols">', `</div><div class="row" style="margin-bottom:8px"><button class="btn small" data-act="repair_all" ${need ? '' : 'disabled'}>🔧 Sửa tất cả đang mặc (${need})</button></div><div class="cols">`);
     }
     html += '</div><div>';
     const sel = selectedEntry();
@@ -28,6 +32,7 @@
         upgrade: 'Chọn trang bị bên trái để nâng cấp. Mỗi cấp +8% chỉ số chính.',
         reforge: 'Tẩy luyện gieo lại toàn bộ dòng phụ của đồ Tốt, Hiếm, Huyền thoại (giữ nguyên số dòng). Có thể ra tốt hơn hoặc tệ hơn.',
         seal: `Khắc ấn: đồ đạt độ hoàn hảo ${G.PERFECT_MIN}% trở lên được thêm 1 dòng phụ thứ tư, vĩnh viễn. Mỗi món chỉ khắc ấn một lần.`,
+        repair: 'Sửa chữa đưa độ bền về 100%. Tốn xu + Đá cường hóa theo phần độ bền còn thiếu. Món đã hỏng (0%) vẫn sửa được, chỉ tốn nhất.',
         salvage: 'Phân rã đồ trong túi để lấy Đá cường hóa: Thường 0–1, Tốt 1, Hiếm 3, Huyền thoại 6 viên, cộng thêm theo cấp nâng.',
       }[S.smithTab];
       html += `<div class="detail muted">${tip}</div></div></div>`;
@@ -60,6 +65,13 @@
           <div>Chi phí: <span class="${p.gold >= c.gold ? '' : 'bad'}">${fmt(c.gold)} xu</span>, <span class="${stones >= c.stones ? '' : 'bad'}">${c.stones} đá cường hóa</span></div>
           <div class="row" style="margin-top:10px"><button class="btn primary" data-act="reforge" ${p.gold >= c.gold && stones >= c.stones ? '' : 'disabled'}>🔮 Tẩy luyện</button></div></div>`;
       }
+    } else if (S.smithTab === 'repair') {
+      const c = G.repairCost(e);
+      if (G.durInfinite(G.ITEMS[e.id])) html += '<div class="detail muted">Món này có độ bền vô hạn, không bao giờ hao mòn.</div>';
+      else if (!c) html += '<div class="detail muted">Món này còn nguyên độ bền, không cần sửa.</div>';
+      else html += `<div class="detail"><div>Sửa từ <b>${G.durPct(e)}%</b> lên <b class="gold">100%</b>${G.isBroken(e) ? ' <span class="bad">(đang hỏng)</span>' : ''}.</div>
+          <div>Chi phí: <span class="${p.gold >= c.gold ? '' : 'bad'}">${fmt(c.gold)} xu</span>, <span class="${stones >= c.stones ? '' : 'bad'}">${c.stones} đá cường hóa</span></div>
+          <div class="row" style="margin-top:10px"><button class="btn primary" data-act="repair" ${p.gold >= c.gold && stones >= c.stones ? '' : 'disabled'}>🔧 Sửa chữa</button></div></div>`;
     } else if (S.smithTab === 'seal') {
       // Khắc ấn: chỉ đồ đạt độ hoàn hảo 95%+ và chưa khắc ấn
       const pf = G.perfection(e);

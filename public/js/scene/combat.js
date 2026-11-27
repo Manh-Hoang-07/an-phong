@@ -118,7 +118,10 @@ WorldScene.mix(class WorldCombat {
         if (Phaser.Geom.Intersects.RectangleToRectangle(b, this.mBounds(m))) {
           p.hitSet.add(m);
           if (p.o.sfx) this.sfxProjHit(p, m);
-          this.damageMonster(m, p.o.mult, { slow: p.o.slow, freeze: p.o.freeze, knock: p.o.knock, dir: Math.sign(p.vx), basic: p.o.basic, shred: p.o.shred });
+          // sk/id/ult/superUlt: đạn của KỸ NĂNG phải khai loại đòn + id như mọi đòn kỹ năng khác (xem fx() ở skills.js),
+          // nếu không server coi là đánh thường và kẹp bằng trần đánh thường.
+          this.damageMonster(m, p.o.mult, { slow: p.o.slow, freeze: p.o.freeze, knock: p.o.knock, dir: Math.sign(p.vx), basic: p.o.basic, shred: p.o.shred,
+            sk: p.o.sk, id: p.o.id, ult: p.o.ult, superUlt: p.o.superUlt });
           if (!p.o.pierce) { this.fadeProjectile(p); break; }
         }
       }
@@ -273,11 +276,12 @@ WorldScene.mix(class WorldCombat {
     for (const o of this.monsters) {
       if (budget.n <= 0) break;
       if (o === m || !o.alive || o.def.passive) continue;
-      if (Math.hypot(o.sprite.x - s.x, o.sprite.y - s.y) <= (extra.chainRadius || 150)) { budget.n--; this.damageMonster(o, extra.chain, { isChain: true }); }
+      if (Math.hypot(o.sprite.x - s.x, o.sprite.y - s.y) <= (extra.chainRadius || 150)) { budget.n--; this.damageMonster(o, extra.chain, { isChain: true, sk: extra.sk, id: extra.id, ult: extra.ult, superUlt: extra.superUlt }); }
     }
   }
 
-  hurtPlayer(atk, dir, push = 260, mon = null) {
+  // src: quái gây sát thương (mặc định = mon). Đạn của trùm truyền owner vào src (không truyền vào mon để khỏi bị phản sát thương).
+  hurtPlayer(atk, dir, push = 260, mon = null, src = mon) {
     const now = this.time.now;
     if (now < this.invulnUntil || this.dashing) return;
     const fxNow = this.playerFx();
@@ -336,6 +340,8 @@ WorldScene.mix(class WorldCombat {
       return;
     }
     App.hp -= dmg;
+    // Độ bền: báo server quái nào vừa đánh trúng (server tự tra cấp/hạng quái và tự tính lượng hao)
+    if (src && src.net && src.uid != null) { try { Realtime.send({ t: 'hurt', u: src.uid }); } catch (e) { /* mất kết nối: bỏ qua */ } }
     const companions = this.summonedPetIds();
     if (companions.length) {
       const share = dmg * 0.18 / companions.length;

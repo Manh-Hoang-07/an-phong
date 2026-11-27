@@ -674,6 +674,21 @@ const UI = (() => {
     }
     return h + '</div>';
   }
+  // Độ bền: chỉ hiện %, màu theo mức. Đồ vô hạn (Linh Ngọc / đặc biệt) và vật phẩm không phải trang bị → rỗng.
+  function durTag(entry) {
+    const pct = G.durPct(entry);
+    if (pct == null) return '';
+    if (pct <= 0) return '<span class="dur dur-broken">HỎNG</span>';
+    return `<span class="dur ${pct < G.DURABILITY.WARN_PCT ? 'dur-low' : pct < 50 ? 'dur-mid' : 'dur-ok'}">Bền ${pct}%</span>`;
+  }
+  function durBar(entry) {
+    const pct = G.durPct(entry);
+    if (pct == null) return '';
+    const cls = pct <= 0 ? 'dur-broken' : pct < G.DURABILITY.WARN_PCT ? 'dur-low' : pct < 50 ? 'dur-mid' : 'dur-ok';
+    return `<div class="dur-row">Độ bền: ${durTag(entry)}<div class="dur-bar"><i class="${cls}" style="width:${pct}%"></i></div>`
+      + (pct <= 0 ? '<div class="bad" style="font-size:11px">Đã hỏng: không cộng chỉ số, không mặc được. Mang đến Thợ rèn để sửa.</div>' : '') + '</div>';
+  }
+
   function itemInfo(entry, opts = {}) {
     const d = G.ITEMS[entry.id];
     const p = App.player;
@@ -702,6 +717,7 @@ const UI = (() => {
       const sealable = G.canSeal(entry);
       h += `<div class="perf">Độ hoàn hảo: <b class="${pf >= 80 ? 'q4' : pf >= 50 ? 'okc' : 'muted'}">${pf}%</b>`
         + (sealable ? ` <span class="q4">— khắc ấn được ở Thợ rèn</span>` : '') + '</div>';
+      h += durBar(entry);
       // So sánh với món đang mặc cùng ô
       const cur = p.equip[d.slot];
       if (opts.compare && cur && cur.uid !== entry.uid) {
@@ -745,7 +761,7 @@ const UI = (() => {
       const used = p.skillBooks || 0, max = G.SKILL_BOOK_MAX;
       h += `<div class="${used >= max ? 'bad' : 'muted'}">Đã đọc: <b>${used}/${max}</b> cuốn${used >= max ? ' — đã đạt tối đa, không đọc thêm được' : ` · còn đọc được ${max - used}`}</div>`;
     }
-    if (opts.sell && G.sellPrice(entry)) h += `<div class="gold">Bán được: ${fmt(G.sellPrice(entry))} xu / cái</div>`;
+    if (opts.sell && G.sellPrice(entry)) h += `<div class="gold">Bán được: ${fmt(G.sellPrice(entry))} xu / cái${G.isBroken(entry) ? ' <span class="muted">(món hỏng: 25% giá)</span>' : ''}</div>`;
     return h;
   }
 
@@ -846,7 +862,7 @@ const UI = (() => {
   }
 
   // Dùng nội bộ cho các file ui/panels/*.js và ui/actions.js (không gọi từ ngoài UI)
-  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, itemEmoji, refresh, tick, tickPets, tickBuffs, log, banner, askRespawn, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
+  const lib = { G, $, esc, fmt, skIcon, MENU_TABS, SLOT_ICONS, WEAPON_ICONS, statText, qOf, NPC_ICONS, isTouch, keyText, itemIcon, itemEmoji, refresh, tick, tickPets, tickBuffs, log, banner, askRespawn, hint, setMap, setAttackIcon, questLines, questReady, renderQuestTrack, activeSides, sideTrack, sidePanelHtml, dailyLines, dailyTrack, resetIn, openPanel, closePanel, renderPanel, act, cellHtml, itemInfo, durTag, durBar, shopHere, selectedEntry, showTip, hideTip, init, S, PANELS };
 
   return {
     init, refresh, tick, tickPets, log, banner, askRespawn, hint, setMap, setMapCount, setAttackIcon, questReady, hiddenChat,

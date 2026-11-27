@@ -141,6 +141,14 @@ const actions = {
     p.hp = Math.round(st.maxHp * 0.5);
     p.mp = Math.round(st.maxMp * 0.5);
     p.hiddenNpcActive = false;
+    // Độ bền: chết làm mọi món đang mặc hao thêm (tính trước khi tính lại máu để món vừa hỏng không còn cộng chỉ số)
+    const broke = G.applyDeathWear(p);
+    if (broke.length) {
+      ev.push({ t: 'msg', text: `Hỏng do bị đánh bại: ${broke.map((s) => G.ITEMS[p.equip[s].id].name).join(', ')}. Đến Thợ rèn để sửa.`, color: '#ef5350' });
+      const st2 = G.calcStats(p, { form: false });
+      p.hp = Math.min(p.hp, Math.round(st2.maxHp * 0.5));
+      p.mp = Math.min(p.mp, Math.round(st2.maxMp * 0.5));
+    }
     // Mặc định `home` để các luồng chết tự động (Đổi mạng gọi die(p, {}, [])) giữ nguyên hành vi cũ.
     const where = placeRespawn(p, ev, a && a.where);
     ev.push({ t: 'msg', text: `Bạn đã bị đánh bại, mất ${fmt(lose)} kinh nghiệm. Hồi sinh tại ${where}.`, color: '#ef5350' });

@@ -64,7 +64,7 @@ WorldScene.mix(class WorldBoss {
       .setTint(o.tint || 0xff7043).setBlendMode(Phaser.BlendModes.ADD);
     this.enemyShots.push({
       img, vx: Math.cos(ang) * o.speed, vy: Math.sin(ang) * o.speed,
-      life: o.life || 3, dmg: o.dmg || Math.round(m.def.atk * 0.6),
+      life: o.life || 3, dmg: o.dmg || Math.round(m.def.atk * 0.6), owner: m,
     });
   }
 
@@ -85,7 +85,7 @@ WorldScene.mix(class WorldBoss {
       }
       if (this.dead) continue;
       if (Phaser.Geom.Intersects.RectangleToRectangle(p.img.getBounds(), this.pBounds())) {
-        this.hurtPlayer(p.dmg, Math.sign(p.vx) || 1, 180);
+        this.hurtPlayer(p.dmg, Math.sign(p.vx) || 1, 180, null, p.owner);
         p.img.destroy(); this.enemyShots.splice(this.enemyShots.indexOf(p), 1);
       }
     }

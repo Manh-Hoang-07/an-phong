@@ -55,7 +55,7 @@
     const eq = { hp: 0, mp: 0, atk: 0, def: 0, crit: 0, lifesteal: 0, cdr: 0, speed: 0, boss: 0, goldfind: 0, expfind: 0, sta: 0, staRegen: 0, skill: 0 };
     for (const slot of SLOTS) {
       const it = player.equip[slot];
-      if (!it) continue;
+      if (!it || G.isBroken(it)) continue;   // món hỏng: không cộng chỉ số
       const s = instStats(normalizeInst(it)).all;
       for (const k in s) eq[k] = (eq[k] || 0) + s[k];
     }
@@ -187,7 +187,7 @@
     const out = {};
     for (const slot of SLOTS) {
       const it = player.equip && player.equip[slot];
-      if (!it) continue;
+      if (!it || G.isBroken(it)) continue;
       const def = ITEMS[it.id];
       if (!def || !def.fx) continue;
       out[def.fx.kind] = def.fx;

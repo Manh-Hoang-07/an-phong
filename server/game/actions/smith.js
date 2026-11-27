@@ -69,6 +69,45 @@ const actions = {
     ev.push({ t: 'msg', text: `Phân rã ${def.name}${stones ? `, nhận ${stones} Đá cường hóa` : ', không thu được gì'}.`, color: '#e0e0e0' });
   },
 
+  // Sửa chữa: trả xu + Đá cường hóa theo phần độ bền còn thiếu, đưa về đầy. Món hỏng (0%) vẫn sửa được.
+  // Đồ Linh Ngọc / đặc biệt có độ bền vô hạn nên không có gì để sửa.
+  repair(p, a, ev) {
+    if (!roleHere(p, 'smith')) fail('Hãy đến gặp Thợ rèn.');
+    const target = a.slot ? p.equip[a.slot] : bagEntry(p, a.uid);
+    if (!target) fail('Không có trang bị.');
+    const def = G.ITEMS[target.id];
+    if (!def.slot) fail('Chỉ sửa được trang bị.');
+    const cost = G.repairCost(target);
+    if (!cost) fail(G.durInfinite(def) ? 'Món này không bao giờ hao mòn.' : 'Món này còn nguyên độ bền.');
+    if (p.gold < cost.gold) fail('Không đủ xu.');
+    if (countItem(p, 'da_cuong_hoa') < cost.stones) fail(`Cần ${cost.stones} Đá cường hóa.`);
+    p.gold -= cost.gold;
+    removeItem(p, 'da_cuong_hoa', cost.stones);
+    G.repairFull(target);
+    clampHpMp(p);
+    ev.push({ t: 'msg', text: `Đã sửa ${def.name} về 100% (-${cost.gold} xu, -${cost.stones} đá).`, color: '#69f0ae' });
+  },
+
+  // Sửa tất cả đồ ĐANG MẶC cần sửa (món nào đủ tiền thì sửa theo thứ tự ô; hết tiền/đá thì dừng, báo phần còn lại)
+  repair_all(p, a, ev) {
+    if (!roleHere(p, 'smith')) fail('Hãy đến gặp Thợ rèn.');
+    let n = 0, gold = 0, stones = 0, skipped = 0;
+    for (const slot of G.SLOTS) {
+      const it = p.equip[slot];
+      const cost = it && G.repairCost(it);
+      if (!cost) continue;
+      if (p.gold < cost.gold || countItem(p, 'da_cuong_hoa') < cost.stones) { skipped++; continue; }
+      p.gold -= cost.gold;
+      removeItem(p, 'da_cuong_hoa', cost.stones);
+      G.repairFull(it);
+      n++; gold += cost.gold; stones += cost.stones;
+    }
+    if (!n && !skipped) fail('Không có món đang mặc nào cần sửa.');
+    if (!n) fail('Không đủ xu hoặc Đá cường hóa để sửa.');
+    clampHpMp(p);
+    ev.push({ t: 'msg', text: `Đã sửa ${n} món đang mặc (-${gold} xu, -${stones} đá).${skipped ? ` Còn ${skipped} món chưa đủ tiền sửa.` : ''}`, color: '#69f0ae' });
+  },
+
   // Khắc ấn: đồ đạt độ hoàn hảo 95% trở lên được thêm 1 dòng phụ thứ tư, vĩnh viễn.
   // Đây là chỗ duy nhất độ hoàn hảo có tác dụng thật (trước đây chỉ để hiển thị).
   seal(p, a, ev) {

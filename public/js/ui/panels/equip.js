@@ -80,8 +80,8 @@
       const sel = S.selected && S.selected.where === 'equip' && S.selected.key === slot;
       const ic = e ? itemIcon(e.id) : (UI._.SLOT_ICONS[slot] || '◇');
       const name = e ? `${esc(d.name)}${e.plus ? ' +' + e.plus : ''}` : esc(G.SLOT_NAMES[slot]);
-      const sub = e ? `${G.QUALITY_NAMES[q]} · ${G.perfection(e)}%` : 'Trống';
-      return `<div class="eq-slot${e ? ' filled' : ' empty'}${sel ? ' sel' : ''}" data-sel="equip:${slot}" title="${esc(G.SLOT_NAMES[slot])}">
+      const sub = e ? `${G.QUALITY_NAMES[q]} · ${G.perfection(e)}% ${UI._.durTag(e)}` : 'Trống';
+      return `<div class="eq-slot${e ? ' filled' : ' empty'}${sel ? ' sel' : ''}${e && G.isBroken(e) ? ' broken' : ''}" data-sel="equip:${slot}" title="${esc(G.SLOT_NAMES[slot])}">
         <span class="eq-slot-ic">${ic}</span>
         <span class="eq-slot-txt"><b class="${e ? 'q' + q : 'muted'}">${name}</b><small>${sub}</small></span></div>`;
     };
